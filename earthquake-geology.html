@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震地质 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="earthquake-geology">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#fault">一、活动断层</a></li>
+      <li><a href="#paleoseismology">二、古地震</a></li>
+      <li><a href="#slip-rate">三、滑动速率</a></li>
+      <li><a href="#recurrence">四、复发间隔</a></li>
+      <li><a href="#tectonic">五、构造地貌</a></li>
+      <li><a href="#segmentation">六、断层分段</a></li>
+      <li><a href="#tectonics">七、中国地震构造</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 地震地质
+        </div>
+        <h1>地震地质</h1>
+        <p class="lead">
+          从活动断层到古地震，覆盖断层活动性鉴定、滑动速率、
+          地震复发间隔与构造地貌。它是地震危险性分析的地质基础，
+          回答"断层在哪里、多久发生一次地震、最大能有多大"这三个核心问题。
+        </p>
+        <div class="article-meta">
+          <span>活动断层</span>
+          <span>古地震</span>
+          <span>复发间隔</span>
+          <span class="blue">地震危险性</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            地震地质研究<strong>地震与地质构造的关系</strong>。
+            它的核心任务是为地震危险性分析提供<strong>地质约束</strong>：
+            断层在哪里？滑动速率多大？多久发生一次大地震？最大震级是多少？
+          </p>
+          <p>
+            在工程地震学的链条中，地震地质处于<strong>最前端</strong>：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>层次</th><th>学科</th><th>回答的问题</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地质层</td>
+                  <td><strong>地震地质</strong></td>
+                  <td><strong>断层在哪里？多久发生一次？最大多大？</strong></td>
+                </tr>
+                <tr>
+                  <td>地震层</td>
+                  <td>定量地震学</td>
+                  <td>震源如何破裂？波如何传播？</td>
+                </tr>
+                <tr>
+                  <td>危险性层</td>
+                  <td>工程地震学</td>
+                  <td>场地未来遭遇多大地震动？</td>
+                </tr>
+                <tr>
+                  <td>工程层</td>
+                  <td>地震工程</td>
+                  <td>结构如何抵抗地震？</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            为什么地震地质重要？因为 PSHA 的输入参数——
+            震源几何、震级分布、年发生率——都来自地震地质。
+            没有可靠的地质约束，PSHA 就成了无源之水。
+          </p>
+
+          <p>
+            一个典型例子：2008 年汶川 Mw7.9 地震发生在龙门山断裂带。
+            震前，该断裂带的滑动速率估计为 1~3 mm/a，
+            复发间隔数千年。地震地质研究为后续的危险性重评估提供了关键数据。
+          </p>
+
+          <p>
+            这份笔记按"活动断层 $\to$ 古地震 $\to$ 滑动速率 $\to$ 复发 $\to$ 构造地貌 $\to$ 分段 $\to$ 中国构造 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="fault">
+          <h2><span class="num">01</span>活动断层</h2>
+
+          <h3>定义与分类</h3>
+          <p>
+            <strong>活动断层</strong>是第四纪（距今约 2.6 Ma）以来有过活动、
+            未来仍可能活动的断层。按活动时代分为：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>活动时代</th><th>工程意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>全新世活动断层</td>
+                  <td>距今 1.1 万年以来</td>
+                  <td>最高等级，必须避让</td>
+                </tr>
+                <tr>
+                  <td>晚更新世活动断层</td>
+                  <td>距今 1.1 万~12.6 万年</td>
+                  <td>高等级，一般需避让</td>
+                </tr>
+                <tr>
+                  <td>早中更新世断层</td>
+                  <td>距今 12.6 万~260 万年</td>
+                  <td>中等，需评估</td>
+                </tr>
+                <tr>
+                  <td>前第四纪断层</td>
+                  <td>距今 &gt; 260 万年</td>
+                  <td>一般不活动</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>断层类型</h3>
+          <p>
+            按滑动方向，断层分为三类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>滑动方向</th><th>应力状态</th><th>典型地震</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>正断层</td>
+                  <td>上盘相对下降</td>
+                  <td>拉张</td>
+                  <td>美国盆地山脉省</td>
+                </tr>
+                <tr>
+                  <td>逆断层 / 逆冲断层</td>
+                  <td>上盘相对上升</td>
+                  <td>挤压</td>
+                  <td>汶川地震、喜马拉雅</td>
+                </tr>
+                <tr>
+                  <td>走滑断层</td>
+                  <td>水平错动</td>
+                  <td>剪切</td>
+                  <td>圣安德烈斯、鲜水河</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            斜滑断层是两种机制的复合，滑动矢量与断层走向斜交。
+          </p>
+
+          <h3>活动断层鉴定</h3>
+          <p>
+            鉴定一条断层是否活动，需要综合多种证据：
+          </p>
+          <ul>
+            <li><strong>地质证据</strong>：断层错断第四纪地层、覆盖层。</li>
+            <li><strong>地貌证据</strong>：断层陡坎、断错水系、断层槽地。</li>
+            <li><strong>地震证据</strong>：历史地震、仪器地震记录。</li>
+            <li><strong>地球物理证据</strong>：浅层地震勘探、探地雷达。</li>
+            <li><strong>年代学证据</strong>：$^{14}$C、光释光（OSL）、宇宙成因核素测年。</li>
+          </ul>
+
+          <h3>活动断层探测方法</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>探测深度</th><th>分辨率</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>遥感解译</td>
+                  <td>地表</td>
+                  <td>中~高</td>
+                  <td>初步识别</td>
+                </tr>
+                <tr>
+                  <td>地质填图</td>
+                  <td>地表</td>
+                  <td>高</td>
+                  <td>详细调查</td>
+                </tr>
+                <tr>
+                  <td>探槽</td>
+                  <td>几米</td>
+                  <td>极高</td>
+                  <td>古地震识别</td>
+                </tr>
+                <tr>
+                  <td>浅层地震勘探</td>
+                  <td>几十~几百米</td>
+                  <td>中~高</td>
+                  <td>隐伏断层定位</td>
+                </tr>
+                <tr>
+                  <td>钻探</td>
+                  <td>几十~几百米</td>
+                  <td>高</td>
+                  <td>断层活动性验证</td>
+                </tr>
+                <tr>
+                  <td>大地电磁（MT）</td>
+                  <td>几~几十 km</td>
+                  <td>低~中</td>
+                  <td>深部结构</td>
+                </tr>
+                <tr>
+                  <td>GPS / InSAR</td>
+                  <td>地表</td>
+                  <td>毫米级</td>
+                  <td>现代形变</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>隐伏断层</h3>
+          <p>
+            隐伏断层是被第四纪沉积物覆盖、未出露地表的断层。
+            识别隐伏断层极具挑战：
+          </p>
+          <ul>
+            <li>地表没有明显断层陡坎，需要物探手段。</li>
+            <li>可能通过地震活动（微震）间接识别。</li>
+            <li>可以用地貌异常（如线性水系）推断。</li>
+            <li>在城市地区，隐伏断层是重大隐患。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：活动断层的存在对工程选址有决定性影响。
+              中国《建筑抗震设计规范》（GB 50011）规定：
+              ① 全新世活动断层、发震断层不得作为建筑场地；
+              ② 一般性活动断层需评估避让距离；
+              ③ 避让距离通常为几十米到几百米，取决于断层类型与活动强度。
+              这是用地质"硬约束"换取工程安全。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="paleoseismology">
+          <h2><span class="num">02</span>古地震</h2>
+
+          <h3>什么是古地震</h3>
+          <p>
+            <strong>古地震</strong>是发生在有历史记录之前的地震，
+            通过地质证据识别。古地震研究是地震地质最核心的分支。
+          </p>
+          <p>
+            为什么重要？历史地震记录通常只有几百年，
+            而大地震的复发间隔可能数千年。
+            仅靠历史记录，无法评估断层的长期行为。
+            古地震把地震记录延伸到数万年尺度。
+          </p>
+
+          <h3>古地震的识别证据</h3>
+          <p>
+            识别一次古地震事件，需要找到"地震沉积"证据：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>证据类型</th><th>表现</th><th>可靠性</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>断层错断地层</td>
+                  <td>地层被断层切断</td>
+                  <td>高</td>
+                </tr>
+                <tr>
+                  <td>崩积楔</td>
+                  <td>断层崖下方的楔形堆积</td>
+                  <td>高</td>
+                </tr>
+                <tr>
+                  <td>液化喷砂</td>
+                  <td>古液化遗迹</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>软沉积变形</td>
+                  <td>沙纹、卷曲层理</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>古滑坡</td>
+                  <td>大规模滑坡堆积</td>
+                  <td>中~低</td>
+                </tr>
+                <tr>
+                  <td>古崩塌</td>
+                  <td>山前崩塌堆积</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>树木扰动</td>
+                  <td>埋藏森林、倾斜树干</td>
+                  <td>中</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>探槽技术</h3>
+          <p>
+            探槽是古地震研究最重要的手段。基本流程：
+          </p>
+          <ol class="steps">
+            <li>沿断层走向开挖垂直于断层的探槽（宽 1~2 m，深 3~5 m）。</li>
+            <li>清理探槽壁，识别地层单元与断层。</li>
+            <li>详细编录：绘制地层、断层、崩积楔的剖面图。</li>
+            <li>系统采样：在关键地层界面采集 $^{14}$C、OSL 样品。</li>
+            <li>测年：确定各次事件的时间。</li>
+            <li>确定事件序列：每次事件的位移量、时间、震级估计。</li>
+          </ol>
+
+          <h3>年代学方法</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>适用时间范围</th><th>测年对象</th><th>精度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$^{14}$C</td>
+                  <td>100~50,000 年</td>
+                  <td>木炭、骨骼、泥炭</td>
+                  <td>±30~100 年</td>
+                </tr>
+                <tr>
+                  <td>光释光（OSL）</td>
+                  <td>100~200,000 年</td>
+                  <td>石英、长石颗粒</td>
+                  <td>±5%~10%</td>
+                </tr>
+                <tr>
+                  <td>热释光（TL）</td>
+                  <td>1000~500,000 年</td>
+                  <td>陶片、砖瓦</td>
+                  <td>±5%~15%</td>
+                </tr>
+                <tr>
+                  <td>宇宙成因核素（$^{10}$Be、$^{26}$Al）</td>
+                  <td>1000~几百万年</td>
+                  <td>地表暴露岩石</td>
+                  <td>±5%~10%</td>
+                </tr>
+                <tr>
+                  <td>$^{210}$Pb、$^{137}$Cs</td>
+                  <td>&lt; 150 年</td>
+                  <td>近代沉积物</td>
+                  <td>±5 年</td>
+                </tr>
+                <tr>
+                  <td>树轮年代</td>
+                  <td>0~10,000 年</td>
+                  <td>树木年轮</td>
+                  <td>±1 年</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>古地震事件识别原则</h3>
+          <p>
+            为了确定一次"事件"（而非缓慢变形），需要满足：
+          </p>
+          <ul>
+            <li><strong>同震性</strong>：多个地层界面在同一次事件中被错断。</li>
+            <li><strong>突发性</strong>：错断是突然的，而不是渐变的。</li>
+            <li><strong>一致性</strong>：同一次事件在空间上分布一致。</li>
+            <li><strong>可重复性</strong>：不同探槽、不同地点识别出相同事件。</li>
+          </ul>
+
+          <h3>古地震序列与时间分布</h3>
+          <p>
+            古地震研究的一个重要结论：大地震的复发时间分布
+            往往既不是完全随机的（泊松过程），
+            也不是完全周期的（准周期）。
+            常见的三种模型：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>模型</th><th>时间分布</th><th>含义</th><th>典型断层</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>泊松模型</td>
+                  <td>指数分布</td>
+                  <td>完全随机，无记忆</td>
+                  <td>区域源</td>
+                </tr>
+                <tr>
+                  <td>准周期模型</td>
+                  <td>正态/对数正态</td>
+                  <td>接近固定周期</td>
+                  <td>圣安德烈斯 Parkfield</td>
+                </tr>
+                <tr>
+                  <td>时间可预测模型</td>
+                  <td>基于上一次位移量</td>
+                  <td>位移越大，间隔越长</td>
+                  <td>某些走滑断层</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>古地震的局限</strong>：探槽能记录的事件有限——
+              ① 时间分辨率取决于测年方法，$^{14}$C 测年误差 ±100 年，
+              对复发间隔几百年的断层难以区分相邻事件；
+              ② 探槽只能看到"保存下来的"事件，侵蚀、覆盖会抹去证据；
+              ③ 探槽位置的选择影响事件识别完整性。
+              因此，古地震事件目录通常是<strong>下限</strong>，
+              实际事件可能更多。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="slip-rate">
+          <h2><span class="num">03</span>滑动速率</h2>
+
+          <h3>定义与分类</h3>
+          <p>
+            <strong>滑动速率</strong>是断层单位时间内错动的平均距离，
+            反映断层的活动强度。
+          </p>
+
+          <p>
+            按时间尺度分为：
+          </p>
+          <ul>
+            <li><strong>地质滑动速率</strong>：用数万年尺度的地质标志计算（如错断的河流阶地、冲沟）。</li>
+            <li><strong>大地测量速率</strong>：用 GPS、InSAR 测量现代形变（几十年尺度）。</li>
+            <li><strong>地震滑动速率</strong>：用古地震事件的位移除以复发间隔。</li>
+          </ul>
+
+          <p>
+            三种速率通常一致，但也可能不同——
+            如果存在无震蠕滑，大地测量速率会大于地震滑动速率。
+          </p>
+
+          <h3>滑动速率的等级</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>等级</th><th>滑动速率</th><th>典型断层</th><th>地震危险性</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>极快</td>
+                  <td>&gt; 30 mm/a</td>
+                  <td>圣安德烈斯南段、喜马拉雅主逆冲</td>
+                  <td>极高</td>
+                </tr>
+                <tr>
+                  <td>快</td>
+                  <td>10~30 mm/a</td>
+                  <td>圣安德烈斯中段</td>
+                  <td>高</td>
+                </tr>
+                <tr>
+                  <td>中</td>
+                  <td>1~10 mm/a</td>
+                  <td>龙门山、鲜水河</td>
+                  <td>中~高</td>
+                </tr>
+                <tr>
+                  <td>慢</td>
+                  <td>0.1~1 mm/a</td>
+                  <td>大部分内陆断层</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>极慢</td>
+                  <td>&lt; 0.1 mm/a</td>
+                  <td>稳定区域断层</td>
+                  <td>低</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>滑动速率的测量方法</h3>
+
+          <h4>1. 地质法</h4>
+          <p>
+            测量被断层错断的地貌单元的错距与年代：
+          </p>
+
+          $$ v = \frac{D}{t} $$
+
+          <p>
+            其中 $D$ 是累计位移，$t$ 是时间间隔。
+            常用的地貌标志：
+          </p>
+          <ul>
+            <li><strong>断错水系</strong>：河流被断层错开，形成断头河、反向河。</li>
+            <li><strong>断错阶地</strong>：河流阶地被断层错断，用阶地面年龄定年。</li>
+            <li><strong>冲沟</strong>：冲沟被断层错断，错距可测。</li>
+            <li><strong>冰碛物、洪积扇</strong>：大的地貌单元的错断。</li>
+          </ul>
+
+          <h4>2. GPS 测量</h4>
+          <p>
+            用连续 GPS 台站测量地壳形变速度场，
+            跨断层的速度差给出断层滑动速率。
+            现代 GPS 精度可达 1~2 mm/a。
+          </p>
+
+          <h4>3. InSAR 测量</h4>
+          <p>
+            合成孔径雷达干涉测量，提供厘米级精度的地表形变。
+            适合区域形变场研究，对缓慢滑动敏感。
+          </p>
+
+          <h4>4. 地震矩平衡法</h4>
+          <p>
+            用历史地震释放的总地震矩除以时间，得到等效滑动速率：
+          </p>
+
+          $$ v = \frac{\sum M_0}{A \mu T} $$
+
+          <p>
+            其中 $M_0$ 是地震矩，$A$ 是断层面积，
+            $\mu$ 是剪切模量（约 30 GPa），$T$ 是时间跨度。
+          </p>
+
+          <h3>滑动速率与震级的关系</h3>
+          <p>
+            断层的最大震级与滑动速率有一定相关性（经验关系）：
+          </p>
+
+          $$ M_{\max} \approx 4.0 + 1.0 \log_{10}(v) + 1.0 \log_{10}(L) $$
+
+          <p>
+            其中 $v$ 是滑动速率（mm/a），$L$ 是断层长度（km）。
+            滑动速率越大、断层越长，可能发生的地震越大。
+          </p>
+
+          <p>
+            但这只是统计关系，不是物理定律。
+            一条慢滑动的大断层（如龙门山，约 1 mm/a）也能发生 Mw8 级大地震。
+            这就是为什么汶川地震对全球地震界产生了巨大冲击——
+            震前的滑动速率估计与最大震级估计都偏低了。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>滑动速率的不确定性</strong>：不同方法得到的滑动速率
+              可能相差 2~3 倍，这是 PSHA 中最大的不确定性来源之一。
+              在逻辑树中，滑动速率通常给 3~5 个分支，
+              权重反映不同方法的可靠性。
+              对重大工程，通常要求用至少两种独立方法交叉验证。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="recurrence">
+          <h2><span class="num">04</span>复发间隔</h2>
+
+          <h3>定义</h3>
+          <p>
+            <strong>复发间隔</strong>是断层上两次大地震之间的时间间隔。
+            它与滑动速率、同震位移的关系：
+          </p>
+
+          $$ T_r = \frac{D_{\text{avg}}}{v} $$
+
+          <p>
+            其中 $D_{\text{avg}}$ 是平均同震位移，$v$ 是滑动速率。
+            例如龙门山断裂带：
+            $v = 1$ mm/a，$D_{\text{avg}} = 3$ m，
+            则 $T_r = 3000$ 年。
+          </p>
+
+          <h3>复发间隔的统计分布</h3>
+          <p>
+            复发间隔不是固定的，具有随机性。
+            常用统计模型：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>模型</th><th>概率密度</th><th>变异系数 $C_V$</th><th>含义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>泊松（指数）</td>
+                  <td>$f(t) = \lambda e^{-\lambda t}$</td>
+                  <td>$C_V = 1$</td>
+                  <td>完全随机，无记忆</td>
+                </tr>
+                <tr>
+                  <td>对数正态</td>
+                  <td>$f(t) = \frac{1}{t\sigma\sqrt{2\pi}} e^{-(\ln t - \mu)^2/(2\sigma^2)}$</td>
+                  <td>$C_V &lt; 1$</td>
+                  <td>准周期，常用</td>
+                </tr>
+                <tr>
+                  <td>布朗通过时间</td>
+                  <td>—</td>
+                  <td>$0.5 &lt; C_V &lt; 1$</td>
+                  <td>弱周期</td>
+                </tr>
+                <tr>
+                  <td>威布尔</td>
+                  <td>$f(t) = \frac{k}{\lambda} (\frac{t}{\lambda})^{k-1} e^{-(t/\lambda)^k}$</td>
+                  <td>可调</td>
+                  <td>一般化</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            $C_V$（变异系数）是标准差与均值之比。
+            实际断层的 $C_V$ 通常为 0.3~0.7，
+            即介于完全周期（$C_V = 0$）与完全随机（$C_V = 1$）之间。
+          </p>
+
+          <h3>时间可预测模型</h3>
+          <p>
+            经典的时间可预测模型（Shimazaki &amp; Nakata, 1980）：
+          </p>
+
+          $$ T_r = D / v $$
+
+          <p>
+            其中 $D$ 是上一次事件的同震位移。
+            含义：位移越大，释放的能量越多，下一次需要等待的时间越长。
+          </p>
+
+          <h3>地震空区</h3>
+          <p>
+            <strong>地震空区</strong>是长期没有发生大地震、
+            但滑动速率较高、累积应变的断层段。
+            理论上，空区是未来大地震的有利位置。
+          </p>
+
+          <p>
+            著名例子：
+          </p>
+          <ul>
+            <li>1985 年墨西哥城地震前的 Guerrero 空区。</li>
+            <li>1976 年唐山地震前的华北地区长期无大震。</li>
+            <li>日本东海地震（预测中，至今未发生）。</li>
+          </ul>
+
+          <p>
+            但地震空区理论并不总是成立——
+            有些空区数百年没有地震，也未在预测时间内发生。
+            这反映了地震物理过程的复杂性。
+          </p>
+
+          <h3>从复发间隔到年发生率</h3>
+          <p>
+            在 PSHA 中，复发间隔用于计算震源的年发生率：
+          </p>
+
+          $$ \nu = \frac{1}{T_r} $$
+
+          <p>
+            对断层源，通常给出：
+          </p>
+          <ul>
+            <li>$M_{\max}$：最大震级。</li>
+            <li>$T_r$：复发间隔，或 $v$：滑动速率。</li>
+            <li>$b$ 值：GR 关系斜率（通常 0.8~1.0）。</li>
+            <li>滑动速率与 $a$ 值的关系：
+              $\nu(M \ge M_{\min}) = v A / (b \cdot M_0^{\text{avg}})$。</li>
+          </ul>
+
+          <h3>Python 示例：复发间隔统计</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>recurrence.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+
+def recurrence_log_normal(T_mean, cv, n_samples=100000, seed=42):
+    """
+    从对数正态分布抽样复发间隔。
+    T_mean: 平均复发间隔（年）
+    cv:     变异系数（标准差/均值）
+    """
+    rng = np.random.default_rng(seed)
+
+    # 对数正态参数
+    sigma_ln = np.sqrt(np.log(1 + cv**2))
+    mu_ln = np.log(T_mean) - 0.5 * sigma_ln**2
+
+    samples = rng.lognormal(mu_ln, sigma_ln, n_samples)
+    return samples
+
+
+def recurrence_brownian(T_mean, cv, n_samples=100000, seed=42):
+    """
+    布朗通过时间模型（简化模拟）。
+    """
+    rng = np.random.default_rng(seed)
+    # 简化：用 Gamma 分布近似
+    shape = 1 / cv**2
+    scale = T_mean / shape
+    return rng.gamma(shape, scale, n_samples)
+
+
+def conditional_probability(samples, t_elapsed, t_window):
+    """
+    给定已过时间 t_elapsed，计算未来 t_window 年内发生地震的条件概率。
+    """
+    # 找到所有已经过了 t_elapsed 年的样本
+    past = samples[samples > t_elapsed]
+    if len(past) == 0:
+        return 0.0
+    # 未来 t_window 年内发生
+    future = past[past <= t_elapsed + t_window]
+    return len(future) / len(past)
+
+
+if __name__ == "__main__":
+    T_mean = 3000.0  # 平均复发间隔 3000 年
+    cv = 0.5         # 变异系数
+
+    # ---- 对数正态模型 ----
+    samples_ln = recurrence_log_normal(T_mean, cv)
+
+    # ---- 布朗模型 ----
+    samples_br = recurrence_brownian(T_mean, cv)
+
+    # ---- 统计 ----
+    print(f"目标：T_mean = {T_mean} 年，Cv = {cv}")
+    print(f"\n对数正态模型：")
+    print(f"  样本均值:   {np.mean(samples_ln):.1f} 年")
+    print(f"  样本标准差: {np.std(samples_ln):.1f} 年")
+    print(f"  中位数:     {np.median(samples_ln):.1f} 年")
+    print(f"  16%~84%:    {np.percentile(samples_ln, 16):.0f} ~ "
+          f"{np.percentile(samples_ln, 84):.0f} 年")
+
+    # ---- 条件概率 ----
+    print(f"\n条件概率（已过时间 t，未来 50 年内发生）：")
+    print(f"{'t (年)':>10}{'条件概率':>15}")
+    for t_elapsed in [0, 1000, 2000, 3000, 4000, 5000]:
+        p = conditional_probability(samples_ln, t_elapsed, 50)
+        print(f"{t_elapsed:>10}{p:>15.4f}")
+
+    # ---- 绘图 ----
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+    # 概率密度
+    bins = np.linspace(0, 10000, 100)
+    axes[0].hist(samples_ln, bins=bins, density=True,
+                 alpha=0.6, label="对数正态", color="#db2777")
+    axes[0].hist(samples_br, bins=bins, density=True,
+                 alpha=0.4, label="布朗通过", color="#2563eb")
+    axes[0].axvline(T_mean, color="black", linestyle="--",
+                    label=f"T_mean = {T_mean} 年")
+    axes[0].set_xlabel("复发间隔 / 年")
+    axes[0].set_ylabel("概率密度")
+    axes[0].set_title(f"复发间隔分布（Cv = {cv}）")
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+
+    # 条件概率曲线
+    t_arr = np.linspace(0, 8000, 100)
+    p_arr = [conditional_probability(samples_ln, t, 50) for t in t_arr]
+    axes[1].plot(t_arr, p_arr, color="#db2777", linewidth=2)
+    axes[1].axvline(T_mean, color="black", linestyle="--",
+                    label=f"T_mean = {T_mean} 年")
+    axes[1].set_xlabel("已过时间 t / 年")
+    axes[1].set_ylabel("未来 50 年条件概率")
+    axes[1].set_title("时间相依的复发概率")
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>复发间隔分布明显右偏（对数正态特性）。</li>
+            <li>已过时间超过平均复发间隔后，条件概率开始显著上升。</li>
+            <li>这就是"时间相依 PSHA"的基础——地震空区的危险性被提高。</li>
+          </ul>
+        </section>
+
+        <section id="tectonic">
+          <h2><span class="num">05</span>构造地貌</h2>
+
+          <h3>构造地貌的识别</h3>
+          <p>
+            构造地貌是断层长期活动在地表留下的痕迹。
+            识别这些地貌是活动断层调查的第一步。
+          </p>
+
+          <h3>典型构造地貌标志</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>地貌标志</th><th>断层类型</th><th>识别特征</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>断层陡坎</td>
+                  <td>正断层、逆断层</td>
+                  <td>线性陡坎，坡度异常</td>
+                </tr>
+                <tr>
+                  <td>断层三角面</td>
+                  <td>正断层</td>
+                  <td>山前三角形陡崖</td>
+                </tr>
+                <tr>
+                  <td>断层槽地</td>
+                  <td>走滑断层</td>
+                  <td>线状洼地、断塞塘</td>
+                </tr>
+                <tr>
+                  <td>断错水系</td>
+                  <td>走滑断层</td>
+                  <td>河流突然拐弯、断头河</td>
+                </tr>
+                <tr>
+                  <td>眉脊</td>
+                  <td>逆断层</td>
+                  <td>山脊被错断</td>
+                </tr>
+                <tr>
+                  <td>断层泉</td>
+                  <td>各类</td>
+                  <td>沿断层线分布的泉水</td>
+                </tr>
+                <tr>
+                  <td>线性山脊、水系</td>
+                  <td>走滑断层</td>
+                  <td>长距离直线状</td>
+                </tr>
+                <tr>
+                  <td>三角面山</td>
+                  <td>正断层</td>
+                  <td>山前陡崖</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>走滑断层的典型地貌</h3>
+          <p>
+            走滑断层最典型的地貌是<strong>断错水系</strong>。
+            当河流横穿走滑断层时，河道被逐渐错开：
+          </p>
+          <ul>
+            <li><strong>同步弯曲</strong>：河流在断层附近突然拐弯，之后又恢复原方向。</li>
+            <li><strong>断头河</strong>：上游与下游分离，形成断头。</li>
+            <li><strong>断塞塘</strong>：断错形成的洼地积水。</li>
+            <li><strong>拉分盆地</strong>：走滑断层弯曲处形成的拉张盆地。</li>
+          </ul>
+
+          <p>
+            断错水系的错距除以水系形成年龄，就是滑动速率。
+            这正是地质法测量滑动速率的基本方法。
+          </p>
+
+          <h3>正断层的典型地貌</h3>
+          <p>
+            正断层常形成<strong>断层崖</strong>与<strong>断层三角面</strong>：
+          </p>
+          <ul>
+            <li><strong>断层崖</strong>：新鲜的断层陡坎，随时间被侵蚀后退。</li>
+            <li><strong>断层三角面</strong>：山前多个三角形陡崖，沿断层线排列。</li>
+            <li><strong>地堑、地垒</strong>：正断层组合形成的构造。</li>
+            <li><strong>阶梯状断层</strong>：多条平行正断层形成阶梯。</li>
+          </ul>
+
+          <h3>逆断层的典型地貌</h3>
+          <p>
+            逆断层的地貌标志相对隐蔽：
+          </p>
+          <ul>
+            <li><strong>断层崖</strong>：上盘抬升形成陡坎。</li>
+            <li><strong>眉脊</strong>：山脊被逆冲断层错断。</li>
+            <li><strong>断层相关褶皱</strong>：盲逆断层在地表形成背斜。</li>
+            <li><strong>河流阶地变形</strong>：阶地面被褶皱变形。</li>
+          </ul>
+
+          <p>
+            汶川地震时，龙门山逆冲断裂带的地表破裂
+            沿山前形成了长达 240 km 的断层陡坎与眉脊。
+          </p>
+
+          <h3>地貌年代学</h3>
+          <p>
+            构造地貌研究需要确定地貌面的年代：
+          </p>
+          <ul>
+            <li><strong>阶地</strong>：河流阶地的砾石层、上覆黄土可测年。</li>
+            <li><strong>洪积扇</strong>：扇顶堆积物的年代。</li>
+            <li><strong>冲沟</strong>：冲沟切入的基岩或沉积物。</li>
+            <li><strong>地表岩石暴露年龄</strong>：宇宙成因核素法。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>构造地貌的工程意义</strong>：
+              构造地貌标志是识别活动断层的"第一手资料"。
+              在工程选址初期，通过卫星影像、航空照片识别线性地貌异常，
+              可以快速锁定可能存在活动断层的区域。
+              之后再用地表调查、探槽、物探等手段确认。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="segmentation">
+          <h2><span class="num">06</span>断层分段</h2>
+
+          <h3>为什么分段</h3>
+          <p>
+            一条长断层并非总是整体破裂。
+            地震通常在断层的某一段上发生，形成<strong>分段破裂</strong>。
+            分段研究对地震危险性分析至关重要：
+          </p>
+          <ul>
+            <li>确定每次地震的破裂范围与最大震级。</li>
+            <li>确定各段的复发间隔与滑动速率。</li>
+            <li>判断未来可能破裂的段落。</li>
+          </ul>
+
+          <h3>分段的标志</h3>
+          <p>
+            判断断层分段的主要标志：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>标志类型</th><th>具体表现</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>几何标志</td>
+                  <td>断层走向、倾角的变化</td>
+                </tr>
+                <tr>
+                  <td>结构标志</td>
+                  <td>阶区、拉分盆地、推隆区</td>
+                </tr>
+                <tr>
+                  <td>活动性标志</td>
+                  <td>滑动速率的变化</td>
+                </tr>
+                <tr>
+                  <td>古地震标志</td>
+                  <td>历史破裂范围的差异</td>
+                </tr>
+                <tr>
+                  <td>地震活动标志</td>
+                  <td>微震分布、地震空区</td>
+                </tr>
+                <tr>
+                  <td>地貌标志</td>
+                  <td>断层崖的新鲜程度</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>阶区与障碍体</h3>
+          <p>
+            断层阶区是两条平行或斜列断层段之间的过渡带，
+            是阻止破裂传播的重要结构：
+          </p>
+          <ul>
+            <li><strong>拉张阶区</strong>：两段之间有拉张区，常形成拉分盆地。</li>
+            <li><strong>挤压阶区</strong>：两段之间有挤压区，常形成推隆。</li>
+            <li><strong>阶区宽度</strong>：阶区越宽，破裂越难跨越。</li>
+          </ul>
+
+          <p>
+            经验关系（Wesnousky, 2006）：
+          </p>
+
+          $$ \text{破裂可跨越的阶区宽度} \approx 3 \sim 5 \text{ km} $$
+
+          <p>
+            当阶区宽度大于阈值时，破裂倾向于止于阶区，
+            形成分段破裂。
+          </p>
+
+          <h3>最大震级估计</h3>
+          <p>
+            对每个断层段，用经验关系估计最大震级。
+            常用的<strong>Wells &amp; Coppersmith (1994)</strong>关系：
+          </p>
+
+          $$ M_w = 4.86 + 1.32 \log_{10}(SRL) \quad (\text{走滑}) $$
+
+          $$ M_w = 4.33 + 1.32 \log_{10}(SRL) \quad (\text{逆冲}) $$
+
+          $$ M_w = 4.87 + 1.32 \log_{10}(SRL) \quad (\text{正断}) $$
+
+          <p>
+            其中 $SRL$ 是地表破裂长度（km）。
+            此外还有基于破裂面积 $A$ 的关系：
+          </p>
+
+          $$ M_w = 4.07 + 0.98 \log_{10}(A) $$
+
+          <p>
+            其中 $A$ 单位 km²。
+          </p>
+
+          <p>
+            对多段破裂，最大震级可用全长估计。
+            因此，分段方案直接影响 $M_{\max}$ 的估计，
+            是 PSHA 中敏感的参数。
+          </p>
+
+          <h3>分段的不确定性</h3>
+          <p>
+            分段方案往往存在多种可能：
+          </p>
+          <ul>
+            <li>保守方案：每段独立，$M_{\max}$ 较小。</li>
+            <li>激进方案：多段可联合破裂，$M_{\max}$ 较大。</li>
+            <li>中间方案：考虑阶区宽度的概率跨越。</li>
+          </ul>
+
+          <p>
+            在 PSHA 中，通常用逻辑树处理分段的不确定性：
+            给出多个分段方案及其权重。
+          </p>
+
+          <h3>Python 示例：分段与震级估计</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>segmentation.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def Mw_from_length(length_km, fault_type="strike-slip"):
+    """
+    Wells & Coppersmith (1994) 经验关系：
+    由地表破裂长度估计矩震级。
+    """
+    log_L = np.log10(length_km)
+    if fault_type == "strike-slip":
+        return 4.86 + 1.32 * log_L
+    elif fault_type == "reverse":
+        return 4.33 + 1.32 * log_L
+    elif fault_type == "normal":
+        return 4.87 + 1.32 * log_L
+    else:
+        raise ValueError("未知断层类型")
+
+
+def Mw_from_area(area_km2):
+    """由破裂面积估计矩震级"""
+    return 4.07 + 0.98 * np.log10(area_km2)
+
+
+def evaluate_segmentation(segments, fault_type="strike-slip"):
+    """
+    评估不同分段方案下的最大震级。
+    segments: 各段的长度列表（km）
+    """
+    print(f"断层类型：{fault_type}")
+    print(f"分段方案：{segments}")
+    print()
+
+    # 方案 1：各段独立
+    Mw_individual = [Mw_from_length(L, fault_type) for L in segments]
+    Mw_max_individual = max(Mw_individual)
+
+    # 方案 2：全部联合破裂
+    total_length = sum(segments)
+    Mw_total = Mw_from_length(total_length, fault_type)
+
+    # 方案 3：相邻段联合
+    Mw_adjacent = []
+    for i in range(len(segments) - 1):
+        L_combined = segments[i] + segments[i + 1]
+        Mw_adjacent.append(Mw_from_length(L_combined, fault_type))
+
+    print("方案 1：各段独立破裂")
+    for i, (L, M) in enumerate(zip(segments, Mw_individual), 1):
+        print(f"  段 {i}（L = {L} km）：Mw = {M:.2f}")
+    print(f"  最大震级：Mw = {Mw_max_individual:.2f}")
+    print()
+
+    print("方案 2：全部联合破裂")
+    print(f"  总长度 L = {total_length} km：Mw = {Mw_total:.2f}")
+    print()
+
+    print("方案 3：相邻段联合破裂")
+    for i, M in enumerate(Mw_adjacent, 1):
+        print(f"  段 {i} + 段 {i+1}：Mw = {M:.2f}")
+    print(f"  最大震级：Mw = {max(Mw_adjacent):.2f}")
+
+
+if __name__ == "__main__":
+    # 一条假想断层，分为 4 段
+    segments = [30, 45, 25, 40]
+    evaluate_segmentation(segments, "strike-slip")
+
+    # ---- 参数研究：断层长度与 Mw 的关系 ----
+    L_arr = np.logspace(np.log10(5), np.log10(500), 100)
+
+    plt.figure(figsize=(10, 5))
+    for ft, label in [("strike-slip", "走滑"),
+                       ("reverse", "逆冲"),
+                       ("normal", "正断")]:
+        Mw_arr = Mw_from_length(L_arr, ft)
+        plt.plot(L_arr, Mw_arr, label=label, linewidth=2)
+
+    # 标注分段方案
+    plt.axvline(sum(segments), color="gray", linestyle="--",
+                label=f"联合破裂 L = {sum(segments)} km")
+    plt.axvline(max(segments), color="gray", linestyle=":",
+                label=f"最大单段 L = {max(segments)} km")
+
+    plt.xlabel("地表破裂长度 L / km")
+    plt.ylabel("矩震级 Mw")
+    plt.title("断层长度与最大震级的关系")
+    plt.xscale("log")
+    plt.legend()
+    plt.grid(True, which="both", alpha=0.3)
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>分段方案不同，$M_{\max}$ 相差 0.3~0.5 级。</li>
+            <li>联合破裂比各段独立的 $M_{\max}$ 更大。</li>
+            <li>逆冲断层在同长度下 $M_w$ 略低于走滑断层。</li>
+          </ul>
+        </section>
+
+        <section id="tectonics">
+          <h2><span class="num">07</span>中国地震构造</h2>
+
+          <h3>中国地震构造格局</h3>
+          <p>
+            中国大陆受印度板块、太平洋板块、菲律宾海板块的共同作用，
+            形成了复杂的活动构造格局：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>构造区</th><th>主要断层</th><th>活动特征</th><th>典型地震</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>青藏高原</td>
+                  <td>喜马拉雅主逆冲、东昆仑、鲜水河</td>
+                  <td>挤压、走滑</td>
+                  <td>2008 汶川、2010 玉树</td>
+                </tr>
+                <tr>
+                  <td>华北</td>
+                  <td>郯庐、太行山前、张家口-渤海</td>
+                  <td>走滑、正断</td>
+                  <td>1976 唐山、1668 郯城</td>
+                </tr>
+                <tr>
+                  <td>西北</td>
+                  <td>阿尔金、天山、祁连山</td>
+                  <td>走滑、逆冲</td>
+                  <td>1902 喀什、1931 富蕴</td>
+                </tr>
+                <tr>
+                  <td>东南沿海</td>
+                  <td>滨海、长乐-南澳</td>
+                  <td>走滑</td>
+                  <td>1604 泉州、1918 南澳</td>
+                </tr>
+                <tr>
+                  <td>台湾</td>
+                  <td>纵谷、车笼埔</td>
+                  <td>逆冲、走滑</td>
+                  <td>1999 集集</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>主要活动断层带</h3>
+
+          <h4>1. 龙门山断裂带</h4>
+          <p>
+            位于青藏高原东缘，长约 500 km，
+            由三条主要逆冲断层组成：
+          </p>
+          <ul>
+            <li>后山断裂（茂汶-汶川）</li>
+            <li>中央断裂（映秀-北川）</li>
+            <li>前山断裂（灌县-江油）</li>
+          </ul>
+          <p>
+            滑动速率约 1~3 mm/a，复发间隔数千年。
+            2008 年汶川 Mw7.9 地震在中央断裂与前山断裂上破裂，
+            地表破裂长度约 240 km。
+          </p>
+
+          <h4>2. 鲜水河断裂带</h4>
+          <p>
+            位于川西高原，长约 350 km，
+            以左旋走滑为主，滑动速率约 10~15 mm/a。
+            是中国大陆滑动速率最高的断层之一。
+            历史上多次 7 级以上地震，如 1973 年炉霍 M7.9。
+          </p>
+
+          <h4>3. 郯庐断裂带</h4>
+          <p>
+            中国东部最重要的走滑断层，长约 2400 km。
+            中段（山东-江苏）活动性强，
+            1668 年郯城 M8.5 是中国东部历史上最大的地震。
+            南段（安徽-江西）活动性较弱。
+          </p>
+
+          <h4>4. 阿尔金断裂带</h4>
+          <p>
+            青藏高原北缘的左旋走滑断层，长约 1600 km，
+            滑动速率约 10~20 mm/a。
+            是中国西部重要的地震构造带。
+          </p>
+
+          <h3>历史大地震</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>时间</th><th>地震</th><th>震级</th><th>断层</th><th>死亡人数</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1556</td>
+                  <td>华县地震</td>
+                  <td>≈8.0</td>
+                  <td>渭河断裂</td>
+                  <td>约 83 万</td>
+                </tr>
+                <tr>
+                  <td>1668</td>
+                  <td>郯城地震</td>
+                  <td>≈8.5</td>
+                  <td>郯庐断裂</td>
+                  <td>约 5 万</td>
+                </tr>
+                <tr>
+                  <td>1920</td>
+                  <td>海原地震</td>
+                  <td>≈8.5</td>
+                  <td>海原断裂</td>
+                  <td>约 23 万</td>
+                </tr>
+                <tr>
+                  <td>1976</td>
+                  <td>唐山地震</td>
+                  <td>7.8</td>
+                  <td>唐山断裂</td>
+                  <td>约 24 万</td>
+                </tr>
+                <tr>
+                  <td>2008</td>
+                  <td>汶川地震</td>
+                  <td>7.9</td>
+                  <td>龙门山断裂</td>
+                  <td>约 6.9 万</td>
+                </tr>
+                <tr>
+                  <td>2010</td>
+                  <td>玉树地震</td>
+                  <td>7.1</td>
+                  <td>甘孜-玉树断裂</td>
+                  <td>约 2700</td>
+                </tr>
+                <tr>
+                  <td>2013</td>
+                  <td>芦山地震</td>
+                  <td>6.6</td>
+                  <td>龙门山南段</td>
+                  <td>约 200</td>
+                </tr>
+                <tr>
+                  <td>2022</td>
+                  <td>泸定地震</td>
+                  <td>6.8</td>
+                  <td>鲜水河断裂南段</td>
+                  <td>约 100</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>中国地震区划</h3>
+          <p>
+            中国地震动参数区划图（GB 18306-2015）给出了：
+          </p>
+          <ul>
+            <li>全国各地区 50 年超越概率 10% 的 PGA 分布。</li>
+            <li>反应谱特征周期 $T_g$ 的分布。</li>
+            <li>地震动峰值加速度与反应谱的对应关系。</li>
+          </ul>
+          <p>
+            区划图的分区反映了地震地质研究成果的集成：
+            活动断层分布、历史地震、地震活动性、构造应力场。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>汶川地震的教训</strong>：龙门山断裂带在震前被认为
+              "滑动速率低、危险性中等"，汶川地震的破裂长度与震级都超出了预期。
+              这暴露了地震地质研究的两大难题：
+              ① 慢滑动断层也能发生大震；
+              ② 多段联合破裂的可能性难以预测。
+              汶川地震后，中国地震界重新评估了多个"低滑动速率"断层的危险性。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>活动断层避让</h3>
+          <p>
+            活动断层对工程最直接的影响是<strong>地表破裂</strong>。
+            地表破裂会直接切断建筑物基础、管线、道路，
+            是工程无法抵抗的灾害。
+          </p>
+
+          <p>
+            各国规范对避让距离的要求：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>规范</th><th>避让距离</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>中国 GB 50011</td>
+                  <td>按断层类型确定，通常几十~几百米</td>
+                  <td>建筑</td>
+                </tr>
+                <tr>
+                  <td>美国加州 Alquist-Priolo</td>
+                  <td>一般 15 m 以上</td>
+                  <td>新建建筑</td>
+                </tr>
+                <tr>
+                  <td>美国 ASCE 41</td>
+                  <td>按断层类型确定</td>
+                  <td>既有建筑评估</td>
+                </tr>
+                <tr>
+                  <td>日本建筑基准法</td>
+                  <td>不明确，需个案研究</td>
+                  <td>建筑</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            避让距离取决于：
+          </p>
+          <ul>
+            <li>断层活动时代（全新世、晚更新世）。</li>
+            <li>断层类型（走滑、逆冲、正断）。</li>
+            <li>建筑物重要性（一般、重要、特别重要）。</li>
+            <li>地表破裂的随机性（破裂不一定在原有断层线上）。</li>
+          </ul>
+
+          <h3>场地地震安全性评价</h3>
+          <p>
+            重大工程必须做场地地震安全性评价，其中地震地质是核心内容：
+          </p>
+          <ol class="steps">
+            <li>区域地震构造环境调查。</li>
+            <li>近场活动断层鉴定与活动性评估。</li>
+            <li>断层滑动速率与复发间隔确定。</li>
+            <li>断层分段与最大震级估计。</li>
+            <li>地震危险性分析（PSHA + DSHA）。</li>
+            <li>设计地震动确定。</li>
+            <li>地震地质灾害评估（含地表破裂）。</li>
+          </ol>
+
+          <h3>跨断层工程</h3>
+          <p>
+            当工程必须跨断层时，需要采取特殊的抗震措施：
+          </p>
+          <ul>
+            <li><strong>管线</strong>：采用柔性接头、可伸缩段，允许一定错动。</li>
+            <li><strong>桥梁</strong>：加大跨径，避开断层地表破裂带。</li>
+            <li><strong>隧道</strong>：用柔性衬砌、超挖，允许断层错动。</li>
+            <li><strong>渠道</strong>：设置柔性段或绕过断层。</li>
+          </ul>
+
+          <p>
+            典型例子：
+          </p>
+          <ul>
+            <li><strong>阿拉斯加输油管道</strong>：跨 Dennison 断层，采用滑动支座与柔性设计。</li>
+            <li><strong>青藏铁路</strong>：跨多活动断层，采用桥梁跨越与线路优化。</li>
+            <li><strong>南水北调中线</strong>：跨多活动断层，用暗涵与柔性结构。</li>
+          </ul>
+
+          <h3>城市活动断层探测</h3>
+          <p>
+            许多城市位于活动断层之上，如北京、西安、银川、乌鲁木齐。
+            城市活动断层探测是城市防灾的重要工作：
+          </p>
+          <ul>
+            <li>用浅层地震勘探确定隐伏断层位置。</li>
+            <li>用探槽确定断层活动性。</li>
+            <li>编制城市活动断层分布图。</li>
+            <li>确定建筑物避让范围。</li>
+            <li>纳入城市规划与土地利用管理。</li>
+          </ul>
+
+          <p>
+            中国从 2004 年起开展"城市活动断层探测与地震危险性评价"项目，
+            已有 20 多个城市完成探测。
+          </p>
+
+          <h3>与其它专业的分工</h3>
+          <p>
+            地震地质在工程安全性评价中的位置：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>专业</th><th>核心任务</th><th>与地震地质的关系</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地震地质</td>
+                  <td>断层在哪里？多久一次？最大多大？</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>工程地震学</td>
+                  <td>场地地震动参数</td>
+                  <td>用地震地质结果作为输入</td>
+                </tr>
+                <tr>
+                  <td>地震工程</td>
+                  <td>结构抗震设计</td>
+                  <td>用工程地震学结果作为输入</td>
+                </tr>
+                <tr>
+                  <td>岩土工程</td>
+                  <td>地基与基础</td>
+                  <td>用活动断层分布作为选址依据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>地震地质与你的项目</strong>：
+              你主页上的"地震危险性分析"项目直接依赖地震地质的参数——
+              断层位置、滑动速率、复发间隔、最大震级。
+              如果项目提供了输入这些参数的界面，
+              可以把这份笔记作为<strong>参数来源与含义</strong>的说明文档，
+              从项目页面链接到对应章节。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>活动断层</strong>：第四纪以来有活动的断层；按时代分类；用地质、地貌、地震、物探综合鉴定。</li>
+              <li><strong>古地震</strong>：用探槽、年代学识别历史记录之前的地震；扩展地震记录到数万年尺度。</li>
+              <li><strong>滑动速率</strong>：地质法、GPS、InSAR、地震矩平衡；是断层的核心活动参数。</li>
+              <li><strong>复发间隔</strong>：$T_r = D/v$；对数正态或布朗分布；时间相依 PSHA 的基础。</li>
+              <li><strong>构造地貌</strong>：断层陡坎、断错水系、三角面；活动断层识别的第一手资料。</li>
+              <li><strong>断层分段</strong>：阶区、几何变化；分段方案决定 $M_{\max}$ 估计。</li>
+              <li><strong>中国构造</strong>：青藏、华北、西北、东南沿海、台湾五大区；龙门山、鲜水河、郯庐等主要断层带。</li>
+              <li><strong>工程应用</strong>：活动断层避让、场地地震安全性评价、跨断层工程、城市活动断层探测。</li>
+            </ul>
+          </div>
+
+          <h3>关键参数速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>参数</th><th>典型值</th><th>含义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>滑动速率 $v$</td>
+                  <td>0.1~30 mm/a</td>
+                  <td>断层活动强度</td>
+                </tr>
+                <tr>
+                  <td>复发间隔 $T_r$</td>
+                  <td>10²~10⁴ 年</td>
+                  <td>两次大地震之间的时间</td>
+                </tr>
+                <tr>
+                  <td>变异系数 $C_V$</td>
+                  <td>0.3~0.7</td>
+                  <td>复发间隔的离散程度</td>
+                </tr>
+                <tr>
+                  <td>$M_{\max}$</td>
+                  <td>6.0~9.0</td>
+                  <td>断层段最大震级</td>
+                </tr>
+                <tr>
+                  <td>破裂长度 $SRL$</td>
+                  <td>10~1000 km</td>
+                  <td>地表破裂长度</td>
+                </tr>
+                <tr>
+                  <td>$b$ 值</td>
+                  <td>0.8~1.0</td>
+                  <td>GR 关系斜率</td>
+                </tr>
+                <tr>
+                  <td>同震位移</td>
+                  <td>0.1~10 m</td>
+                  <td>单次地震的平均错动</td>
+                </tr>
+                <tr>
+                  <td>避让距离</td>
+                  <td>15~500 m</td>
+                  <td>建筑与活动断层的最小距离</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>定量地震学</strong>（地震学）：震源物理、矩震级、震源谱。</li>
+            <li><strong>工程地震学</strong>（地震学）：PSHA 的震源模型与震级分布直接来自地震地质。</li>
+            <li><strong>地震工程</strong>（地震学）：活动断层避让是工程选址的硬约束。</li>
+            <li><strong>强震动观测</strong>（地震学）：古地震与仪器记录的互补。</li>
+            <li><strong>土动力学</strong>（地震学）：断层错动引起的永久变形与土体响应。</li>
+            <li><strong>地震预警</strong>（地震学）：活动断层分布决定预警台网布设。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：复发间隔分布、时间相依概率。</li>
+            <li><strong>数值分析</strong>（数学）：断层滑动速率反演、探槽数据拟合。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>McCalpin (ed.), <em>Paleoseismology</em> — 古地震学权威教材</li>
+            <li>Yeats, Sieh &amp; Allen, <em>The Geology of Earthquakes</em> — 地震地质经典</li>
+            <li>Wells &amp; Coppersmith, "New empirical relationships among magnitude, rupture length, rupture width, rupture area, and surface displacement" (1994) — 震级-破裂经验关系</li>
+            <li>Wesnousky, "Predicting the endpoints of earthquake ruptures" (2006) — 断层分段与阶区</li>
+            <li>Shimazaki &amp; Nakata, "Time-predictable recurrence model for large earthquakes" (1980) — 时间可预测模型</li>
+            <li>Scholz, <em>The Mechanics of Earthquakes and Faulting</em> — 断层力学经典</li>
+            <li>邓起东等，《中国活动构造图》— 中国活动断层分布权威图集</li>
+            <li>GB 50011《建筑抗震设计规范》— 活动断层避让的规范要求</li>
+            <li>GB 18306《中国地震动参数区划图》— 全国地震危险性分区</li>
+            <li>中国地震局《活动断层探测》系列技术规范</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

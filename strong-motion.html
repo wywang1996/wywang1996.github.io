@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="strong-motion">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>强震动数据处理 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="strong-motion">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+
+      <li>
+        <a href="index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/>
+            <path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#overview" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4"/>
+            <path d="M12 8h.01"/>
+          </svg>
+          <span>概述</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#features" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>主要功能</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#f-io">数据读取与格式解析</a></li>
+          <li><a href="#f-baseline">基线校正</a></li>
+          <li><a href="#f-filter">数字滤波</a></li>
+          <li><a href="#f-spike">去尖峰与异常值</a></li>
+          <li><a href="#f-resample">重采样</a></li>
+          <li><a href="#f-integrate">积分与微分</a></li>
+          <li><a href="#f-rotate">分量旋转</a></li>
+          <li><a href="#f-quality">质量控制</a></li>
+          <li><a href="#f-batch">批处理与流水线</a></li>
+          <li><a href="#f-viz">可视化与报告</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#workflow" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          <span>工作流程</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#method" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 4h6v6H4z"/>
+            <path d="M14 4h6v6h-6z"/>
+            <path d="M4 14h6v6H4z"/>
+            <path d="M14 14h6v6h-6z"/>
+          </svg>
+          <span>方法与公式</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#m-baseline">基线校正</a></li>
+          <li><a href="#m-filter">滤波器设计</a></li>
+          <li><a href="#m-spike">去尖峰</a></li>
+          <li><a href="#m-resample">重采样</a></li>
+          <li><a href="#m-integrate">积分与微分</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#code" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          <span>代码示例</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#data" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
+          </svg>
+          <span>数据与依赖</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#refs" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          </svg>
+          <span>参考资料</span>
+        </a>
+      </li>
+
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="index.html">主页</a> &nbsp;/&nbsp; 项目 &nbsp;/&nbsp; 强震动数据处理
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Project · Strong Motion</div>
+      <h1>强震动数据处理</h1>
+      <p class="lead">
+        面向强震动记录的全流程预处理工具链：从原始加速度时程出发，
+        依次完成格式解析、去尖峰、基线校正、滤波、重采样与积分，
+        输出可直接用于结构时程分析与反应谱计算的加速度、速度与位移时程。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">开发中</span>
+        <span class="pill">Python 3.10+</span>
+        <span class="pill">NumPy · SciPy</span>
+        <span class="pill blue">兼容 ObsPy</span>
+        <span class="pill">2026</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+      <p>
+        强震动记录在采集与传输过程中不可避免地引入多种误差：传感器零点漂移、
+        积分带来的基线偏移、通信干扰造成的尖峰、触发与采样系统带来的直流分量与趋势项。
+        这些误差如果不加处理，会直接污染反应谱与结构响应计算，甚至导致位移时程发散。
+      </p>
+      <p>
+        本项目的目标是把这一套预处理流程标准化、可复现：把每一步处理都记录为可追溯的操作，
+        支持参数化配置与批处理，使得同一批记录可以在相同参数下得到一致的结果，
+        同时保留原始记录以便对比与回溯。
+      </p>
+      <div class="callout">
+        <strong>处理顺序很重要：</strong>一般应先去除尖峰（尖峰会严重干扰滤波与基线拟合），
+        再做基线校正，然后滤波，最后积分。顺序颠倒会引入虚假的低频成分，
+        或者让尖峰在滤波后被“抹开”成更宽的异常段。
+      </div>
+    </section>
+
+    <!-- ===== 主要功能 ===== -->
+    <section id="features">
+      <div class="section-head">
+        <span class="section-label">Features</span>
+        <h2>主要功能</h2>
+      </div>
+
+      <div class="feature-list">
+
+        <article class="feature" id="f-io">
+          <div class="feature-head">
+            <span class="feature-num">01</span>
+            <h3>数据读取与格式解析</h3>
+          </div>
+          <p>
+            统一读取国内外主流强震动记录格式，自动解析采样率、单位、时标、
+            通道方位与仪器响应信息，把异构文件归一为内部统一的数据结构。
+          </p>
+          <ul class="feature-points">
+            <li>支持 PEER NGA、COSMOS V1/V2、SAC、MiniSEED、ASCII 等格式</li>
+            <li>自动识别单位（g / gal / m/s²）并统一换算为 cm/s²</li>
+            <li>解析通道方位角，为后续旋转与分量合成做准备</li>
+            <li>支持多分量文件（三分量）一次性读取</li>
+            <li>保留原始元数据，处理链全程可追溯</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-baseline">
+          <div class="feature-head">
+            <span class="feature-num">02</span>
+            <h3>基线校正</h3>
+          </div>
+          <p>
+            消除由传感器漂移与积分误差引起的速度、位移基线偏移，
+            使处理后的位移时程在强震段结束后回到零值附近，避免位移不合理发散。
+          </p>
+          <ul class="feature-points">
+            <li>多项式基线校正（线性、二次、三次），可分段拟合</li>
+            <li>Iwan 双段校正与 Boore 方法</li>
+            <li>基于 P 波触发前后的均值去直流</li>
+            <li>支持人工指定强震段起止时间，分段处理</li>
+            <li>自动检验校正后位移的残余偏移量</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-filter">
+          <div class="feature-head">
+            <span class="feature-num">03</span>
+            <h3>数字滤波</h3>
+          </div>
+          <p>
+            按记录的信噪比与可用频带，选择合适的高通、低通或带通滤波器，
+            去除长周期漂移与高频噪声，同时避免滤波引入的相位失真。
+          </p>
+          <ul class="feature-points">
+            <li>Butterworth、Chebyshev、椭圆滤波器设计</li>
+            <li>零相位滤波（filtfilt）与单相位滤波可选</li>
+            <li>支持长周期滤波拐点自动估计（基于信噪比）</li>
+            <li>滤波前后频谱对比与频带检查</li>
+            <li>可配置因果/非因果模式以匹配不同分析需求</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-spike">
+          <div class="feature-head">
+            <span class="feature-num">04</span>
+            <h3>去尖峰与异常值剔除</h3>
+          </div>
+          <p>
+            检测并修复由通信中断、传感器瞬时故障造成的尖峰与毛刺，
+            避免尖峰在滤波与积分后被放大成宽频异常。
+          </p>
+          <ul class="feature-points">
+            <li>基于滑动中位数与 MAD 的稳健检测</li>
+            <li>基于加速度、速度、位移一致性的检测</li>
+            <li>支持插值修复、置零或整段剔除</li>
+            <li>可查看被剔除样本的数量与位置</li>
+            <li>检测阈值可自适应记录噪声水平</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-resample">
+          <div class="feature-head">
+            <span class="feature-num">05</span>
+            <h3>重采样</h3>
+          </div>
+          <p>
+            把不同采样率的记录统一到目标采样率，便于批量对比与结构分析输入，
+            并进行抗混叠处理。
+          </p>
+          <ul class="feature-points">
+            <li>多相滤波重采样，支持任意有理比</li>
+            <li>降采样前置抗混叠低通滤波</li>
+            <li>支持升采样与任意目标采样率</li>
+            <li>重采样误差与频谱一致性检查</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-integrate">
+          <div class="feature-head">
+            <span class="feature-num">06</span>
+            <h3>积分与微分</h3>
+          </div>
+          <p>
+            由加速度时程积分得到速度与位移时程，支持多种数值积分格式与
+            积分后校正，是反应谱与结构时程分析的必要输入。
+          </p>
+          <ul class="feature-points">
+            <li>梯形法、Simpson 法与频域积分</li>
+            <li>积分常数与初始条件可配置</li>
+            <li>积分后自动检测并报告残余速度与位移</li>
+            <li>支持逐段积分以配合分段基线校正</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-rotate">
+          <div class="feature-head">
+            <span class="feature-num">07</span>
+            <h3>分量旋转与合成</h3>
+          </div>
+          <p>
+            处理三分量记录，按方位角旋转到指定坐标系，或合成水平向与竖向，
+            便于与设计谱和场地主轴向对比。
+          </p>
+          <ul class="feature-points">
+            <li>EW/NS 旋转到断层法向与走向方向</li>
+            <li>任意角度旋转与主轴向搜索</li>
+            <li>水平双向合成（SRSS、最大方向）</li>
+            <li>旋转前后反应谱对比</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-quality">
+          <div class="feature-head">
+            <span class="feature-num">08</span>
+            <h3>质量控制与处理报告</h3>
+          </div>
+          <p>
+            对每条记录给出质量指标与处理报告，识别低质量记录，
+            让批量处理的每一步都可检查、可追溯。
+          </p>
+          <ul class="feature-points">
+            <li>信噪比、可用频带、PGA 与仪表量程检查</li>
+            <li>触发信息完整性、截断与削波检测</li>
+            <li>处理前后能量平衡与残余位移报告</li>
+            <li>质量标记（优、良、合格、剔除）自动分级</li>
+            <li>生成每步操作日志与参数记录</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-batch">
+          <div class="feature-head">
+            <span class="feature-num">09</span>
+            <h3>批处理与流水线</h3>
+          </div>
+          <p>
+            面向成百上千条记录的批量处理需求，提供配置文件与命令行接口，
+            支持并行执行与失败重试。
+          </p>
+          <ul class="feature-points">
+            <li>YAML / JSON 配置文件驱动的处理流水线</li>
+            <li>多进程并行，支持进度显示与日志输出</li>
+            <li>处理规则可复用、可继承、可按事件分组覆盖</li>
+            <li>失败记录单独归档，便于人工复核</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-viz">
+          <div class="feature-head">
+            <span class="feature-num">10</span>
+            <h3>可视化与导出</h3>
+          </div>
+          <p>
+            内置交互式绘图与批量导出，方便结果复核、参数敏感性检查与报告生成。
+          </p>
+          <ul class="feature-points">
+            <li>加速度 / 速度 / 位移时程与傅里叶谱、反应谱绘图</li>
+            <li>处理前后叠加对比、批处理质量概览</li>
+            <li>导出 SAC、MiniSEED、CSV、HDF5</li>
+            <li>一键生成含参数与图表的 HTML / PDF 处理报告</li>
+          </ul>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== 工作流程 ===== -->
+    <section id="workflow">
+      <div class="section-head">
+        <span class="section-label">Workflow</span>
+        <h2>工作流程</h2>
+      </div>
+      <ol class="steps">
+        <li><b>读取与解析</b>：读取原始记录，解析格式、单位、方位角与元数据，归一为统一数据结构。</li>
+        <li><b>去尖峰</b>：用稳健统计方法检测尖峰与异常值，插值修复或标记剔除。</li>
+        <li><b>去直流与趋势</b>：去除触发前的均值与明显的线性趋势项。</li>
+        <li><b>基线校正</b>：按 Iwan 双段或多项式方法校正，重点控制位移残余。</li>
+        <li><b>数字滤波</b>：根据信噪比选择频带，做零相位高通/低通或带通滤波。</li>
+        <li><b>重采样</b>：统一到目标采样率，降采样时做抗混叠处理。</li>
+        <li><b>积分与微分</b>：由加速度积分得到速度与位移，检查残余量并二次校正。</li>
+        <li><b>旋转与合成</b>：按需旋转到目标方向或合成水平向，输出分析用分量。</li>
+        <li><b>质检与导出</b>：生成质量报告，导出标准格式与处理日志。</li>
+      </ol>
+    </section>
+
+    <!-- ===== 方法 ===== -->
+    <section id="method">
+      <div class="section-head">
+        <span class="section-label">Method</span>
+        <h2>方法与公式</h2>
+      </div>
+
+      <h3 class="sub" id="m-baseline">基线校正</h3>
+      <p>
+        常用多项式基线校正：对速度时程拟合低阶多项式并扣除，其等价于在加速度时程上
+        扣除该多项式的导数项。Iwan 双段校正假设强震段内存在两段不同的基线偏移，
+        分别拟合后拼接，能较好兼顾近场大位移记录。
+      </p>
+      <div class="formula">v_corr(t) = v(t) − p(t) ,    p(t) = c₀ + c₁t + c₂t² + …
+
+a_corr(t) = a(t) − p′(t)          <em># 校正后的加速度</em>
+
+∫ a_corr dt → v_corr ,  ∫ v_corr dt → d_corr
+要求：d_corr(t_end) ≈ 0 ,   v_corr(t_end) ≈ 0   <em># 校正目标</em></div>
+
+      <h3 class="sub" id="m-filter">滤波器设计</h3>
+      <p>
+        采用 Butterworth 等 IIR 滤波器时，通常使用零相位滤波（前向 + 反向各一次），
+        使相位失真相互抵消，但等效阶数翻倍，实际截止特性会变陡。
+      </p>
+      <div class="formula">H(s) = 1 / √(1 + (s/ω_c)^(2n))      <em># Butterworth 幅频响应</em>
+
+filtfilt 等效于 |H(ω)|² ,  相位为 0     <em># 零相位滤波</em>
+
+推荐：高通拐点 f_hp ≈ 1/(1.5·T_total) ,  低通 ≤ 0.8·f_Nyq</div>
+
+      <h3 class="sub" id="m-spike">去尖峰</h3>
+      <p>
+        以滑动窗口的中位数与 MAD 为基准，超过阈值的样本视为异常。
+        相比均值和标准差，中位数与 MAD 不受尖峰本身影响，检测更稳健。
+      </p>
+      <div class="formula">MAD = median( |x_i − median(x)| )
+
+flag_i = |x_i − median(x)| &gt; k · 1.4826 · MAD     <em># k 常取 5 ~ 10</em>
+
+修复：x_i ← median(x)   或  线性插值 / 三次样条插值</div>
+
+      <h3 class="sub" id="m-resample">重采样</h3>
+      <p>
+        有理比重采样先升采样到两采样率的最小公倍数，再降采样到目标采样率，
+        降采样前必须低通到新的奈奎斯特频率以下，否则会产生混叠。
+      </p>
+      <div class="formula">L / M 重采样：x ↑L → 低通 → ↓M
+
+f_cut ≤ min(f_Nyq_in, f_Nyq_out) = 0.5 · min(f_s_in, f_s_out)
+
+f_s_out = (L/M) · f_s_in</div>
+
+      <h3 class="sub" id="m-integrate">积分与微分</h3>
+      <p>
+        时域积分常用梯形法；也可在频域做积分，即除以 jω，
+        但需注意零频与极低频的分量处理，通常与高通滤波配合使用。
+      </p>
+      <div class="formula">v_n = v_{n-1} + (a_{n-1} + a_n)/2 · Δt         <em># 梯形积分</em>
+
+d_n = d_{n-1} + (v_{n-1} + v_n)/2 · Δt
+
+频域：V(ω) = A(ω) / (jω) ,   D(ω) = −A(ω) / ω²
+<em># ω → 0 处需置零或高通截断，避免发散</em></div>
+    </section>
+
+    <!-- ===== 代码示例 ===== -->
+    <section id="code">
+      <div class="section-head">
+        <span class="section-label">Code</span>
+        <h2>代码示例</h2>
+      </div>
+      <p>
+        下面是一个最小可运行的预处理流程：去尖峰 → 去均值 → 高通滤波 → 积分，
+        演示关键步骤的实现方式。实际工程中需在此基础上补齐基线校正、低通滤波、
+        重采样与质量控制。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang">
+            <span>strong_motion_preprocess.py</span>
+            <span class="lang">Python</span>
+          </div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code class="language-python">"""
+强震动记录预处理最小示例
+去尖峰 → 去均值 → 高通滤波 → 梯形积分
+"""
+import numpy as np
+from scipy.signal import butter, filtfilt
+
+
+def remove_spikes(a, k=8.0, win=5):
+    """基于滑动中位数与 MAD 的尖峰检测与插值修复"""
+    a = a.copy()
+    n = len(a)
+    half = win // 2
+    flagged = np.zeros(n, dtype=bool)
+
+    for i in range(n):
+        lo, hi = max(0, i - half), min(n, i + half + 1)
+        seg = a[lo:hi]
+        med = np.median(seg)
+        mad = np.median(np.abs(seg - med))
+        if mad > 0 and abs(a[i] - med) > k * 1.4826 * mad:
+            flagged[i] = True
+
+    if flagged.any():
+        idx = np.arange(n)
+        a[flagged] = np.interp(idx[flagged], idx[~flagged], a[~flagged])
+    return a, flagged
+
+
+def highpass(a, fs, f_corner, order=4):
+    """零相位 Butterworth 高通滤波"""
+    b, ax = butter(order, f_corner / (fs / 2.0), btype="high")
+    return filtfilt(b, ax, a)
+
+
+def integrate(a, dt):
+    """梯形法积分，返回速度与位移"""
+    v = np.cumsum((a[1:] + a[:-1]) / 2.0) * dt
+    v = np.insert(v, 0, 0.0)
+    d = np.cumsum((v[1:] + v[:-1]) / 2.0) * dt
+    d = np.insert(d, 0, 0.0)
+    return v, d
+
+
+if __name__ == "__main__":
+    fs = 200.0                     # 采样率 Hz
+    dt = 1.0 / fs
+    t = np.arange(0, 30.0, dt)
+    # 合成一段带趋势与尖峰的示意加速度（cm/s²）
+    a = 50 * np.sin(2 * np.pi * 3 * t) * np.exp(-((t - 5) ** 2) / 8)
+    a += 0.8 * t                    # 线性趋势，模拟基线漂移
+    a[1200] += 800.0                # 人为尖峰
+
+    a, flags = remove_spikes(a)
+    a -= np.mean(a[:200])           # 触发前均值作为直流基准
+    a = highpass(a, fs, 0.1)
+    v, d = integrate(a, dt)
+
+    print(f"修复尖峰数: {flags.sum()}")
+    print(f"PGA = {np.max(np.abs(a)):.2f} cm/s²")
+    print(f"PGV = {np.max(np.abs(v)):.2f} cm/s")
+    print(f"PGD = {np.max(np.abs(d)):.2f} cm")
+    print(f"残余位移 = {d[-1]:.3f} cm")</code></pre>
+      </div>
+
+      <div class="callout">
+        这段代码只做演示：<strong>没有</strong>包含基线校正、低通滤波、重采样与质量控制，
+        也没有处理三分量旋转。用于实际记录时，必须先按建议顺序执行完整处理链，
+        并检查处理前后反应谱的差异是否在可接受范围内。
+      </div>
+    </section>
+
+    <!-- ===== 数据与依赖 ===== -->
+    <section id="data">
+      <div class="section-head">
+        <span class="section-label">Data &amp; Stack</span>
+        <h2>数据与依赖</h2>
+      </div>
+      <div class="split">
+        <div>
+          <div class="split-title">输入数据</div>
+          <div class="chips">
+            <span class="chip">PEER NGA 数据库</span>
+            <span class="chip">COSMOS 强震记录</span>
+            <span class="chip">中国强震动台网</span>
+            <span class="chip blue">NIED K-NET / KiK-net</span>
+            <span class="chip blue">ESM 工程强震库</span>
+            <span class="chip">SAC / MiniSEED 波形</span>
+            <span class="chip">台站元数据与方位角</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">技术栈</div>
+          <div class="chips">
+            <span class="chip">Python 3.10+</span>
+            <span class="chip">NumPy</span>
+            <span class="chip">SciPy</span>
+            <span class="chip">pandas</span>
+            <span class="chip">Matplotlib</span>
+            <span class="chip blue">ObsPy</span>
+            <span class="chip blue">pyrotd</span>
+            <span class="chip blue">h5py</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 参考资料 ===== -->
+    <section id="refs">
+      <div class="section-head">
+        <span class="section-label">References</span>
+        <h2>参考资料</h2>
+      </div>
+      <ol class="refs">
+        <li>Boore, D. M., &amp; Bommer, J. J. (2005). Processing of strong-motion accelerograms: needs, options and consequences. <i>Soil Dynamics and Earthquake Engineering</i>, 25(2), 93–115.</li>
+        <li>Iwan, W. D., Moser, M. A., &amp; Peng, C.-Y. (1985). Some observations on strong-motion earthquake measurement using a digital accelerograph. <i>BSSA</i>, 75(5), 1225–1246.</li>
+        <li>Boore, D. M., Stephens, C. D., &amp; Joyner, W. B. (2002). Comments on baseline correction of digital strong-motion data. <i>BSSA</i>, 92(5), 1862–1880.</li>
+        <li>Akkar, S., &amp; Bommer, J. J. (2006). Influence of long-period filter cut-off on elastic spectral displacements. <i>Earthquake Engineering &amp; Structural Dynamics</i>, 35(9), 1145–1165.</li>
+        <li>Wang, G.-Q., et al. (2003). A stable procedure to remove the instrument response and integrate strong-motion records. <i>BSSA</i>, 93(3), 1258–1268.</li>
+        <li>Krishnamoorthy, A., &amp; Abraham, A. (2019). Signal processing for strong-motion data. <i>Encyclopedia of Earthquake Engineering</i>.</li>
+        <li>GB/T 36072-2018《强震动观测数据处理与交换》. 中国标准出版社.</li>
+      </ol>
+    </section>
+
+    <footer>
+      © 2026 wayione · Built with ❤️ and Python
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

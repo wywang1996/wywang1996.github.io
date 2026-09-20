@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>复变函数与积分变换 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="complex-analysis">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#complex">一、复数与复平面</a></li>
+      <li><a href="#analytic">二、解析函数</a></li>
+      <li><a href="#integral">三、复积分与柯西定理</a></li>
+      <li><a href="#series">四、级数与洛朗展开</a></li>
+      <li><a href="#residue">五、留数定理</a></li>
+      <li><a href="#fourier">六、傅里叶变换</a></li>
+      <li><a href="#laplace">七、拉普拉斯变换</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 复变函数与积分变换
+        </div>
+        <h1>复变函数与积分变换</h1>
+        <p class="lead">
+          从复数运算到留数定理，从傅里叶变换到拉普拉斯变换，
+          覆盖复变函数与积分变换的核心概念。它是振动分析、信号处理、
+          频域方法、随机振动与地震动谱分析的共同数学基础。
+        </p>
+        <div class="article-meta">
+          <span>解析函数</span>
+          <span>留数定理</span>
+          <span>傅里叶变换</span>
+          <span class="blue">频域方法</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            复变函数研究<strong>自变量与函数值都取复数</strong>的函数。
+            看似抽象，但它在工程中无处不在：只要涉及到<strong>振动、波、信号</strong>，
+            复变函数几乎必然登场。
+          </p>
+          <p>
+            对结构工程师来说，这套工具的价值体现在三个层面：
+          </p>
+          <ul>
+            <li><strong>振动分析</strong>：单自由度体系的复频响应函数 $H(\omega)$ 是传递函数，其极点与系统的固有频率、阻尼直接对应。</li>
+            <li><strong>积分变换</strong>：傅里叶变换把时域卷积变成频域乘积，拉普拉斯变换把微分方程变成代数方程。</li>
+            <li><strong>频域方法</strong>：随机振动、功率谱、传递函数、滤波、地震动谱分析，全部建立在复变函数与积分变换之上。</li>
+          </ul>
+          <p>
+            这份笔记按"复数 $\to$ 解析函数 $\to$ 复积分 $\to$ 级数 $\to$ 留数 $\to$ 傅里叶变换 $\to$ 拉普拉斯变换 $\to$ 工程应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="complex">
+          <h2><span class="num">01</span>复数与复平面</h2>
+
+          <h3>复数的表示</h3>
+          <p>
+            复数 $z = x + iy$，其中 $i^2 = -1$，$x, y \in \mathbb{R}$。
+            实部 $\mathrm{Re}(z) = x$，虚部 $\mathrm{Im}(z) = y$。
+          </p>
+
+          <p>三种等价表示：</p>
+          <ul>
+            <li><strong>代数形式</strong>：$z = x + iy$</li>
+            <li><strong>三角形式</strong>：$z = r(\cos\theta + i\sin\theta)$</li>
+            <li><strong>指数形式</strong>：$z = r e^{i\theta}$</li>
+          </ul>
+
+          <p>
+            其中 $r = |z| = \sqrt{x^2 + y^2}$ 是模，$\theta = \arg z$ 是辐角。
+            指数形式由<strong>欧拉公式</strong>给出：
+          </p>
+
+          $$ e^{i\theta} = \cos\theta + i\sin\theta $$
+
+          <p>
+            欧拉公式是复变函数中最优美的公式，也是振动分析的核心。
+            用它把三角函数与指数函数统一：
+          </p>
+
+          $$ \cos\theta = \frac{e^{i\theta} + e^{-i\theta}}{2}, \qquad
+             \sin\theta = \frac{e^{i\theta} - e^{-i\theta}}{2i} $$
+
+          <h3>四则运算与共轭</h3>
+          <p>
+            加减法逐分量运算；乘除法用指数形式最方便：
+          </p>
+
+          $$ z_1 z_2 = r_1 r_2 e^{i(\theta_1 + \theta_2)}, \qquad
+             \frac{z_1}{z_2} = \frac{r_1}{r_2} e^{i(\theta_1 - \theta_2)} $$
+
+          <p>
+            共轭复数 $\bar{z} = x - iy$，满足：
+          </p>
+
+          $$ z \bar{z} = |z|^2, \qquad \overline{z_1 z_2} = \bar{z}_1 \bar{z}_2 $$
+
+          <h3>棣莫弗公式</h3>
+          <p>
+            由指数形式的乘法性质，立得：
+          </p>
+
+          $$ (\cos\theta + i\sin\theta)^n = \cos(n\theta) + i\sin(n\theta) $$
+
+          <p>
+            这是把三角函数的 $n$ 倍角公式统一成一句话的工具。
+          </p>
+
+          <h3>复平面上的几何意义</h3>
+          <p>
+            复数与复平面上的点一一对应。
+            $|z - z_0| = r$ 表示以 $z_0$ 为圆心、$r$ 为半径的圆；
+            $|z - z_1| = |z - z_2|$ 表示到两点等距的垂直平分线。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>振动分析中的复数</strong>：单自由度体系在简谐激励下的稳态响应为
+              $u(t) = A e^{i\omega t}$，其中 $A$ 是<strong>复振幅</strong>，
+              包含幅值和相位信息。用复数表示可以把三角函数运算变成代数运算，
+              是频域分析的基本约定。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="analytic">
+          <h2><span class="num">02</span>解析函数</h2>
+
+          <h3>复变函数的极限与连续</h3>
+          <p>
+            复变函数 $w = f(z)$ 把复平面上的点映射到复平面。
+            极限 $\lim_{z \to z_0} f(z) = w_0$ 要求
+            $z$ 沿<strong>任意路径</strong>趋近 $z_0$ 时，$f(z)$ 都趋近 $w_0$。
+            这个要求比实函数严格得多。
+          </p>
+
+          <h3>导数与柯西-黎曼方程</h3>
+          <p>
+            若 $f(z) = u(x, y) + i v(x, y)$ 在 $z_0$ 处可导，则必须满足
+            <strong>柯西-黎曼方程</strong>：
+          </p>
+
+          $$ \frac{\partial u}{\partial x} = \frac{\partial v}{\partial y}, \qquad
+             \frac{\partial u}{\partial y} = -\frac{\partial v}{\partial x} $$
+
+          <p>
+            这是复变函数区别于实变函数的核心条件。满足此条件的函数称为<strong>解析函数</strong>
+            （或全纯函数）。
+          </p>
+
+          <p>
+            解析函数有两条极强的性质：
+          </p>
+          <ul>
+            <li><strong>无穷可微</strong>：只要在某点解析，就在该点的邻域内无穷次可微。</li>
+            <li><strong>调和性</strong>：实部 $u$ 与虚部 $v$ 都是调和函数，即 $\nabla^2 u = 0$、$\nabla^2 v = 0$。</li>
+          </ul>
+
+          <h3>初等解析函数</h3>
+
+          <p>指数函数：</p>
+          $$ e^z = e^{x + iy} = e^x (\cos y + i \sin y) $$
+
+          <p>三角函数（用指数定义）：</p>
+          $$ \sin z = \frac{e^{iz} - e^{-iz}}{2i}, \qquad
+             \cos z = \frac{e^{iz} + e^{-iz}}{2} $$
+
+          <p>对数函数（多值）：</p>
+          $$ \mathrm{Ln}\, z = \ln |z| + i (\arg z + 2k\pi), \qquad k \in \mathbb{Z} $$
+
+          <p>
+            取主值 $\mathrm{ln}\, z = \ln|z| + i \arg z$（$\arg z \in (-\pi, \pi]$）为单值分支。
+            多值函数的存在是复变函数独有的特性。
+          </p>
+
+          <h3>工程中的解析函数</h3>
+          <ul>
+            <li><strong>传递函数</strong> $H(s)$：在 $s$ 平面（复频域）上有理分式，极点、零点都在复平面上。</li>
+            <li><strong>保角映射</strong>：弹性力学中的复变解法（如孔口问题）利用解析函数保持角度不变的特性。</li>
+            <li><strong>势流</strong>：流体的复势 $w = \phi + i\psi$ 是解析函数，实部与虚部分别是速度势与流函数。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>结构动力学中的传递函数</strong>：单自由度体系
+              $m\ddot{u} + c\dot{u} + ku = F(t)$ 在频域内的传递函数为
+              $H(\omega) = 1/(k - m\omega^2 + i c \omega)$。
+              它是复变函数的有理函数形式，分母的零点给出固有频率与阻尼，
+              这正是模态分析与频响函数分析的核心。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="integral">
+          <h2><span class="num">03</span>复积分与柯西定理</h2>
+
+          <h3>复积分的定义</h3>
+          <p>
+            复变函数 $f(z)$ 沿曲线 $C$ 的积分定义为：
+          </p>
+
+          $$ \int_C f(z) \, dz = \lim_{n \to \infty}
+             \sum_{k=1}^{n} f(\zeta_k) \Delta z_k $$
+
+          <p>
+            与实积分类似，但被积函数与积分路径都在复平面上。
+            复积分具有<strong>方向性</strong>：换方向则积分变号。
+          </p>
+
+          <h3>柯西-古萨定理</h3>
+          <p>
+            若 $f(z)$ 在<strong>单连通区域</strong> $D$ 内解析，$C$ 是 $D$ 内的任意闭曲线，则：
+          </p>
+
+          $$ \oint_C f(z) \, dz = 0 $$
+
+          <p>
+            这是复变函数最基本的定理。它表明：解析函数的积分只依赖端点，不依赖路径。
+            由此可以定义<strong>不定积分</strong>：
+          </p>
+
+          $$ F(z) = \int_{z_0}^{z} f(\zeta) \, d\zeta $$
+
+          <p>
+            且 $F'(z) = f(z)$。
+          </p>
+
+          <h3>柯西积分公式</h3>
+          <p>
+            设 $f(z)$ 在简单闭曲线 $C$ 及其内部解析，$z_0$ 是 $C$ 内一点，则：
+          </p>
+
+          $$ f(z_0) = \frac{1}{2\pi i} \oint_C \frac{f(z)}{z - z_0} \, dz $$
+
+          <p>
+            这一公式表明：解析函数在区域内部的值<strong>完全由边界上的值决定</strong>。
+            这是解析函数"刚性"的本质——知道了边界，就知道了整个区域。
+          </p>
+
+          <p>更进一步，解析函数可求高阶导数：</p>
+
+          $$ f^{(n)}(z_0) = \frac{n!}{2\pi i} \oint_C
+             \frac{f(z)}{(z - z_0)^{n+1}} \, dz $$
+
+          <h3>Python 示例：复积分与柯西定理验证</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>contour_integral.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+# ---- 数值复积分：沿闭曲线 C 积分 f(z) dz ----
+
+def contour_integral(f, path):
+    """
+    用梯形法计算复积分。
+    path: 复平面上的点序列（首尾闭合）
+    """
+    z = np.asarray(path, dtype=complex)
+    fz = f(z)
+    dz = np.diff(z)
+    # 梯形法：每段用中点值近似
+    return np.sum(0.5 * (fz[:-1] + fz[1:]) * dz)
+
+
+def circle_path(z0, r, n=2000):
+    """以 z0 为中心、r 为半径的圆路径（逆时针）"""
+    t = np.linspace(0, 2 * np.pi, n)
+    return z0 + r * np.exp(1j * t)
+
+
+if __name__ == "__main__":
+    # ---- 例 1：解析函数 f(z) = z^2 绕单位圆积分 ----
+    # 由柯西-古萨定理，结果应为 0
+    f1 = lambda z: z**2
+    path1 = circle_path(0, 1.0)
+    I1 = contour_integral(f1, path1)
+    print(f"∮ z^2 dz  (|z| = 1) = {I1:.6e}  （理论值 0）")
+
+    # ---- 例 2：1/z 绕原点积分 ----
+    # 理论值 2πi ≈ 6.2832i
+    f2 = lambda z: 1 / z
+    path2 = circle_path(0, 1.0)
+    I2 = contour_integral(f2, path2)
+    print(f"∮ 1/z dz  (|z| = 1) = {I2:.6f}  （理论值 2πi）")
+
+    # ---- 例 3：柯西积分公式 ----
+    # f(z0) = (1/2πi) ∮ f(z)/(z-z0) dz
+    # 取 f(z) = exp(z)，z0 = 0，理论值 f(0) = 1
+    f3 = lambda z: np.exp(z) / z
+    path3 = circle_path(0, 1.0)
+    I3 = contour_integral(f3, path3)
+    f_at_0 = I3 / (2j * np.pi)
+    print(f"\n柯西积分公式：f(0) = {f_at_0.real:.6f} + "
+          f"{f_at_0.imag:.6f}i  （理论值 1）")</code></pre>
+          </div>
+
+          <p>
+            运行可以看到：解析函数 $z^2$ 的闭路积分为零（柯西-古萨），
+            而有奇点的 $1/z$ 积分给出 $2\pi i$（这是留数定理的直接体现）。
+          </p>
+        </section>
+
+        <section id="series">
+          <h2><span class="num">04</span>级数与洛朗展开</h2>
+
+          <h3>泰勒级数</h3>
+          <p>
+            若 $f(z)$ 在圆盘 $|z - z_0| < R$ 内解析，则在该圆盘内可以展开为：
+          </p>
+
+          $$ f(z) = \sum_{n=0}^{\infty} a_n (z - z_0)^n, \qquad
+             a_n = \frac{f^{(n)}(z_0)}{n!} $$
+
+          <p>
+            这与实函数的泰勒级数形式相同，但复变函数的<strong>收敛半径</strong>有明确几何意义：
+            $R$ 等于 $z_0$ 到最近奇点的距离。
+          </p>
+
+          <p>常用展开（$|z| < 1$）：</p>
+          $$ \frac{1}{1-z} = \sum_{n=0}^{\infty} z^n, \qquad
+             e^z = \sum_{n=0}^{\infty} \frac{z^n}{n!}, \qquad
+             \ln(1+z) = \sum_{n=1}^{\infty} \frac{(-1)^{n+1}}{n} z^n $$
+
+          <h3>洛朗级数</h3>
+          <p>
+            如果函数在圆环域 $r < |z - z_0| < R$ 内解析，
+            则在该圆环内可以展开为<strong>双边的幂级数</strong>：
+          </p>
+
+          $$ f(z) = \sum_{n=-\infty}^{+\infty} a_n (z - z_0)^n $$
+
+          <p>其中：</p>
+
+          $$ a_n = \frac{1}{2\pi i} \oint_C
+             \frac{f(z)}{(z - z_0)^{n+1}} \, dz $$
+
+          <p>
+            洛朗级数包含<strong>正幂部分</strong>（正则部分）与<strong>负幂部分</strong>（主要部分）。
+            负幂部分决定了奇点的性质。
+          </p>
+
+          <h3>孤立奇点的分类</h3>
+          <p>
+            设 $z_0$ 是 $f(z)$ 的孤立奇点，根据洛朗展开中负幂部分的形态分为三类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>负幂部分</th><th>极限行为</th><th>示例</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>可去奇点</td>
+                  <td>全为零</td>
+                  <td>$\lim_{z\to z_0} f(z)$ 有限</td>
+                  <td>$\dfrac{\sin z}{z}$ 在 $z = 0$</td>
+                </tr>
+                <tr>
+                  <td>$m$ 阶极点</td>
+                  <td>有限项，最高为 $(z-z_0)^{-m}$</td>
+                  <td>$\lim_{z\to z_0} f(z) = \infty$</td>
+                  <td>$\dfrac{1}{z^2}$ 在 $z = 0$（2 阶）</td>
+                </tr>
+                <tr>
+                  <td>本性奇点</td>
+                  <td>无穷多项</td>
+                  <td>极限不存在（且取值稠密）</td>
+                  <td>$e^{1/z}$ 在 $z = 0$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>零极点与传递函数</h3>
+          <p>
+            在工程中，传递函数 $H(s)$ 通常是有理分式：
+          </p>
+
+          $$ H(s) = \frac{N(s)}{D(s)} = K \frac{(s - z_1)(s - z_2) \cdots}{(s - p_1)(s - p_2) \cdots} $$
+
+          <p>
+            $z_i$ 称为<strong>零点</strong>，$p_i$ 称为<strong>极点</strong>。
+            极点的位置决定了系统的稳定性与响应特性：
+          </p>
+          <ul>
+            <li>极点全部在左半平面 $\mathrm{Re}(s) < 0$：系统稳定</li>
+            <li>极点在虚轴上：系统临界稳定（等幅振荡）</li>
+            <li>极点在右半平面：系统不稳定（响应发散）</li>
+          </ul>
+
+          <p>
+            对结构动力学中的单自由度体系，传递函数 $H(\omega) = 1/(k - m\omega^2 + ic\omega)$ 的极点
+            给出复固有频率：
+          </p>
+
+          $$ s_{1,2} = -\zeta \omega_n \pm i \omega_n \sqrt{1 - \zeta^2} $$
+
+          <p>
+            实部 $-\zeta \omega_n$ 反映衰减，虚部反映振荡频率。
+            这就是模态分析中"复模态"的数学来源。
+          </p>
+        </section>
+
+        <section id="residue">
+          <h2><span class="num">05</span>留数定理</h2>
+
+          <h3>留数的定义</h3>
+          <p>
+            设 $z_0$ 是 $f(z)$ 的孤立奇点，$f(z)$ 在 $0 < |z - z_0| < R$ 内的洛朗展开为：
+          </p>
+
+          $$ f(z) = \sum_{n=-\infty}^{+\infty} a_n (z - z_0)^n $$
+
+          <p>
+            则 $(z - z_0)^{-1}$ 项的系数 $a_{-1}$ 称为 $f(z)$ 在 $z_0$ 处的<strong>留数</strong>：
+          </p>
+
+          $$ \mathrm{Res}[f, z_0] = a_{-1} $$
+
+          <h3>留数定理</h3>
+          <p>
+            设 $f(z)$ 在简单闭曲线 $C$ 上及其内部除有限个孤立奇点 $z_1, \ldots, z_n$ 外解析，则：
+          </p>
+
+          $$ \oint_C f(z) \, dz = 2\pi i \sum_{k=1}^{n} \mathrm{Res}[f, z_k] $$
+
+          <p>
+            这条定理是复变函数最强大的工具之一。它把复杂的围道积分转化为留数的代数求和。
+          </p>
+
+          <h3>留数的计算</h3>
+
+          <p><strong>1 阶极点</strong>：</p>
+          $$ \mathrm{Res}[f, z_0] = \lim_{z \to z_0} (z - z_0) f(z) $$
+
+          <p>
+            若 $f(z) = P(z)/Q(z)$，$P(z_0) \ne 0$，$Q(z_0) = 0$，$Q'(z_0) \ne 0$：
+          </p>
+          $$ \mathrm{Res}[f, z_0] = \frac{P(z_0)}{Q'(z_0)} $$
+
+          <p><strong>$m$ 阶极点</strong>：</p>
+          $$ \mathrm{Res}[f, z_0] = \frac{1}{(m-1)!} \lim_{z \to z_0}
+             \frac{d^{m-1}}{dz^{m-1}} \left[ (z - z_0)^m f(z) \right] $$
+
+          <h3>用留数计算实积分</h3>
+          <p>
+            留数定理最重要的应用之一是把某些实积分化为复围道积分。
+            典型形式：
+          </p>
+
+          $$ \int_{-\infty}^{+\infty} f(x) \, dx = 2\pi i
+             \sum_{\mathrm{Im}(z_k) > 0} \mathrm{Res}[f, z_k] $$
+
+          <p>
+            条件是 $f(z)$ 在上半平面除有限个极点外解析，
+            且 $|z| \to \infty$ 时 $|f(z)| \to 0$ 足够快。
+          </p>
+
+          <p>例如：</p>
+          $$ \int_{-\infty}^{+\infty} \frac{dx}{1 + x^2} = \pi, \qquad
+             \int_{-\infty}^{+\infty} \frac{\cos x}{1 + x^2} \, dx = \frac{\pi}{e} $$
+
+          <h3>Python 示例：留数计算与实积分</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>residue.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import sympy as sp
+
+
+def residue_example():
+    """用 sympy 计算留数"""
+    z = sp.Symbol("z")
+
+    # ---- 例 1：f(z) = 1/(1 + z^2)，极点在 z = ±i ----
+    f = 1 / (1 + z**2)
+    r1 = sp.residue(f, z, sp.I)
+    r2 = sp.residue(f, z, -sp.I)
+
+    print("f(z) = 1 / (1 + z^2)")
+    print(f"  Res[f, i ] = {r1}")
+    print(f"  Res[f, -i] = {r2}")
+
+    # 用留数定理：∫_{-∞}^{+∞} f(x) dx = 2πi · Res[f, i]
+    I = 2 * sp.pi * sp.I * r1
+    print(f"  ∫ f(x) dx = {sp.simplify(I)}  （理论值 π）")
+
+    print()
+
+    # ---- 例 2：f(z) = e^{iz}/(1 + z^2) ----
+    # 用于计算 ∫ cos(x)/(1 + x^2) dx = π/e
+    f2 = sp.exp(sp.I * z) / (1 + z**2)
+    r = sp.residue(f2, z, sp.I)
+    I2 = 2 * sp.pi * sp.I * r
+    print("f(z) = e^{iz} / (1 + z^2)")
+    print(f"  Res[f, i] = {sp.simplify(r)}")
+    print(f"  ∫ cos(x)/(1+x^2) dx = {sp.simplify(I2)}  （理论值 π/e）")
+
+
+if __name__ == "__main__":
+    residue_example()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：留数定理在振动分析中有两个直接应用：
+              ① 计算脉冲响应函数时，通过对频响函数做<strong>拉普拉斯逆变换</strong>，
+              需要求 $H(s) e^{st}$ 的留数；
+              ② 随机振动中的功率谱积分，通过留数定理把复杂的频率积分化为极点处的代数运算。
+              这使得许多看似困难的频域积分有了封闭解析解。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="fourier">
+          <h2><span class="num">06</span>傅里叶变换</h2>
+
+          <h3>傅里叶级数</h3>
+          <p>
+            周期为 $T$ 的函数 $f(t)$ 可以展开为三角函数级数：
+          </p>
+
+          $$ f(t) = \frac{a_0}{2} + \sum_{n=1}^{\infty}
+             \left[ a_n \cos(n\omega_0 t) + b_n \sin(n\omega_0 t) \right] $$
+
+          <p>
+            其中 $\omega_0 = 2\pi/T$ 是基频。用复指数形式更简洁：
+          </p>
+
+          $$ f(t) = \sum_{n=-\infty}^{+\infty} c_n e^{i n \omega_0 t}, \qquad
+             c_n = \frac{1}{T} \int_{-T/2}^{T/2} f(t) e^{-i n \omega_0 t} \, dt $$
+
+          <h3>傅里叶变换</h3>
+          <p>
+            把周期 $T \to \infty$，傅里叶级数变为<strong>傅里叶积分</strong>：
+          </p>
+
+          $$ F(\omega) = \int_{-\infty}^{+\infty} f(t) e^{-i\omega t} \, dt $$
+
+          <p>逆变换：</p>
+
+          $$ f(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} F(\omega) e^{i\omega t} \, d\omega $$
+
+          <p>
+            $F(\omega)$ 是<strong>频谱</strong>，$|F(\omega)|$ 是幅值谱，$\arg F(\omega)$ 是相位谱。
+          </p>
+
+          <h3>傅里叶变换的性质</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>性质</th><th>时域</th><th>频域</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>线性</td>
+                  <td>$a f + b g$</td>
+                  <td>$a F + b G$</td>
+                </tr>
+                <tr>
+                  <td>时移</td>
+                  <td>$f(t - t_0)$</td>
+                  <td>$F(\omega) e^{-i\omega t_0}$</td>
+                </tr>
+                <tr>
+                  <td>频移</td>
+                  <td>$f(t) e^{i\omega_0 t}$</td>
+                  <td>$F(\omega - \omega_0)$</td>
+                </tr>
+                <tr>
+                  <td>尺度</td>
+                  <td>$f(at)$</td>
+                  <td>$\dfrac{1}{|a|} F\!\left(\dfrac{\omega}{a}\right)$</td>
+                </tr>
+                <tr>
+                  <td>微分</td>
+                  <td>$f'(t)$</td>
+                  <td>$i\omega F(\omega)$</td>
+                </tr>
+                <tr>
+                  <td>卷积</td>
+                  <td>$(f * g)(t)$</td>
+                  <td>$F(\omega) G(\omega)$</td>
+                </tr>
+                <tr>
+                  <td>Parseval</td>
+                  <td>$\int |f(t)|^2 dt$</td>
+                  <td>$\dfrac{1}{2\pi} \int |F(\omega)|^2 d\omega$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            其中<strong>卷积定理</strong>是最重要的：时域卷积对应频域乘积。
+            这是线性时不变系统（LTI）分析的核心——输入信号与系统脉冲响应的卷积，
+            在频域变成输入频谱与传递函数的乘积。
+          </p>
+
+          <h3>离散傅里叶变换（DFT）</h3>
+          <p>
+            工程中信号都是离散采样的，用 DFT：
+          </p>
+
+          $$ X_k = \sum_{n=0}^{N-1} x_n e^{-i 2\pi kn / N}, \qquad k = 0, 1, \ldots, N-1 $$
+
+          <p>
+            快速算法（FFT）把计算量从 $O(N^2)$ 降到 $O(N \log N)$，
+            是现代信号处理的基石。
+          </p>
+
+          <h3>Python 示例：矩形脉冲的频谱</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>fourier.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def rect_pulse(t, width=1.0):
+    """宽度为 width 的矩形脉冲（中心在 0）"""
+    return np.where(np.abs(t) <= width / 2, 1.0, 0.0)
+
+
+def fft_spectrum(x, dt):
+    """对离散信号做 FFT，返回频率轴、幅值谱、相位谱"""
+    N = len(x)
+    X = np.fft.fft(x)
+    freq = np.fft.fftfreq(N, d=dt)
+
+    # 只取正频率部分
+    pos = freq >= 0
+    freq_pos = freq[pos]
+    X_pos = X[pos]
+
+    # 幅值与相位
+    amp = np.abs(X_pos) * dt
+    phase = np.angle(X_pos)
+    return freq_pos, amp, phase
+
+
+if __name__ == "__main__":
+    # 采样参数
+    dt = 0.001           # 采样间隔 1 ms
+    T = 0.5              # 总时长 0.5 s
+    t = np.arange(-T / 2, T / 2, dt)
+
+    # 矩形脉冲
+    x = rect_pulse(t, width=0.05)   # 宽 50 ms
+
+    # FFT
+    freq, amp, phase = fft_spectrum(x, dt)
+
+    # 理论频谱：矩形脉冲的傅里叶变换 = τ·sinc(ωτ/2)，sinc(u)=sin(u)/u
+    tau = 0.05
+    omega = 2 * np.pi * freq
+    theoretical = np.where(
+        np.abs(omega) < 1e-9,
+        tau,
+        tau * np.sin(omega * tau / 2) / (omega * tau / 2)
+    )
+
+    # 打印部分数据对比
+    print(f"{'频率 / Hz':>15}{'数值幅值':>18}{'理论幅值':>18}")
+    idx = np.linspace(0, 200, 6).astype(int)
+    for i in idx:
+        print(f"{freq[i]:>15.2f}{amp[i]:>18.6f}{abs(theoretical[i]):>18.6f}")
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(freq, amp, label="数值 FFT")
+    plt.plot(freq, np.abs(theoretical), "--", label="理论 sinc", alpha=0.7)
+    plt.xlabel("f / Hz")
+    plt.ylabel("|X(f)|")
+    plt.xlim(0, 100)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>地震工程中的傅里叶变换</strong>：地震动加速度时程 $a(t)$ 的傅里叶谱
+              $|A(f)|$ 反映不同频率成分的能量分布。反应谱是傅里叶谱的"工程化版本"，
+              更关注结构响应而非信号本身。地震动处理中的<strong>基线校正</strong>、
+              <strong>滤波</strong>、<strong>频谱平滑</strong>，全部在频域内完成。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="laplace">
+          <h2><span class="num">07</span>拉普拉斯变换</h2>
+
+          <h3>定义</h3>
+          <p>
+            函数 $f(t)$（$t \ge 0$）的拉普拉斯变换定义为：
+          </p>
+
+          $$ F(s) = \mathcal{L}\{f(t)\} = \int_0^{\infty} f(t) e^{-st} \, dt $$
+
+          <p>
+            其中 $s = \sigma + i\omega$ 是复变量。
+            当 $s = i\omega$ 时退化为傅里叶变换（在收敛条件下）。
+          </p>
+
+          <p>逆变换：</p>
+
+          $$ f(t) = \frac{1}{2\pi i} \int_{c - i\infty}^{c + i\infty} F(s) e^{st} \, ds $$
+
+          <p>
+            这是一条复平面上的竖直路径积分，通常用留数定理计算。
+          </p>
+
+          <h3>常用变换对</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>$f(t)$</th><th>$F(s)$</th><th>收敛域</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$\delta(t)$</td>
+                  <td>$1$</td>
+                  <td>全平面</td>
+                </tr>
+                <tr>
+                  <td>$1$（阶跃）</td>
+                  <td>$\dfrac{1}{s}$</td>
+                  <td>$\mathrm{Re}(s) > 0$</td>
+                </tr>
+                <tr>
+                  <td>$t^n$</td>
+                  <td>$\dfrac{n!}{s^{n+1}}$</td>
+                  <td>$\mathrm{Re}(s) > 0$</td>
+                </tr>
+                <tr>
+                  <td>$e^{-at}$</td>
+                  <td>$\dfrac{1}{s+a}$</td>
+                  <td>$\mathrm{Re}(s) > -a$</td>
+                </tr>
+                <tr>
+                  <td>$\sin(\omega t)$</td>
+                  <td>$\dfrac{\omega}{s^2 + \omega^2}$</td>
+                  <td>$\mathrm{Re}(s) > 0$</td>
+                </tr>
+                <tr>
+                  <td>$\cos(\omega t)$</td>
+                  <td>$\dfrac{s}{s^2 + \omega^2}$</td>
+                  <td>$\mathrm{Re}(s) > 0$</td>
+                </tr>
+                <tr>
+                  <td>$e^{-at}\sin(\omega t)$</td>
+                  <td>$\dfrac{\omega}{(s+a)^2 + \omega^2}$</td>
+                  <td>$\mathrm{Re}(s) > -a$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>主要性质</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>性质</th><th>时域</th><th>$s$ 域</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>线性</td>
+                  <td>$a f + b g$</td>
+                  <td>$a F + b G$</td>
+                </tr>
+                <tr>
+                  <td>时移</td>
+                  <td>$f(t - t_0) u(t - t_0)$</td>
+                  <td>$F(s) e^{-s t_0}$</td>
+                </tr>
+                <tr>
+                  <td>一阶微分</td>
+                  <td>$f'(t)$</td>
+                  <td>$s F(s) - f(0^-)$</td>
+                </tr>
+                <tr>
+                  <td>二阶微分</td>
+                  <td>$f''(t)$</td>
+                  <td>$s^2 F(s) - s f(0^-) - f'(0^-)$</td>
+                </tr>
+                <tr>
+                  <td>积分</td>
+                  <td>$\int_0^t f(\tau) d\tau$</td>
+                  <td>$\dfrac{F(s)}{s}$</td>
+                </tr>
+                <tr>
+                  <td>卷积</td>
+                  <td>$(f * g)(t)$</td>
+                  <td>$F(s) G(s)$</td>
+                </tr>
+                <tr>
+                  <td>初值定理</td>
+                  <td>$f(0^+)$</td>
+                  <td>$\lim_{s \to \infty} s F(s)$</td>
+                </tr>
+                <tr>
+                  <td>终值定理</td>
+                  <td>$\lim_{t \to \infty} f(t)$</td>
+                  <td>$\lim_{s \to 0} s F(s)$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>用拉普拉斯变换解微分方程</h3>
+          <p>
+            拉普拉斯变换最重要的应用是<strong>把微分方程变成代数方程</strong>。
+            以单自由度体系的自由振动为例：
+          </p>
+
+          $$ m \ddot{u}(t) + c \dot{u}(t) + k u(t) = 0, \qquad
+             u(0) = u_0, \; \dot{u}(0) = v_0 $$
+
+          <p>
+            两边做拉普拉斯变换：
+          </p>
+
+          $$ (ms^2 + cs + k) U(s) = m s u_0 + m v_0 + c u_0 $$
+
+          <p>
+            解得：
+          </p>
+
+          $$ U(s) = \frac{m s u_0 + m v_0 + c u_0}{m s^2 + c s + k} $$
+
+          <p>
+            再做<strong>拉普拉斯逆变换</strong>（通常用留数定理或查表），
+            得到时域响应 $u(t)$。这就是振动分析中"复频域方法"的基本流程。
+          </p>
+
+          <h3>Python 示例：用 sympy 求解振动方程</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>laplace_vibration.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import sympy as sp
+
+
+def solve_sdof_vibration():
+    """
+    用拉普拉斯变换求解单自由度体系自由振动：
+        m·ü + c·u̇ + k·u = 0
+        u(0) = u0, u̇(0) = v0
+    """
+    t, s = sp.symbols("t s", real=True)
+    m, c, k = sp.symbols("m c k", positive=True)
+    u0, v0 = sp.symbols("u0 v0", real=True)
+
+    # 待求函数
+    U = sp.Function("U")(s)
+
+    # 拉普拉斯变换后的方程（假设初值 u(0)=u0, u'(0)=v0）
+    eq = sp.Eq(
+        m * (s**2 * U - s * u0 - v0)
+        + c * (s * U - u0)
+        + k * U,
+        0
+    )
+
+    # 解出 U(s)
+    U_sol = sp.solve(eq, U)[0]
+    U_sol = sp.simplify(U_sol)
+    print("U(s) =")
+    sp.pprint(U_sol)
+    print()
+
+    # 拉普拉斯逆变换
+    u_t = sp.inverse_laplace_transform(U_sol, s, t)
+    u_t = sp.simplify(u_t)
+    print("u(t) =")
+    sp.pprint(u_t)
+
+
+def solve_sdof_forced():
+    """
+    用拉普拉斯变换求解单自由度体系受迫振动：
+        m·ü + c·u̇ + k·u = F0·sin(ω·t)
+        u(0) = 0, u̇(0) = 0
+    """
+    t, s = sp.symbols("t s", real=True)
+    m, c, k = sp.symbols("m c k", positive=True)
+    F0, omega = sp.symbols("F0 omega", positive=True)
+
+    U = sp.Function("U")(s)
+
+    # sin(ω t) 的拉普拉斯变换
+    F_s = F0 * omega / (s**2 + omega**2)
+
+    # 变换后的方程
+    eq = sp.Eq(
+        m * s**2 * U + c * s * U + k * U,
+        F_s
+    )
+
+    U_sol = sp.solve(eq, U)[0]
+    print("\n受迫振动 U(s) =")
+    sp.pprint(sp.simplify(U_sol))
+
+    u_t = sp.inverse_laplace_transform(U_sol, s, t)
+    print("\n受迫振动 u(t) =")
+    sp.pprint(sp.simplify(u_t))
+
+
+if __name__ == "__main__":
+    solve_sdof_vibration()
+    solve_sdof_forced()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么结构动力学偏爱拉普拉斯变换</strong>：
+              与傅里叶变换相比，拉普拉斯变换的优势在于
+              ① 直接包含<strong>初始条件</strong>，适合求瞬态响应；
+              ② 收敛域更宽，对发散函数也能处理；
+              ③ 极点位置直接对应系统稳定性与模态。
+              这就是为什么地震工程中的传递函数、频响函数、
+              反应谱分析都用 $s = -\zeta\omega_n + i\omega_d$ 作为基本变量。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>频响函数与传递函数</h3>
+          <p>
+            对线性时不变（LTI）系统，输入 $x(t)$ 与输出 $y(t)$ 的关系在频域中为：
+          </p>
+
+          $$ Y(\omega) = H(\omega) X(\omega) $$
+
+          <p>
+            其中 $H(\omega)$ 是<strong>频响函数</strong>。
+            对单自由度体系：
+          </p>
+
+          $$ H(\omega) = \frac{1}{k - m\omega^2 + i c \omega} $$
+
+          <p>
+            它的幅值 $|H(\omega)|$ 与相位 $\arg H(\omega)$ 给出系统对每个频率的放大与延迟。
+          </p>
+
+          <h3>共振与阻尼</h3>
+          <p>
+            当激励频率接近系统固有频率 $\omega_n = \sqrt{k/m}$ 时，$|H(\omega)|$ 达到峰值：
+          </p>
+
+          $$ |H(\omega_n)| \approx \frac{1}{2\zeta k} $$
+
+          <p>
+            阻尼比 $\zeta$ 越小，峰值越高。这就是共振现象。
+            <strong>半功率带宽法</strong>测量阻尼：
+          </p>
+
+          $$ \zeta = \frac{\omega_2 - \omega_1}{2\omega_n} $$
+
+          <p>
+            其中 $\omega_1, \omega_2$ 是 $|H|$ 降到峰值的 $1/\sqrt{2}$ 处的频率。
+          </p>
+
+          <h3>随机振动与功率谱</h3>
+          <p>
+            地震动是随机过程，用<strong>功率谱密度</strong>（PSD）描述其频域特性。
+            LTI 系统的输出功率谱与输入功率谱的关系：
+          </p>
+
+          $$ S_Y(\omega) = |H(\omega)|^2 S_X(\omega) $$
+
+          <p>
+            输出的均方（方差）为：
+          </p>
+
+          $$ \sigma_Y^2 = \int_{-\infty}^{+\infty} S_Y(\omega) \, d\omega
+             = \int_{-\infty}^{+\infty} |H(\omega)|^2 S_X(\omega) \, d\omega $$
+
+          <p>
+            这个积分通常用留数定理计算，是随机振动分析的标准流程。
+            著名的<strong>Kanai-Tajimi 谱</strong>、<strong>Clough-Penzien 谱</strong>
+            就是为地震动建立的 PSD 模型。
+          </p>
+
+          <h3>地震反应谱与傅里叶谱的关系</h3>
+          <p>
+            反应谱 $S_a(T, \zeta)$ 与傅里叶幅值谱 $|A(f)|$ 有经验关系：
+          </p>
+
+          $$ S_a(T, \zeta) \approx \text{放大因子} \times (2\pi f)^2 |A(f)| $$
+
+          <p>
+            但两者有本质区别：
+          </p>
+          <ul>
+            <li><strong>傅里叶谱</strong>是信号本身的频域分解，不依赖结构。</li>
+            <li><strong>反应谱</strong>是单自由度体系对信号的最大响应，依赖周期与阻尼比。</li>
+            <li>傅里叶谱丢失了相位信息（只保留幅值），反应谱保留了峰值信息。</li>
+          </ul>
+
+          <h3>滤波与系统辨识</h3>
+          <p>
+            频域方法是<strong>滤波</strong>与<strong>系统辨识</strong>的核心：
+          </p>
+          <ul>
+            <li>理想低通滤波：保留 $|f| < f_c$ 的频率成分，其余置零。</li>
+            <li>Butterworth 滤波：用 $|H(\omega)|^2 = 1/(1 + (\omega/\omega_c)^{2n})$ 逼近理想滤波器。</li>
+            <li>系统辨识：从输入输出记录估计 $H(\omega) = Y(\omega)/X(\omega)$，
+              再用最小二乘拟合模态参数。</li>
+          </ul>
+
+          <h3>Python 示例：频响函数与共振峰</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>frf.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def frf_sdof(omega, m, k, c):
+    """单自由度体系的频响函数 H(ω) = 1 / (k - mω² + i c ω)"""
+    return 1.0 / (k - m * omega**2 + 1j * c * omega)
+
+
+if __name__ == "__main__":
+    # 系统参数
+    m = 1.0
+    k = 100.0
+    omega_n = np.sqrt(k / m)      # 固有频率 = 10 rad/s
+
+    # 频率扫描范围
+    omega = np.linspace(0.1, 30, 2000)
+
+    plt.figure(figsize=(10, 5))
+
+    # 三种阻尼比
+    for zeta in [0.02, 0.05, 0.10]:
+        c = 2 * m * omega_n * zeta
+        H = frf_sdof(omega, m, k, c)
+        plt.plot(omega, np.abs(H), label=f"ζ = {zeta}")
+
+    plt.axvline(omega_n, color="gray", linestyle="--", alpha=0.5,
+                label=f"ω_n = {omega_n:.1f} rad/s")
+    plt.xlabel("ω / (rad/s)")
+    plt.ylabel("|H(ω)|")
+    plt.title("单自由度体系频响函数幅值")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 用半功率带宽法反推阻尼比 ----
+    zeta_true = 0.05
+    c = 2 * m * omega_n * zeta_true
+    H = frf_sdof(omega, m, k, c)
+    H_mag = np.abs(H)
+
+    # 峰值
+    idx_peak = np.argmax(H_mag)
+    omega_peak = omega[idx_peak]
+    H_peak = H_mag[idx_peak]
+
+    # 半功率点
+    target = H_peak / np.sqrt(2)
+    idx_above = np.where(H_mag >= target)[0]
+    omega_1 = omega[idx_above[0]]
+    omega_2 = omega[idx_above[-1]]
+
+    zeta_est = (omega_2 - omega_1) / (2 * omega_peak)
+
+    print(f"固有频率 ω_n      = {omega_peak:.4f} rad/s  （真值 {omega_n}）")
+    print(f"半功率带宽       = [{omega_1:.4f}, {omega_2:.4f}]")
+    print(f"阻尼比估计 ζ     = {zeta_est:.4f}  （真值 {zeta_true}）")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：阻尼比越小，共振峰越高越窄；
+            半功率带宽法能从频响曲线中反推出阻尼比，这是实验模态分析的基本方法。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>频域方法 vs 时域方法</strong>：
+              时域方法（Newmark-β、RK4）直接积分运动方程，
+              适合非线性问题、瞬态响应；
+              频域方法（傅里叶、拉普拉斯）把问题转化为代数运算，
+              适合线性系统、稳态响应、随机振动。
+              地震工程中两者互补：
+              线性分析、反应谱、随机振动用频域；
+              非线性时程分析、损伤演化用时域。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>复数</strong>：指数形式 $z = re^{i\theta}$ 与欧拉公式是全部运算的基础。</li>
+              <li><strong>解析函数</strong>：满足柯西-黎曼方程；实部虚部均为调和函数；无穷可微。</li>
+              <li><strong>柯西定理</strong>：解析函数的闭路积分为零；柯西积分公式给出内部值由边界决定。</li>
+              <li><strong>洛朗级数</strong>：含负幂项，是分析奇点性质与计算留数的工具。</li>
+              <li><strong>留数定理</strong>：把围道积分化为极点留数的求和，是计算实积分的利器。</li>
+              <li><strong>傅里叶变换</strong>：时域与频域的桥梁；卷积定理是 LTI 系统分析的核心。</li>
+              <li><strong>拉普拉斯变换</strong>：把微分方程化为代数方程；直接包含初始条件，适合结构动力学。</li>
+              <li><strong>工程应用</strong>：频响函数、共振、随机振动、反应谱、滤波、系统辨识。</li>
+            </ul>
+          </div>
+
+          <h3>工程落点速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>复变/积分变换概念</th><th>结构/地震工程中的对应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>欧拉公式</td>
+                  <td>简谐振动、复振幅表示</td>
+                </tr>
+                <tr>
+                  <td>解析函数 / 柯西-黎曼</td>
+                  <td>弹性力学复变解法、势流、保角映射</td>
+                </tr>
+                <tr>
+                  <td>极点与零点</td>
+                  <td>传递函数的极零点分布决定稳定性</td>
+                </tr>
+                <tr>
+                  <td>复固有频率</td>
+                  <td>$s = -\zeta\omega_n \pm i\omega_n\sqrt{1-\zeta^2}$，模态分析</td>
+                </tr>
+                <tr>
+                  <td>留数定理</td>
+                  <td>拉普拉斯逆变换、随机振动功率谱积分</td>
+                </tr>
+                <tr>
+                  <td>傅里叶变换</td>
+                  <td>地震动频谱分析、滤波、基线校正</td>
+                </tr>
+                <tr>
+                  <td>卷积定理</td>
+                  <td>LTI 系统的输入-输出关系、脉冲响应</td>
+                </tr>
+                <tr>
+                  <td>拉普拉斯变换</td>
+                  <td>运动方程求解、传递函数、反应谱</td>
+                </tr>
+                <tr>
+                  <td>频响函数</td>
+                  <td>共振分析、半功率带宽法测阻尼</td>
+                </tr>
+                <tr>
+                  <td>功率谱密度</td>
+                  <td>随机振动、Kanai-Tajimi 谱、地震动模拟</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它数学分支的联系</h3>
+          <ul>
+            <li><strong>线性代数</strong>：传递函数的极零点、状态空间表示、矩阵函数 $e^{\mathbf{A}t}$。</li>
+            <li><strong>数值分析</strong>：FFT 的数值实现、拉普拉斯逆变换的数值算法（如 Talbot 法）。</li>
+            <li><strong>概率论</strong>：随机过程、功率谱密度、Wiener-Khinchin 定理。</li>
+            <li><strong>常微分方程</strong>：拉普拉斯变换是求解线性 ODE 的通用工具。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Brown &amp; Churchill, <em>Complex Variables and Applications</em> — 复变函数标准教材</li>
+            <li>Ahlfors, <em>Complex Analysis</em> — 更深入的复分析经典</li>
+            <li>Bracewell, <em>The Fourier Transform and Its Applications</em> — 傅里叶变换工程应用</li>
+            <li>Oppenheim &amp; Willsky, <em>Signals and Systems</em> — 信号与系统经典</li>
+            <li>Papoulis &amp; Pillai, <em>Probability, Random Variables, and Stochastic Processes</em> — 随机过程</li>
+            <li>Clough &amp; Penzien, <em>Dynamics of Structures</em> — 结构动力学中的频域方法</li>
+            <li>Chopra, <em>Dynamics of Structures</em> — 反应谱与傅里叶谱的关系</li>
+            <li>Nigam &amp; Jennings, "Digital calculation of response spectra from strong-motion earthquake records" (1968) — 反应谱计算的经典文献</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

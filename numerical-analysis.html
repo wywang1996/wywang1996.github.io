@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数值分析 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="numerical-analysis">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#error">一、误差与条件数</a></li>
+      <li><a href="#root">二、非线性方程求根</a></li>
+      <li><a href="#linear">三、线性方程组</a></li>
+      <li><a href="#interp">四、插值与逼近</a></li>
+      <li><a href="#integral">五、数值积分</a></li>
+      <li><a href="#ode">六、常微分方程初值问题</a></li>
+      <li><a href="#eigen">七、特征值数值计算</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 数值分析
+        </div>
+        <h1>数值分析</h1>
+        <p class="lead">
+          从误差分析到常微分方程数值解，梳理工程计算中最常用的数值方法。
+          结构时程分析、有限元求解、地震危险性积分——几乎所有的工程计算，
+          最终都落到这份笔记里的某几个算法上。
+        </p>
+        <div class="article-meta">
+          <span>数值方法</span>
+          <span>稳定性</span>
+          <span>收敛阶</span>
+          <span class="blue">时程分析</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            数值分析研究的是「用有限步的算术运算，求数学问题的近似解」。
+            它关心的不只是"能不能算"，更关心三件事：
+          </p>
+          <ul>
+            <li><strong>精度</strong>：近似解离真解有多远？误差随步长/迭代次数如何衰减？</li>
+            <li><strong>稳定性</strong>：输入的小扰动会不会被方法放大到失真？</li>
+            <li><strong>效率</strong>：达到给定精度需要多少计算量与存储量？</li>
+          </ul>
+          <p>
+            在结构工程与地震工程中，数值分析不是"选修课"，而是"日常工作语言"：
+          </p>
+          <ul>
+            <li>有限元求解 $\mathbf{K}\mathbf{u} = \mathbf{F}$ → 线性方程组直接法/迭代法</li>
+            <li>模态分析 $\mathbf{K}\boldsymbol{\phi} = \omega^2 \mathbf{M}\boldsymbol{\phi}$ → 特征值数值算法</li>
+            <li>结构时程分析 $\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = -\mathbf{M}\mathbf{1}\ddot{u}_g$ → 常微分方程数值积分</li>
+            <li>地震危险性分析中的超越概率积分 → 数值积分与插值</li>
+            <li>地震动反应谱计算 → 单自由度体系的大量重复求解</li>
+          </ul>
+          <p>
+            这份笔记按"误差 → 求根 → 线性方程组 → 插值 → 积分 → 常微分方程 → 特征值"的顺序梳理，
+            每一节都尽量落到工程语境上，并给出可运行的 Python 示例。
+          </p>
+        </section>
+
+        <section id="error">
+          <h2><span class="num">01</span>误差与条件数</h2>
+
+          <h3>误差的来源</h3>
+          <p>
+            数值计算中的误差可以分为三类：
+          </p>
+          <ul>
+            <li><strong>模型误差</strong>：数学模型与真实物理之间的差距（例如把结构简化为集中质量模型）。</li>
+            <li><strong>截断误差</strong>：用有限项近似无穷过程造成的误差（例如把导数用差商代替）。</li>
+            <li><strong>舍入误差</strong>：浮点数表示精度有限造成的误差（例如 $0.1 + 0.2 \ne 0.3$）。</li>
+          </ul>
+
+          <h3>绝对误差与相对误差</h3>
+          <p>
+            设 $x^*$ 是真值，$\tilde{x}$ 是近似值：
+          </p>
+
+          $$ e_a = |\tilde{x} - x^*|, \qquad
+             e_r = \frac{|\tilde{x} - x^*|}{|x^*|} \quad (x^* \ne 0) $$
+
+          <p>
+            工程计算通常更关心<strong>相对误差</strong>。例如结构位移的计算结果，
+            误差 1 mm 对 10 m 跨度的梁无关紧要，对 10 mm 的微振测试却是致命的。
+          </p>
+
+          <h3>有效数字</h3>
+          <p>
+            若近似值的绝对误差不超过某一位的半个单位，则称该位及之前所有位为有效数字。
+            例如 $\pi \approx 3.1416$ 有 5 位有效数字。
+          </p>
+
+          <h3>病态问题与条件数</h3>
+          <p>
+            考虑线性方程组 $\mathbf{A}\mathbf{x} = \mathbf{b}$。如果右端有一个小扰动
+            $\delta \mathbf{b}$，解的变化满足：
+          </p>
+
+          $$ \frac{\|\delta \mathbf{x}\|}{\|\mathbf{x}\|}
+             \le \kappa(\mathbf{A}) \cdot \frac{\|\delta \mathbf{b}\|}{\|\mathbf{b}\|} $$
+
+          <p>
+            其中 $\kappa(\mathbf{A}) = \|\mathbf{A}\| \cdot \|\mathbf{A}^{-1}\|$
+            称为条件数。条件数越大，问题越<strong>病态</strong>：
+            输入的小扰动会被放大成解的大误差。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>$\kappa(\mathbf{A})$ 量级</th><th>典型表现</th><th>应对</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$10^0 \sim 10^3$</td>
+                  <td>良态，正常求解</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>$10^4 \sim 10^{10}$</td>
+                  <td>病态，双精度下丢位数</td>
+                  <td>归一化、预处理、选主元</td>
+                </tr>
+                <tr>
+                  <td>$> 10^{15}$</td>
+                  <td>双精度下结果不可信</td>
+                  <td>高精度算法、重新建模</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>工程提示</strong>：有限元模型中如果混入了刚度相差 $10^8$ 倍以上的单元
+              （例如软土地基与混凝土构件），或者出现了"薄而长"的单元，
+              条件数会急剧恶化。检查 $\kappa(\mathbf{K})$ 的常用手段是
+              $\lambda_{\max}/\lambda_{\min}$，或者直接看求解器输出的警告。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="root">
+          <h2><span class="num">02</span>非线性方程求根</h2>
+
+          <h3>问题描述</h3>
+          <p>
+            求 $f(x) = 0$ 的根。大多数非线性方程没有解析解，
+            必须用迭代法求近似根。
+          </p>
+
+          <h3>二分法</h3>
+          <p>
+            若 $f$ 在 $[a, b]$ 上连续，且 $f(a) \cdot f(b) < 0$，
+            则区间内至少有一个根。每次取中点，把区间减半：
+          </p>
+
+          $$ c = \frac{a + b}{2}, \qquad
+             \text{若 } f(a) f(c) < 0 \Rightarrow b = c, \text{否则 } a = c $$
+
+          <p>
+            二分法<strong>必然收敛</strong>，但收敛速度慢（线性收敛），
+            误差约每步减半，$\varepsilon$ 精度下需 $\log_2((b-a)/\varepsilon)$ 步。
+          </p>
+
+          <h3>牛顿-拉夫逊法</h3>
+          <p>
+            在当前近似点 $x_n$ 处用切线代替曲线，取切线与 $x$ 轴的交点作为下一个近似：
+          </p>
+
+          $$ x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)} $$
+
+          <p>
+            牛顿法是<strong>二阶收敛</strong>的（误差平方衰减），
+            即每步有效位数大约翻倍。但要求 $f'(x)$ 可求且不为零，
+            初值必须足够靠近真根，否则可能发散。
+          </p>
+
+          <h3>割线法</h3>
+          <p>
+            如果 $f'(x)$ 难求，可以用差商近似导数：
+          </p>
+
+          $$ x_{n+1} = x_n - f(x_n) \cdot
+             \frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})} $$
+
+          <p>
+            割线法收敛阶约为 1.618（黄金比例），
+            介于二分法与牛顿法之间，但不需要解析导数。
+          </p>
+
+          <h3>方法对比</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>收敛阶</th><th>是否需导数</th><th>收敛性</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>二分法</td>
+                  <td>1（线性）</td>
+                  <td>否</td>
+                  <td>必然收敛</td>
+                  <td>粗定位、保底</td>
+                </tr>
+                <tr>
+                  <td>牛顿法</td>
+                  <td>2（二次）</td>
+                  <td>是</td>
+                  <td>局部收敛</td>
+                  <td>导数易求、初值好</td>
+                </tr>
+                <tr>
+                  <td>割线法</td>
+                  <td>≈1.618</td>
+                  <td>否</td>
+                  <td>局部收敛</td>
+                  <td>导数难求</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：三种方法对比</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>rootfinding.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+# 目标方程：f(x) = x^3 - 2x - 5 = 0（在 x ≈ 2.0946 处有唯一实根）
+f  = lambda x: x**3 - 2*x - 5
+df = lambda x: 3*x**2 - 2
+
+
+def bisection(a, b, tol=1e-12, max_iter=200):
+    """二分法：要求 f(a) 与 f(b) 异号"""
+    if f(a) * f(b) > 0:
+        raise ValueError("区间端点必须异号")
+    for k in range(max_iter):
+        c = (a + b) / 2
+        if abs(b - a) < tol or abs(f(c)) < tol:
+            return c, k + 1
+        if f(a) * f(c) < 0:
+            b = c
+        else:
+            a = c
+    return (a + b) / 2, max_iter
+
+
+def newton(x0, tol=1e-12, max_iter=100):
+    """牛顿法：x_{n+1} = x_n - f(x_n) / f'(x_n)"""
+    x = x0
+    for k in range(max_iter):
+        fx = f(x)
+        if abs(fx) < tol:
+            return x, k + 1
+        x = x - fx / df(x)
+    return x, max_iter
+
+
+def secant(x0, x1, tol=1e-12, max_iter=100):
+    """割线法：用差商近似导数"""
+    for k in range(max_iter):
+        f0, f1 = f(x0), f(x1)
+        if abs(f1) < tol:
+            return x1, k + 1
+        x2 = x1 - f1 * (x1 - x0) / (f1 - f0)
+        x0, x1 = x1, x2
+    return x1, max_iter
+
+
+if __name__ == "__main__":
+    root_b, n_b = bisection(2.0, 3.0)
+    root_n, n_n = newton(2.0)
+    root_s, n_s = secant(2.0, 3.0)
+
+    print(f"二分法  : x = {root_b:.12f}  迭代 {n_b} 次")
+    print(f"牛顿法  : x = {root_n:.12f}  迭代 {n_n} 次")
+    print(f"割线法  : x = {root_s:.12f}  迭代 {n_s} 次")
+
+    # 验算：f(root) ≈ 0
+    print(f"\nf(牛顿解) = {f(root_n):.3e}")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>收敛速度直观对比</strong>：同一个方程，同样精度要求下，
+              二分法约需 40 次迭代，割线法约 8 次，牛顿法约 5 次。
+              但牛顿法要额外计算导数，且对初值敏感。
+              工程上常用「二分法定位 + 牛顿法精化」的组合策略。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="linear">
+          <h2><span class="num">03</span>线性方程组</h2>
+
+          <h3>直接法</h3>
+          <p>
+            直接法通过有限步算术运算给出精确解（在舍入误差范围内）。三类常用分解：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>分解</th><th>形式</th><th>适用矩阵</th><th>运算量</th><th>工程场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>LU</td>
+                  <td>$\mathbf{A} = \mathbf{L}\mathbf{U}$</td>
+                  <td>一般方阵</td>
+                  <td>$\frac{2}{3}n^3$</td>
+                  <td>一般线性方程组</td>
+                </tr>
+                <tr>
+                  <td>Cholesky</td>
+                  <td>$\mathbf{A} = \mathbf{L}\mathbf{L}^{\mathsf{T}}$</td>
+                  <td>对称正定</td>
+                  <td>$\frac{1}{3}n^3$</td>
+                  <td>有限元刚度方程</td>
+                </tr>
+                <tr>
+                  <td>QR</td>
+                  <td>$\mathbf{A} = \mathbf{Q}\mathbf{R}$</td>
+                  <td>任意矩阵</td>
+                  <td>$\frac{4}{3}n^3$</td>
+                  <td>最小二乘、特征值</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            对有限元中的对称正定 $\mathbf{K}$，Cholesky 是首选：
+            运算量是 LU 的一半，且不需要选主元。
+          </p>
+
+          <h3>迭代法</h3>
+          <p>
+            对大型稀疏矩阵，直接法会产生大量"填充"，内存和运算量都不可接受。
+            迭代法只依赖矩阵-向量乘积，更适合大规模问题。
+          </p>
+
+          <p>三类经典迭代格式（把 $\mathbf{A}$ 拆成 $\mathbf{D} + \mathbf{L} + \mathbf{U}$）：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>迭代格式</th><th>收敛条件</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Jacobi</td>
+                  <td>$\mathbf{x}^{(k+1)} = \mathbf{D}^{-1}(\mathbf{b} - (\mathbf{L}+\mathbf{U})\mathbf{x}^{(k)})$</td>
+                  <td>对角占优</td>
+                </tr>
+                <tr>
+                  <td>Gauss–Seidel</td>
+                  <td>$\mathbf{x}^{(k+1)} = (\mathbf{D}+\mathbf{L})^{-1}(\mathbf{b} - \mathbf{U}\mathbf{x}^{(k)})$</td>
+                  <td>对角占优 / 对称正定</td>
+                </tr>
+                <tr>
+                  <td>SOR</td>
+                  <td>Gauss–Seidel + 松弛因子 $\omega$</td>
+                  <td>$0 < \omega < 2$ 且对称正定</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>共轭梯度法（CG）</h3>
+          <p>
+            对对称正定矩阵，共轭梯度法是最重要的 Krylov 子空间方法。
+            它保证在 $n$ 步内收敛到精确解（理论上），
+            实际中通常几十到几百步即可达到工程精度。
+          </p>
+
+          <p>
+            如果矩阵<strong>不是</strong>对称正定，可以用 GMRES、BiCGSTAB 等推广方法。
+            工程上通常配合<strong>预处理</strong>（不完全 Cholesky、代数多重网格 AMG）
+            大幅加速收敛。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>直接法 vs 迭代法的选择</strong>：
+              自由度 $< 10^5$、矩阵较稠密 → 直接法（Cholesky）；
+              自由度 $> 10^6$、高度稀疏 → 迭代法（CG + AMG）。
+              地震工程中，土-结构相互作用模型、区域尺度场地响应分析
+              通常落在迭代法的适用区间。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="interp">
+          <h2><span class="num">04</span>插值与逼近</h2>
+
+          <h3>拉格朗日插值</h3>
+          <p>
+            给定 $n+1$ 个互异节点 $(x_i, y_i)$，存在唯一的次数不超过 $n$ 的多项式
+            通过所有节点：
+          </p>
+
+          $$ P_n(x) = \sum_{i=0}^{n} y_i \ell_i(x), \qquad
+             \ell_i(x) = \prod_{\substack{j=0 \\ j \ne i}}^{n}
+                        \frac{x - x_j}{x_i - x_j} $$
+
+          <p>
+            拉格朗日插值形式对称、理论清晰，但节点增减时要全部重算，不便于增量计算。
+          </p>
+
+          <h3>牛顿插值</h3>
+          <p>
+            用<strong>差商</strong>构造，节点增加时只需追加一项：
+          </p>
+
+          $$ P_n(x) = f[x_0] + \sum_{i=1}^{n}
+             f[x_0, x_1, \ldots, x_i] \prod_{j=0}^{i-1} (x - x_j) $$
+
+          <p>
+            其中 $f[x_0, \ldots, x_k]$ 是 $k$ 阶差商。工程上更常使用牛顿形式。
+          </p>
+
+          <h3>龙格现象与样条插值</h3>
+          <p>
+            用高次多项式在等距节点上插值，会在区间端点附近产生剧烈振荡，
+            称为<strong>龙格现象</strong>。经典例子是 Runge 函数
+            $f(x) = 1/(1 + 25x^2)$ 在 $[-1, 1]$ 上的等距插值。
+          </p>
+          <p>
+            解决办法是改用<strong>分段低次多项式</strong>，其中最重要的是三次样条：
+            在每个子区间上是三次多项式，且在节点处函数值、一阶导数、二阶导数均连续。
+            三次样条插值具有<strong>最小曲率</strong>性质，在工程中广泛使用。
+          </p>
+
+          <h3>工程场景</h3>
+          <ul>
+            <li><strong>地震动记录重采样</strong>：原始记录常为不等间隔，需插值到均匀时间步。</li>
+            <li><strong>反应谱插值</strong>：设计谱通常以离散周期点给出，中间周期需插值。</li>
+            <li><strong>地震动预测方程</strong>：衰减关系以表格形式给出，中间距离/震级需插值。</li>
+            <li><strong>有限元后处理</strong>：节点结果插值到高斯点或任意位置。</li>
+          </ul>
+        </section>
+
+        <section id="integral">
+          <h2><span class="num">05</span>数值积分</h2>
+
+          <h3>牛顿-柯特斯公式</h3>
+          <p>
+            用等距节点上的函数值近似积分。$n$ 阶牛顿-柯特斯公式的代数精度为：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>阶数</th><th>方法</th><th>公式</th><th>代数精度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>梯形公式</td>
+                  <td>$\dfrac{h}{2}[f(a) + f(b)]$</td>
+                  <td>1</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>辛普森公式</td>
+                  <td>$\dfrac{h}{3}[f(a) + 4f(\frac{a+b}{2}) + f(b)]$</td>
+                  <td>3</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Simpson 3/8</td>
+                  <td>$\dfrac{3h}{8}[f_0 + 3f_1 + 3f_2 + f_3]$</td>
+                  <td>3</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>柯特斯公式</td>
+                  <td>—</td>
+                  <td>5</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            其中 $h = b - a$。注意：高阶牛顿-柯特斯公式虽然代数精度高，
+            但系数会出现负值，数值稳定性差，工程上很少超过辛普森。
+          </p>
+
+          <h3>复合公式</h3>
+          <p>
+            把区间 $[a, b]$ 分成 $n$ 个子区间，在每个子区间上应用低阶公式。
+            复合梯形公式的误差为 $O(h^2)$，复合辛普森为 $O(h^4)$：
+          </p>
+
+          $$ \int_a^b f(x) \, dx =
+             \frac{h}{2}\left[ f(a) + 2\sum_{i=1}^{n-1} f(x_i) + f(b) \right]
+             + O(h^2) $$
+
+          <h3>高斯求积</h3>
+          <p>
+            如果节点<strong>不固定</strong>，可以同时优化节点和权重，
+            得到代数精度最高的求积公式。$n$ 点高斯求积的代数精度可达 $2n - 1$：
+          </p>
+
+          $$ \int_{-1}^{1} f(x) \, dx \approx
+             \sum_{i=1}^{n} w_i f(x_i) $$
+
+          <p>
+            节点是 Legendre 多项式的零点，权重 $w_i$ 均为正。
+            有限元中的单元积分几乎全部使用高斯求积，
+            二维 4 点、三维 8 点是标准配置。
+          </p>
+
+          <h3>Python 示例：辛普森 vs 高斯</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>quadrature.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from numpy.polynomial.legendre import leggauss
+
+# 被积函数：f(x) = sin(x)，在 [0, π] 上精确积分 = 2
+f = np.sin
+a, b = 0.0, np.pi
+exact = 2.0
+
+
+def composite_simpson(f, a, b, n):
+    """复合辛普森公式；n 必须为偶数"""
+    if n % 2 == 1:
+        raise ValueError("n 必须是偶数")
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    y = f(x)
+    S = y[0] + y[-1] + 4 * y[1:-1:2].sum() + 2 * y[2:-1:2].sum()
+    return h / 3 * S
+
+
+def gauss_legendre(f, a, b, n):
+    """n 点高斯-勒让德求积；映射到 [a, b]"""
+    xi, wi = leggauss(n)
+    # 从 [-1, 1] 线性映射到 [a, b]
+    x = 0.5 * (b - a) * xi + 0.5 * (b + a)
+    w = 0.5 * (b - a) * wi
+    return np.sum(w * f(x))
+
+
+if __name__ == "__main__":
+    print(f"{'方法':<20}{'结果':>18}{'误差':>15}")
+
+    for n in [4, 8, 16, 64]:
+        S = composite_simpson(f, a, b, n)
+        print(f"复合辛普森 n={n:<3}     {S:>18.12f}{abs(S - exact):>15.3e}")
+
+    for n in [2, 3, 5, 10]:
+        G = gauss_legendre(f, a, b, n)
+        print(f"高斯求积   n={n:<3}     {G:>18.12f}{abs(G - exact):>15.3e}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：<strong>10 点高斯求积的精度已经超过 64 段复合辛普森</strong>。
+            这就是有限元里偏爱高斯积分的原因——同样精度下计算量小得多。
+          </p>
+        </section>
+
+        <section id="ode">
+          <h2><span class="num">06</span>常微分方程初值问题</h2>
+
+          <h3>问题描述</h3>
+          <p>
+            求解一阶常微分方程初值问题：
+          </p>
+
+          $$ \frac{dy}{dt} = f(t, y), \qquad y(t_0) = y_0 $$
+
+          <p>
+            结构动力学中的运动方程 $\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = \mathbf{P}(t)$
+            可以通过引入状态向量 $\mathbf{z} = [\mathbf{u}; \dot{\mathbf{u}}]$
+            化为一阶方程组，再用本节的方法求解。
+          </p>
+
+          <h3>显式方法</h3>
+          <p>
+            <strong>欧拉法</strong>（一阶）：
+          </p>
+
+          $$ y_{n+1} = y_n + h f(t_n, y_n) $$
+
+          <p>
+            <strong>经典四阶 Runge–Kutta</strong>（RK4，四阶）：
+          </p>
+
+          $$ \begin{aligned}
+             k_1 &= f(t_n, y_n) \\
+             k_2 &= f(t_n + \tfrac{h}{2}, y_n + \tfrac{h}{2}k_1) \\
+             k_3 &= f(t_n + \tfrac{h}{2}, y_n + \tfrac{h}{2}k_2) \\
+             k_4 &= f(t_n + h, y_n + h k_3) \\
+             y_{n+1} &= y_n + \tfrac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4)
+             \end{aligned} $$
+
+          <p>
+            RK4 每步需 4 次函数求值，但精度高、稳定性好，
+            是通用 ODE 求解器的默认选择。
+          </p>
+
+          <h3>隐式方法：Newmark-β 法</h3>
+          <p>
+            结构动力学中的运动方程通常<strong>刚硬</strong>（stiff），
+            显式方法受稳定性条件限制，时间步长必须非常小。
+            隐式方法允许更大步长，是地震时程分析的主流。
+          </p>
+
+          <p>Newmark-β 法的核心假设（用位移和速度的加权平均近似加速度）：</p>
+
+          $$ \begin{aligned}
+             \dot{\mathbf{u}}_{n+1} &= \dot{\mathbf{u}}_n
+                + h[(1 - \gamma)\ddot{\mathbf{u}}_n + \gamma \ddot{\mathbf{u}}_{n+1}] \\
+             \mathbf{u}_{n+1} &= \mathbf{u}_n + h \dot{\mathbf{u}}_n
+                + h^2\left[(\tfrac{1}{2} - \beta)\ddot{\mathbf{u}}_n
+                + \beta \ddot{\mathbf{u}}_{n+1}\right]
+             \end{aligned} $$
+
+          <p>
+            参数 $(\gamma, \beta)$ 决定方法的性质：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>$\gamma$</th><th>$\beta$</th><th>方法</th><th>稳定性</th><th>精度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$1/2$</td>
+                  <td>$1/4$</td>
+                  <td>平均加速度法</td>
+                  <td>无条件稳定</td>
+                  <td>二阶</td>
+                </tr>
+                <tr>
+                  <td>$1/2$</td>
+                  <td>$1/6$</td>
+                  <td>线性加速度法</td>
+                  <td>条件稳定</td>
+                  <td>二阶</td>
+                </tr>
+                <tr>
+                  <td>$1/2$</td>
+                  <td>$0$</td>
+                  <td>中心差分法</td>
+                  <td>条件稳定</td>
+                  <td>二阶</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            其中 $\gamma \ge 1/2$ 保证数值阻尼非负（避免虚假能量增长），
+            $\beta \ge \gamma/2$ 保证无条件稳定。
+            <strong>平均加速度法</strong>（$\gamma = 1/2, \beta = 1/4$）是结构动力学最常用的配置。
+          </p>
+
+          <h3>Python 示例：Newmark-β 法求解单自由度体系</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>newmark.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+# ---- 单自由度体系参数 ----
+m = 1.0          # 质量
+k = 100.0        # 刚度
+c = 0.5          # 阻尼
+omega = np.sqrt(k / m)          # 固有圆频率 = 10 rad/s
+zeta = c / (2 * m * omega)      # 阻尼比
+
+# ---- 时间参数 ----
+T = 2 * np.pi / omega           # 自振周期
+h = T / 20                      # 时间步长（每周期 20 步）
+t_end = 5.0
+n_steps = int(t_end / h)
+t = np.linspace(0, t_end, n_steps + 1)
+
+# ---- 激励：正弦荷载 ----
+P = 10.0 * np.sin(3.0 * t)
+
+# ---- Newmark-β 参数（平均加速度法：无条件稳定） ----
+gamma = 0.5
+beta  = 0.25
+
+# ---- 初始化 ----
+u = np.zeros(n_steps + 1)
+v = np.zeros(n_steps + 1)
+a = np.zeros(n_steps + 1)
+
+# 初始加速度由运动方程求出：m a0 + c v0 + k u0 = P0
+a[0] = (P[0] - c * v[0] - k * u[0]) / m
+
+# ---- 有效刚度 ----
+K_eff = k + gamma / (beta * h) * c + 1.0 / (beta * h**2) * m
+
+# ---- 逐步积分 ----
+for n in range(n_steps):
+    # 有效荷载
+    P_eff = (
+        P[n + 1]
+        + m * (1.0 / (beta * h**2) * u[n] + 1.0 / (beta * h) * v[n]
+               + (1.0 / (2 * beta) - 1.0) * a[n])
+        + c * (gamma / (beta * h) * u[n]
+               + (gamma / beta - 1.0) * v[n]
+               + h * (gamma / (2 * beta) - 1.0) * a[n])
+    )
+    # 求位移
+    u[n + 1] = P_eff / K_eff
+    # 更新速度与加速度
+    v[n + 1] = (gamma / (beta * h) * (u[n + 1] - u[n])
+                - (gamma / beta - 1.0) * v[n]
+                - h * (gamma / (2 * beta) - 1.0) * a[n])
+    a[n + 1] = (1.0 / (beta * h**2) * (u[n + 1] - u[n])
+                - 1.0 / (beta * h) * v[n]
+                - (1.0 / (2 * beta) - 1.0) * a[n])
+
+if __name__ == "__main__":
+    print(f"固有频率 omega = {omega:.3f} rad/s")
+    print(f"自振周期 T     = {T:.4f} s")
+    print(f"阻尼比   zeta  = {zeta:.4f}")
+    print(f"最大位移 u_max = {np.max(np.abs(u)):.5f} m")
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(t, u, label="位移 u(t)")
+    plt.plot(t, P / k, "--", label="静力位移 P(t)/k", alpha=0.6)
+    plt.xlabel("t / s")
+    plt.ylabel("位移 / m")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>与反应谱的关系</strong>：把上面这段代码放进循环，
+              对一系列周期 $T_i$ 和阻尼比 $\zeta$ 重复计算，取最大位移响应，
+              就得到<strong>位移反应谱</strong>。这正是地震动反应谱计算的核心算法。
+              工程上常用的 <code>OpenSees</code>、<code>SeismoSignal</code>、<code>PEER NGA</code>
+              都基于同一套 Newmark-β 或类似的时间积分格式。</p>
+            </div>
+          </div>
+
+          <h3>稳定性的直观理解</h3>
+          <p>
+            数值方法在求解振动问题时，会引入额外的<strong>数值阻尼</strong>。
+            好的方法应该满足：
+          </p>
+          <ul>
+            <li>不放大系统的真实能量（否则响应会虚假增长）</li>
+            <li>在时间步长过大时，能<strong>耗散</strong>高频成分（避免虚假振荡）</li>
+            <li>在时间步长足够小时，数值阻尼趋近于零（不污染真实响应）</li>
+          </ul>
+          <p>
+            Newmark-β 平均加速度法（$\beta = 1/4$）是<strong>无数值阻尼</strong>的，
+            对长周期结构保真度好。如果需要抑制高频，可以用 HHT-α 法或广义-α 法。
+          </p>
+        </section>
+
+        <section id="eigen">
+          <h2><span class="num">07</span>特征值数值计算</h2>
+
+          <h3>问题描述</h3>
+          <p>
+            求 $\mathbf{A}\mathbf{x} = \lambda \mathbf{x}$。
+            对大型稀疏矩阵，直接用特征多项式求根不可行，
+            必须用迭代法。
+          </p>
+
+          <h3>幂法与反幂法</h3>
+          <p>
+            <strong>幂法</strong>迭代 $\mathbf{x}^{(k+1)} = \mathbf{A}\mathbf{x}^{(k)} / \|\mathbf{A}\mathbf{x}^{(k)}\|$，
+            收敛到模最大的特征值 $\lambda_{\max}$ 及其特征向量。
+          </p>
+          <p>
+            <strong>反幂法</strong>对 $\mathbf{A}^{-1}$ 应用幂法，
+            收敛到模最小的特征值 $\lambda_{\min}$。
+            如果配合<strong>移位</strong> $\mathbf{A} - \sigma \mathbf{I}$，
+            可以求出离 $\sigma$ 最近的特征值。
+          </p>
+
+          <h3>QR 算法</h3>
+          <p>
+            QR 算法是求全部特征值的标准方法。基本思想：
+            反复对当前矩阵做 QR 分解，并令 $\mathbf{A}_{k+1} = \mathbf{R}_k \mathbf{Q}_k$，
+            矩阵会逐步收敛到上三角（或拟上三角），对角线元素即为特征值。
+          </p>
+
+          <p>
+            实际实现中，会先通过 Householder 变换把矩阵化为 Hessenberg 形（或对称三对角形），
+            再用带移位的 QR 迭代加速收敛。现代 LAPACK 中的
+            <code>dgeev</code>、<code>dsyev</code> 就是这套算法的工程实现。
+          </p>
+
+          <h3>对称矩阵：Lanczos 方法</h3>
+          <p>
+            对大型稀疏对称矩阵（例如有限元中的 $\mathbf{K}$、$\mathbf{M}$），
+            Lanczos 方法是首选。它通过 Krylov 子空间
+            $\mathcal{K}_m(\mathbf{A}, \mathbf{v}) = \text{span}\{\mathbf{v}, \mathbf{A}\mathbf{v}, \ldots, \mathbf{A}^{m-1}\mathbf{v}\}$
+            构造一个三对角矩阵，其极端特征值快速收敛到原矩阵的极端特征值。
+          </p>
+          <p>
+            结构模态分析中，通常只需要前几十阶低频模态，
+            这正是 Lanczos 方法最擅长的场景。
+            工程软件（ABAQUS、ANSYS、OpenSees）的模态求解器大多基于 Lanczos 或子空间迭代法。
+          </p>
+
+          <h3>广义特征值问题</h3>
+          <p>
+            结构动力学中的自由振动方程：
+          </p>
+
+          $$ \mathbf{K}\boldsymbol{\phi} = \omega^2 \mathbf{M}\boldsymbol{\phi} $$
+
+          <p>
+            处理方法：
+          </p>
+          <ul>
+            <li>如果 $\mathbf{M}$ 正定，Cholesky 分解 $\mathbf{M} = \mathbf{L}\mathbf{L}^{\mathsf{T}}$，化为标准问题</li>
+            <li>如果 $\mathbf{M}$ 半正定（含集中质量矩阵的零对角元），用 QZ 算法或子空间迭代</li>
+            <li>大型问题用 Lanczos 的广义形式（Krylov 子空间基于 $\mathbf{K}^{-1}\mathbf{M}$）</li>
+          </ul>
+
+          <h3>Python 示例：模态求解与对比</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>eigenmodes.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy.linalg import eigh
+from scipy.sparse.linalg import eigsh
+from scipy.sparse import diags
+
+# ---- 一个 100 自由度的链式弹簧-质量系统 ----
+n = 100
+m = np.ones(n)          # 各质点质量
+k = np.ones(n + 1) * 100.0   # 各弹簧刚度
+
+# 组装质量矩阵（对角）
+M = np.diag(m)
+
+# 组装刚度矩阵（三对角）
+main  = np.zeros(n)
+lower = np.zeros(n - 1)
+
+main[0]  = k[0] + k[1]
+main[-1] = k[-1] + k[-2]
+for i in range(1, n - 1):
+    main[i] = k[i] + k[i + 1]
+for i in range(n - 1):
+    lower[i] = -k[i + 1]
+
+K = np.diag(main) + np.diag(lower, 1) + np.diag(lower, -1)
+
+# ---- 方法 1：稠密广义特征值（全解） ----
+eigvals_dense, _ = eigh(K, M)
+omega_dense = np.sqrt(np.abs(eigvals_dense))
+T_dense = 2 * np.pi / omega_dense
+
+print("【稠密求解】前 5 阶频率与周期：")
+for i in range(5):
+    print(f"  第 {i+1} 阶: omega = {omega_dense[i]:.4f} rad/s, "
+          f"T = {T_dense[i]:.5f} s")
+
+# ---- 方法 2：稀疏 Lanczos（只求前 6 阶） ----
+K_sparse = diags([lower, main, lower], [-1, 0, 1], format="csr")
+M_sparse = diags(np.ones(n), 0, format="csr")
+
+eigvals_sparse, _ = eigsh(K_sparse, k=6, M=M_sparse, which="SM")
+omega_sparse = np.sqrt(np.abs(eigvals_sparse))
+T_sparse = 2 * np.pi / omega_sparse
+
+print("\n【稀疏 Lanczos】前 6 阶频率与周期：")
+for i in range(6):
+    print(f"  第 {i+1} 阶: omega = {omega_sparse[i]:.4f} rad/s, "
+          f"T = {T_sparse[i]:.5f} s")
+
+# ---- 验证一致性 ----
+print(f"\n前 5 阶最大相对误差: "
+      f"{np.max(np.abs(omega_sparse[:5] - omega_dense[:5]) / omega_dense[:5]):.3e}")</code></pre>
+          </div>
+
+          <p>
+            这里 <code>eigh</code> 对 100×100 矩阵求解全部特征值，
+            <code>eigsh</code> 用 Lanczos 只求前 6 阶。
+            当 $n = 10^5$ 时，前者内存与运算量都不可接受，
+            而后者仍能在几秒内给出前几十阶模态。
+          </p>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>误差与条件数</strong>：数值解的可信度由问题的条件数和方法本身的稳定性共同决定。</li>
+              <li><strong>非线性求根</strong>：二分法保底，牛顿法快，割线法不需要导数。工程上常用组合策略。</li>
+              <li><strong>线性方程组</strong>：对称正定用小规模直接法（Cholesky），大规模稀疏用迭代法（CG + AMG）。</li>
+              <li><strong>插值</strong>：高次多项式有龙格现象，工程上偏爱三次样条与分段低次插值。</li>
+              <li><strong>数值积分</strong>：高斯求积用更少的点达到更高精度，是有限元单元积分的标准工具。</li>
+              <li><strong>常微分方程</strong>：显式方法（RK4）适合非刚性问题，隐式方法（Newmark-β）适合结构动力学。</li>
+              <li><strong>特征值计算</strong>：中小型矩阵用 QR 算法，大型稀疏矩阵用 Lanczos 方法求前几阶模态。</li>
+            </ul>
+          </div>
+
+          <h3>工程落点速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>数值方法</th><th>结构/地震工程中的对应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Cholesky 分解</td>
+                  <td>静力有限元求解 $\mathbf{K}\mathbf{u} = \mathbf{F}$</td>
+                </tr>
+                <tr>
+                  <td>共轭梯度 + AMG</td>
+                  <td>大规模稀疏刚度方程求解</td>
+                </tr>
+                <tr>
+                  <td>三次样条插值</td>
+                  <td>地震动重采样、反应谱插值</td>
+                </tr>
+                <tr>
+                  <td>高斯求积</td>
+                  <td>单元刚度矩阵、质量矩阵的数值积分</td>
+                </tr>
+                <tr>
+                  <td>Newmark-β</td>
+                  <td>结构动力时程分析、地震反应谱计算</td>
+                </tr>
+                <tr>
+                  <td>RK4</td>
+                  <td>非线性动力系统、地震动合成</td>
+                </tr>
+                <tr>
+                  <td>Lanczos 方法</td>
+                  <td>大规模结构的前几十阶模态求解</td>
+                </tr>
+                <tr>
+                  <td>幂法 / 反幂法</td>
+                  <td>寻找极端频率、临界屈曲荷载</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Burden &amp; Faires, <em>Numerical Analysis</em> — 最经典的数值分析教材</li>
+            <li>Golub &amp; Van Loan, <em>Matrix Computations</em> — 数值线性代数的标准参考</li>
+            <li>Trefethen &amp; Bau, <em>Numerical Linear Algebra</em> — 精炼深刻，适合进阶</li>
+            <li>Hairer, Nørsett &amp; Wanner, <em>Solving Ordinary Differential Equations</em> — ODE 数值解经典</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 含 Newmark 法、Lanczos 法的工程讲解</li>
+            <li>Chopra, <em>Dynamics of Structures</em> — 结构动力学中的时程分析方法</li>
+            <li>Hughes, <em>The Finite Element Method</em> — 动力学有限元的稳定性分析</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

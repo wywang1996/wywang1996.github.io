@@ -1,0 +1,1744 @@
+/* =========================================================
+   pages.css — 内页增量样式
+   ---------------------------------------------------------
+   本文件只包含「site.css 没有」或「需要针对具体页面覆盖」的样式。
+   通用基础（导航、侧栏、卡片、代码块、KaTeX、打印等）全部在
+   site.css，所有内页必须同时引用：
+
+     <link rel="stylesheet" href="assets/site.css">
+     <link rel="stylesheet" href="assets/pages.css">
+
+   data-page 取值：
+     strong-motion / ground-motion / seismic-hazard
+     spectral-analysis / dsp / quant-seismo
+     magnitude / waveform
+     note                    ← 通用笔记页（数学/力学/地震学等长文）
+   ========================================================= */
+
+/* =========================================================
+   1. 各页主题变量覆盖
+   ========================================================= */
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]):root {
+  --accent: #db2777;
+  --accent-2: #2563eb;
+}
+
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]):root {
+  --bg-code: #fdf2f8;
+}
+
+:where(html[data-page="magnitude"]):root {
+  --bg-nav: rgba(254, 252, 232, 0.92);
+  --accent-strong: #92400e;
+  --alert-bg: #fff4f0;
+  --alert-border: #f5c0a8;
+  --alert-text: #9a3412;
+  --alert-strong: #7c2d12;
+  --warn-soft-bg: #fffbeb;
+  --warn-soft-border: #f0d99a;
+  --warn-soft-text: #854d0e;
+  --warn-soft-strong: #713f12;
+  --drop-bg: #fff7ed;
+  --green: #15803d;
+  --red: #c2410c;
+  --bg: #fefce8;
+  --bg-blue: #eff6ff;
+  --bg-blue-soft: #f7fbff;
+  --panel: #ffffff;
+  --border: #f0e2b8;
+  --border-blue: #d5e3f7;
+  --border-soft: #faf3d8;
+  --muted: #59636e;
+  --dim: #a19770;
+  --accent: #b45309;
+  --accent-dim: rgba(180, 83, 9, 0.08);
+}
+
+:where(html[data-page="waveform"]):root {
+  --bg-nav: rgba(254, 252, 232, 0.92);
+  --accent-strong: #92400e;
+  --alert-bg: #fff4f0;
+  --alert-border: #f5c0a8;
+  --alert-text: #9a3412;
+  --alert-strong: #7c2d12;
+  --warn-soft-bg: #fffbeb;
+  --warn-soft-border: #f0d99a;
+  --warn-soft-text: #854d0e;
+  --warn-soft-strong: #713f12;
+  --drop-bg: #fff7ed;
+  --bg: #fefce8;
+  --bg-blue: #eff6ff;
+  --bg-blue-soft: #f7fbff;
+  --panel: #ffffff;
+  --border: #f0e2b8;
+  --border-blue: #d5e3f7;
+  --border-soft: #faf3d8;
+  --muted: #59636e;
+  --dim: #a19770;
+  --accent: #b45309;
+  --accent-dim: rgba(180, 83, 9, 0.08);
+  --green: #15803d;
+  --red: #c2410c;
+  --serif: "Times New Roman", "Songti SC", "SimSun", serif;
+}
+
+/* 深色覆盖：粉色系内页 */
+[data-theme="dark"]:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"],
+    html[data-page="spectral-analysis"], html[data-page="quant-seismo"]):root {
+  --bg-code: #1a1f2a;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --warn-border: rgba(245, 158, 11, 0.35);
+  --warn-text: #fcd34d;
+  --info-text: #93c5fd;
+}
+
+/* 深色覆盖：琥珀色小工具页 */
+[data-theme="dark"]:where(html[data-page="magnitude"]):root {
+  --bg: #14120d;
+  --bg-nav: rgba(20, 18, 13, 0.9);
+  --bg-solid: #1c1913;
+  --panel: #1c1913;
+  --bg-blue: #131a24;
+  --bg-blue-soft: #182029;
+  --border: #352c1e;
+  --border-soft: #2a2418;
+  --border-blue: #26364a;
+  --text: #ece7dc;
+  --muted: #b3aa99;
+  --dim: #857c6b;
+  --accent: #f59e0b;
+  --accent-2: #60a5fa;
+  --accent-dim: rgba(245, 158, 11, 0.12);
+  --accent-strong: #b45309;
+  --green: #7ee787;
+  --red: #fb923c;
+  --alert-bg: rgba(194, 65, 12, 0.16);
+  --alert-border: rgba(194, 65, 12, 0.45);
+  --alert-text: #fdba74;
+  --alert-strong: #fed7aa;
+  --warn-soft-bg: rgba(245, 158, 11, 0.12);
+  --warn-soft-border: rgba(245, 158, 11, 0.4);
+  --warn-soft-text: #fcd34d;
+  --warn-soft-strong: #fde68a;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --warn-border: rgba(245, 158, 11, 0.35);
+  --warn-text: #fcd34d;
+  --info-text: #93c5fd;
+  --drop-bg: rgba(245, 158, 11, 0.12);
+  --error-bg: rgba(220, 38, 38, 0.16);
+  --error-border: rgba(220, 38, 38, 0.45);
+  --error-text: #fca5a5;
+  --ok-bg: rgba(34, 197, 94, 0.14);
+  --ok-border: rgba(34, 197, 94, 0.45);
+  --ok-text: #86efac;
+  --caption-text: #b3aa99;
+}
+
+[data-theme="dark"]:where(html[data-page="waveform"]):root {
+  --bg: #14120d;
+  --bg-nav: rgba(20, 18, 13, 0.9);
+  --bg-solid: #1c1913;
+  --panel: #1c1913;
+  --bg-blue: #131a24;
+  --bg-blue-soft: #182029;
+  --border: #352c1e;
+  --border-soft: #2a2418;
+  --border-blue: #26364a;
+  --text: #ece7dc;
+  --muted: #b3aa99;
+  --dim: #857c6b;
+  --accent: #f59e0b;
+  --accent-2: #60a5fa;
+  --accent-dim: rgba(245, 158, 11, 0.12);
+  --accent-strong: #b45309;
+  --green: #7ee787;
+  --red: #fb923c;
+  --alert-bg: rgba(194, 65, 12, 0.16);
+  --alert-border: rgba(194, 65, 12, 0.45);
+  --alert-text: #fdba74;
+  --alert-strong: #fed7aa;
+  --warn-soft-bg: rgba(245, 158, 11, 0.12);
+  --warn-soft-border: rgba(245, 158, 11, 0.4);
+  --warn-soft-text: #fcd34d;
+  --warn-soft-strong: #fde68a;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --warn-border: rgba(245, 158, 11, 0.35);
+  --warn-text: #fcd34d;
+  --info-text: #93c5fd;
+  --drop-bg: rgba(245, 158, 11, 0.12);
+  --error-bg: rgba(220, 38, 38, 0.16);
+  --error-border: rgba(220, 38, 38, 0.45);
+  --error-text: #fca5a5;
+  --ok-bg: rgba(34, 197, 94, 0.14);
+  --ok-border: rgba(34, 197, 94, 0.45);
+  --ok-text: #86efac;
+  --caption-text: #b3aa99;
+}
+
+/* =========================================================
+   2. 各页 body / 导航 / 布局差异
+   ========================================================= */
+
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) body {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) {
+  scroll-padding-top: 80px;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"],
+    html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) ::selection {
+  background: rgba(219, 39, 119, 0.18);
+}
+
+:where(html[data-page="magnitude"], html[data-page="waveform"]) ::selection {
+  background: rgba(180, 83, 9, 0.16);
+}
+
+/* 导航：窄栏 */
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) .nav-inner,
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .nav-inner {
+  max-width: 1080px;
+  padding: 0 24px;
+}
+
+/* 导航：logo 圆点（小工具页纯色） */
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .nav-logo .dot {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+/* 导航：右侧 */
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .nav-right a {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* 布局：窄栏 */
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) .layout {
+  max-width: 1080px;
+  padding: 0 24px;
+  gap: 40px;
+}
+
+/* 布局：宽栏（项目页） */
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .layout {
+  max-width: 1920px;
+  padding: 0 clamp(20px, 3vw, 60px);
+  gap: clamp(20px, 2.5vw, 48px);
+}
+
+/* 主区 padding */
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) .main {
+  padding: 36px 0 80px;
+}
+
+/* 侧栏：项目页 */
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  position: sticky;
+  top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  padding: 28px 0 40px;
+}
+
+/* =========================================================
+   3. 面包屑 / 页头
+   ========================================================= */
+
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) .crumb {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+:where(html[data-page="ground-motion"]) .crumb {
+  font-size: 12.5px;
+  font-family: var(--mono);
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+:where(html[data-page="spectral-analysis"], html[data-page="dsp"],
+    html[data-page="quant-seismo"]) .crumb {
+  font-size: 12.5px;
+  font-family: var(--mono);
+  color: var(--text-dim);
+  margin-bottom: 14px;
+}
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .crumb {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: 650;
+  margin-bottom: 9px;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .crumb a {
+  color: var(--text-muted);
+}
+:where(html[data-page="spectral-analysis"], html[data-page="dsp"],
+    html[data-page="quant-seismo"]) .crumb a {
+  color: var(--accent-2);
+}
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .crumb a {
+  color: inherit;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .crumb a:hover {
+  color: var(--accent);
+}
+:where(html[data-page="spectral-analysis"], html[data-page="dsp"],
+    html[data-page="quant-seismo"]) .crumb a:hover {
+  text-decoration: underline;
+}
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .crumb a:hover {
+  opacity: .75;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .page-head {
+  padding: 0 0 26px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .page-head h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+:where(html[data-page="magnitude"], html[data-page="waveform"]) .page-head h1 {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  margin-bottom: 8px;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .lead {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 74ch;
+  margin-bottom: 16px;
+}
+
+/* pill 标签（项目页独有） */
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.pill.accent {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(219, 39, 119, 0.2);
+}
+.pill.blue {
+  background: var(--blue-dim);
+  color: var(--accent-2);
+  border-color: rgba(37, 99, 235, 0.18);
+}
+
+/* section 间距 */
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) section {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border-soft);
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) section:last-of-type {
+  border-bottom: none;
+}
+
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) section {
+  margin-bottom: 48px;
+  scroll-margin-top: 80px;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) .section-head {
+  margin-bottom: 14px;
+}
+
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) h2 {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+}
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) h2 {
+  font-size: 22px;
+  font-weight: 680;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-soft);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+h3.sub {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text);
+  margin: 20px 0 8px;
+  scroll-margin-top: calc(var(--nav-h) + 20px);
+}
+h3.sub:first-of-type { margin-top: 6px; }
+
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) h3 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 26px 0 12px;
+}
+
+/* 简洁列表 */
+ul.plain { list-style: none; margin-bottom: 12px; padding-left: 0; }
+ul.plain li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text-body);
+  line-height: 1.65;
+}
+ul.plain li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.65;
+}
+
+/* =========================================================
+   4. 功能模块（项目页：01/02/03... 编号卡）
+   ========================================================= */
+
+.feature-list { display: flex; flex-direction: column; gap: 10px; }
+
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .feature {
+  position: relative;
+  padding: 16px 18px 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-solid);
+  transition: all 0.18s ease;
+  overflow: hidden;
+  scroll-margin-top: calc(var(--nav-h) + 20px);
+}
+:where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+    html[data-page="seismic-hazard"]) .feature::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.feature:hover {
+  border-color: rgba(219, 39, 119, 0.35);
+  box-shadow: 0 4px 18px rgba(219, 39, 119, 0.09);
+  transform: translateY(-2px);
+}
+.feature:hover::before { opacity: 1; }
+.feature:target { animation: flashRing 1.2s ease; }
+
+@keyframes flashRing {
+  0% { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.18); }
+  100% { border-color: var(--border); box-shadow: 0 0 0 0 transparent; }
+}
+
+.feature-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.feature-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(219, 39, 119, 0.2);
+  border-radius: 5px;
+  padding: 1px 7px;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+.feature-head h3 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  line-height: 1.4;
+}
+.feature > p {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.feature-points {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 4px 20px;
+  margin: 0;
+  padding: 10px 0 0;
+  border-top: 1px dashed var(--border);
+}
+.feature-points li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 12.5px;
+  color: var(--text-body);
+  line-height: 1.7;
+}
+.feature-points li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  opacity: 0.6;
+}
+
+[data-theme="dark"] .feature:hover {
+  border-color: rgba(244, 114, 182, 0.45);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+/* =========================================================
+   5. 流程步骤（01/02/03... 编号 li）
+   ========================================================= */
+
+.steps { list-style: none; counter-reset: step; margin: 6px 0 4px; padding-left: 0; }
+.steps li {
+  position: relative;
+  padding-left: 42px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: var(--text-body);
+  line-height: 1.65;
+}
+.steps li::before {
+  counter-increment: step;
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(219, 39, 119, 0.2);
+  border-radius: 5px;
+  padding: 1px 7px;
+  line-height: 1.5;
+}
+.steps li b { color: var(--text); font-weight: 620; }
+
+/* =========================================================
+   6. 公式（旧写法：手写 Unicode 的 .formula 盒子）
+   ========================================================= */
+
+:where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) .formula {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 2;
+  background: var(--bg-solid);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin: 12px 0 14px;
+  color: var(--text-body);
+  overflow-x: auto;
+  white-space: pre;
+}
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) .formula {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.9;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.formula em { font-style: normal; color: var(--text-dim); font-size: 11.5px; }
+.formula .note {
+  display: block;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   7. callout 提示框（内页扩展，site.css 只定义最基础的结构）
+   ========================================================= */
+
+:where(html[data-page="spectral-analysis"], html[data-page="dsp"],
+    html[data-page="quant-seismo"]) .callout.tip {
+  background: var(--blue-dim);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: var(--info-text, var(--accent-2));
+}
+:where(html[data-page="ground-motion"]) [data-theme="dark"] .callout {
+  border-color: rgba(96, 165, 250, 0.25);
+  border-left-color: var(--accent-2);
+}
+
+.callout .ico { flex-shrink: 0; font-size: 15px; }
+.callout p:last-child { margin-bottom: 0; }
+.callout strong { color: inherit; font-weight: 650; }
+.callout.warn {
+  background: var(--warn-bg, rgba(245, 158, 11, 0.07));
+  border-color: var(--warn-border, rgba(245, 158, 11, 0.28));
+  color: var(--warn-text, #92400e);
+}
+
+/* =========================================================
+   8. 数据与依赖（双列 + chips）
+   ========================================================= */
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.split-title {
+  font-size: 12.5px;
+  font-weight: 620;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  font-size: 12px;
+  padding: 4px 11px;
+  border-radius: 7px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+}
+.chip.blue {
+  background: var(--blue-dim);
+  border-color: rgba(37, 99, 235, 0.15);
+  color: var(--accent-2);
+}
+[data-theme="dark"] .chip.blue { border-color: rgba(96, 165, 250, 0.28); }
+
+/* =========================================================
+   9. 参考资料（编号列表）
+   ========================================================= */
+
+ol.refs { list-style: none; counter-reset: ref; padding-left: 0; }
+ol.refs li {
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 9px;
+  font-size: 13.5px;
+  color: var(--text-body);
+  line-height: 1.65;
+}
+ol.refs li::before {
+  counter-increment: ref;
+  content: "[" counter(ref) "]";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* =========================================================
+   10. 关键点总结卡（文章页）
+   ========================================================= */
+
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) .keypoints {
+  background: linear-gradient(135deg, rgba(219, 39, 119, 0.05), rgba(37, 99, 235, 0.05));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin: 20px 0;
+}
+:where(html[data-page="dsp"]) .keypoints {
+  background: linear-gradient(135deg, var(--accent-dim), var(--blue-dim));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin: 20px 0;
+}
+.keypoints h4 {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.keypoints ul { margin-bottom: 0; }
+:where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) .keypoints li {
+  font-size: 14px;
+}
+
+/* =========================================================
+   11. 上下篇导航
+   ========================================================= */
+
+.pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border-soft);
+}
+.pager a {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: rgba(219, 39, 119, 0.4);
+  background: var(--accent-dim);
+  transform: translateY(-2px);
+}
+.pager .dir {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+.pager .name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.pager .right { text-align: right; }
+.pager .placeholder { opacity: 0.45; pointer-events: none; }
+
+/* 文章头标签（内页独有写法） */
+.article-tags-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+}
+.article-tags-inline span {
+  font-family: var(--mono);
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(219, 39, 119, 0.18);
+}
+.article-tags-inline span.blue {
+  background: var(--blue-dim);
+  color: var(--accent-2);
+  border-color: rgba(37, 99, 235, 0.18);
+}
+[data-theme="dark"] .article-tags-inline span.blue {
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+/* 窄内容栏（文章页专用） */
+.dsp-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.dsp-wrap .main { flex: 1; min-width: 0; padding: 36px 0 80px; }
+.nav-inner.dsp-nav { max-width: 1080px; padding: 0 24px; }
+.dsp-wrap .toc {
+  display: block;
+  width: 200px;
+  flex-shrink: 0;
+  position: sticky;
+  top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  padding: 32px 0 40px;
+}
+.dsp-wrap .toc a {
+  display: block;
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   12. 小工具页（magnitude / waveform）独有组件
+   ========================================================= */
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 34px 24px 90px; }
+
+:where(html[data-page="magnitude"]) .page-head p,
+:where(html[data-page="waveform"]) .page-head p {
+  color: var(--muted);
+  font-size: 14.5px;
+  max-width: 720px;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  background: var(--panel);
+}
+.panel-label {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--dim);
+  font-weight: 650;
+  margin-bottom: 13px;
+}
+:where(html[data-page="waveform"]) .panel-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.panel-label .hint {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: .8px;
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* 输入区 */
+.input-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+#magInput {
+  width: 152px;
+  font-size: 30px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -0.5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 14px;
+  color: var(--accent);
+  background: var(--panel);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -moz-appearance: textfield;
+}
+#magInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+#magInput::-webkit-outer-spin-button,
+#magInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+#scaleSelect {
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  border: 1px solid var(--border-blue);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--bg-blue-soft);
+  cursor: pointer;
+  outline: none;
+  min-width: 168px;
+}
+#scaleSelect:focus { border-color: var(--accent-2); }
+
+input[type="range"] {
+  width: 100%;
+  height: 4px;
+  margin: 4px 0 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-blue);
+  background: var(--bg-blue-soft);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.presets button:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: var(--blue-dim);
+}
+
+/* 饱和预警 */
+.sat-warn {
+  margin-top: 14px;
+  padding: 11px 14px 11px 13px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  border: 1px solid;
+  border-left-width: 4px;
+  animation: warnIn .25s ease;
+}
+@keyframes warnIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.sat-warn strong { font-family: var(--mono); }
+.sat-warn.severe {
+  background: var(--alert-bg);
+  border-color: var(--alert-border);
+  border-left-color: var(--red);
+  color: var(--alert-text);
+}
+.sat-warn.severe strong { color: var(--alert-strong); }
+.sat-warn.mild {
+  background: var(--warn-soft-bg);
+  border-color: var(--warn-soft-border);
+  border-left-color: #b45309;
+  color: var(--warn-soft-text);
+}
+.sat-warn.mild strong { color: var(--warn-soft-strong); }
+.sat-warn .warn-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+/* 能量主卡 */
+.energy-card {
+  border: 1px solid var(--border-blue);
+  border-radius: 14px;
+  padding: 26px 26px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-blue);
+}
+.energy-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.energy-value {
+  font-size: clamp(30px, 6.2vw, 46px);
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -1.5px;
+  line-height: 1.05;
+  color: var(--text);
+  word-break: break-all;
+}
+.energy-value .unit {
+  font-size: .42em;
+  color: var(--dim);
+  font-weight: 600;
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.energy-sub { margin-top: 12px; font-size: 14.5px; color: var(--muted); }
+.energy-sub strong { color: var(--accent); font-weight: 650; font-family: var(--mono); }
+.energy-note {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--dim);
+  font-family: var(--mono);
+  letter-spacing: .3px;
+}
+
+/* 小格 */
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 10px;
+}
+.mini {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--bg-blue-soft);
+}
+.mini .k {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 5px;
+}
+.mini .v {
+  font-size: 15px;
+  font-weight: 620;
+  font-family: var(--mono);
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.35;
+}
+
+/* 等效震级 */
+.scale-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.scale-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 15px 10px;
+  text-align: center;
+  background: var(--bg);
+  transition: border-color .18s, background .18s;
+  position: relative;
+}
+.scale-item .k {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--dim);
+  letter-spacing: .9px;
+  margin-bottom: 3px;
+}
+.scale-item .v {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.scale-item.active { border-color: var(--accent); background: var(--accent-dim); }
+.scale-item.active .k { color: var(--accent); }
+.scale-item.active .v { color: var(--accent); }
+.scale-item .sat-mark {
+  position: absolute;
+  top: 5px; right: 7px;
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--red);
+  opacity: 0;
+  transition: opacity .2s;
+  line-height: 1;
+}
+.scale-item.over .sat-mark { opacity: 1; }
+.scale-item.over { border-color: var(--alert-border); background: var(--alert-bg); }
+.scale-item.over .v { color: var(--red); }
+
+/* 饱和阈值参考 */
+.sat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+}
+.sat-item {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--bg-blue-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sat-item .sk {
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent-2);
+  letter-spacing: .5px;
+}
+.sat-item .sv { font-size: 13.5px; font-weight: 620; color: var(--text); font-family: var(--mono); }
+.sat-item .sd { font-size: 11px; color: var(--dim); line-height: 1.4; }
+.sat-item.no-sat .sk,
+.sat-item.no-sat .sv { color: var(--green); }
+
+/* 对比条 */
+.bars { display: flex; flex-direction: column; gap: 11px; }
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(64px, 104px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.bar-name {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar-track {
+  height: 10px;
+  background: var(--bg-blue-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  width: 0;
+  background: var(--accent);
+  transition: width .4s cubic-bezier(.4, 0, .2, 1);
+}
+.bar-row.ref .bar-fill { background: #b8cdf0; }
+.bar-row.ref .bar-name { color: var(--dim); }
+.bar-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.bar-row.current .bar-name { color: var(--accent); font-weight: 650; }
+.bar-row.current .bar-val { color: var(--accent); font-weight: 650; }
+
+/* 表格 */
+.table-scroll { overflow-x: auto; margin: 0 -4px; }
+td.mono { font-family: var(--mono); color: var(--text); }
+td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
+:where(html[data-page="magnitude"]) tbody tr:last-child td { border-bottom: none; }
+
+.note code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--bg-blue-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--muted);
+}
+:where(html[data-page="magnitude"]) .note,
+:where(html[data-page="waveform"]) .note {
+  font-size: 12.5px;
+  color: var(--dim);
+  line-height: 1.75;
+  margin-top: 12px;
+}
+.note ul { margin: 6px 0 0 18px; }
+.note li { margin-bottom: 3px; }
+
+/* 拖拽区 */
+.drop-zone {
+  border: 2px dashed var(--border-blue);
+  border-radius: 14px;
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--bg-blue-soft);
+  cursor: pointer;
+  transition: all .18s ease;
+  position: relative;
+}
+.drop-zone:hover { border-color: var(--accent-2); background: var(--bg-blue); }
+.drop-zone.drag { border-color: var(--accent); background: var(--drop-bg); transform: scale(1.005); }
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.drop-ico { font-size: 34px; margin-bottom: 8px; line-height: 1; display: block; filter: grayscale(0.3); }
+.drop-title { font-size: 15.5px; font-weight: 620; color: var(--text); margin-bottom: 5px; }
+.drop-sub { font-size: 12.5px; color: var(--dim); line-height: 1.6; }
+.drop-sub strong { font-family: var(--mono); color: var(--muted); font-weight: 600; }
+
+/* Demo */
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.demo-item {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 13px 15px;
+  background: var(--bg-blue-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.demo-head { display: flex; align-items: baseline; gap: 8px; }
+.demo-tag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  color: var(--accent-2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--blue-dim);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  white-space: nowrap;
+}
+.demo-name { font-size: 13px; font-weight: 620; color: var(--text); }
+.demo-desc { font-size: 11.5px; color: var(--dim); line-height: 1.5; flex: 1; }
+.demo-actions { display: flex; gap: 6px; }
+.demo-actions button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border-blue);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.demo-actions button:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: var(--blue-dim);
+}
+.demo-actions button[data-action="load"] {
+  background: var(--accent-2);
+  color: #fff;
+  border-color: var(--accent-2);
+}
+.demo-actions button[data-action="load"]:hover { background: #1d4ed8; color: #fff; }
+
+/* 文件信息条 */
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  background: var(--bg-blue-soft);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.file-info .fname {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 620;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+.file-info .fsize {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.file-info .ftag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .8px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  white-space: nowrap;
+  font-weight: 650;
+}
+.btn-clear {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-clear:hover { color: var(--red); border-color: rgba(194, 65, 12, 0.35); }
+
+/* 波形信息 */
+.trace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.trace-item {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--bg-blue-soft);
+}
+.trace-item .k {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+.trace-item .v {
+  font-size: 14.5px;
+  font-weight: 620;
+  font-family: var(--mono);
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.35;
+}
+.trace-item .v.small { font-size: 12.5px; font-weight: 550; }
+
+.wave-wrap {
+  border: 1px solid #d5d5d5;
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 8px;
+}
+#waveCanvas { width: 100%; height: 260px; display: block; }
+.wave-caption {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--caption-text, #333);
+  text-align: center;
+  padding: 6px 0 2px;
+  font-style: italic;
+}
+
+/* 格式选择 */
+.format-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.format-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 15px;
+  cursor: pointer;
+  background: var(--panel);
+  transition: all .15s ease;
+  position: relative;
+}
+.format-item:hover { border-color: var(--accent); background: var(--accent-dim); }
+.format-item.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.14);
+}
+.format-item .fk {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+.format-item .fv { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.format-item .fd { font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+
+/* 保存 */
+.save-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 620;
+  padding: 11px 26px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.btn-primary:hover { background: var(--accent-strong, #92400e); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.save-hint {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.55;
+  flex: 1;
+  min-width: 200px;
+}
+.save-hint strong { color: var(--muted); font-weight: 620; }
+
+/* 提示条 */
+.alert {
+  padding: 12px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.65;
+  border: 1px solid;
+  border-left-width: 4px;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+}
+.alert.error {
+  background: var(--error-bg, #fef2f2);
+  border-color: var(--error-border, #fecaca);
+  border-left-color: var(--red);
+  color: var(--error-text, #991b1b);
+}
+.alert.ok {
+  background: var(--ok-bg, #f0fdf4);
+  border-color: var(--ok-border, #bbf7d0);
+  border-left-color: var(--green);
+  color: var(--ok-text, #166534);
+}
+.alert code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(0,0,0,0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+:where(html[data-page="waveform"]) [hidden] { display: none !important; }
+
+/* =========================================================
+   13. 响应式补充
+   ========================================================= */
+
+@media (max-width: 960px) {
+  .split { grid-template-columns: 1fr; gap: 14px; }
+}
+
+@media (max-width: 820px) {
+  :where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) .layout,
+  :where(html[data-page="ground-motion"]) .layout {
+    padding: 0 20px;
+    gap: 0;
+  }
+  :where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) .nav-inner,
+  :where(html[data-page="ground-motion"]) .nav-inner {
+    padding: 0 20px;
+  }
+  :where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+      html[data-page="seismic-hazard"]) .page-head h1 { font-size: 23px; }
+  :where(html[data-page="strong-motion"], html[data-page="ground-motion"],
+      html[data-page="seismic-hazard"]) .lead { font-size: 14px; }
+  :where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) section {
+    padding: 22px 0;
+  }
+  :where(html[data-page="strong-motion"], html[data-page="seismic-hazard"]) h2 { font-size: 16px; }
+  .steps li { font-size: 13.5px; padding-left: 38px; }
+  .feature { padding: 14px 15px 14px 17px; }
+  .feature-head h3 { font-size: 14px; }
+  .feature > p { font-size: 13px; }
+  .feature-points { grid-template-columns: 1fr; gap: 3px; }
+}
+
+@media (max-width: 900px) {
+  .toc { display: none; }
+  .article-head h1 { font-size: 26px; }
+  :where(html[data-page="spectral-analysis"], html[data-page="quant-seismo"]) h2 { font-size: 19px; }
+  .pager { grid-template-columns: 1fr; }
+  .dsp-wrap { padding: 0 18px; }
+  .dsp-wrap .toc { display: none; }
+  .nav-inner.dsp-nav { padding: 0 18px; }
+}
+
+@media (max-width: 620px) {
+  .wrap { padding: 24px 18px 70px; }
+  :where(html[data-page="magnitude"], html[data-page="waveform"]) .nav-inner { padding: 0 18px; }
+  :where(html[data-page="magnitude"], html[data-page="waveform"]) .page-head h1 { font-size: 22px; }
+  .panel { padding: 17px 16px; }
+  .energy-card { padding: 22px 20px; }
+  .scale-grid { grid-template-columns: repeat(2, 1fr); }
+  .scale-item .v { font-size: 19px; }
+  #magInput { width: 122px; font-size: 26px; }
+  #scaleSelect { min-width: 140px; }
+  .drop-zone { padding: 30px 18px; }
+  .format-grid { grid-template-columns: 1fr; }
+  #waveCanvas { height: 220px; }
+  .btn-primary { width: 100%; justify-content: center; }
+}
+
+/* =========================================================
+   14. 通用文章/笔记页补充组件
+   ---------------------------------------------------------
+   以下组件原先在 site.css / pages.css 中都未定义，
+   但在理论力学、线性代数等内页里已被使用。
+   统一在此补齐，所有内页共享。
+   ========================================================= */
+
+/* ----- 阅读进度条（配合 site.js 的 initProgress） ----- */
+#progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  z-index: 200;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+/* ----- 顶部返回主页 ----- */
+.nav-back {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.nav-back:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(219, 39, 119, 0.2);
+  text-decoration: none;
+}
+[data-theme="dark"] .nav-back:hover {
+  border-color: rgba(244, 114, 182, 0.35);
+}
+
+/* ----- 章节编号（§ / 01 / 02 …） ----- */
+h2 .num {
+  font-family: var(--mono);
+  font-size: 0.68em;
+  font-weight: 550;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+/* ----- 文章导语 ----- */
+.article-header .lead {
+  font-size: 14.5px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  margin-top: 12px;
+  max-width: 74ch;
+}
+
+/* ----- 文章元信息中的蓝色强调 ----- */
+.article-meta .blue {
+  color: var(--accent-2);
+}
+.article-meta .blue::before {
+  content: "·";
+  color: var(--text-dim);
+  margin-right: 8px;
+}
+.article-meta > span:first-child::before { content: none; }
+
+/* ----- callout 基础容器（第 7 节只定义了修饰符） ----- */
+.callout {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--accent);
+  margin: 18px 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+.callout .ico {
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout strong { color: inherit; font-weight: 650; }
+
+/* tip 变体（浅色下已由第 7 节的 :where 规则覆盖更具体的页面） */
+.callout.tip {
+  background: var(--blue-dim);
+  border-color: rgba(37, 99, 235, 0.2);
+  border-left-color: var(--accent-2);
+}
+[data-theme="dark"] .callout.tip {
+  border-color: rgba(96, 165, 250, 0.28);
+  border-left-color: var(--accent-2);
+}
+
+/* ----- 可横向滚动的表格包裹 ----- */
+.table-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.table-wrap table {
+  margin: 0;
+  border: none;
+  min-width: 100%;
+}
+.table-wrap th,
+.table-wrap td {
+  border-left: none;
+  border-right: none;
+}
+.table-wrap tr:last-child td {
+  border-bottom: none;
+}
+
+/* ----- 文章末尾返回链接 ----- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent-2);
+  text-decoration: none;
+  font-size: 13.5px;
+  transition: all 0.15s;
+}
+.back-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  text-decoration: none;
+}
+.back-link .arrow { transition: transform 0.2s; }
+.back-link:hover .arrow { transform: translateX(-3px); }
+
+/* =========================================================
+   15. 通用笔记页 data-page="note"
+   ---------------------------------------------------------
+   适用于数学 / 力学 / 地震学等长文笔记。
+   使用方式：
+     <html lang="zh-CN" data-page="note">
+     <body data-nav="linear-algebra">
+   ========================================================= */
+
+:where(html[data-page="note"]) body {
+  font-size: 16px;
+  line-height: 1.8;
+}
+:where(html[data-page="note"]) {
+  scroll-padding-top: 80px;
+}
+:where(html[data-page="note"]) ::selection {
+  background: rgba(219, 39, 119, 0.18);
+}
+[data-theme="dark"]:where(html[data-page="note"]) ::selection {
+  background: rgba(244, 114, 182, 0.25);
+}
+
+/* 笔记页的章节标题：更大更醒目 */
+:where(html[data-page="note"]) .article-body h2 {
+  font-size: 20px;
+  font-weight: 680;
+  margin: 36px 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-soft);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+:where(html[data-page="note"]) .article-body h3 {
+  font-size: 16.5px;
+  font-weight: 650;
+  margin: 26px 0 12px;
+}
+:where(html[data-page="note"]) .article-body p {
+  margin-bottom: 12px;
+}
+:where(html[data-page="note"]) .article-body ul,
+:where(html[data-page="note"]) .article-body ol {
+  margin-bottom: 14px;
+}
+
+/* 笔记页的核心要点卡 */
+:where(html[data-page="note"]) .keypoints {
+  background: linear-gradient(135deg,
+              rgba(219, 39, 119, 0.05),
+              rgba(37, 99, 235, 0.05));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin: 20px 0;
+}
+[data-theme="dark"]:where(html[data-page="note"]) .keypoints {
+  background: linear-gradient(135deg,
+              rgba(244, 114, 182, 0.08),
+              rgba(96, 165, 250, 0.08));
+}
+:where(html[data-page="note"]) .keypoints h4 {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+:where(html[data-page="note"]) .keypoints ul {
+  margin-bottom: 0;
+}
+:where(html[data-page="note"]) .keypoints li {
+  font-size: 14px;
+}
+
+/* 笔记页的代码块稍大一号 */
+:where(html[data-page="note"]) .code-block pre {
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+/* 笔记页响应式微调 */
+@media (max-width: 900px) {
+  :where(html[data-page="note"]) .article-body h2 {
+    font-size: 18px;
+  }
+  :where(html[data-page="note"]) .article-body h3 {
+    font-size: 15.5px;
+  }
+}

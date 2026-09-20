@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有限元方法 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="fem">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#discretization">一、离散化与插值</a></li>
+      <li><a href="#element">二、单元刚度矩阵</a></li>
+      <li><a href="#assembly">三、整体组装与边界条件</a></li>
+      <li><a href="#isoparametric">四、等参单元与数值积分</a></li>
+      <li><a href="#frame">五、杆系单元</a></li>
+      <li><a href="#continuum">六、二维与三维实体单元</a></li>
+      <li><a href="#plate-shell">七、板壳单元</a></li>
+      <li><a href="#dynamics">八、动力学有限元</a></li>
+      <li><a href="#nonlinear">九、非线性有限元</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 有限元方法
+        </div>
+        <h1>有限元方法</h1>
+        <p class="lead">
+          从离散化到整体组装，从等参单元到动力学与非线性，
+          系统梳理有限元方法的核心理论。
+          有限元是弹性力学、结构力学、板壳理论、塑性力学、断裂力学的统一数值实现，
+          也是 OpenSees、ABAQUS、ANSYS 等工业软件的共同基础。
+        </p>
+        <div class="article-meta">
+          <span>离散化</span>
+          <span>等参单元</span>
+          <span>动力学</span>
+          <span class="blue">数值实现</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            有限元方法（Finite Element Method, FEM）是求解偏微分方程最强大的数值工具之一，
+            它把连续问题离散化为有限个自由度，把偏微分方程化为代数方程组。
+            从结构力学、流体力学到电磁场、传热，
+            几乎所有工程与物理领域都有有限元的应用。
+          </p>
+          <p>
+            在结构工程中，有限元是<strong>把力学理论转化为工程计算</strong>的关键：
+          </p>
+          <ul>
+            <li><strong>静力分析</strong>：求解 $\mathbf{K}\mathbf{u} = \mathbf{F}$。</li>
+            <li><strong>模态分析</strong>：广义特征值问题 $\mathbf{K}\boldsymbol{\phi} = \omega^2 \mathbf{M} \boldsymbol{\phi}$。</li>
+            <li><strong>时程分析</strong>：逐步积分 $\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = \mathbf{F}(t)$。</li>
+            <li><strong>非线性分析</strong>：Newton-Raphson 迭代求解非线性方程组。</li>
+            <li><strong>稳定性分析</strong>：特征值屈曲或几何非线性后屈曲。</li>
+          </ul>
+          <p>
+            本笔记按"离散化 → 单元 → 组装 → 求解"的主线展开，
+            兼顾理论框架与工程实现。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>有限元 = Rayleigh-Ritz + 分区插值</strong>：
+              Rayleigh-Ritz 法用全局试探函数近似解，
+              有限元把试探函数的定义域<strong>限制在每个单元内部</strong>，
+              用简单低阶多项式近似。这样既保留了变分原理的优雅，
+              又能处理任意几何与边界——这是有限元成功的根本原因。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="discretization">
+          <h2><span class="num">01</span>离散化与插值</h2>
+
+          <h3>三步走</h3>
+          <p>有限元求解一个连续问题，通常按以下三步展开：</p>
+          <ol class="steps">
+            <li><strong>前处理</strong>：把求解域划分为有限个单元，定义节点与自由度。</li>
+            <li><strong>单元分析</strong>：在每个单元上建立单元方程（刚度矩阵、荷载向量）。</li>
+            <li><strong>整体组装与求解</strong>：把单元方程组装为整体方程，施加边界条件，求解。</li>
+          </ol>
+
+          <h3>形函数与插值</h3>
+          <p>
+            在每个单元内部，物理量用<strong>形函数</strong>（shape function）$N_i$ 插值：
+          </p>
+
+          $$ u(\mathbf{x}) \approx \sum_{i=1}^{n} N_i(\mathbf{x}) \, u_i $$
+
+          <p>
+            其中 $u_i$ 为节点值，$n$ 为单元节点数。
+            形函数满足两个基本性质：
+          </p>
+          <ul>
+            <li><strong>Kronecker delta</strong>：$N_i(\mathbf{x}_j) = \delta_{ij}$，即在节点 $j$ 上，只有形函数 $N_j$ 等于 1，其余为 0。</li>
+            <li><strong>单位分解</strong>：$\sum_{i=1}^{n} N_i(\mathbf{x}) = 1$，保证刚体位移能被精确表示。</li>
+          </ul>
+
+          <h3>一维线性形函数</h3>
+          <p>
+            对 2 节点线单元（长度 $L$），在自然坐标 $\xi \in [-1, 1]$ 下：
+          </p>
+
+          $$ N_1(\xi) = \frac{1 - \xi}{2}, \qquad N_2(\xi) = \frac{1 + \xi}{2} $$
+
+          <p>
+            用这两个形函数，单元内任意位置的位移可以线性插值：
+          </p>
+
+          $$ u(\xi) = N_1(\xi) u_1 + N_2(\xi) u_2 $$
+
+          <h3>二维三角形形函数</h3>
+          <p>
+            对 3 节点三角形单元，在面积坐标 $(L_1, L_2, L_3)$ 下：
+          </p>
+
+          $$ N_i = L_i, \qquad L_1 + L_2 + L_3 = 1 $$
+
+          <p>
+            面积坐标 $L_i$ 的含义：点 $P$ 与 $i$ 节点相对边构成的小三角形面积
+            与整个三角形面积之比。
+          </p>
+
+          <h3>二维四边形形函数</h3>
+          <p>
+            对 4 节点四边形单元，在自然坐标 $(\xi, \eta) \in [-1, 1]^2$ 下：
+          </p>
+
+          $$ N_i(\xi, \eta) = \frac{1}{4} (1 + \xi_i \xi) (1 + \eta_i \eta) $$
+
+          <p>
+            其中 $(\xi_i, \eta_i)$ 为节点 $i$ 在自然坐标下的坐标。
+            这种形函数称为<strong>双线性形函数</strong>。
+          </p>
+
+          <h3>完备性与协调性</h3>
+          <p>形函数必须满足两个基本要求：</p>
+          <ul>
+            <li><strong>完备性</strong>：能精确表示刚体位移与常应变状态——
+              这是收敛性的必要条件。</li>
+            <li><strong>协调性</strong>：单元边界上的场量必须连续——
+              对位移型有限元，要求 $C^0$ 连续（位移连续即可）。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>形函数的选择影响很大</strong>：
+              线性单元精度低但简单，二次/三次单元精度高但计算量大。
+              工程中要权衡精度、效率与实现难度。
+              对同一问题，高次单元能用更少的单元获得同样精度，
+              但每个单元的计算成本更高。最优选择取决于具体问题。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="element">
+          <h2><span class="num">02</span>单元刚度矩阵</h2>
+
+          <h3>最小势能原理</h3>
+          <p>
+            有限元方法可以从多个变分原理出发建立。
+            位移型有限元最常用<strong>最小势能原理</strong>：
+          </p>
+
+          $$ \Pi = U - W_e = \frac{1}{2} \int_V \boldsymbol{\varepsilon}^T \mathbf{D} \boldsymbol{\varepsilon} \, dV
+             - \int_V \mathbf{u}^T \mathbf{f} \, dV
+             - \int_S \mathbf{u}^T \mathbf{T} \, dS $$
+
+          <p>对节点位移取极小，得到单元刚度方程：</p>
+
+          $$ \frac{\partial \Pi}{\partial \mathbf{u}^e} = \mathbf{0}
+             \quad \Rightarrow \quad
+             \mathbf{k}^e \mathbf{u}^e = \mathbf{f}^e $$
+
+          <h3>单元刚度矩阵的通用公式</h3>
+          <p>这是有限元方法中最核心的公式：</p>
+
+          $$ \boxed{\mathbf{k}^e = \int_{V_e} \mathbf{B}^T \mathbf{D} \mathbf{B} \, dV} $$
+
+          <p>其中：</p>
+          <ul>
+            <li>$\mathbf{B}$ 为<strong>应变-位移矩阵</strong>（由形函数的导数构成）。</li>
+            <li>$\mathbf{D}$ 为<strong>材料弹性矩阵</strong>（本构关系）。</li>
+            <li>积分在单元体积内进行。</li>
+          </ul>
+
+          <h3>应变-位移矩阵 B</h3>
+          <p>
+            应变由位移的导数表示：
+          </p>
+
+          $$ \boldsymbol{\varepsilon} = \mathbf{B} \mathbf{u}^e $$
+
+          <p>
+            在一维情况下（$n$ 个节点、每节点 1 个自由度）：
+          </p>
+
+          $$ \mathbf{B} = \begin{bmatrix}
+             \dfrac{dN_1}{dx} & \dfrac{dN_2}{dx} & \cdots & \dfrac{dN_n}{dx}
+             \end{bmatrix} $$
+
+          <p>
+            在二维情况下，以 3 节点三角形为例（每节点 2 个自由度 $u, v$）：
+          </p>
+
+          $$ \mathbf{B} = \frac{1}{2A} \begin{bmatrix}
+             b_1 & 0 & b_2 & 0 & b_3 & 0 \\
+             0 & c_1 & 0 & c_2 & 0 & c_3 \\
+             c_1 & b_1 & c_2 & b_2 & c_3 & b_3
+             \end{bmatrix} $$
+
+          <p>
+            其中 $b_i = y_j - y_k$、$c_i = x_k - x_j$（下标循环），$A$ 为三角形面积。
+            这一 $\mathbf{B}$ 是常数矩阵——所以 3 节点三角形单元又称<strong>常应变单元</strong>。
+          </p>
+
+          <h3>杆单元示例</h3>
+          <p>
+            对一维杆单元（轴向刚度 $EA$、长度 $L$），应变-位移矩阵为常数：
+          </p>
+
+          $$ \mathbf{B} = \frac{1}{L} \begin{bmatrix} -1 & 1 \end{bmatrix}, \qquad
+             \mathbf{D} = E $$
+
+          <p>单元刚度矩阵为：</p>
+
+          $$ \mathbf{k}^e = \int_0^L \frac{1}{L} \begin{bmatrix} -1 \\ 1 \end{bmatrix}
+             E \frac{1}{L} \begin{bmatrix} -1 & 1 \end{bmatrix} A \, dx
+             = \frac{EA}{L} \begin{bmatrix} 1 & -1 \\ -1 & 1 \end{bmatrix} $$
+
+          <p>
+            这就是矩阵位移法中熟悉的杆单元刚度矩阵。
+          </p>
+
+          <h3>梁单元示例</h3>
+          <p>
+            对 Euler-Bernoulli 梁单元（自由度 $[v_1, \theta_1, v_2, \theta_2]$），
+            需要三次 Hermite 插值形函数。单元刚度矩阵为：
+          </p>
+
+          $$ \mathbf{k}^e = \frac{EI}{L^3} \begin{bmatrix}
+             12 & 6L & -12 & 6L \\
+             6L & 4L^2 & -6L & 2L^2 \\
+             -12 & -6L & 12 & -6L \\
+             6L & 2L^2 & -6L & 4L^2
+             \end{bmatrix} $$
+
+          <p>
+            这与矩阵位移法中推导的梁单元刚度矩阵完全一致。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>单元刚度矩阵的统一性</strong>：无论是杆、梁、三角形还是四面体单元，
+              单元刚度矩阵都用同一个公式 $\mathbf{k}^e = \int \mathbf{B}^T \mathbf{D} \mathbf{B} \, dV$。
+              区别只在于：<strong>形函数不同</strong>（决定 $\mathbf{B}$）、
+              <strong>本构关系不同</strong>（决定 $\mathbf{D}$）、
+              <strong>积分域不同</strong>（决定积分方式）。
+              掌握了这个公式，就掌握了有限元的核心。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="assembly">
+          <h2><span class="num">03</span>整体组装与边界条件</h2>
+
+          <h3>整体刚度矩阵</h3>
+          <p>
+            把所有单元刚度矩阵按节点自由度编号"叠加"，得到整体刚度矩阵：
+          </p>
+
+          $$ \mathbf{K} = \sum_{e} \mathbf{K}^e $$
+
+          <p>
+            其中 $\mathbf{K}^e$ 是单元刚度矩阵 $\mathbf{k}^e$ 按节点自由度索引扩展得到的整体矩阵。
+            这一过程称为<strong>组装（assembly）</strong>。
+          </p>
+
+          <h3>组装规则</h3>
+          <p>
+            对每个单元，其节点 $i$ 的第 $a$ 个自由度对应整体自由度编号
+            $I = 2i + a$（二维情况）。把 $\mathbf{k}^e$ 第 $(a, b)$ 个元素加到
+            $\mathbf{K}$ 的第 $(I, J)$ 个位置：
+          </p>
+
+          $$ K_{IJ} \mathrel{+}= k^e_{ab} $$
+
+          <p>
+            这一规则对所有单元类型通用，是有限元实现的核心操作。
+          </p>
+
+          <h3>整体方程</h3>
+          <p>组装后得到整体平衡方程：</p>
+
+          $$ \mathbf{K} \mathbf{u} = \mathbf{F} $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$\mathbf{K}$ 为 $n \times n$ 整体刚度矩阵（$n$ 为总自由度数）。</li>
+            <li>$\mathbf{u}$ 为节点位移向量。</li>
+            <li>$\mathbf{F}$ 为节点荷载向量。</li>
+          </ul>
+
+          <h3>整体刚度矩阵的性质</h3>
+          <ul>
+            <li><strong>对称</strong>：$\mathbf{K}^T = \mathbf{K}$（由 $B^T D B$ 的对称性保证）。</li>
+            <li><strong>稀疏</strong>：非零元只出现在节点有连接的对应位置。</li>
+            <li><strong>带状</strong>：如果节点编号合理，非零元集中在主对角线附近。</li>
+            <li><strong>正定或半正定</strong>：加了边界条件后正定。</li>
+          </ul>
+
+          <p>
+            这些性质对求解效率至关重要：
+            对称与带状可以通过 Cholesky 分解或 LDL 分解利用；
+            稀疏可以用稀疏矩阵算法或迭代求解器。
+          </p>
+
+          <h3>边界条件处理</h3>
+          <p>整体方程的边界条件分为两类：</p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            位移边界条件（Dirichlet 条件）：
+          </p>
+          <p>
+            给定某些自由度上的位移 $u_i = \bar{u}_i$。
+            处理方法：
+          </p>
+          <ul>
+            <li><strong>置大数法</strong>：把对角元素改为一个大数，右侧改为大数乘给定值。</li>
+            <li><strong>置一法</strong>：把对应行列消去，右侧修正。</li>
+            <li><strong>自由度重排</strong>：把已知与未知自由度分开，求解后回代。</li>
+          </ul>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            力边界条件（Neumann 条件）：
+          </p>
+          <p>
+            给定某些自由度上的力 $F_i = \bar{F}_i$，直接写入 $\mathbf{F}$ 向量即可。
+          </p>
+
+          <h3>整体刚度矩阵的分块形式</h3>
+          <p>
+            把自由度分为<strong>自由</strong>（下标 $f$）与<strong>约束</strong>（下标 $c$）两部分：
+          </p>
+
+          $$ \begin{bmatrix}
+             \mathbf{K}_{ff} & \mathbf{K}_{fc} \\
+             \mathbf{K}_{cf} & \mathbf{K}_{cc}
+             \end{bmatrix}
+             \begin{bmatrix} \mathbf{u}_f \\ \mathbf{u}_c \end{bmatrix}
+             = \begin{bmatrix} \mathbf{F}_f \\ \mathbf{F}_c \end{bmatrix} $$
+
+          <p>已知 $\mathbf{u}_c$，求解 $\mathbf{u}_f$：</p>
+
+          $$ \mathbf{K}_{ff} \mathbf{u}_f = \mathbf{F}_f - \mathbf{K}_{fc} \mathbf{u}_c $$
+
+          <p>求解后，支座反力为：</p>
+
+          $$ \mathbf{F}_c = \mathbf{K}_{cf} \mathbf{u}_f + \mathbf{K}_{cc} \mathbf{u}_c $$
+
+          <h3>Python 示例：完整的一维杆系有限元</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>bar_fem.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+一维杆系有限元完整实现
+从单元分析到组装到边界条件处理到后处理
+"""
+import numpy as np
+
+
+def bar_element_stiffness(E, A, L):
+    """一维 2 节点杆单元的刚度矩阵"""
+    return (E * A / L) * np.array([
+        [1, -1],
+        [-1, 1],
+    ])
+
+
+def assemble_bar_system(nodes, elements, E, A):
+    """
+    组装一维杆系整体刚度矩阵
+    nodes    : 节点坐标数组 [x1, x2, ...]
+    elements : 单元列表 [(i, j), ...]
+    E, A     : 弹性模量与截面积
+    返回 K（n×n，n 为节点数）
+    """
+    n = len(nodes)
+    K = np.zeros((n, n))
+
+    for (i, j) in elements:
+        L = abs(nodes[j] - nodes[i])
+        k = bar_element_stiffness(E, A, L)
+        K[i, i] += k[0, 0]
+        K[i, j] += k[0, 1]
+        K[j, i] += k[1, 0]
+        K[j, j] += k[1, 1]
+
+    return K
+
+
+def solve_bar_system(nodes, elements, E, A, fixed_dofs, F):
+    """求解杆系问题"""
+    K = assemble_bar_system(nodes, elements, E, A)
+    n = K.shape[0]
+
+    free = [d for d in range(n) if d not in fixed_dofs]
+    K_ff = K[np.ix_(free, free)]
+    F_f = F[free]
+
+    u = np.zeros(n)
+    u[free] = np.linalg.solve(K_ff, F_f)
+
+    R = K @ u - F
+    return u, R, K
+
+
+if __name__ == "__main__":
+    # 示例：3 段变截面杆，一端固定，另一端受拉力
+    nodes = [0.0, 1.0, 2.0, 3.0]
+    elements = [(0, 1), (1, 2), (2, 3)]
+    E, A = 200e9, 1e-3
+
+    fixed = [0]
+    F = np.zeros(4)
+    F[3] = 1e5  # 端部拉力 100 kN
+
+    u, R, K = solve_bar_system(nodes, elements, E, A, fixed, F)
+
+    print("节点位移：")
+    for i, x in enumerate(nodes):
+        print(f"  节点 {i} (x = {x} m): u = {u[i]*1e6:8.4f} μm")
+
+    print("\n支座反力：")
+    for d in fixed:
+        print(f"  自由度 {d}: R = {R[d]:.2f} N")
+
+    print(f"\n平衡校核：Σ R + Σ F = {R.sum() + F.sum():.3e}")
+
+    # 理论校核：总伸长 = F L / (E A)，每段长度 1 m
+    total_elong = 3 * (1e5 * 1.0) / (E * A)
+    print(f"\n理论总伸长 = {total_elong*1e6:.4f} μm")
+    print(f"数值总伸长 = {u[3]*1e6:.4f} μm")
+
+    # 打印整体刚度矩阵结构
+    print("\n整体刚度矩阵 K：")
+    print(np.array2string(K / 1e8, precision=3, suppress_small=True))</code></pre>
+          </div>
+        </section>
+
+        <section id="isoparametric">
+          <h2><span class="num">04</span>等参单元与数值积分</h2>
+
+          <h3>自然坐标与物理坐标</h3>
+          <p>
+            实际的单元形状（四边形、六面体、曲边单元）在物理坐标下形状复杂，
+            不利于计算。有限元方法通过<strong>坐标变换</strong>
+            把复杂形状映射到规则的标准单元（自然坐标下）。
+          </p>
+
+          <p>以一维为例，物理坐标 $x$ 与自然坐标 $\xi$：</p>
+
+          $$ x(\xi) = \sum_{i=1}^{n} N_i(\xi) x_i $$
+
+          <h3>等参的概念</h3>
+          <p>
+            如果用于插值<strong>几何</strong>的形函数与用于插值<strong>物理量</strong>的形函数
+            完全相同，则称为<strong>等参单元</strong>。
+          </p>
+
+          <p>对二维四边形等参单元：</p>
+
+          $$ x(\xi, \eta) = \sum_{i=1}^{4} N_i(\xi, \eta) x_i, \qquad
+             y(\xi, \eta) = \sum_{i=1}^{4} N_i(\xi, \eta) y_i $$
+
+          $$ u(\xi, \eta) = \sum_{i=1}^{4} N_i(\xi, \eta) u_i, \qquad
+             v(\xi, \eta) = \sum_{i=1}^{4} N_i(\xi, \eta) v_i $$
+
+          <p>
+            几何与位移用同一组形函数——这是等参单元最大的魅力：
+            既能处理曲边几何，又能保证位移场的连续性与完备性。
+          </p>
+
+          <h3>雅可比矩阵</h3>
+          <p>
+            计算应变时需要对物理坐标求导，但形函数是自然坐标的函数。
+            通过链式法则：
+          </p>
+
+          $$ \begin{bmatrix} \dfrac{\partial N}{\partial x} \\[6pt] \dfrac{\partial N}{\partial y} \end{bmatrix}
+             = \mathbf{J}^{-1}
+             \begin{bmatrix} \dfrac{\partial N}{\partial \xi} \\[6pt] \dfrac{\partial N}{\partial \eta} \end{bmatrix} $$
+
+          <p>其中 $\mathbf{J}$ 为<strong>雅可比矩阵</strong>：</p>
+
+          $$ \mathbf{J} = \begin{bmatrix}
+             \dfrac{\partial x}{\partial \xi} & \dfrac{\partial y}{\partial \xi} \\[6pt]
+             \dfrac{\partial x}{\partial \eta} & \dfrac{\partial y}{\partial \eta}
+             \end{bmatrix} $$
+
+          <p>
+            雅可比行列式 $|\mathbf{J}|$ 也出现在面积/体积元的变换中：
+          </p>
+
+          $$ dA = |\mathbf{J}| \, d\xi \, d\eta $$
+
+          <h3>数值积分：高斯求积</h3>
+          <p>
+            等参单元的刚度矩阵积分通常在自然坐标下进行，用<strong>高斯-勒让德求积</strong>：
+          </p>
+
+          $$ \int_{-1}^{1} f(\xi) \, d\xi \approx \sum_{i=1}^{n} w_i f(\xi_i) $$
+
+          <p>其中 $\xi_i$ 为高斯点，$w_i$ 为权重。$n$ 个高斯点可以精确积分 $2n - 1$ 次多项式。</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>积分点数 $n$</th><th>高斯点</th><th>权重</th><th>精度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>0</td>
+                  <td>2</td>
+                  <td>1 次</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>$\pm 1/\sqrt{3}$</td>
+                  <td>1, 1</td>
+                  <td>3 次</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>$0, \pm\sqrt{3/5}$</td>
+                  <td>8/9, 5/9, 5/9</td>
+                  <td>5 次</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>$\pm 0.33998, \pm 0.86114$</td>
+                  <td>0.65215, 0.34785</td>
+                  <td>7 次</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>二维与三维积分</h3>
+          <p>
+            二维积分直接用张量积：
+          </p>
+
+          $$ \int_{-1}^{1} \int_{-1}^{1} f(\xi, \eta) \, d\xi \, d\eta
+             \approx \sum_{i} \sum_{j} w_i w_j f(\xi_i, \eta_j) $$
+
+          <p>三维类似。对二维 4 节点四边形，常用 $2 \times 2$ 高斯积分（4 个积分点）。</p>
+
+          <h3>完全积分与减缩积分</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>积分点数</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>完全积分</strong></td>
+                  <td>保证多项式精确积分所需的最少点数</td>
+                  <td>精度高，但可能出现剪切锁死、体积锁死</td>
+                </tr>
+                <tr>
+                  <td><strong>减缩积分</strong></td>
+                  <td>比完全积分少一个积分点</td>
+                  <td>缓解锁死，但可能出现零能模式（沙漏模式）</td>
+                </tr>
+                <tr>
+                  <td><strong>选择性减缩积分</strong></td>
+                  <td>弯曲项用减缩、剪切项用完全</td>
+                  <td>兼顾两者优点</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：二维等参四边形单元</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>q4_element.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+4 节点等参四边形单元的刚度矩阵
+使用 2×2 高斯积分
+"""
+import numpy as np
+
+
+def shape_q4(xi, eta):
+    """
+    4 节点四边形单元的双线性形函数
+    节点顺序：(-1,-1), (1,-1), (1,1), (-1,1)
+    """
+    N = 0.25 * np.array([
+        (1 - xi) * (1 - eta),
+        (1 + xi) * (1 - eta),
+        (1 + xi) * (1 + eta),
+        (1 - xi) * (1 + eta),
+    ])
+    # 对自然坐标的导数
+    dN_dxi = 0.25 * np.array([
+        -(1 - eta), (1 - eta), (1 + eta), -(1 + eta)
+    ])
+    dN_deta = 0.25 * np.array([
+        -(1 - xi), -(1 + xi), (1 + xi), (1 - xi)
+    ])
+    return N, np.vstack([dN_dxi, dN_deta])
+
+
+def q4_stiffness(coords, E, nu, t=1.0, plane="stress"):
+    """
+    4 节点四边形等参单元刚度矩阵
+    coords : 4×2 节点物理坐标
+    E, nu  : 弹性常数
+    t      : 厚度
+    plane  : "stress" 或 "strain"
+    """
+    # 材料矩阵 D
+    if plane == "stress":
+        D = (E / (1 - nu**2)) * np.array([
+            [1, nu, 0],
+            [nu, 1, 0],
+            [0, 0, (1 - nu) / 2],
+        ])
+    else:
+        D = (E / ((1 + nu) * (1 - 2 * nu))) * np.array([
+            [1 - nu, nu, 0],
+            [nu, 1 - nu, 0],
+            [0, 0, (1 - 2 * nu) / 2],
+        ])
+
+    # 2×2 高斯积分
+    gp = [-1.0 / np.sqrt(3), 1.0 / np.sqrt(3)]
+    w = [1.0, 1.0]
+
+    K = np.zeros((8, 8))  # 4 节点 × 2 自由度
+
+    for i, xi in enumerate(gp):
+        for j, eta in enumerate(gp):
+            N, dN_dnat = shape_q4(xi, eta)
+
+            # 雅可比矩阵 J = dN/dnat @ coords
+            J = dN_dnat @ coords   # 2×2
+            detJ = np.linalg.det(J)
+            if detJ <= 0:
+                raise ValueError("雅可比行列式非正，单元扭曲")
+
+            # 形函数对物理坐标的导数
+            invJ = np.linalg.inv(J)
+            dN_dphys = invJ @ dN_dnat   # 2×4
+
+            # 应变-位移矩阵 B（3×8）
+            B = np.zeros((3, 8))
+            for k in range(4):
+                B[0, 2*k]     = dN_dphys[0, k]
+                B[1, 2*k + 1] = dN_dphys[1, k]
+                B[2, 2*k]     = dN_dphys[1, k]
+                B[2, 2*k + 1] = dN_dphys[0, k]
+
+            K += w[i] * w[j] * detJ * t * (B.T @ D @ B)
+
+    return K
+
+
+if __name__ == "__main__":
+    # 单元几何：单位正方形
+    coords = np.array([
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ])
+
+    E, nu = 200e9, 0.3
+    K = q4_stiffness(coords, E, nu, t=0.01, plane="stress")
+
+    print(f"单元刚度矩阵规模: {K.shape}")
+    print(f"对称性检查: {np.allclose(K, K.T)}")
+
+    # 特征值分析：应只有 3 个零特征值（2 个平动 + 1 个转动）
+    eigvals = np.linalg.eigvalsh(K)
+    print(f"\n最小 5 个特征值：")
+    for i in range(5):
+        print(f"  λ_{i+1} = {eigvals[i]:.6e}")
+
+    # 与理论比较：单位正方形受轴向拉，刚度应接近 EA/L
+    print(f"\n对角元素 K[0,0] = {K[0,0]:.4e}")
+    print(f"对应轴向刚度估计 EA/L = {E * 0.01 * 1.0:.4e}")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>等参单元的统一性</strong>：无论是二维四边形还是三维六面体，
+              无论是线性还是二次单元，刚度矩阵的计算流程完全一致：
+              <strong>循环高斯点 → 计算形函数与雅可比 → 组装 B → 累加 B<sup>T</sup>DB·detJ·w</strong>。
+              掌握了这一个流程，就掌握了所有等参单元的实现。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="frame">
+          <h2><span class="num">05</span>杆系单元</h2>
+
+          <h3>从矩阵位移法到有限元</h3>
+          <p>
+            杆系单元（杆、梁、桁架、刚架）是有限元中最简单的一类单元，
+            也是结构工程师最熟悉的。它们可以看成是<strong>矩阵位移法</strong>
+            在有限元框架下的实现。
+          </p>
+
+          <h3>平面桁架单元</h3>
+          <p>
+            桁架单元只有轴向刚度，整体坐标下的刚度矩阵通过坐标变换得到：
+          </p>
+
+          $$ \mathbf{k}^e = \mathbf{T}^T \mathbf{k}_{\text{local}}^e \mathbf{T} $$
+
+          <p>
+            其中 $\mathbf{k}_{\text{local}}^e$ 是局部坐标下的杆单元刚度矩阵
+            （只有轴向分量），$\mathbf{T}$ 是坐标变换矩阵。
+          </p>
+
+          <h3>平面刚架单元</h3>
+          <p>
+            刚架单元同时考虑轴向与弯曲刚度，每个节点 3 个自由度：
+            $u$、$v$、$\theta$。
+            局部坐标下的单元刚度矩阵为：
+          </p>
+
+          $$ \mathbf{k}_{\text{local}}^e = \begin{bmatrix}
+             \dfrac{EA}{L} & 0 & 0 & -\dfrac{EA}{L} & 0 & 0 \\[6pt]
+             0 & \dfrac{12EI}{L^3} & \dfrac{6EI}{L^2} & 0 & -\dfrac{12EI}{L^3} & \dfrac{6EI}{L^2} \\[6pt]
+             0 & \dfrac{6EI}{L^2} & \dfrac{4EI}{L} & 0 & -\dfrac{6EI}{L^2} & \dfrac{2EI}{L} \\[6pt]
+             -\dfrac{EA}{L} & 0 & 0 & \dfrac{EA}{L} & 0 & 0 \\[6pt]
+             0 & -\dfrac{12EI}{L^3} & -\dfrac{6EI}{L^2} & 0 & \dfrac{12EI}{L^3} & -\dfrac{6EI}{L^2} \\[6pt]
+             0 & \dfrac{6EI}{L^2} & \dfrac{2EI}{L} & 0 & -\dfrac{6EI}{L^2} & \dfrac{4EI}{L}
+             \end{bmatrix} $$
+
+          <p>
+            这与矩阵位移法中的单元刚度矩阵完全一致。
+          </p>
+
+          <h3>等效节点荷载</h3>
+          <p>
+            分布荷载不能直接加到节点上，需要转换为<strong>等效节点荷载</strong>：
+          </p>
+
+          $$ \mathbf{f}^e = \int_0^L \mathbf{N}^T q(x) \, dx $$
+
+          <p>
+            例如均布荷载 $q_0$ 作用在梁单元上，等效节点荷载为：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            两端节点力：
+          </p>
+          $$ F_y = \frac{q_0 L}{2} \quad \text{（每端）} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            两端节点弯矩：
+          </p>
+          $$ M_z = \frac{q_0 L^2}{12} \quad \text{（每端）} $$
+
+          <h3>内部释放与端部释放</h3>
+          <p>
+            实际结构中的铰接节点、滑动支座等需要<strong>端部释放</strong>——
+            把某些自由度从刚度矩阵中消去。
+            常用做法是静力凝聚，把释放的自由度凝聚掉。
+          </p>
+
+          <p>
+            端部释放的公式为（以释放自由度 $m$ 为例）：
+          </p>
+
+          $$ \mathbf{k}_{\text{condensed}} = \mathbf{k}_{ff} - \mathbf{k}_{fm} \mathbf{k}_{mm}^{-1} \mathbf{k}_{mf} $$
+
+          <p>
+            其中下标 $f$ 为保留自由度，$m$ 为释放自由度。
+          </p>
+
+          <h3>从杆系到实体单元</h3>
+          <p>
+            杆系单元与实体单元的理论框架完全一致——
+            都用 $\mathbf{k}^e = \int \mathbf{B}^T \mathbf{D} \mathbf{B} \, dV$。
+            区别在于：
+          </p>
+          <ul>
+            <li>杆系单元用<strong>解析形函数</strong>（线性、三次 Hermite）。</li>
+            <li>实体单元用<strong>数值形函数</strong>（等参插值）。</li>
+            <li>杆系单元节点少、计算快；实体单元节点多、计算慢。</li>
+          </ul>
+
+          <p>
+            工程中，<strong>杆系单元用于梁、柱、支撑等一维构件；
+            实体单元用于节点、基础、复杂几何</strong>。
+            大规模结构分析中，通常混合使用多种单元。
+          </p>
+        </section>
+
+        <section id="continuum">
+          <h2><span class="num">06</span>二维与三维实体单元</h2>
+
+          <h3>常用二维实体单元</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>单元类型</th><th>节点数</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>CST</strong>（常应变三角形）</td>
+                  <td>3</td>
+                  <td>简单，但刚度过大、精度低</td>
+                </tr>
+                <tr>
+                  <td><strong>LST</strong>（线性应变三角形）</td>
+                  <td>6</td>
+                  <td>二次插值，精度高</td>
+                </tr>
+                <tr>
+                  <td><strong>Q4</strong>（4 节点四边形）</td>
+                  <td>4</td>
+                  <td>常用，需处理剪切锁死</td>
+                </tr>
+                <tr>
+                  <td><strong>Q8</strong>（8 节点四边形）</td>
+                  <td>8</td>
+                  <td>二次 Serendipity 单元</td>
+                </tr>
+                <tr>
+                  <td><strong>Q9</strong>（9 节点四边形）</td>
+                  <td>9</td>
+                  <td>二次 Lagrange 单元</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>常用三维实体单元</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>单元类型</th><th>节点数</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>四面体（Tet4）</strong></td>
+                  <td>4</td>
+                  <td>线性，简单但刚硬</td>
+                </tr>
+                <tr>
+                  <td><strong>四面体（Tet10）</strong></td>
+                  <td>10</td>
+                  <td>二次，精度高</td>
+                </tr>
+                <tr>
+                  <td><strong>六面体（Hex8）</strong></td>
+                  <td>8</td>
+                  <td>常用，需处理锁死</td>
+                </tr>
+                <tr>
+                  <td><strong>六面体（Hex20）</strong></td>
+                  <td>20</td>
+                  <td>二次，工程首选</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>网格划分要点</h3>
+          <ul>
+            <li><strong>单元质量</strong>：避免严重扭曲的单元，长宽比接近 1。</li>
+            <li><strong>网格密度</strong>：应力梯度大的地方应加密。</li>
+            <li><strong>过渡</strong>：从密到疏应平滑过渡，避免单节点跳级。</li>
+            <li><strong>奇异点</strong>：集中力、尖角附近的应力奇异，
+              网格加密不会收敛到有限值——需要特殊处理（如子模型法）。</li>
+          </ul>
+
+          <h3>锁死问题</h3>
+          <p>完全积分的低阶单元在特定条件下会表现过刚，称为<strong>锁死</strong>：</p>
+          <ul>
+            <li><strong>剪切锁死</strong>：薄板/壳弯曲时，剪切应变被过度约束。</li>
+            <li><strong>体积锁死</strong>：近不可压材料（$\nu \to 0.5$）体积应变被过度约束。</li>
+            <li><strong>膜锁死</strong>：弯曲主导问题时，薄膜应变被过度约束。</li>
+          </ul>
+
+          <p>解决方案：</p>
+          <ul>
+            <li><strong>减缩积分</strong>：减少积分点，缓解约束。</li>
+            <li><strong>B-bar 方法</strong>：把体积应变用低阶近似。</li>
+            <li><strong>F-bar 方法</strong>：更先进的体积应变处理。</li>
+            <li><strong>EAS 单元</strong>：引入内部自由度增强应变场。</li>
+            <li><strong>MITC 单元</strong>：混合插值剪切应变。</li>
+          </ul>
+
+          <h3>网格收敛性</h3>
+          <p>
+            随着网格加密，有限元解应逐渐收敛到真实解。
+            收敛性可以通过以下指标检验：
+          </p>
+          <ul>
+            <li><strong>位移收敛</strong>：位移从下方逼近真实解（位移型有限元）。</li>
+            <li><strong>能量范数收敛</strong>：应变能误差随网格加密减小。</li>
+            <li><strong>应力收敛</strong>：应力收敛较慢，通常需要比位移更密的网格。</li>
+          </ul>
+
+          <p>
+            工程中的做法是：做 2–3 个不同密度的网格，
+            看关键结果（最大位移、最大应力）是否趋于稳定。
+          </p>
+        </section>
+
+        <section id="plate-shell">
+          <h2><span class="num">07</span>板壳单元</h2>
+
+          <h3>板壳单元的两条路线</h3>
+          <p>
+            板壳单元基于板壳理论（见板壳理论笔记），但需要数值化。
+            两条主流路线：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>路线</th><th>理论基础</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Kirchhoff 板单元</strong></td>
+                  <td>Kirchhoff 薄板理论</td>
+                  <td>需要 $C^1$ 连续，实现复杂，适合极薄板</td>
+                </tr>
+                <tr>
+                  <td><strong>Mindlin 板单元</strong></td>
+                  <td>Mindlin 中厚板理论</td>
+                  <td>只需 $C^0$ 连续，实现简单，工业主流</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>壳单元的构造</h3>
+          <p>
+            壳单元可以看成<strong>板单元 + 薄膜单元</strong>的组合：
+          </p>
+
+          $$ \mathbf{K}^e = \mathbf{K}_{\text{membrane}}^e + \mathbf{K}_{\text{bending}}^e + \mathbf{K}_{\text{shear}}^e $$
+
+          <p>
+            对曲面壳，还需要在单元局部坐标系下组装，
+            再通过坐标变换转到整体坐标系。
+          </p>
+
+          <h3>退化壳单元</h3>
+          <p>
+            现代有限元软件（如 ABAQUS 的 S4R）主要使用<strong>退化壳单元</strong>：
+            从三维实体单元退化而来，把厚度方向的自由度约束掉，
+            只保留中面自由度加上一个厚度方向转动。
+          </p>
+
+          <p>
+            退化壳单元的优势：
+          </p>
+          <ul>
+            <li>可以处理任意曲率的壳，不限于规则几何。</li>
+            <li>统一了板单元与壳单元的实现。</li>
+            <li>可以与实体单元混合使用。</li>
+          </ul>
+
+          <h3>壳单元的锁死与解决</h3>
+          <p>
+            薄壳单元会遇到严重的锁死问题：
+          </p>
+          <ul>
+            <li><strong>剪切锁死</strong>：$h/L \to 0$ 时，剪切刚度主导。</li>
+            <li><strong>膜锁死</strong>：弯曲曲率大时，薄膜应变被过度约束。</li>
+          </ul>
+
+          <p>
+            工业软件常用的解决方案：
+          </p>
+          <ul>
+            <li><strong>减缩积分 + 沙漏控制</strong>：四节点壳单元用 1 个积分点，
+              再加人工沙漏刚度。</li>
+            <li><strong>MITC4 / MITC8</strong>：混合插值张量分量单元，无条件无锁死。</li>
+            <li><strong>EAS 壳单元</strong>：增强假定应变。</li>
+          </ul>
+
+          <h3>分层壳（Layered Shell）</h3>
+          <p>
+            对钢筋混凝土剪力墙、组合板等，使用<strong>分层壳单元</strong>：
+            把壳厚度方向分层（混凝土层 + 钢筋层），
+            每层有独立的材料本构，厚度方向积分。
+          </p>
+
+          <p>
+            分层壳能同时考虑：
+          </p>
+          <ul>
+            <li>混凝土的开裂与压碎。</li>
+            <li>钢筋的屈服。</li>
+            <li>层间的应力传递。</li>
+          </ul>
+
+          <p>
+            这是抗震分析中剪力墙建模的标准方法之一，
+            Perform-3D、OpenSees、ABAQUS 都支持。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从板壳理论到板壳单元</strong>：板壳理论给出偏微分方程，
+              板壳单元把它离散为代数方程。理论上是一致的，
+              但工程实现需要考虑：锁死、大变形、材料非线性、
+              层合效应、接触、断裂等一系列复杂问题。
+              工业软件的核心竞争力就在于这些"工程细节"。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="dynamics">
+          <h2><span class="num">08</span>动力学有限元</h2>
+
+          <h3>运动方程</h3>
+          <p>
+            有限元动力学方程为：
+          </p>
+
+          $$ \mathbf{M} \ddot{\mathbf{u}} + \mathbf{C} \dot{\mathbf{u}} + \mathbf{K} \mathbf{u} = \mathbf{F}(t) $$
+
+          <p>
+            其中质量矩阵 $\mathbf{M}$ 与阻尼矩阵 $\mathbf{C}$ 也需要通过单元分析组装。
+          </p>
+
+          <h3>质量矩阵</h3>
+          <p>质量矩阵有两种构造方式：</p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            一致质量矩阵（Consistent Mass Matrix）：
+          </p>
+          $$ \mathbf{m}^e = \int_{V_e} \rho \mathbf{N}^T \mathbf{N} \, dV $$
+
+          <p>
+            由形函数插值得到，与刚度矩阵的计算方式一致。
+            优点：精度高、模态收敛快。
+            缺点：非对角、计算量大。
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            集中质量矩阵（Lumped Mass Matrix）：
+          </p>
+          <p>
+            把质量集中到节点，矩阵为对角。
+            优点：计算快、存储少、适合显式积分。
+            缺点：精度略低，高频模态精度差。
+          </p>
+
+          <h3>模态分析</h3>
+          <p>忽略阻尼与外力，自由振动方程化为广义特征值问题：</p>
+
+          $$ \mathbf{K} \boldsymbol{\phi} = \omega^2 \mathbf{M} \boldsymbol{\phi} $$
+
+          <p>求解特征值得到 $n$ 个自振频率 $\omega_1 \le \omega_2 \le \cdots \le \omega_n$。</p>
+
+          <p>对大型问题（$n$ 很大），只求前几阶模态即可，常用方法：</p>
+          <ul>
+            <li><strong>子空间迭代法</strong>：经典方法，适合前 10–100 阶。</li>
+            <li><strong>Lanczos 方法</strong>：现代主流，速度更快。</li>
+            <li><strong>Arnoldi 方法</strong>：适合非对称问题。</li>
+          </ul>
+
+          <h3>时程分析</h3>
+          <p>时程分析直接对运动方程做数值积分，常用方法：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>稳定性</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Newmark-β</strong></td>
+                  <td>条件或无条件稳定</td>
+                  <td>线性与弱非线性</td>
+                </tr>
+                <tr>
+                  <td><strong>Wilson-θ</strong></td>
+                  <td>无条件稳定（θ≥1.37）</td>
+                  <td>结构动力学</td>
+                </tr>
+                <tr>
+                  <td><strong>HHT-α</strong></td>
+                  <td>无条件稳定</td>
+                  <td>含可调数值阻尼</td>
+                </tr>
+                <tr>
+                  <td><strong>中心差分法</strong></td>
+                  <td>条件稳定</td>
+                  <td>显式，冲击动力学</td>
+                </tr>
+                <tr>
+                  <td><strong>广义-α 法</strong></td>
+                  <td>无条件稳定</td>
+                  <td>现代主流</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>隐式与显式积分</h3>
+          <p>
+            时间积分分为两大类：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            隐式积分（Implicit）：
+          </p>
+          <p>
+            每个时间步需要求解线性方程组（或非线性迭代）。
+            无条件稳定，时间步可以较大。
+            适合长时程、平滑响应问题。如结构地震响应分析。
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            显式积分（Explicit）：
+          </p>
+          <p>
+            每个时间步只需矩阵-向量乘法，无需解方程组。
+            条件稳定，时间步必须小于临界值 $\Delta t_{cr}$。
+            适合短时程、高频响应、冲击与接触问题。
+            如汽车碰撞、爆炸、跌落分析。
+          </p>
+
+          <p>临界时间步的估算：</p>
+
+          $$ \Delta t_{cr} \approx \frac{L_{\min}}{c}, \qquad
+             c = \sqrt{\frac{E}{\rho}} $$
+
+          <p>
+            其中 $L_{\min}$ 为最小单元尺寸，$c$ 为材料波速。
+            这要求单元不能太小，否则时间步过小导致计算量爆炸。
+          </p>
+
+          <h3>Python 示例：Newmark-β 法的多自由度实现</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>mdof_newmark.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+多自由度体系的 Newmark-β 时程分析
+含 Rayleigh 阻尼
+"""
+import numpy as np
+
+
+def rayleigh_damping(M, K, zeta1, zeta2, omega1, omega2):
+    """
+    计算 Rayleigh 阻尼矩阵 C = alpha*M + beta*K
+    在两个指定频率处匹配目标阻尼比
+    """
+    alpha = 2 * omega1 * omega2 * (zeta2 * omega1 - zeta1 * omega2) \
+            / (omega1**2 - omega2**2)
+    beta = 2 * (zeta1 * omega1 - zeta2 * omega2) \
+           / (omega1**2 - omega2**2)
+    return alpha * M + beta * K, alpha, beta
+
+
+def mdof_newmark(M, C, K, F, dt, u0=None, v0=None,
+                 gamma=0.5, beta=0.25):
+    """
+    多自由度体系的 Newmark-β 时程分析
+    M, C, K : n×n 矩阵
+    F       : n×n_steps 荷载矩阵（每一列是一个时间步的荷载）
+    dt      : 时间步长
+    返回 t, U, V, A
+    """
+    n = M.shape[0]
+    n_steps = F.shape[1]
+
+    if u0 is None: u0 = np.zeros(n)
+    if v0 is None: v0 = np.zeros(n)
+
+    # 初始加速度
+    a0 = np.linalg.solve(M, F[:, 0] - C @ v0 - K @ u0)
+
+    U = np.zeros((n, n_steps))
+    V = np.zeros((n, n_steps))
+    A = np.zeros((n, n_steps))
+    U[:, 0] = u0
+    V[:, 0] = v0
+    A[:, 0] = a0
+
+    # 等效刚度（一次性分解）
+    K_hat = K + gamma / (beta * dt) * C + 1.0 / (beta * dt ** 2) * M
+
+    # 系数
+    a1 = 1.0 / (beta * dt ** 2) * M + gamma / (beta * dt) * C
+    a2 = 1.0 / (beta * dt) * M + (gamma / beta - 1.0) * C
+    a3 = (0.5 / beta - 1.0) * M + dt * (gamma / (2 * beta) - 1.0) * C
+
+    for i in range(n_steps - 1):
+        p_hat = F[:, i + 1] + a1 @ U[:, i] + a2 @ V[:, i] + a3 @ A[:, i]
+        U_new = np.linalg.solve(K_hat, p_hat)
+        V_new = (gamma / (beta * dt)) * (U_new - U[:, i]) \
+                + (1 - gamma / beta) * V[:, i] \
+                + dt * (1 - gamma / (2 * beta)) * A[:, i]
+        A_new = (1.0 / (beta * dt ** 2)) * (U_new - U[:, i]) \
+                - (1.0 / (beta * dt)) * V[:, i] \
+                - (1.0 / (2 * beta) - 1.0) * A[:, i]
+
+        U[:, i + 1] = U_new
+        V[:, i + 1] = V_new
+        A[:, i + 1] = A_new
+
+    t = np.arange(n_steps) * dt
+    return t, U, V, A
+
+
+if __name__ == "__main__":
+    # 3 层剪切型框架
+    m, k = 1e5, 1e8
+    M = np.diag([m, m, m])
+    K = np.array([
+        [ 2*k, -k,    0],
+        [-k,    2*k, -k],
+        [ 0,   -k,    k],
+    ])
+
+    # 模态分析
+    from scipy.linalg import eigh
+    eigvals, eigvecs = eigh(K, M)
+    omega = np.sqrt(eigvals)
+    print(f"自振频率: {omega}")
+    print(f"自振周期: {2*np.pi/omega}")
+
+    # Rayleigh 阻尼（匹配前两阶模态，ζ = 5%）
+    C, alpha, beta = rayleigh_damping(M, K, 0.05, 0.05, omega[0], omega[1])
+    print(f"\nRayleigh 系数: α = {alpha:.4f}, β = {beta:.6f}")
+
+    # 底部地面加速度（简谐激励）
+    dt = 0.01
+    t_total = 10.0
+    n_steps = int(t_total / dt)
+    t = np.arange(n_steps) * dt
+    ag = 1.0 * np.sin(2 * np.pi * 1.0 * t)   # 1 Hz 正弦
+
+    # 等效荷载 -M * 1 * ag
+    ones = np.ones(3)
+    F = -np.outer(M @ ones, ag)
+
+    # Newmark 时程分析
+    t_out, U, V, A = mdof_newmark(M, C, K, F, dt)
+
+    print(f"\n最大层间位移：")
+    for i in range(3):
+        print(f"  第 {i+1} 层：{np.max(np.abs(U[i]))*1000:.3f} mm")
+
+    print(f"\n最大绝对加速度：")
+    for i in range(3):
+        a_abs = A[i] + ag
+        print(f"  第 {i+1} 层：{np.max(np.abs(a_abs)):.3f} m/s²")</code></pre>
+          </div>
+        </section>
+
+        <section id="nonlinear">
+          <h2><span class="num">09</span>非线性有限元</h2>
+
+          <h3>三类非线性</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>来源</th><th>典型问题</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>几何非线性</strong></td>
+                  <td>大位移、大转动、大应变</td>
+                  <td>屈曲、后屈曲、膜结构</td>
+                </tr>
+                <tr>
+                  <td><strong>材料非线性</strong></td>
+                  <td>塑性、损伤、粘弹性、断裂</td>
+                  <td>结构极限承载力、地震非线性响应</td>
+                </tr>
+                <tr>
+                  <td><strong>边界非线性</strong></td>
+                  <td>接触、摩擦、间隙</td>
+                  <td>碰撞、土-结构相互作用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>非线性平衡方程</h3>
+          <p>引入非线性后，平衡方程变为：</p>
+
+          $$ \mathbf{R}(\mathbf{u}) = \mathbf{F}_{\text{ext}} - \mathbf{F}_{\text{int}}(\mathbf{u}) = \mathbf{0} $$
+
+          <p>其中 $\mathbf{F}_{\text{int}}$ 为内力向量，是位移的非线性函数。</p>
+
+          <h3>Newton-Raphson 法</h3>
+          <p>求解非线性方程组最常用的方法。基本迭代为：</p>
+
+          $$ \mathbf{K}_T(\mathbf{u}^{(k)}) \, \Delta \mathbf{u}^{(k)} = \mathbf{R}(\mathbf{u}^{(k)}) $$
+
+          $$ \mathbf{u}^{(k+1)} = \mathbf{u}^{(k)} + \Delta \mathbf{u}^{(k)} $$
+
+          <p>其中 $\mathbf{K}_T = \partial \mathbf{F}_{\text{int}} / \partial \mathbf{u}$ 为<strong>切线刚度矩阵</strong>。</p>
+
+          <p>迭代收敛后即得到非线性解。收敛判据常用：</p>
+          <ul>
+            <li>残差范数 $\|\mathbf{R}\| / \|\mathbf{F}_{\text{ext}}\| < \varepsilon_1$。</li>
+            <li>位移增量范数 $\|\Delta \mathbf{u}\| / \|\mathbf{u}\| < \varepsilon_2$。</li>
+            <li>能量范数 $\Delta \mathbf{u}^T \mathbf{R} < \varepsilon_3$。</li>
+          </ul>
+
+          <h3>修正 Newton 法</h3>
+          <p>
+            每一步都重新计算 $\mathbf{K}_T$ 并分解代价高昂。
+            <strong>修正 Newton 法</strong>只计算一次切线刚度，
+            用于几步迭代，收敛慢但每步代价低。
+          </p>
+
+          <p>
+            在计算效率与收敛速度之间，工程实践中常根据问题性质选择。
+          </p>
+
+          <h3>弧长法</h3>
+          <p>
+            对含极限点（如屈曲、软化）的问题，
+            标准 Newton-Raphson 在极限点附近会发散。
+            <strong>弧长法</strong>（Arc-Length Method, Riks 法）
+            把荷载因子也作为未知量，沿弧长追踪平衡路径：
+          </p>
+
+          $$ \Delta \mathbf{u}^T \Delta \mathbf{u} + \psi^2 \Delta \lambda^2 = \Delta s^2 $$
+
+          <p>
+            这样能顺利通过极限点，跟踪结构的后屈曲路径。
+            弧长法是薄壳、屈曲、软化的首选方法。
+          </p>
+
+          <h3>材料本构的积分</h3>
+          <p>
+            在非线性有限元中，每一步迭代都要更新应力状态。
+            对弹塑性材料，常用<strong>返回映射算法</strong>：
+          </p>
+          <ol class="steps">
+            <li>弹性试探：假设本步纯弹性，计算试探应力。</li>
+            <li>屈服判断：判断试探应力是否超出屈服面。</li>
+            <li>塑性修正：如超出，用返回映射投影回屈服面。</li>
+            <li>更新状态变量：塑性应变、硬化参数等。</li>
+            <li>计算一致性切线刚度。</li>
+          </ol>
+
+          <p>
+            这要求本构模型提供<strong>一致性切线刚度</strong>
+            （Consistent Tangent Modulus），
+            它是 Newton-Raphson 迭代收敛的关键。
+          </p>
+
+          <h3>几何非线性的两种格式</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>格式</th><th>参考构型</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Total Lagrangian (TL)</strong></td>
+                  <td>初始构型</td>
+                  <td>适合大位移小应变</td>
+                </tr>
+                <tr>
+                  <td><strong>Updated Lagrangian (UL)</strong></td>
+                  <td>上一步构型</td>
+                  <td>适合大应变、接触</td>
+                </tr>
+                <tr>
+                  <td><strong>Corotational</strong></td>
+                  <td>分离刚体运动</td>
+                  <td>适合梁壳大转动</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：Newton-Raphson 非线性求解</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>newton_raphson.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+非线性有限元的 Newton-Raphson 求解
+以单自由度体系为例，展示迭代收敛过程
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def nonlinear_response(u, k0, alpha):
+    """
+    非线性恢复力：k0 * u + alpha * u^3
+    模拟几何非线性（大位移）或材料非线性（硬化）
+    """
+    return k0 * u + alpha * u**3
+
+
+def tangent_stiffness(u, k0, alpha):
+    """切线刚度 dF/du"""
+    return k0 + 3 * alpha * u**2
+
+
+def newton_raphson(F_ext, k0, alpha, u0=0.0, tol=1e-8, max_iter=30):
+    """
+    求解非线性平衡方程 F_int(u) = F_ext
+    返回 (u, history)：最终位移与迭代历史
+    """
+    u = u0
+    history = [u]
+
+    for i in range(max_iter):
+        F_int = nonlinear_response(u, k0, alpha)
+        residual = F_ext - F_int
+
+        if abs(residual) < tol:
+            print(f"  收敛，迭代 {i} 次")
+            return u, history
+
+        K_T = tangent_stiffness(u, k0, alpha)
+        du = residual / K_T
+        u += du
+        history.append(u)
+
+        print(f"  迭代 {i+1}: u = {u:12.6e}, R = {residual:12.4e}, "
+              f"K_T = {K_T:12.4e}")
+
+    print(f"  未收敛（达到最大迭代次数 {max_iter}）")
+    return u, history
+
+
+if __name__ == "__main__":
+    # 单自由度非线性弹簧
+    k0 = 1e6       # 线性刚度
+    alpha = 1e9    # 三次项系数
+
+    print("=" * 60)
+    print("示例：非线性弹簧的 Newton-Raphson 求解")
+    print("=" * 60)
+
+    # 施加不同荷载，观察迭代次数
+    print("\n施加力 F = 5e4 N:")
+    u1, hist1 = newton_raphson(5e4, k0, alpha)
+
+    print(f"\n施加力 F = 1e5 N:")
+    u2, hist2 = newton_raphson(1e5, k0, alpha)
+
+    print(f"\n施加力 F = 2e5 N:")
+    u3, hist3 = newton_raphson(2e5, k0, alpha)
+
+    # 画平衡路径
+    u_range = np.linspace(0, 0.25, 200)
+    F_range = nonlinear_response(u_range, k0, alpha)
+    F_linear = k0 * u_range
+
+    plt.figure(figsize=(9, 5))
+    plt.plot(u_range * 1000, F_range / 1e3, color="#db2777",
+             linewidth=2, label="非线性：F = k₀u + αu³")
+    plt.plot(u_range * 1000, F_linear / 1e3, color="#2563eb",
+             linewidth=1.5, linestyle="--", label="线性：F = k₀u")
+    plt.scatter([u1*1000, u2*1000, u3*1000], [50, 100, 200],
+                color="black", zorder=5, s=50)
+    plt.xlabel("位移 u (mm)")
+    plt.ylabel("力 F (kN)")
+    plt.title("非线性恢复力与平衡路径")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    print("\n" + "=" * 60)
+    print("示例：切线刚度对迭代收敛的影响")
+    print("=" * 60)
+
+    # 对比两种刚度：线性（不更新）和切线（更新）
+    F_target = 2e5
+    print(f"\n目标力 F = {F_target/1e3:.0f} kN")
+
+    # 用线性刚度
+    print("\n1) 用线性刚度（修正 Newton 法）:")
+    u = 0.0
+    for i in range(20):
+        R = F_target - nonlinear_response(u, k0, alpha)
+        if abs(R) < 1e-6:
+            break
+        u += R / k0   # 用固定 k0
+        print(f"  迭代 {i+1}: u = {u*1000:10.4f} mm, R = {R:12.4e}")
+    print(f"  收敛于 u = {u*1000:.4f} mm（迭代 {i+1} 次）")
+
+    # 用切线刚度
+    print("\n2) 用切线刚度（标准 Newton-Raphson）:")
+    u = 0.0
+    for i in range(20):
+        R = F_target - nonlinear_response(u, k0, alpha)
+        if abs(R) < 1e-6:
+            break
+        K_T = tangent_stiffness(u, k0, alpha)
+        u += R / K_T
+        print(f"  迭代 {i+1}: u = {u*1000:10.4f} mm, R = {R:12.4e}")
+    print(f"  收敛于 u = {u*1000:.4f} mm（迭代 {i+1} 次）")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从线性到非线性</strong>：线性有限元解一次方程；
+              非线性有限元需要迭代。核心挑战是：
+              <strong>收敛性</strong>（迭代是否收敛）、
+              <strong>效率</strong>（每步计算量）、
+              <strong>鲁棒性</strong>（能否通过极限点）。
+              工业级软件（ABAQUS、ANSYS、OpenSees）的竞争力，
+              很大程度上体现在非线性求解的鲁棒性上。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>有限元三步走</strong>：前处理离散化 → 单元分析 → 组装求解。</li>
+              <li><strong>核心公式</strong>：$\mathbf{k}^e = \int_{V_e} \mathbf{B}^T \mathbf{D} \mathbf{B} \, dV$，贯穿所有单元类型。</li>
+              <li><strong>形函数</strong>：插值几何与物理量，满足 Kronecker delta 与单位分解。</li>
+              <li><strong>等参单元</strong>：几何与位移用同一组形函数，通过雅可比矩阵处理坐标变换。</li>
+              <li><strong>数值积分</strong>：高斯求积是等参单元的核心，$n$ 个点精确积分 $2n-1$ 次多项式。</li>
+              <li><strong>整体组装</strong>：把单元刚度矩阵按自由度编号叠加，得到 $\mathbf{K}\mathbf{u} = \mathbf{F}$。</li>
+              <li><strong>边界条件</strong>：位移边界用置大数法或自由度重排；力边界直接写入荷载向量。</li>
+              <li><strong>杆系单元</strong>：桁架、刚架、梁单元是最简单也最常用的单元。</li>
+              <li><strong>实体单元</strong>：三角形、四边形、四面体、六面体；注意锁死问题。</li>
+              <li><strong>板壳单元</strong>：Kirchhoff 路线（$C^1$ 连续）与 Mindlin 路线（$C^0$ 连续）；工业主流用退化壳单元。</li>
+              <li><strong>动力学有限元</strong>：$\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = \mathbf{F}(t)$，模态分析 + 时程分析。</li>
+              <li><strong>非线性有限元</strong>：几何、材料、边界三类非线性；Newton-Raphson 迭代 + 切线刚度 + 返回映射。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Zienkiewicz &amp; Taylor, <em>The Finite Element Method</em> (Vol. 1–3) — 有限元权威著作</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 结构工程视角的经典教材</li>
+            <li>Hughes, <em>The Finite Element Method: Linear Static and Dynamic Finite Element Analysis</em> — 理论严谨</li>
+            <li>Cook et al., <em>Concepts and Applications of Finite Element Analysis</em> — 工程入门</li>
+            <li>Simo &amp; Hughes, <em>Computational Inelasticity</em> — 非线性有限元权威</li>
+            <li>Crisfield, <em>Non-linear Finite Element Analysis of Solids and Structures</em> — 非线性经典</li>
+            <li>王勖成，《有限单元法》— 国内权威教材</li>
+            <li>朱伯芳，《有限单元法原理与应用》— 工程应用</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

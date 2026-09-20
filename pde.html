@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>偏微分方程 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="pde">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#classification">一、方程分类</a></li>
+      <li><a href="#first-order">二、一阶方程与特征线法</a></li>
+      <li><a href="#wave">三、波动方程</a></li>
+      <li><a href="#heat">四、热传导方程</a></li>
+      <li><a href="#laplace">五、拉普拉斯方程</a></li>
+      <li><a href="#separation">六、分离变量法</a></li>
+      <li><a href="#green">七、格林函数</a></li>
+      <li><a href="#numerical">八、数值方法</a></li>
+      <li><a href="#application">九、工程应用</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 偏微分方程
+        </div>
+        <h1>偏微分方程</h1>
+        <p class="lead">
+          从方程分类到波动、热传导、拉普拉斯三大方程，覆盖特征线法、
+          分离变量、格林函数与数值解法。它是连续介质力学、地震波传播、
+          场地地震反应分析、热-力耦合问题的共同数学基础。
+        </p>
+        <div class="article-meta">
+          <span>波动方程</span>
+          <span>热传导</span>
+          <span>分离变量</span>
+          <span class="blue">连续介质</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            偏微分方程（PDE）是含有未知函数<strong>多个自变量偏导数</strong>的方程。
+            与常微分方程（ODE）相比，PDE 描述的是<strong>空间分布 + 时间演化</strong>的物理过程，
+            是连续介质力学的通用语言。
+          </p>
+          <p>
+            对结构工程师与地震工程师来说，PDE 出现在三个层次：
+          </p>
+          <ul>
+            <li><strong>连续体描述</strong>：一维杆的纵波、梁的弯曲波、三维弹性动力学方程，都是 PDE。</li>
+            <li><strong>波的传播</strong>：地震波在土层中的传播、场地放大效应，本质是波动方程的边值问题。</li>
+            <li><strong>数值离散</strong>：有限元与有限差分把 PDE 离散化为代数方程组，这是所有工程仿真软件的内核。</li>
+          </ul>
+          <p>
+            这份笔记按"分类 $\to$ 一阶方程 $\to$ 三大方程 $\to$ 分离变量 $\to$ 格林函数 $\to$ 数值方法 $\to$ 工程应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="classification">
+          <h2><span class="num">01</span>方程分类</h2>
+
+          <h3>阶数与线性性</h3>
+          <p>
+            按最高阶偏导数的阶数，PDE 分为一阶、二阶、高阶。
+            按未知函数及其导数的出现方式，分为：
+          </p>
+          <ul>
+            <li><strong>线性</strong>：所有项都是未知函数及其导数的一次式，系数只依赖自变量。</li>
+            <li><strong>半线性</strong>：最高阶项线性，低阶项可以非线性。</li>
+            <li><strong>拟线性</strong>：最高阶项的系数含未知函数或其低阶导数。</li>
+            <li><strong>完全非线性</strong>：最高阶项关于最高阶导数非线性。</li>
+          </ul>
+
+          <h3>二阶方程的分类</h3>
+          <p>
+            考虑一般的二阶线性 PDE：
+          </p>
+
+          $$ A u_{xx} + 2B u_{xy} + C u_{yy} + \cdots = 0 $$
+
+          <p>
+            根据判别式 $\Delta = B^2 - AC$ 的符号分为三类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>判别式</th><th>标准形式</th><th>典型方程</th><th>物理意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>椭圆型</td>
+                  <td>$\Delta < 0$</td>
+                  <td>$u_{xx} + u_{yy} = f$</td>
+                  <td>拉普拉斯 / 泊松方程</td>
+                  <td>平衡、稳态</td>
+                </tr>
+                <tr>
+                  <td>抛物型</td>
+                  <td>$\Delta = 0$</td>
+                  <td>$u_t = u_{xx}$</td>
+                  <td>热传导方程</td>
+                  <td>扩散、耗散</td>
+                </tr>
+                <tr>
+                  <td>双曲型</td>
+                  <td>$\Delta > 0$</td>
+                  <td>$u_{tt} = u_{xx}$</td>
+                  <td>波动方程</td>
+                  <td>传播、振动</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            三类方程在数学性质上有本质差异：
+          </p>
+          <ul>
+            <li><strong>椭圆型</strong>：解在区域内无穷光滑（若系数光滑）；边界数据决定内部解。</li>
+            <li><strong>抛物型</strong>：解随时间演化；初始条件 + 边界条件决定；具有无限传播速度（数学上）。</li>
+            <li><strong>双曲型</strong>：解沿特征线传播；波速有限；可能出现间断（激波）。</li>
+          </ul>
+
+          <h3>定解条件</h3>
+          <p>
+            PDE 本身有无穷多解，需要附加条件才能确定唯一解：
+          </p>
+          <ul>
+            <li><strong>初始条件</strong>：给定位移、速度、温度等在 $t = 0$ 的值（抛物型、双曲型需要）。</li>
+            <li><strong>边界条件</strong>：给定边界上的函数值（Dirichlet）、法向导数（Neumann）、或两者组合（Robin）。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：结构动力学中的运动方程
+              $\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = \mathbf{P}(t)$
+              是空间离散化的双曲型方程（或抛物型，当阻尼很大时）。
+              不同的数值积分方法（显式 vs 隐式）正好对应不同的方程类型特征。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="first-order">
+          <h2><span class="num">02</span>一阶方程与特征线法</h2>
+
+          <h3>一阶线性方程</h3>
+          <p>
+            考虑一阶拟线性方程：
+          </p>
+
+          $$ a(x, y, u) u_x + b(x, y, u) u_y = c(x, y, u) $$
+
+          <p>
+            特征线法的思想：把 PDE 转化为沿某些曲线（<strong>特征线</strong>）的 ODE。
+            特征线由下述 ODE 系统定义：
+          </p>
+
+          $$ \frac{dx}{dt} = a, \qquad \frac{dy}{dt} = b, \qquad \frac{du}{dt} = c $$
+
+          <p>
+            沿特征线，PDE 退化为 ODE，可以积分求解。
+          </p>
+
+          <h3>守恒律与激波</h3>
+          <p>
+            一阶方程的重要特例是<strong>守恒律</strong>：
+          </p>
+
+          $$ u_t + f(u)_x = 0 $$
+
+          <p>
+            即使初始条件光滑，解也可能在有限时间内出现<strong>间断（激波）</strong>。
+            一维气体动力学、交通流、浅水波方程都是这类。
+          </p>
+
+          <h3>例子：输运方程</h3>
+          <p>
+            最简单的输运方程：
+          </p>
+
+          $$ u_t + c u_x = 0, \qquad u(x, 0) = \phi(x) $$
+
+          <p>
+            解为 $u(x, t) = \phi(x - ct)$，即初始波形以速度 $c$ 向右平移。
+            这就是<strong>行波</strong>的原型。
+          </p>
+
+          <p>
+            地震学中的一维波动传播，在不考虑反射折射时，
+            可以近似用输运方程描述。地下介质的分层性、波阻抗差异，
+            则对应特征线法中的"边界反射"处理。
+          </p>
+
+          <h3>Python 示例：一阶方程的数值解</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>transport.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def upwind_transport(c, L, T, nx, nt):
+    """
+    一阶输运方程 u_t + c·u_x = 0 的一阶迎风格式。
+    稳定条件：|c|·dt/dx ≤ 1（CFL 条件）
+    """
+    dx = L / nx
+    dt = T / nt
+    x = np.linspace(0, L, nx + 1)
+
+    # 初始条件：高斯脉冲
+    u = np.exp(-((x - L / 4) ** 2) / (2 * (L / 20) ** 2))
+
+    # CFL 数
+    nu = abs(c) * dt / dx
+    print(f"CFL 数 = {nu:.3f}（应 ≤ 1 保证稳定）")
+
+    # 时间推进
+    for n in range(nt):
+        u_new = u.copy()
+        for i in range(1, nx + 1):
+            if c > 0:
+                # 迎风格式：c > 0 时用左侧信息
+                u_new[i] = u[i] - nu * (u[i] - u[i - 1])
+            else:
+                u_new[i] = u[i] - nu * (u[i + 1] - u[i])
+        u = u_new
+
+    return x, u
+
+
+if __name__ == "__main__":
+    L, T = 1.0, 0.5
+    c = 1.0
+
+    plt.figure(figsize=(10, 4))
+
+    for nx, nt in [(100, 200), (200, 400), (400, 800)]:
+        x, u = upwind_transport(c, L, T, nx, nt)
+        plt.plot(x, u, label=f"nx={nx}")
+
+    plt.xlabel("x")
+    plt.ylabel("u(x, T)")
+    plt.title("输运方程：初始高斯脉冲在 t=0.5 时的波形")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：脉冲在传播过程中<strong>被数值格式抹平</strong>（数值耗散），
+            网格越密，抹平越少。这是所有一阶格式的共性，
+            也是 CFD 与波传播数值模拟中"高阶格式"研究动力的来源。
+          </p>
+        </section>
+
+        <section id="wave">
+          <h2><span class="num">03</span>波动方程</h2>
+
+          <h3>方程形式</h3>
+          <p>
+            一维波动方程：
+          </p>
+
+          $$ \frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2} $$
+
+          <p>
+            其中 $c$ 是波速。三维形式：
+          </p>
+
+          $$ \frac{\partial^2 u}{\partial t^2} = c^2 \nabla^2 u $$
+
+          <h3>达朗贝尔解</h3>
+          <p>
+            对一维波动方程，达朗贝尔给出通解：
+          </p>
+
+          $$ u(x, t) = f(x - ct) + g(x + ct) $$
+
+          <p>
+            其中 $f$ 是右行波，$g$ 是左行波。
+            初始条件 $u(x, 0) = \phi(x)$，$u_t(x, 0) = \psi(x)$ 对应：
+          </p>
+
+          $$ u(x, t) = \frac{1}{2}[\phi(x - ct) + \phi(x + ct)]
+             + \frac{1}{2c} \int_{x - ct}^{x + ct} \psi(s) \, ds $$
+
+          <h3>能量守恒</h3>
+          <p>
+            波动方程有守恒的总能量：
+          </p>
+
+          $$ E(t) = \frac{1}{2} \int \left( u_t^2 + c^2 u_x^2 \right) dx
+             = \text{const} $$
+
+          <p>
+            这正是它适合描述无耗散波传播的数学原因。
+          </p>
+
+          <h3>结构中的波动方程</h3>
+          <p>
+            结构杆件中的<strong>纵波</strong>方程：
+          </p>
+
+          $$ \frac{\partial^2 u}{\partial t^2} = \frac{E}{\rho}
+             \frac{\partial^2 u}{\partial x^2}, \qquad
+             c = \sqrt{\frac{E}{\rho}} $$
+
+          <p>
+            例如钢的 $E \approx 200 \text{ GPa}$，$\rho \approx 7850 \text{ kg/m}^3$，
+            纵波速约 $c \approx 5100 \text{ m/s}$。
+          </p>
+
+          <p>
+            梁的<strong>弯曲波</strong>（Euler-Bernoulli 梁）：
+          </p>
+
+          $$ \rho A \frac{\partial^2 w}{\partial t^2}
+             + EI \frac{\partial^4 w}{\partial x^4} = q(x, t) $$
+
+          <p>
+            注意弯曲波是四阶 PDE，具有<strong>色散</strong>特性：
+            不同频率的波速不同。这与纵波的非色散形成对比。
+          </p>
+
+          <h3>地震学中的波动方程</h3>
+          <p>
+            三维弹性动力学方程（无体力）：
+          </p>
+
+          $$ \rho \frac{\partial^2 \mathbf{u}}{\partial t^2}
+             = (\lambda + \mu) \nabla (\nabla \cdot \mathbf{u})
+             + \mu \nabla^2 \mathbf{u} $$
+
+          <p>
+            其中 $\lambda$、$\mu$ 是 Lamé 常数。通过 Helmholtz 分解，
+            可以拆成两个独立的波动方程：
+          </p>
+
+          $$ \mathbf{u} = \nabla \phi + \nabla \times \boldsymbol{\psi} $$
+
+          <p>
+            分别对应<strong>P 波</strong>（压缩波）与<strong>S 波</strong>（剪切波）：
+          </p>
+
+          $$ c_P = \sqrt{\frac{\lambda + 2\mu}{\rho}}, \qquad
+             c_S = \sqrt{\frac{\mu}{\rho}} $$
+
+          <p>
+            这就是地震学中 P 波先到、S 波后到的数学解释。
+            两者的速度比 $c_P/c_S = \sqrt{(1-\nu)/(1-2\nu)}$，只依赖泊松比。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>场地地震反应分析</strong>：一维土层地震反应分析（如 SHAKE 程序）
+              就是把水平土层简化为一维剪切梁，求解 SH 波在层状介质中的传播方程。
+              通过频域内逐层传递（传递矩阵法），得到地表的放大因子。
+              这是场地效应分析的标准方法。</p>
+            </div>
+          </div>
+
+          <h3>Python 示例：一维波动方程的数值解</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>wave1d.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def wave1d_explicit(c, L, T, nx, nt, x_source=None):
+    """
+    一维波动方程 u_tt = c² u_xx 的显式中心差分格式。
+    稳定条件：Courant 数 C = c·dt/dx ≤ 1。
+    边界：两端固定（u = 0）。
+    """
+    dx = L / nx
+    dt = T / nt
+    C = c * dt / dx
+    print(f"Courant 数 C = {C:.3f}（应 ≤ 1）")
+
+    x = np.linspace(0, L, nx + 1)
+    u = np.zeros((nt + 1, nx + 1))
+
+    # 初始条件：高斯脉冲
+    x0 = x_source if x_source is not None else L / 4
+    u[0, :] = np.exp(-((x - x0) ** 2) / (2 * (L / 30) ** 2))
+
+    # 第一步（用 u_t(x, 0) = 0 的特殊处理）
+    for i in range(1, nx):
+        u[1, i] = u[0, i] + 0.5 * C**2 * (u[0, i + 1] - 2 * u[0, i] + u[0, i - 1])
+
+    # 时间推进
+    for n in range(1, nt):
+        for i in range(1, nx):
+            u[n + 1, i] = (2 * u[n, i] - u[n - 1, i]
+                           + C**2 * (u[n, i + 1] - 2 * u[n, i] + u[n, i - 1]))
+
+    return x, u
+
+
+if __name__ == "__main__":
+    c, L = 1.0, 1.0
+    nx = 400
+    T = 1.0
+
+    # 展示不同时刻的波形
+    snapshots = [0.0, 0.2, 0.4, 0.6]
+    nt = int(T * nx / c / L)
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 7))
+    axes = axes.flatten()
+
+    for ax, t_snap in zip(axes, snapshots):
+        n_snap = int(t_snap * nx / c / L)
+        _, u = wave1d_explicit(c, L, t_snap, nx, max(1, n_snap), x_source=0.3)
+        x = np.linspace(0, L, nx + 1)
+        ax.plot(x, u[-1, :])
+        ax.set_title(f"t = {t_snap:.1f}")
+        ax.set_ylim(-1.1, 1.1)
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            运行后会看到：初始脉冲分裂成左右两个行波，
+            分别以速度 $c$ 传播；碰到固定端后<strong>反射并变号</strong>。
+            这正是地震波在自由地表与基岩界面反射的简化模型。
+          </p>
+        </section>
+
+        <section id="heat">
+          <h2><span class="num">04</span>热传导方程</h2>
+
+          <h3>方程形式</h3>
+          <p>
+            一维热传导方程：
+          </p>
+
+          $$ \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2} $$
+
+          <p>
+            其中 $\alpha$ 是热扩散系数。三维形式：
+          </p>
+
+          $$ \frac{\partial u}{\partial t} = \alpha \nabla^2 u $$
+
+          <h3>基本解</h3>
+          <p>
+            在无限域上，初始点源 $\delta(x)$ 的解是<strong>热核</strong>：
+          </p>
+
+          $$ u(x, t) = \frac{1}{\sqrt{4\pi \alpha t}}
+             \exp\!\left(-\frac{x^2}{4 \alpha t}\right) $$
+
+          <p>
+            这是一个宽度随时间增长、峰值随时间衰减的高斯函数。
+            它体现了扩散过程的两个基本特征：
+          </p>
+          <ul>
+            <li><strong>无穷传播速度</strong>：任何位置的温度在瞬间就能感受到点源的影响（虽然极小）。</li>
+            <li><strong>不可逆性</strong>：时间反演不成立，信息在扩散中丢失。</li>
+          </ul>
+
+          <h3>极大值原理</h3>
+          <p>
+            热传导方程满足<strong>极大值原理</strong>：
+            解在区域内部的最大值必在边界或初始时刻取得。
+            物理上就是"热量不会自发集中"。
+          </p>
+          <p>
+            数学推论：初值的光滑性会被立即提升（$t > 0$ 后解 $C^\infty$），
+            这与波动方程保持初始奇异性形成鲜明对比。
+          </p>
+
+          <h3>工程类比</h3>
+          <p>
+            虽然结构工程中直接的"热传导"不多，但热传导方程的数学结构
+            （抛物型）出现在许多问题中：
+          </p>
+          <ul>
+            <li><strong>粘弹性阻尼</strong>：Kelvin-Voigt 模型的应力松弛过程。</li>
+            <li><strong>孔隙水压力扩散</strong>：饱和土体的固结方程（Terzaghi 一维固结）。</li>
+            <li><strong>损伤演化</strong>：连续损伤力学中的损伤变量演化方程。</li>
+            <li><strong>混凝土水化热</strong>：大体积混凝土的温度场演化。</li>
+          </ul>
+
+          <p>
+            例如，一维固结方程：
+          </p>
+
+          $$ \frac{\partial u}{\partial t} = c_v \frac{\partial^2 u}{\partial z^2} $$
+
+          <p>
+            其中 $u$ 是超孔隙水压力，$c_v$ 是固结系数。形式与热传导完全一致，
+            连解法（分离变量、级数解）都相同。
+          </p>
+
+          <h3>Python 示例：显式与隐式格式对比</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>heat1d.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def heat_explicit(alpha, L, T, nx, nt):
+    """
+    显式格式求解 u_t = α u_xx。
+    稳定条件：r = α·dt/dx² ≤ 0.5。
+    边界：两端固定 u = 0。
+    """
+    dx = L / nx
+    dt = T / nt
+    r = alpha * dt / dx**2
+    print(f"显式格式：r = {r:.4f}（应 ≤ 0.5）")
+
+    x = np.linspace(0, L, nx + 1)
+    u = np.sin(np.pi * x / L)  # 初始条件
+
+    for n in range(nt):
+        u_new = u.copy()
+        for i in range(1, nx):
+            u_new[i] = u[i] + r * (u[i + 1] - 2 * u[i] + u[i - 1])
+        u = u_new
+
+    return x, u
+
+
+def heat_implicit(alpha, L, T, nx, nt):
+    """
+    隐式格式（Crank-Nicolson 风格）求解，无条件稳定。
+    """
+    dx = L / nx
+    dt = T / nt
+    r = alpha * dt / dx**2
+
+    x = np.linspace(0, L, nx + 1)
+    u = np.sin(np.pi * x / L)
+
+    # 三对角矩阵
+    n_inner = nx - 1
+    main = (1 + 2 * r) * np.ones(n_inner)
+    off  = -r * np.ones(n_inner - 1)
+
+    # 简单的 Thomas 算法
+    def solve_tridiag(a, b, c, d):
+        n = len(b)
+        cp = np.zeros(n)
+        dp = np.zeros(n)
+        cp[0] = c[0] / b[0]
+        dp[0] = d[0] / b[0]
+        for i in range(1, n):
+            m = b[i] - a[i - 1] * cp[i - 1]
+            cp[i] = c[i] / m if i < n - 1 else 0
+            dp[i] = (d[i] - a[i - 1] * dp[i - 1]) / m
+        x_sol = np.zeros(n)
+        x_sol[-1] = dp[-1]
+        for i in range(n - 2, -1, -1):
+            x_sol[i] = dp[i] - cp[i] * x_sol[i + 1]
+        return x_sol
+
+    a = off.copy()
+    c = off.copy()
+
+    for n in range(nt):
+        d = u[1:-1].copy()  # 内部节点
+        u_inner = solve_tridiag(a, main, c, d)
+        u[1:-1] = u_inner
+
+    return x, u
+
+
+if __name__ == "__main__":
+    alpha, L = 0.01, 1.0
+
+    plt.figure(figsize=(10, 4))
+
+    for T in [0.5, 1.0, 2.0]:
+        x, u_explicit = heat_explicit(alpha, L, T, 50, 200)
+        x, u_implicit = heat_implicit(alpha, L, T, 50, 200)
+        plt.plot(x, u_explicit, "--", alpha=0.6, label=f"显式 T={T}")
+        plt.plot(x, u_implicit, "-", label=f"隐式 T={T}")
+
+    plt.xlabel("x")
+    plt.ylabel("u(x, T)")
+    plt.title("热传导方程：正弦初始条件的衰减")
+    plt.legend(fontsize=9, ncol=2)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    # 理论解对比
+    print("\n理论解：u(x, t) = exp(-α π² t / L²) · sin(πx/L)")
+    for T in [0.5, 1.0, 2.0]:
+        decay = np.exp(-alpha * np.pi**2 * T / L**2)
+        print(f"  t = {T}: 峰值衰减因子 = {decay:.6f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：显式格式受稳定性限制（$r \le 0.5$），
+            隐式格式无条件稳定，但每步需要解三对角方程组。
+            这正是<strong>显式 vs 隐式</strong>经典权衡的直观体现。
+          </p>
+        </section>
+
+        <section id="laplace">
+          <h2><span class="num">05</span>拉普拉斯方程</h2>
+
+          <h3>方程形式</h3>
+          <p>
+            拉普拉斯方程：
+          </p>
+
+          $$ \nabla^2 u = 0 $$
+
+          <p>带源项时称为泊松方程：</p>
+
+          $$ \nabla^2 u = f $$
+
+          <h3>调和函数的性质</h3>
+          <p>
+            满足拉普拉斯方程的函数称为<strong>调和函数</strong>。它们有几条非常强的性质：
+          </p>
+          <ul>
+            <li><strong>均值性质</strong>：函数在某点的值等于以该点为球心的球面上的平均值。</li>
+            <li><strong>极大值原理</strong>：非常数调和函数的最大值与最小值都在边界上取得。</li>
+            <li><strong>解析性</strong>：调和函数在内部无穷可微，且是解析的（与复变函数连接）。</li>
+            <li><strong>唯一性</strong>：Dirichlet 问题的解在区域内唯一。</li>
+          </ul>
+
+          <p>
+            均值性质有一个漂亮的物理含义：平衡状态下，任何点都是周围点的"平均"，
+            不存在局部极值——这就是"平衡态"的数学表述。
+          </p>
+
+          <h3>与复变函数的联系</h3>
+          <p>
+            若 $f(z) = u + iv$ 是解析函数，则 $u$ 与 $v$ 都是调和函数。
+            反过来，在单连通区域内，任何调和函数都是某个解析函数的实部。
+          </p>
+          <p>
+            这个联系使得二维拉普拉斯方程可以用复变函数方法求解——
+            保角映射把复杂几何映射到简单几何，从而快速求解边值问题。
+            这正是弹性力学中<strong>孔口问题</strong>（Kirsch 解、Michell 解）的数学基础。
+          </p>
+
+          <h3>基本解与格林函数</h3>
+          <p>
+            拉普拉斯算子的基本解（即 $\nabla^2 G = -\delta$ 的解）为：
+          </p>
+
+          $$ G(\mathbf{x}, \boldsymbol{\xi}) = \begin{cases}
+             -\dfrac{1}{2\pi} \ln |\mathbf{x} - \boldsymbol{\xi}|, & \text{二维} \\[6pt]
+             \dfrac{1}{4\pi |\mathbf{x} - \boldsymbol{\xi}|}, & \text{三维}
+             \end{cases} $$
+
+          <p>
+            这是泊松方程和位势理论的核心工具。
+            结合边界条件构造出满足齐次边界条件的格林函数后，
+            任意源项的泊松方程解都可以写成积分形式。
+          </p>
+
+          <h3>工程应用</h3>
+          <ul>
+            <li><strong>稳态渗流</strong>：土坝中的稳态渗流场满足 Laplace 方程，等势线与流线正交。</li>
+            <li><strong>稳态温度场</strong>：无热源区域的稳态温度场是调和函数。</li>
+            <li><strong>弹性力学平面问题</strong>：无体力的平面弹性问题可用 Airy 应力函数表达，应力函数满足双调和方程 $\nabla^4 \phi = 0$。</li>
+            <li><strong>扭转问题</strong>：Saint-Venant 扭转问题的应力函数满足 Poisson 方程。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Airy 应力函数</strong>：二维弹性力学中最巧妙的工具之一。
+              取 $\sigma_x = \partial^2 \phi/\partial y^2$，
+              $\sigma_y = \partial^2 \phi/\partial x^2$，
+              $\tau_{xy} = -\partial^2 \phi/\partial x \partial y$，
+              则平衡方程自动满足，而相容方程化为双调和方程
+              $\nabla^4 \phi = 0$。这是把 PDE 边值问题化为标量问题的经典手法。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="separation">
+          <h2><span class="num">06</span>分离变量法</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            分离变量法是求解线性 PDE 边值问题的最基本方法。
+            假设解可以写成单变量函数的乘积：
+          </p>
+
+          $$ u(x, t) = X(x) T(t) $$
+
+          <p>
+            代入 PDE 后，把变量分离到等式两侧，两侧必须都等于常数
+            （称为<strong>分离常数</strong>），从而得到两个 ODE。
+          </p>
+
+          <h3>方法步骤</h3>
+          <ol class="steps">
+            <li>假设分离形式 $u(x, t) = X(x) T(t)$，代入 PDE。</li>
+            <li>整理成左端只含 $x$、右端只含 $t$ 的形式。</li>
+            <li>令两侧等于 $-\lambda$（或 $+\lambda$），得到两个 ODE。</li>
+            <li>求解 $X$ 的 ODE 并施加边界条件，得到特征值 $\lambda_n$ 与特征函数 $X_n$。</li>
+            <li>求解 $T$ 的 ODE，得到 $T_n$。</li>
+            <li>叠加所有解 $u(x, t) = \sum_n X_n(x) T_n(t)$，用初始条件确定系数。</li>
+          </ol>
+
+          <h3>例：一维波动方程</h3>
+          <p>
+            考虑两端固定的弦振动：
+          </p>
+
+          $$ u_{tt} = c^2 u_{xx}, \qquad u(0, t) = u(L, t) = 0 $$
+
+          <p>
+            分离变量后得到特征值问题：
+          </p>
+
+          $$ X'' + \lambda X = 0, \qquad X(0) = X(L) = 0 $$
+
+          <p>
+            解为特征函数与特征值：
+          </p>
+
+          $$ X_n(x) = \sin\!\left(\frac{n\pi x}{L}\right), \qquad
+             \lambda_n = \left(\frac{n\pi}{L}\right)^2, \quad n = 1, 2, \ldots $$
+
+          <p>
+            时间部分 $T_n(t) = A_n \cos(\omega_n t) + B_n \sin(\omega_n t)$，
+            其中：
+          </p>
+
+          $$ \omega_n = c \sqrt{\lambda_n} = \frac{n\pi c}{L} $$
+
+          <p>
+            最终解为级数：
+          </p>
+
+          $$ u(x, t) = \sum_{n=1}^{\infty}
+             \left[A_n \cos(\omega_n t) + B_n \sin(\omega_n t)\right]
+             \sin\!\left(\frac{n\pi x}{L}\right) $$
+
+          <p>
+            这正是<strong>振型分解</strong>的数学原型：
+            任意初始波形都可以分解成若干正弦波（振型）的叠加，
+            每个振型以各自的频率 $\omega_n$ 独立振动。
+          </p>
+
+          <h3>傅里叶级数</h3>
+          <p>
+            系数 $A_n$、$B_n$ 由初始条件与正交性确定：
+          </p>
+
+          $$ A_n = \frac{2}{L} \int_0^L \phi(x) \sin\!\left(\frac{n\pi x}{L}\right) dx, \qquad
+             B_n = \frac{2}{n\pi c} \int_0^L \psi(x) \sin\!\left(\frac{n\pi x}{L}\right) dx $$
+
+          <p>
+            这正是傅里叶正弦级数的系数公式。
+            分离变量法把 PDE 求解归结为<strong>傅里叶级数展开</strong>，
+            这把偏微分方程与积分变换紧密联系起来。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>与结构动力学的对应</strong>：分离变量法在结构动力学中就是
+              <strong>振型分解法</strong>。连续体（梁、板、壳）的振型函数
+              就是分离变量得到的特征函数，固有频率 $\omega_n$ 就是特征值。
+              把连续体离散化为多自由度体系后，振型向量代替振型函数，
+              但数学结构完全一样：广义特征值问题 $\mathbf{K}\boldsymbol{\phi} = \omega^2 \mathbf{M}\boldsymbol{\phi}$。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="green">
+          <h2><span class="num">07</span>格林函数</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            格林函数法是把线性微分方程的解表示为积分形式：
+          </p>
+
+          $$ u(\mathbf{x}) = \int_\Omega G(\mathbf{x}, \boldsymbol{\xi}) f(\boldsymbol{\xi}) \, d\boldsymbol{\xi} $$
+
+          <p>
+            其中 $G(\mathbf{x}, \boldsymbol{\xi})$ 是<strong>格林函数</strong>，
+            物理意义是在 $\boldsymbol{\xi}$ 处施加单位点源时，
+            在 $\mathbf{x}$ 处的响应。
+          </p>
+
+          <p>
+            对线性算子 $\mathcal{L}$，格林函数满足：
+          </p>
+
+          $$ \mathcal{L} G(\mathbf{x}, \boldsymbol{\xi}) = -\delta(\mathbf{x} - \boldsymbol{\xi}) $$
+
+          <p>
+            并满足齐次边界条件。
+          </p>
+
+          <h3>物理直觉</h3>
+          <p>
+            格林函数法是<strong>叠加原理</strong>的数学表达：
+          </p>
+          <ul>
+            <li>把任意源分解成无数点源的叠加</li>
+            <li>每个点源的响应就是格林函数</li>
+            <li>总响应是所有这些响应的叠加（积分）</li>
+          </ul>
+          <p>
+            这与结构动力学中的<strong>杜哈梅积分</strong>如出一辙：
+            任意激励的响应 = 单位脉冲响应 × 激励的积分。
+          </p>
+
+          <h3>求解方法</h3>
+          <p>
+            格林函数的构造方式：
+          </p>
+          <ul>
+            <li><strong>镜像法</strong>：利用对称性构造（如半空间问题）。</li>
+            <li><strong>特征函数展开</strong>：用边值问题的特征函数展开格林函数。</li>
+            <li><strong>变换法</strong>：用傅里叶或拉普拉斯变换求解。</li>
+          </ul>
+
+          <h3>地震学中的格林函数</h3>
+          <p>
+            格林函数在地震学中有极其重要的地位：
+          </p>
+          <ul>
+            <li><strong>震源表示定理</strong>：地震位移场可以写成震源矩张量与格林函数的卷积。</li>
+            <li><strong>合成地震图</strong>：给定震源与地下结构，用格林函数合成地震波。</li>
+            <li><strong>波形反演</strong>：从观测地震图反推震源参数，需要用格林函数计算理论波形。</li>
+            <li><strong>经验格林函数法</strong>：用小震记录作为经验格林函数，合成大震的强地面运动。</li>
+          </ul>
+
+          <h3>Python 示例：一维格林函数</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>green1d.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def green_1d_dirichlet(x, xi, L=1.0):
+    """
+    一维拉普拉斯方程在 [0, L] 上、两端 Dirichlet 边界条件（u = 0）的格林函数：
+        G(x, ξ) = ξ(L - x)/L,   x > ξ
+        G(x, ξ) = x(L - ξ)/L,   x < ξ
+    """
+    x = np.asarray(x)
+    if xi <= 0 or xi >= L:
+        raise ValueError("源点必须在 (0, L) 内")
+    G = np.where(x < xi, x * (L - xi) / L, xi * (L - x) / L)
+    return G
+
+
+if __name__ == "__main__":
+    L = 1.0
+    x = np.linspace(0, L, 500)
+
+    plt.figure(figsize=(10, 4))
+
+    for xi in [0.25, 0.5, 0.75]:
+        G = green_1d_dirichlet(x, xi, L)
+        plt.plot(x, G, label=f"源点 ξ = {xi}")
+
+    plt.axhline(0, color="gray", linewidth=0.5)
+    plt.xlabel("x")
+    plt.ylabel("G(x, ξ)")
+    plt.title("一维 Dirichlet 格林函数")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 用格林函数求解 -u'' = f，u(0) = u(L) = 0 ----
+    def solve_by_green(f, x_grid, L):
+        """u(x) = ∫ G(x, ξ) f(ξ) dξ"""
+        xi = x_grid
+        f_xi = f(xi)
+        u = np.zeros_like(x_grid)
+        for i, xx in enumerate(x_grid):
+            G = green_1d_dirichlet(xx, xi, L)
+            u[i] = np.trapz(G * f_xi, xi)
+        return u
+
+    # 源项 f(x) = sin(πx)
+    f = lambda x: np.sin(np.pi * x / L)
+    # 理论解：u(x) = sin(πx) / π²
+    u_theory = np.sin(np.pi * x / L) / np.pi**2
+
+    u_numeric = solve_by_green(f, x, L)
+    error = np.max(np.abs(u_numeric - u_theory))
+
+    print(f"\n最大绝对误差 = {error:.3e}")
+    print("（理论解 u(x) = sin(πx) / π²）")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：格林函数是一根分段直线（在源点处有斜率突变），
+            用格林函数积分得到的解与理论解吻合。
+            这就是<strong>点源叠加</strong>思想的数值体现。
+          </p>
+        </section>
+
+        <section id="numerical">
+          <h2><span class="num">08</span>数值方法</h2>
+
+          <h3>有限差分法（FDM）</h3>
+          <p>
+            用差分商代替偏导数：
+          </p>
+
+          $$ \frac{\partial u}{\partial x} \approx \frac{u_{i+1} - u_{i-1}}{2\Delta x}, \qquad
+             \frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{\Delta x^2} $$
+
+          <p>
+            优点：实现简单、适用于规则网格。
+            缺点：复杂几何难以处理、边界处理麻烦。
+          </p>
+
+          <h3>有限元法（FEM）</h3>
+          <p>
+            FEM 基于<strong>变分原理</strong>或<strong>加权残值法</strong>。
+            以弱形式为例，对 $-\nabla^2 u = f$ 乘以试验函数 $v$ 并积分：
+          </p>
+
+          $$ \int_\Omega \nabla u \cdot \nabla v \, d\Omega
+             = \int_\Omega f v \, d\Omega + \text{边界项} $$
+
+          <p>
+            在单元上用形函数插值 $u \approx \sum N_i u_i$，
+            得到线性方程组 $\mathbf{K}\mathbf{u} = \mathbf{F}$。
+          </p>
+
+          <p>
+            FEM 的优势：
+          </p>
+          <ul>
+            <li>复杂几何与不规则网格</li>
+            <li>自然处理各种边界条件</li>
+            <li>严格数学基础（变分原理）</li>
+            <li>易扩展到非线性、动力学、多物理场</li>
+          </ul>
+
+          <h3>有限体积法（FVM）</h3>
+          <p>
+            以守恒律的积分形式为基础：
+          </p>
+
+          $$ \frac{d}{dt} \int_V u \, dV + \oint_{\partial V} \mathbf{F} \cdot \mathbf{n} \, dS = 0 $$
+
+          <p>
+            FVM 天然守恒，适合流体力学、传热学。
+            地震学中的某些波传播算法也借鉴 FVM 的思想。
+          </p>
+
+          <h3>谱方法</h3>
+          <p>
+            用全局基函数（傅里叶级数、Chebyshev 多项式）展开解。
+            对光滑解具有<strong>指数收敛</strong>，远快于有限差分/有限元的多项式收敛。
+          </p>
+          <p>
+            缺点：复杂几何与间断解处理困难。
+            地震学中的<strong>伪谱法</strong>（pseudospectral method）
+            在大规模波传播模拟中有重要应用。
+          </p>
+
+          <h3>方法对比</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>网格</th><th>收敛速度</th><th>守恒性</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>FDM</td>
+                  <td>规则</td>
+                  <td>多项式</td>
+                  <td>弱</td>
+                  <td>简单几何、波传播</td>
+                </tr>
+                <tr>
+                  <td>FEM</td>
+                  <td>非结构</td>
+                  <td>多项式</td>
+                  <td>中</td>
+                  <td>复杂几何、结构分析</td>
+                </tr>
+                <tr>
+                  <td>FVM</td>
+                  <td>非结构</td>
+                  <td>多项式</td>
+                  <td>强</td>
+                  <td>流体、守恒律</td>
+                </tr>
+                <tr>
+                  <td>谱方法</td>
+                  <td>规则</td>
+                  <td>指数</td>
+                  <td>中</td>
+                  <td>光滑解、波传播</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>稳定性与收敛性</h3>
+          <p>
+            数值方法必须满足：
+          </p>
+          <ul>
+            <li><strong>一致性</strong>：离散方程在网格趋零时逼近原 PDE。</li>
+            <li><strong>稳定性</strong>：舍入误差不会被放大。</li>
+            <li><strong>收敛性</strong>：网格趋零时数值解趋近真解。</li>
+          </ul>
+          <p>
+            三者满足 Lax 等价定理：<strong>一致性 + 稳定性 $\Leftrightarrow$ 收敛性</strong>。
+          </p>
+
+          <p>
+            对显式格式，稳定性通常要求 CFL 条件：
+          </p>
+
+          $$ C = \frac{c \Delta t}{\Delta x} \le C_{\max} $$
+
+          <p>
+            其中 $C_{\max}$ 依赖于格式（一般取 1）。
+            这是地震波数值模拟中时间步长选择的基本约束。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>数值色散与数值耗散</strong>：离散格式会引入两类误差：
+              ① <strong>数值色散</strong>：不同波数的波速不准确，导致波形变形；
+              ② <strong>数值耗散</strong>：波幅随时间衰减，能量损失。
+              地震波传播模拟中，需要在精度、稳定性、计算量之间权衡，
+              常采用高阶格式（4 阶或更高）降低色散。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">09</span>工程应用</h2>
+
+          <h3>一维土层地震反应分析</h3>
+          <p>
+            把水平土层简化为一维剪切梁，SH 波在层状介质中传播：
+          </p>
+
+          $$ \rho \frac{\partial^2 u}{\partial t^2}
+             = \frac{\partial}{\partial z}\left(G \frac{\partial u}{\partial z}\right)
+             + \eta \frac{\partial^3 u}{\partial z^2 \partial t} $$
+
+          <p>
+            其中 $\rho$ 是密度，$G$ 是剪切模量，$\eta$ 是粘性系数。
+            这是<strong>频域传递函数法</strong>（SHAKE 程序）的数学基础。
+          </p>
+
+          <p>
+            通过频域内逐层传递（传递矩阵法），得到地表与基岩的传递函数：
+          </p>
+
+          $$ H(\omega) = \frac{u_{\text{surface}}(\omega)}{u_{\text{bedrock}}(\omega)} $$
+
+          <p>
+            它的峰值对应场地的卓越频率，与场地覆盖层厚度 $H$ 和剪切波速 $V_s$ 满足：
+          </p>
+
+          $$ f_0 = \frac{V_s}{4H} $$
+
+          <p>
+            这就是场地<strong>卓越周期</strong>的物理来源，
+            也是建筑抗震设计规范中场地分类的基础。
+          </p>
+
+          <h3>地震波传播的数值模拟</h3>
+          <p>
+            区域尺度地震波传播的 PDE：
+          </p>
+
+          $$ \rho \ddot{\mathbf{u}} = \nabla \cdot \boldsymbol{\sigma} + \mathbf{f} $$
+
+          <p>
+            其中 $\boldsymbol{\sigma}$ 是应力张量，$\mathbf{f}$ 是震源力。
+            加上本构关系 $\boldsymbol{\sigma} = \mathbf{C} : \boldsymbol{\varepsilon}$
+            与几何关系 $\boldsymbol{\varepsilon} = \frac{1}{2}(\nabla \mathbf{u} + \nabla \mathbf{u}^{\mathsf{T}})$，
+            得到弹性动力学方程。
+          </p>
+          <p>
+            数值方法包括：
+          </p>
+          <ul>
+            <li><strong>有限差分法</strong>：规则网格，适合大规模模拟（如 SW4）</li>
+            <li><strong>谱元法</strong>：结合 FEM 的灵活性与谱方法的高精度（如 SPECFEM3D）</li>
+            <li><strong>有限元法</strong>：复杂几何，商业软件广泛使用</li>
+          </ul>
+
+          <h3>热-力耦合问题</h3>
+          <p>
+            大体积混凝土水化热、核废料处置、地热开采都涉及热-力耦合：
+          </p>
+
+          $$ \rho c_p \frac{\partial T}{\partial t} = \nabla \cdot (k \nabla T) + Q $$
+
+          <p>
+            温度场通过热膨胀影响应力场：
+          </p>
+
+          $$ \boldsymbol{\sigma} = \mathbf{C} : (\boldsymbol{\varepsilon} - \alpha \Delta T \, \mathbf{I}) $$
+
+          <p>
+            这是两个 PDE 的耦合系统，通常用有限元耦合求解。
+          </p>
+
+          <h3>饱和土体固结</h3>
+          <p>
+            Terzaghi 一维固结方程：
+          </p>
+
+          $$ \frac{\partial u}{\partial t} = c_v \frac{\partial^2 u}{\partial z^2} $$
+
+          <p>
+            其中 $u$ 是超孔隙水压力，$c_v$ 是固结系数。
+            这个抛物型方程与热传导完全同构，
+            解析解可用分离变量法或傅里叶级数得到。
+          </p>
+          <p>
+            Biot 固结理论把固结推广到三维，得到耦合的孔压扩散与固体骨架变形方程，
+            是土动力学与地震工程中重要的 PDE 系统。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>PDE 在结构工程中的三个层次</strong>：
+              ① <strong>建模层</strong>：从守恒律出发推导连续体方程（波动、热传导、弹性动力学）。
+              ② <strong>求解层</strong>：用分离变量、积分变换、格林函数求解析解（简单几何）。
+              ③ <strong>数值层</strong>：用有限差分、有限元、谱方法求数值解（复杂几何）。
+              结构工程师日常使用的大多是第三层，但理解前两层是判断数值结果合理性的基础。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>方程分类</strong>：椭圆型（平衡）、抛物型（扩散）、双曲型（传播），三类性质差异巨大。</li>
+              <li><strong>一阶方程</strong>：特征线法把 PDE 化为 ODE；守恒律可能出现激波。</li>
+              <li><strong>波动方程</strong>：达朗贝尔解为行波叠加；P 波与 S 波是弹性动力学的两个基本波型。</li>
+              <li><strong>热传导方程</strong>：扩散型；极大值原理；与固结方程数学同构。</li>
+              <li><strong>拉普拉斯方程</strong>：调和函数的均值性质、极大值原理、与复变函数的联系。</li>
+              <li><strong>分离变量法</strong>：PDE 化为特征值问题，是振型分解的数学原型。</li>
+              <li><strong>格林函数</strong>：点源叠加的思想，地震学中震源表示定理的核心。</li>
+              <li><strong>数值方法</strong>：FDM / FEM / FVM / 谱方法各有取舍；CFL 条件与数值色散是波传播模拟的关键。</li>
+            </ul>
+          </div>
+
+          <h3>工程落点速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>PDE 概念</th><th>结构/地震工程中的对应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>一维波动方程</td>
+                  <td>杆的纵波、SH 波在土层中的传播</td>
+                </tr>
+                <tr>
+                  <td>Euler-Bernoulli 梁方程</td>
+                  <td>梁的弯曲波传播</td>
+                </tr>
+                <tr>
+                  <td>三维弹性动力学</td>
+                  <td>P 波与 S 波、区域地震波模拟</td>
+                </tr>
+                <tr>
+                  <td>热传导方程</td>
+                  <td>混凝土水化热、Terzaghi 固结</td>
+                </tr>
+                <tr>
+                  <td>拉普拉斯方程</td>
+                  <td>稳态渗流、稳态温度场</td>
+                </tr>
+                <tr>
+                  <td>双调和方程</td>
+                  <td>弹性力学 Airy 应力函数、板弯曲</td>
+                </tr>
+                <tr>
+                  <td>分离变量法</td>
+                  <td>振型分解、傅里叶级数展开</td>
+                </tr>
+                <tr>
+                  <td>格林函数</td>
+                  <td>震源表示定理、合成地震图、杜哈梅积分</td>
+                </tr>
+                <tr>
+                  <td>有限差分 / 有限元</td>
+                  <td>结构动力时程分析、地震波数值模拟</td>
+                </tr>
+                <tr>
+                  <td>CFL 条件</td>
+                  <td>显式时程积分的时间步长约束</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它数学分支的联系</h3>
+          <ul>
+            <li><strong>线性代数</strong>：离散化后的 PDE 变成 $\mathbf{K}\mathbf{u} = \mathbf{F}$ 或广义特征值问题。</li>
+            <li><strong>数值分析</strong>：差分格式、稳定性、收敛性、CFL 条件都是数值分析的内容。</li>
+            <li><strong>概率论</strong>：随机 PDE、随机场、地下介质的不确定性传播。</li>
+            <li><strong>复变函数与积分变换</strong>：傅里叶变换用于频域求解，拉普拉斯变换用于初值问题。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Evans, <em>Partial Differential Equations</em> — 现代 PDE 的标准教材</li>
+            <li>Strauss, <em>Partial Differential Equations: An Introduction</em> — 适合入门的经典</li>
+            <li>Farlow, <em>Partial Differential Equations for Scientists and Engineers</em> — 工程导向</li>
+            <li>Zienkiewicz &amp; Taylor, <em>The Finite Element Method</em> — 有限元求解 PDE 的经典</li>
+            <li>LeVeque, <em>Finite Difference Methods for Ordinary and Partial Differential Equations</em> — 有限差分方法</li>
+            <li>Aki &amp; Richards, <em>Quantitative Seismology</em> — 地震波传播的权威参考</li>
+            <li>Kramer, <em>Geotechnical Earthquake Engineering</em> — 场地地震反应分析</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 结构动力学中的 PDE 数值解法</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

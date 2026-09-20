@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科学计算与 R · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="scientific-computing-r">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#language">一、语言特性</a></li>
+      <li><a href="#data">二、数据结构</a></li>
+      <li><a href="#functional">三、函数式与 apply 家族</a></li>
+      <li><a href="#tidyverse">四、tidyverse 数据操作</a></li>
+      <li><a href="#stats">五、统计建模</a></li>
+      <li><a href="#timeseries">六、时间序列</a></li>
+      <li><a href="#plot">七、可视化</a></li>
+      <li><a href="#vs-python">八、与 Python 对比</a></li>
+      <li><a href="#application">九、工程应用</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 科学计算与 R
+        </div>
+        <h1>科学计算与 R</h1>
+        <p class="lead">
+          从向量化到统计建模，覆盖 R 语言特性、数据操作、可视化与时间序列分析。
+          R 是统计学家的母语，在地震目录统计、极值分析、
+          ETAS 余震建模与地震危险性统计中有着不可替代的地位。
+        </p>
+        <div class="article-meta">
+          <span>向量化</span>
+          <span>统计建模</span>
+          <span>tidyverse</span>
+          <span class="blue">地震统计</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            R 是专为统计计算与数据可视化设计的语言，
+            起源于 1990 年代的 S 语言。
+            它在学术界、生物统计、金融、地震统计中广泛使用。
+          </p>
+
+          <p>
+            R 在工程中的定位：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>R 的角色</th><th>典型包</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>统计建模</td>
+                  <td>主力环境</td>
+                  <td>stats、lme4、brms</td>
+                </tr>
+                <tr>
+                  <td>数据探索与清洗</td>
+                  <td>主力环境</td>
+                  <td>dplyr、tidyr</td>
+                </tr>
+                <tr>
+                  <td>可视化</td>
+                  <td>最强</td>
+                  <td>ggplot2、plotly</td>
+                </tr>
+                <tr>
+                  <td>时间序列</td>
+                  <td>成熟</td>
+                  <td>forecast、tseries</td>
+                </tr>
+                <tr>
+                  <td>极值统计</td>
+                  <td>权威</td>
+                  <td>extRemes、ismev</td>
+                </tr>
+                <tr>
+                  <td>空间统计</td>
+                  <td>成熟</td>
+                  <td>sp、sf、gstat</td>
+                </tr>
+                <tr>
+                  <td>贝叶斯推断</td>
+                  <td>主流</td>
+                  <td>rstan、brms、rjags</td>
+                </tr>
+                <tr>
+                  <td>机器学习</td>
+                  <td>不如 Python</td>
+                  <td>caret、tidymodels、mlr3</td>
+                </tr>
+                <tr>
+                  <td>生产部署</td>
+                  <td>不是强项</td>
+                  <td>plumber（REST API）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            对地震工程师与地震学家来说，R 的三大价值：
+          </p>
+          <ul>
+            <li><strong>统计建模</strong>：极值分析、ETAS 模型、贝叶斯推断。</li>
+            <li><strong>数据探索</strong>：tidyverse 让数据清洗与探索变得优雅。</li>
+            <li><strong>可视化</strong>：ggplot2 是出版级统计图的黄金标准。</li>
+          </ul>
+
+          <p>
+            R 在地震学中的典型应用：
+          </p>
+          <ul>
+            <li><strong>G-R 关系拟合</strong>：震级-频度关系的最大似然估计。</li>
+            <li><strong>ETAS 建模</strong>：余震序列的统计模型。</li>
+            <li><strong>极值分析</strong>：地震动参数的极值分布。</li>
+            <li><strong>PSHA 统计</strong>：危险性曲线的统计分析。</li>
+            <li><strong>地震目录分析</strong>：b 值时空变化、完整性分析。</li>
+            <li><strong>时间序列分析</strong>：地震活动性的时间演化。</li>
+          </ul>
+
+          <p>
+            这份笔记按"语言 $\to$ 数据结构 $\to$ 函数式 $\to$ tidyverse $\to$ 统计 $\to$ 时序 $\to$ 可视化 $\to$ 对比 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="language">
+          <h2><span class="num">01</span>语言特性</h2>
+
+          <h3>基本语法</h3>
+          <pre><code class="language-r"># 赋值（推荐用 <-，= 也可）
+x <- 3.14
+name <- "wayione"
+flag <- TRUE
+
+# 输出
+print(x)
+cat("Hello", name, "\n")
+
+# 注释用 #
+
+# 续行不需要特殊符号，R 自动判断</code></pre>
+
+          <h3>数据类型</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>说明</th><th>示例</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>numeric</td>
+                  <td>浮点（默认）</td>
+                  <td><code>3.14</code></td>
+                </tr>
+                <tr>
+                  <td>integer</td>
+                  <td>整数（需后缀 L）</td>
+                  <td><code>100L</code></td>
+                </tr>
+                <tr>
+                  <td>complex</td>
+                  <td>复数</td>
+                  <td><code>1 + 2i</code></td>
+                </tr>
+                <tr>
+                  <td>logical</td>
+                  <td>逻辑</td>
+                  <td><code>TRUE</code>、<code>FALSE</code></td>
+                </tr>
+                <tr>
+                  <td>character</td>
+                  <td>字符串</td>
+                  <td><code>"abc"</code>、<code>'abc'</code></td>
+                </tr>
+                <tr>
+                  <td>factor</td>
+                  <td>分类变量</td>
+                  <td><code>factor(c("A", "B"))</code></td>
+                </tr>
+                <tr>
+                  <td>Date / POSIXct</td>
+                  <td>日期与时间</td>
+                  <td><code>as.Date("2024-01-01")</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>向量化</h3>
+          <p>
+            R 与 NumPy 一样，向量化是核心：
+          </p>
+
+          <pre><code class="language-r"># 创建向量
+a <- c(1, 2, 3, 4, 5)
+b <- 1:5
+c <- seq(0, 1, by = 0.1)
+
+# 向量化运算
+a * 2         # 每个元素乘 2
+a + b         # 逐元素加
+a > 2         # 逐元素比较
+
+# 函数向量化
+sqrt(a)
+exp(a)
+log(a)
+
+# 聚合
+sum(a)
+mean(a)
+sd(a)
+max(a)
+min(a)
+range(a)
+summary(a)    # 五数概括 + 均值</code></pre>
+
+          <h3>控制流</h3>
+          <pre><code class="language-r"># if-else
+if (x > 0) {
+  cat("正数\n")
+} else if (x < 0) {
+  cat("负数\n")
+} else {
+  cat("零\n")
+}
+
+# for 循环（尽量避免，用向量化）
+for (i in 1:10) {
+  print(i)
+}
+
+# while
+while (x > 0) {
+  x <- x - 1
+}
+
+# 向量化版本（推荐）
+result <- ifelse(a > 0, "正", "非正")
+
+# switch
+switch("A",
+       "A" = print("第一个"),
+       "B" = print("第二个"),
+       print("其他"))</code></pre>
+
+          <h3>函数定义</h3>
+          <pre><code class="language-r"># 基本函数
+add <- function(a, b) {
+  return(a + b)
+}
+
+# 默认参数
+power <- function(x, n = 2) {
+  x^n
+}
+
+# 可变参数
+my_sum <- function(...) {
+  sum(...)
+}
+
+# 匿名函数
+sapply(1:5, function(x) x^2)
+
+# 管道（R 4.1+ 原生支持）
+1:5 |> sqrt() |> sum()</code></pre>
+
+          <h3>常见陷阱</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>陷阱</th><th>说明</th><th>对策</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>索引从 1 开始</td>
+                  <td>与 C / Python 不同</td>
+                  <td>注意换算</td>
+                </tr>
+                <tr>
+                  <td>循环慢</td>
+                  <td>解释执行、无 JIT</td>
+                  <td>向量化、apply、data.table</td>
+                </tr>
+                <tr>
+                  <td>字符串默认是 factor</td>
+                  <td>R 4.0 之前 read.csv 默认</td>
+                  <td><code>stringsAsFactors = FALSE</code></td>
+                </tr>
+                <tr>
+                  <td>NA 传染</td>
+                  <td>含 NA 的运算返回 NA</td>
+                  <td><code>na.rm = TRUE</code></td>
+                </tr>
+                <tr>
+                  <td>循环内动态增长向量</td>
+                  <td>每次重新分配</td>
+                  <td>预先分配、向量化</td>
+                </tr>
+                <tr>
+                  <td>浮点比较</td>
+                  <td><code>0.1 + 0.2 == 0.3</code> 为 FALSE</td>
+                  <td><code>all.equal()</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>R 的哲学</strong>：
+              ① <strong>向量化优先</strong>——循环是最后手段；
+              ② <strong>一切皆对象</strong>——函数也是对象；
+              ③ <strong>向量是一等公民</strong>——标量是长度为 1 的向量；
+              ④ <strong>统计优先</strong>——内置函数面向统计分析。
+              理解这几点，就理解了 R 与其它语言的根本差异。
+              它不追求通用编程的优雅，
+              而是为数据分析和统计建模提供最直接的工具。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="data">
+          <h2><span class="num">02</span>数据结构</h2>
+
+          <h3>核心数据结构</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>结构</th><th>维度</th><th>元素类型</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>vector</td>
+                  <td>1</td>
+                  <td>单一</td>
+                  <td>基础结构</td>
+                </tr>
+                <tr>
+                  <td>matrix</td>
+                  <td>2</td>
+                  <td>单一</td>
+                  <td>矩阵运算</td>
+                </tr>
+                <tr>
+                  <td>array</td>
+                  <td>N</td>
+                  <td>单一</td>
+                  <td>多维数组</td>
+                </tr>
+                <tr>
+                  <td>list</td>
+                  <td>1</td>
+                  <td>任意</td>
+                  <td>异构容器</td>
+                </tr>
+                <tr>
+                  <td>data.frame</td>
+                  <td>2</td>
+                  <td>各列可不同</td>
+                  <td>表格数据</td>
+                </tr>
+                <tr>
+                  <td>tibble</td>
+                  <td>2</td>
+                  <td>各列可不同</td>
+                  <td>data.frame 的现代版</td>
+                </tr>
+                <tr>
+                  <td>factor</td>
+                  <td>1</td>
+                  <td>分类</td>
+                  <td>离散变量</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>向量与索引</h3>
+          <pre><code class="language-r">v <- c(10, 20, 30, 40, 50)
+
+v[1]          # 第 1 个（R 从 1 开始）
+v[c(1, 3)]    # 第 1 和 3 个
+v[-1]         # 除第 1 个外
+v[v > 25]     # 逻辑索引
+v[2:4]        # 切片
+
+# 命名向量
+ages <- c(Alice = 30, Bob = 25, Carol = 35)
+ages["Alice"]  # 按名字访问
+
+# 修改
+v[1] <- 100</code></pre>
+
+          <h3>矩阵</h3>
+          <pre><code class="language-r"># 创建矩阵
+A <- matrix(1:12, nrow = 3, ncol = 4)
+B <- matrix(rnorm(9), 3, 3)
+
+# 按行填充
+M <- matrix(1:6, 2, 3, byrow = TRUE)
+
+# 矩阵运算
+t(A)          # 转置
+A %*% t(A)    # 矩阵乘
+A * 2         # 逐元素乘
+solve(B)      # 求逆
+det(B)        # 行列式
+eigen(B)      # 特征值
+svd(B)        # SVD
+
+# 解线性方程组 Ax = b
+b <- c(1, 2, 3)
+x <- solve(B, b)   # 推荐
+
+# 维度
+dim(A)        # 3 4
+nrow(A)       # 3
+ncol(A)       # 4</code></pre>
+
+          <h3>数据框（data.frame）</h3>
+          <pre><code class="language-r"># 创建 data.frame
+df <- data.frame(
+  event_id = c("ev001", "ev002", "ev003"),
+  magnitude = c(5.5, 6.0, 4.8),
+  depth_km = c(10, 20, 15),
+  station = c("ST01", "ST02", "ST03"),
+  stringsAsFactors = FALSE
+)
+
+# 访问列
+df$magnitude
+df[, "magnitude"]
+df[["magnitude"]]
+
+# 访问行
+df[1, ]
+df[df$magnitude > 5, ]
+
+# 添加列
+df$energy <- 1.5 * df$magnitude + 4.8
+
+# 汇总
+summary(df)
+str(df)
+head(df)
+nrow(df)</code></pre>
+
+          <h3>列表</h3>
+          <pre><code class="language-r"># 列表可以包含任意类型
+event <- list(
+  id = "ev001",
+  magnitude = 6.5,
+  location = c(lat = 30.5, lon = 101.2),
+  waveforms = list(
+    st01 = c(0.1, -0.2, 0.3),
+    st02 = c(0.0, 0.1, -0.1)
+  )
+)
+
+# 访问
+event$id
+event[["magnitude"]]
+event$location["lat"]
+event$waveforms$st01</code></pre>
+
+          <h3>因子</h3>
+          <pre><code class="language-r"># 分类变量
+site_class <- factor(
+  c("I", "II", "III", "II", "I"),
+  levels = c("I", "II", "III", "IV"),
+  ordered = TRUE
+)
+
+# 频率统计
+table(site_class)
+
+# 转换
+as.character(site_class)
+as.numeric(site_class)   # 返回整数编码</code></pre>
+
+          <h3>Python 示例：R 脚本</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>data_basic.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r"># 生成模拟地震目录
+set.seed(42)
+n <- 1000
+
+df <- data.frame(
+  event_id = sprintf("ev%05d", 1:n),
+  origin_time = seq(
+    as.POSIXct("2020-01-01"),
+    by = "6 hours",
+    length.out = n
+  ),
+  magnitude = 2.0 + rexp(n, rate = 0.5),
+  latitude = runif(n, 28, 34),
+  longitude = runif(n, 98, 104),
+  depth_km = rexp(n, rate = 0.1)
+)
+
+# 基本统计
+cat("事件总数:", nrow(df), "\n")
+cat("震级范围:", range(df$magnitude), "\n")
+cat("平均震级:", mean(df$magnitude), "\n")
+cat("深度中位数:", median(df$depth_km), "\n")
+
+# 筛选
+large <- df[df$magnitude > 5, ]
+cat("\n震级大于 5.0 的事件数:", nrow(large), "\n")
+
+# 分组统计
+df$year <- format(df$origin_time, "%Y")
+yearly <- aggregate(magnitude ~ year, data = df, FUN = function(x)
+  c(n = length(x), mean = mean(x), max = max(x)))
+print(yearly)</code></pre>
+          </div>
+        </section>
+
+        <section id="functional">
+          <h2><span class="num">03</span>函数式与 apply 家族</h2>
+
+          <h3>apply 家族</h3>
+          <p>
+            R 的 apply 家族是向量化的推广，
+            用于对数组、列表、数据框的批量操作：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>函数</th><th>输入</th><th>输出</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>apply</td>
+                  <td>矩阵/数组</td>
+                  <td>向量/矩阵</td>
+                  <td>按行或列操作</td>
+                </tr>
+                <tr>
+                  <td>lapply</td>
+                  <td>列表/向量</td>
+                  <td>列表</td>
+                  <td>每个元素应用函数</td>
+                </tr>
+                <tr>
+                  <td>sapply</td>
+                  <td>列表/向量</td>
+                  <td>向量/矩阵</td>
+                  <td>lapply 的简化版</td>
+                </tr>
+                <tr>
+                  <td>vapply</td>
+                  <td>列表/向量</td>
+                  <td>指定类型向量</td>
+                  <td>类型安全的 sapply</td>
+                </tr>
+                <tr>
+                  <td>mapply</td>
+                  <td>多个列表</td>
+                  <td>向量/列表</td>
+                  <td>多参数并行映射</td>
+                </tr>
+                <tr>
+                  <td>tapply</td>
+                  <td>向量 + 分组</td>
+                  <td>数组</td>
+                  <td>分组聚合</td>
+                </tr>
+                <tr>
+                  <td>Map</td>
+                  <td>多个列表</td>
+                  <td>列表</td>
+                  <td>多参数 mapply</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <pre><code class="language-r"># apply：按行/列操作矩阵
+M <- matrix(1:12, 3, 4)
+
+apply(M, 1, sum)   # 每行和
+apply(M, 2, mean)  # 每列均值
+apply(M, 1, max)
+
+# lapply：列表
+nums <- list(a = 1:5, b = 6:10, c = 11:15)
+lapply(nums, mean)
+lapply(nums, function(x) x^2)
+
+# sapply：简化结果
+sapply(nums, mean)   # 返回向量而非列表
+
+# vapply：指定返回类型
+vapply(nums, mean, numeric(1))
+
+# tapply：分组聚合
+magnitudes <- c(5.5, 6.0, 4.8, 5.2, 6.5)
+regions <- c("A", "A", "B", "B", "A")
+tapply(magnitudes, regions, mean)
+
+# mapply：多参数
+mapply(function(x, y) x + y,
+       x = 1:3, y = 4:6)</code></pre>
+
+          <h3>purrr：现代函数式编程</h3>
+          <p>
+            purrr 包提供了更一致、更强大的函数式工具：
+          </p>
+
+          <pre><code class="language-r">library(purrr)
+
+# map 系列
+map(1:5, ~ .x^2)          # 返回列表
+map_dbl(1:5, ~ .x^2)      # 返回数值向量
+map_chr(1:3, ~ paste0("v", .x))
+map_int(1:3, ~ .x * 2L)
+
+# 多参数 map
+map2_dbl(1:3, 4:6, ~ .x + .y)
+pmap_dbl(list(1:3, 4:6, 7:9), ~ ..1 + ..2 + ..3)
+
+# 条件映射
+map_if(1:5, ~ .x %% 2 == 0, ~ .x * 10)
+
+# 规约
+reduce(1:5, `+`)          # 累加
+accumulate(1:5, `+`)      # 累积和
+
+# 安全函数
+safe_log <- safely(log)
+result <- safe_log(-1)
+result$error</code></pre>
+
+          <h3>示例：批量计算反应谱</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>apply_spectrum.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r"># 用 apply 家族批量计算反应谱
+
+# 单自由度体系最大加速度（简化 Newmark-β）
+sdof_sa <- function(acc, dt, T, zeta = 0.05) {
+  omega <- 2 * pi / T
+  beta <- 0.25
+  gamma <- 0.5
+  c <- 2 * zeta * omega
+  k <- omega^2
+  K_eff <- k + gamma / (beta * dt) * c + 1 / (beta * dt^2)
+
+  n <- length(acc)
+  u <- 0; v <- 0
+  a <- -acc[1] - 2 * zeta * omega * v - omega^2 * u
+  a_max <- 0
+
+  for (i in 1:(n - 1)) {
+    P_eff <- -acc[i + 1] +
+      (1 / (beta * dt^2)) * u +
+      (1 / (beta * dt)) * v +
+      (1 / (2 * beta) - 1) * a +
+      c * (gamma / (beta * dt) * u +
+           (gamma / beta - 1) * v +
+           dt * (gamma / (2 * beta) - 1) * a)
+    u_new <- P_eff / K_eff
+    v <- gamma / (beta * dt) * (u_new - u) -
+      (gamma / beta - 1) * v -
+      dt * (gamma / (2 * beta) - 1) * a
+    a <- (1 / (beta * dt^2)) * (u_new - u) -
+      (1 / (beta * dt)) * v -
+      (1 / (2 * beta) - 1) * a
+    u <- u_new
+
+    a_abs <- abs(a + acc[i + 1])
+    if (a_abs > a_max) a_max <- a_abs
+  }
+  a_max
+}
+
+# 生成地震动
+set.seed(42)
+dt <- 0.01
+t <- seq(0, 60, by = dt)
+acc <- rep(0, length(t))
+for (freq in c(0.5, 1.5, 3.0, 5.0)) {
+  acc <- acc + sin(2 * pi * freq * t + runif(1, 0, 2 * pi))
+}
+acc <- acc * exp(-((t - 15)^2) / (2 * 8^2))
+
+# 用 sapply 批量计算反应谱
+periods <- 10^seq(log10(0.05), log10(5.0), length.out = 100)
+Sa <- sapply(periods, function(T) sdof_sa(acc, dt, T, 0.05))
+
+# 用 purrr 并行化（需 future 包）
+# library(furrr)
+# plan(multisession, workers = 4)
+# Sa <- future_map_dbl(periods, ~ sdof_sa(acc, dt, .x, 0.05))
+
+# 输出
+cat("PGA =", Sa[1], "\n")
+cat("T = 1.0 s 处 Sa =", Sa[which.min(abs(periods - 1.0))], "\n")
+
+# 绘图
+plot(periods, Sa, type = "l", log = "xy",
+     xlab = "Period (s)", ylab = "Sa (m/s²)",
+     main = "加速度反应谱", col = "darkred", lwd = 2)
+grid()</code></pre>
+          </div>
+        </section>
+
+        <section id="tidyverse">
+          <h2><span class="num">04</span>tidyverse 数据操作</h2>
+
+          <h3>tidyverse 简介</h3>
+          <p>
+            tidyverse 是 R 的现代数据科学工具集，
+            包含一系列协同工作的包：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>包</th><th>功能</th><th>核心函数</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>dplyr</td>
+                  <td>数据操作</td>
+                  <td>filter、select、mutate、group_by</td>
+                </tr>
+                <tr>
+                  <td>tidyr</td>
+                  <td>数据整形</td>
+                  <td>pivot_longer、pivot_wider</td>
+                </tr>
+                <tr>
+                  <td>ggplot2</td>
+                  <td>可视化</td>
+                  <td>ggplot、geom_*</td>
+                </tr>
+                <tr>
+                  <td>readr</td>
+                  <td>读取数据</td>
+                  <td>read_csv、write_csv</td>
+                </tr>
+                <tr>
+                  <td>tibble</td>
+                  <td>现代 data.frame</td>
+                  <td>tibble、as_tibble</td>
+                </tr>
+                <tr>
+                  <td>purrr</td>
+                  <td>函数式编程</td>
+                  <td>map、reduce</td>
+                </tr>
+                <tr>
+                  <td>stringr</td>
+                  <td>字符串处理</td>
+                  <td>str_*</td>
+                </tr>
+                <tr>
+                  <td>forcats</td>
+                  <td>因子处理</td>
+                  <td>fct_*</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>管道操作</h3>
+          <p>
+            管道 <code>|&gt;</code>（原生）或 <code>%&gt;%</code>（magrittr）
+            把数据流串联起来，代码更易读：
+          </p>
+
+          <pre><code class="language-r">library(dplyr)
+
+# 无管道：嵌套难读
+result <- arrange(
+  filter(
+    summarize(
+      group_by(df, station),
+      mean_mag = mean(magnitude)
+    ),
+    mean_mag > 5
+  ),
+  desc(mean_mag)
+)
+
+# 有管道：线性易读
+result <- df |>
+  group_by(station) |>
+  summarize(mean_mag = mean(magnitude)) |>
+  filter(mean_mag > 5) |>
+  arrange(desc(mean_mag))</code></pre>
+
+          <h3>核心动词</h3>
+          <pre><code class="language-r">library(dplyr)
+
+# filter：筛选行
+df |> filter(magnitude > 5, depth_km < 30)
+
+# select：选列
+df |> select(event_id, magnitude)
+df |> select(starts_with("mag"))
+df |> select(-station)
+
+# mutate：新增/修改列
+df |> mutate(
+  energy = 1.5 * magnitude + 4.8,
+  is_large = magnitude > 5
+)
+
+# arrange：排序
+df |> arrange(desc(magnitude))
+
+# group_by + summarize：分组聚合
+df |>
+  group_by(station) |>
+  summarize(
+    n = n(),
+    mean_mag = mean(magnitude),
+    max_mag = max(magnitude)
+  )
+
+# join：合并
+df |> inner_join(stations, by = "station_id")
+df |> left_join(stations, by = "station_id")
+
+# 其他
+df |> slice_head(n = 10)
+df |> distinct(station)
+df |> count(station)
+df |> rename(mag = magnitude)</code></pre>
+
+          <h3>tidyr：数据整形</h3>
+          <pre><code class="language-r">library(tidyr)
+
+# 宽表转长表
+df_long <- df_wide |>
+  pivot_longer(
+    cols = starts_with("acc"),
+    names_to = "component",
+    values_to = "value"
+  )
+
+# 长表转宽表
+df_wide <- df_long |>
+  pivot_wider(
+    names_from = component,
+    values_from = value
+  )
+
+# 拆分列
+df |> separate(col, into = c("a", "b"), sep = "_")
+
+# 合并列
+df |> unite("id", c("network", "station"), sep = ".")
+
+# 处理 NA
+df |> drop_na()
+df |> replace_na(list(magnitude = 0))</code></pre>
+
+          <h3>示例：地震目录分析</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>tidyverse_catalog.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r">library(dplyr)
+library(tidyr)
+library(lubridate)
+
+# 生成模拟地震目录
+set.seed(42)
+n <- 5000
+
+catalog <- tibble(
+  event_id = sprintf("ev%05d", 1:n),
+  origin_time = as.POSIXct("2000-01-01") + runif(n, 0, 365 * 25) * 24 * 3600,
+  magnitude = 2.5 + rexp(n, rate = 0.6),
+  depth_km = rexp(n, rate = 0.1),
+  latitude = runif(n, 30, 32),
+  longitude = runif(n, 100, 102),
+  station = sample(c("ST01", "ST02", "ST03"), n, replace = TRUE)
+)
+
+# ---- 1. 基本筛选 ----
+large_events <- catalog |>
+  filter(magnitude > 5.0, depth_km < 30) |>
+  arrange(desc(magnitude))
+
+cat("大地震事件数:", nrow(large_events), "\n")
+
+# ---- 2. 派生字段 ----
+catalog <- catalog |>
+  mutate(
+    year = year(origin_time),
+    month = month(origin_time),
+    log_energy = 1.5 * magnitude + 4.8,
+    depth_class = case_when(
+      depth_km < 10 ~ "浅源",
+      depth_km < 30 ~ "中源",
+      TRUE ~ "深源"
+    )
+  )
+
+# ---- 3. 分组统计 ----
+yearly_stats <- catalog |>
+  group_by(year) |>
+  summarize(
+    n_events = n(),
+    n_m5 = sum(magnitude >= 5),
+    mean_mag = mean(magnitude),
+    max_mag = max(magnitude),
+    mean_depth = mean(depth_km),
+    .groups = "drop"
+  )
+
+print(head(yearly_stats, 10))
+
+# ---- 4. 交叉分析 ----
+station_depth <- catalog |>
+  group_by(station, depth_class) |>
+  summarize(n = n(), .groups = "drop") |>
+  pivot_wider(
+    names_from = depth_class,
+    values_from = n,
+    values_fill = 0
+  )
+
+print(station_depth)
+
+# ---- 5. 时间窗口统计 ----
+# 每月的最大震级
+monthly <- catalog |>
+  mutate(ym = floor_date(origin_time, "month")) |>
+  group_by(ym) |>
+  summarize(max_mag = max(magnitude), n = n(), .groups = "drop")
+
+cat("\n月度统计行数:", nrow(monthly), "\n")</code></pre>
+          </div>
+        </section>
+
+        <section id="stats">
+          <h2><span class="num">05</span>统计建模</h2>
+
+          <h3>线性回归</h3>
+          <pre><code class="language-r"># 简单线性回归
+set.seed(42)
+n <- 200
+
+df <- data.frame(
+  M = runif(n, 4, 8),
+  R = runif(n, 10, 200)
+)
+df$ln_pga <- 1.5 + 0.8 * df$M - 1.2 * log(df$R + 10) -
+  0.002 * df$R + rnorm(n, 0, 0.4)
+
+# 拟合
+fit <- lm(ln_pga ~ M + log(R + 10) + R, data = df)
+
+# 结果
+summary(fit)
+
+# 系数
+coef(fit)
+confint(fit)   # 置信区间
+
+# 诊断图
+par(mfrow = c(2, 2))
+plot(fit)
+
+# 预测
+new_data <- data.frame(M = c(6.5, 7.0), R = c(50, 100))
+predict(fit, newdata = new_data, interval = "confidence")</code></pre>
+
+          <h3>广义线性模型（GLM）</h3>
+          <pre><code class="language-r"># 逻辑回归：液化判别
+df_liquefaction <- data.frame(
+  liquefied = rbinom(500, 1, 0.3),
+  spt_n = rnorm(500, 15, 5),
+  pga = runif(500, 0.1, 0.6),
+  depth = rexp(500, 0.1)
+)
+
+# 拟合
+glm_fit <- glm(
+  liquefied ~ spt_n + pga + depth,
+  data = df_liquefaction,
+  family = binomial(link = "logit")
+)
+
+summary(glm_fit)
+
+# 预测概率
+new_data <- data.frame(spt_n = 10, pga = 0.3, depth = 5)
+predict(glm_fit, newdata = new_data, type = "response")
+
+# 优势比
+exp(coef(glm_fit))</code></pre>
+
+          <h3>极大似然估计：G-R 关系</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>gr_fit.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r"># Gutenberg-Richter 关系的极大似然估计
+# log10(N) = a - b*M
+# 或：频率密度 f(M) = β exp(-β(M - Mc))，β = b*ln(10)
+
+# 模拟地震目录（截断指数分布）
+set.seed(42)
+Mc <- 3.0       # 完整性震级
+b_true <- 1.0   # b 值
+
+n <- 1000
+M <- Mc + rexp(n, rate = b_true * log(10))
+# 截断到 [Mc, 8]
+M <- M[M <= 8]
+
+cat("样本数:", length(M), "\n")
+cat("震级范围:", range(M), "\n")
+
+# ---- 1. b 值的 MLE ----
+# 对截断指数分布：b_hat = log10(e) / (mean(M) - Mc)
+b_hat <- log10(exp(1)) / (mean(M) - Mc)
+cat("\nMLE b 值:", b_hat, "\n")
+cat("真实 b 值:", b_true, "\n")
+
+# 标准误（Aki 1965）：σ_b ≈ b / sqrt(N)
+se_b <- b_hat / sqrt(length(M))
+cat("标准误:", se_b, "\n")
+cat("95% 置信区间:", b_hat - 1.96 * se_b, "~", b_hat + 1.96 * se_b, "\n")
+
+# ---- 2. a 值的 MLE ----
+# a = log10(N) + b * M_min（对区间 [Mc, M_max] 的累积数）
+a_hat <- log10(length(M)) + b_hat * Mc
+cat("\na 值:", a_hat, "\n")
+
+# ---- 3. 可视化 ----
+# 累积频次
+M_bins <- seq(Mc, 8, by = 0.1)
+cum_counts <- sapply(M_bins, function(m) sum(M >= m))
+
+# 拟合线
+fit_line <- 10^(a_hat - b_hat * M_bins)
+
+# 绘图
+plot(M_bins, cum_counts, log = "y",
+     xlab = "震级 M", ylab = "N(M ≥ m)",
+     main = "Gutenberg-Richter 关系",
+     pch = 16, cex = 0.7, col = "steelblue")
+lines(M_bins, fit_line, col = "darkred", lwd = 2)
+legend("topright",
+       legend = c("观测", sprintf("拟合 (b = %.3f)", b_hat)),
+       col = c("steelblue", "darkred"),
+       pch = c(16, NA), lty = c(NA, 1))
+
+# ---- 4. 用 fitdistrplus 拟合 ----
+if (requireNamespace("fitdistrplus", quietly = TRUE)) {
+  library(fitdistrplus)
+  fit <- fitdist(M, "exp", start = list(rate = 1))
+  print(summary(fit))
+}</code></pre>
+          </div>
+
+          <h3>极值分析</h3>
+          <p>
+            地震动参数的极值分析是 PSHA 的统计基础：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>extreme_value.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r"># 极值分析：模拟年最大 PGA 的分布
+
+set.seed(42)
+n_years <- 500
+
+# 模拟年最大 PGA（Gumbel 分布）
+pga_max <- rgamma(n_years, shape = 2, scale = 0.1)
+
+# ---- 方法 1：直接用 MLE 拟合 Gumbel ----
+if (requireNamespace("evd", quietly = TRUE)) {
+  library(evd)
+  fit_gumbel <- fgev(pga_max, std.err = TRUE)
+  print(fit_gumbel)
+
+  # 重现期对应的分位数
+  T_return <- c(50, 100, 475, 975, 2475)
+  for (T in T_return) {
+    p <- 1 - 1 / T
+    q <- qgumbel(p, loc = fit_gumbel$estimate[1],
+                 scale = fit_gumbel$estimate[2])
+    cat(sprintf("重现期 %d 年: PGA = %.4f\n", T, q))
+  }
+
+  # 绘图
+  plot(fit_gumbel)
+}
+
+# ---- 方法 2：用 extRemes ----
+if (requireNamespace("extRemes", quietly = TRUE)) {
+  library(extRemes)
+  fit2 <- fevd(pga_max, type = "Gumbel")
+  print(fit2)
+
+  # 重现期水平
+  return_level(fit2, period = c(50, 100, 475, 975))
+}</code></pre>
+          </div>
+
+          <h3>贝叶斯推断</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>bayesian.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r"># 用 rstan 做贝叶斯推断（示例：估计 GMPE 系数）
+# 需要安装 rstan：install.packages("rstan")
+
+if (requireNamespace("rstan", quietly = TRUE)) {
+  library(rstan)
+
+  # Stan 模型（字符串形式，实际中通常放在 .stan 文件）
+  stan_code <- "
+  data {
+    int<lower=0> N;
+    vector[N] M;
+    vector[N] lnR;
+    vector[N] ln_pga;
+  }
+  parameters {
+    real c0;
+    real c1;
+    real c2;
+    real<lower=0> sigma;
+  }
+  model {
+    // 先验
+    c0 ~ normal(1.5, 1);
+    c1 ~ normal(0.8, 0.5);
+    c2 ~ normal(-1.2, 0.5);
+    sigma ~ cauchy(0, 0.5);
+
+    // 似然
+    for (i in 1:N) {
+      ln_pga[i] ~ normal(c0 + c1 * M[i] + c2 * lnR[i], sigma);
+    }
+  }
+  "
+
+  # 生成模拟数据
+  set.seed(42)
+  N <- 200
+  M <- runif(N, 4, 8)
+  R <- runif(N, 10, 200)
+  ln_pga <- 1.5 + 0.8 * M - 1.2 * log(R + 10) + rnorm(N, 0, 0.4)
+
+  data_list <- list(
+    N = N, M = M, lnR = log(R + 10), ln_pga = ln_pga
+  )
+
+  # 编译与采样
+  fit <- stan(model_code = stan_code, data = data_list,
+              chains = 4, iter = 2000, warmup = 1000)
+
+  print(fit, pars = c("c0", "c1", "c2", "sigma"))
+  plot(fit)
+} else {
+  cat("需要安装 rstan 才能运行贝叶斯示例。\n")
+  cat("安装：install.packages('rstan')\n")
+}</code></pre>
+          </div>
+        </section>
+
+        <section id="timeseries">
+          <h2><span class="num">06</span>时间序列</h2>
+
+          <h3>时间序列基础</h3>
+          <pre><code class="language-r"># 创建时间序列对象
+ts_data <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
+plot(ts_data, main = "月度时间序列")
+
+# 分解
+decomp <- decompose(ts_data)
+plot(decomp)
+
+# 自相关
+acf(ts_data)
+pacf(ts_data)</code></pre>
+
+          <h3>ARIMA 模型</h3>
+          <pre><code class="language-r"># 自动选择 ARIMA 模型（forecast 包）
+if (requireNamespace("forecast", quietly = TRUE)) {
+  library(forecast)
+
+  # 生成数据
+  set.seed(42)
+  x <- arima.sim(list(ar = c(0.7, 0.2)), n = 200)
+
+  # 自动拟合
+  fit <- auto.arima(x)
+  print(summary(fit))
+
+  # 预测
+  fcast <- forecast(fit, h = 20)
+  plot(fcast)
+
+  # 检查残差
+  checkresiduals(fit)
+}</code></pre>
+
+          <h3>时间序列在地震学中的应用</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>seismic_ts.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r"># 地震活动性的时间序列分析
+
+library(dplyr)
+library(ggplot2)
+
+# 生成 50 年月度事件数
+set.seed(42)
+months <- seq(as.Date("1970-01-01"), by = "month", length.out = 600)
+
+# 泊松过程 + 周期性
+events <- rpois(600, lambda = 5 + 2 * sin(2 * pi * (1:600) / 12))
+
+df <- tibble(
+  month = months,
+  n_events = events,
+  year = as.integer(format(month, "%Y"))
+)
+
+# ---- 1. 年度趋势 ----
+yearly <- df |>
+  group_by(year) |>
+  summarize(n = sum(n_events), .groups = "drop")
+
+# ---- 2. 简单线性趋势 ----
+fit <- lm(n ~ year, data = yearly)
+summary(fit)
+
+# ---- 3. 绘制趋势 ----
+ggplot(yearly, aes(x = year, y = n)) +
+  geom_line(color = "steelblue") +
+  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+  labs(x = "年", y = "事件数",
+       title = "地震活动性年度趋势") +
+  theme_minimal()
+
+# ---- 4. 时间序列分解 ----
+ts_events <- ts(df$n_events, start = c(1970, 1), frequency = 12)
+decomp <- stl(ts_events, s.window = "periodic")
+
+plot(decomp)
+
+# ---- 5. 自相关分析 ----
+acf(df$n_events, lag.max = 48, main = "自相关函数")
+
+# ---- 6. 检验平稳性 ----
+if (requireNamespace("tseries", quietly = TRUE)) {
+  library(tseries)
+  adf.test(df$n_events)    # ADF 单位根检验
+  kpss.test(df$n_events)   # KPSS 平稳性检验
+}</code></pre>
+          </div>
+
+          <h3>ETAS 模型简介</h3>
+          <p>
+            ETAS（Epidemic Type Aftershock Sequence）是余震序列的标准模型：
+          </p>
+
+          $$ \lambda(t) = \mu + \sum_{t_i < t}
+             \frac{K e^{\alpha (M_i - M_c)}}{(t - t_i + c)^p} $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$\mu$：背景地震发生率。</li>
+            <li>$K$、$\alpha$：余震触发强度。</li>
+            <li>$c$、$p$：Omori 衰减参数。</li>
+          </ul>
+
+          <p>
+            R 中有专门的 ETAS 包（<code>ETAS</code>、<code>etasFLP</code>），
+            可以对地震目录做极大似然估计与模拟。
+          </p>
+        </section>
+
+        <section id="plot">
+          <h2><span class="num">07</span>可视化</h2>
+
+          <h3>基础绘图</h3>
+          <pre><code class="language-r"># 基础绘图系统
+x <- seq(0, 2 * pi, length.out = 100)
+
+plot(x, sin(x), type = "l", col = "blue",
+     xlab = "x", ylab = "y",
+     main = "三角函数")
+lines(x, cos(x), col = "red", lty = 2)
+legend("topright", legend = c("sin", "cos"),
+       col = c("blue", "red"), lty = c(1, 2))
+
+# 多图布局
+par(mfrow = c(2, 2))
+plot(x, sin(x))
+plot(x, cos(x))
+hist(rnorm(1000))
+boxplot(rnorm(1000))
+
+# 恢复默认
+par(mfrow = c(1, 1))</code></pre>
+
+          <h3>ggplot2：图形语法</h3>
+          <p>
+            ggplot2 用"图层"构建图形，把数据、映射、几何对象分离：
+          </p>
+
+          <pre><code class="language-r">library(ggplot2)
+
+# 基本结构
+ggplot(data = df, aes(x = M, y = ln_pga)) +
+  geom_point(alpha = 0.5, color = "steelblue") +
+  geom_smooth(method = "lm", color = "darkred") +
+  labs(
+    x = "震级 M",
+    y = "ln(PGA)",
+    title = "GMPE 拟合"
+  ) +
+  theme_minimal()</code></pre>
+
+          <h3>常用几何对象</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>geom_*</th><th>功能</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>geom_point</td>
+                  <td>散点</td>
+                  <td>相关性</td>
+                </tr>
+                <tr>
+                  <td>geom_line</td>
+                  <td>折线</td>
+                  <td>时间序列</td>
+                </tr>
+                <tr>
+                  <td>geom_bar</td>
+                  <td>条形</td>
+                  <td>分类统计</td>
+                </tr>
+                <tr>
+                  <td>geom_histogram</td>
+                  <td>直方图</td>
+                  <td>分布</td>
+                </tr>
+                <tr>
+                  <td>geom_boxplot</td>
+                  <td>箱线图</td>
+                  <td>组间对比</td>
+                </tr>
+                <tr>
+                  <td>geom_density</td>
+                  <td>密度曲线</td>
+                  <td>平滑分布</td>
+                </tr>
+                <tr>
+                  <td>geom_tile</td>
+                  <td>热图</td>
+                  <td>矩阵、相关性</td>
+                </tr>
+                <tr>
+                  <td>geom_sf</td>
+                  <td>地图</td>
+                  <td>空间数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>分面与主题</h3>
+          <pre><code class="language-r"># 分面：按变量分组显示
+ggplot(df, aes(x = M, y = ln_pga)) +
+  geom_point(alpha = 0.4) +
+  facet_wrap(~ region, ncol = 2) +
+  theme_bw()
+
+# 多变量分面
+ggplot(df, aes(x = M, y = ln_pga)) +
+  geom_point(alpha = 0.4) +
+  facet_grid(region ~ depth_class)
+
+# 自定义主题
+theme_paper <- function() {
+  theme_minimal(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.line = element_line(color = "black"),
+      plot.title = element_text(face = "bold", hjust = 0.5)
+    )
+}
+
+ggplot(df, aes(x = M, y = ln_pga)) +
+  geom_point() +
+  theme_paper()</code></pre>
+
+          <h3>出版级图表示例</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>publication_plot.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r">library(ggplot2)
+library(dplyr)
+library(patchwork)   # 组合多图
+
+# 生成 GMPE 数据
+set.seed(42)
+n <- 500
+
+df <- tibble(
+  M = runif(n, 4, 8),
+  R = runif(n, 5, 300),
+  region = sample(c("A", "B"), n, replace = TRUE)
+) |>
+  mutate(
+    ln_pga = 1.5 + 0.8 * M - 1.2 * log(R + 10) - 0.002 * R +
+      rnorm(n, 0, 0.4)
+  )
+
+# ---- 图 1：衰减关系 ----
+p1 <- ggplot(df, aes(x = R, y = exp(ln_pga), color = factor(round(M)))) +
+  geom_point(alpha = 0.4, size = 1) +
+  scale_x_log10() +
+  scale_y_log10() +
+  scale_color_viridis_d(name = "震级") +
+  labs(x = "距离 R / km", y = "PGA / (m/s²)",
+       title = "(a) 衰减关系") +
+  theme_bw(base_size = 11) +
+  theme(legend.position = "right")
+
+# ---- 图 2：残差分布 ----
+df <- df |>
+  mutate(residual = ln_pga - (1.5 + 0.8 * M - 1.2 * log(R + 10) - 0.002 * R))
+
+p2 <- ggplot(df, aes(x = residual)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 30, fill = "steelblue", alpha = 0.7) +
+  geom_density(color = "darkred", linewidth = 1) +
+  labs(x = "残差", y = "密度",
+       title = "(b) 残差分布") +
+  theme_bw(base_size = 11)
+
+# ---- 图 3：震级-残差 ----
+p3 <- ggplot(df, aes(x = factor(round(M)), y = residual)) +
+  geom_boxplot(fill = "lightblue", alpha = 0.7) +
+  labs(x = "震级 M", y = "残差",
+       title = "(c) 震级-残差关系") +
+  theme_bw(base_size = 11)
+
+# ---- 图 4：区域对比 ----
+p4 <- ggplot(df, aes(x = M, y = ln_pga, color = region)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "震级 M", y = "ln(PGA)",
+       title = "(d) 区域对比") +
+  theme_bw(base_size = 11)
+
+# 组合
+combined <- (p1 | p2) / (p3 | p4)
+print(combined)
+
+# 保存
+ggsave("gmpe_analysis.pdf", combined,
+       width = 10, height = 8, dpi = 300)</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>ggplot2 的图形语法</strong>：
+              一张图 = 数据 + 映射 + 几何对象 + 统计变换 + 坐标系 + 分面。
+              这种"图层叠加"的设计让复杂图形可以逐步构建，
+              也让自定义主题、分面、多图组合变得自然。
+              在地震学的论文中，ggplot2 是最常用的绘图工具之一，
+              与 Python 的 Matplotlib、Seaborn 相比，
+              ggplot2 在统计图的默认美观度上更胜一筹。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="vs-python">
+          <h2><span class="num">08</span>与 Python 对比</h2>
+
+          <h3>语言特性对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>R</th><th>Python</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>索引</td>
+                  <td>1-based</td>
+                  <td>0-based</td>
+                </tr>
+                <tr>
+                  <td>赋值</td>
+                  <td><code>&lt;-</code></td>
+                  <td><code>=</code></td>
+                </tr>
+                <tr>
+                  <td>向量化</td>
+                  <td>原生</td>
+                  <td>NumPy</td>
+                </tr>
+                <tr>
+                  <td>数据框</td>
+                  <td>data.frame / tibble</td>
+                  <td>Pandas</td>
+                </tr>
+                <tr>
+                  <td>统计建模</td>
+                  <td>内置、最丰富</td>
+                  <td>statsmodels</td>
+                </tr>
+                <tr>
+                  <td>可视化</td>
+                  <td>ggplot2（最优）</td>
+                  <td>Matplotlib、Seaborn</td>
+                </tr>
+                <tr>
+                  <td>机器学习</td>
+                  <td>caret / tidymodels</td>
+                  <td>scikit-learn（更成熟）</td>
+                </tr>
+                <tr>
+                  <td>深度学习</td>
+                  <td>keras / torch（R 接口）</td>
+                  <td>PyTorch（主流）</td>
+                </tr>
+                <tr>
+                  <td>性能</td>
+                  <td>较慢（无 JIT）</td>
+                  <td>NumPy / Numba 快</td>
+                </tr>
+                <tr>
+                  <td>部署</td>
+                  <td>较弱</td>
+                  <td>较强</td>
+                </tr>
+                <tr>
+                  <td>生态</td>
+                  <td>统计学最丰富</td>
+                  <td>通用性最强</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>功能对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>R</th><th>Python</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>数据清洗</td>
+                  <td>dplyr / tidyr</td>
+                  <td>Pandas</td>
+                </tr>
+                <tr>
+                  <td>统计回归</td>
+                  <td>lm / glm</td>
+                  <td>statsmodels</td>
+                </tr>
+                <tr>
+                  <td>混合效应模型</td>
+                  <td>lme4（最成熟）</td>
+                  <td>statsmodels（较弱）</td>
+                </tr>
+                <tr>
+                  <td>极值分析</td>
+                  <td>evd / extRemes（权威）</td>
+                  <td>pyextremes</td>
+                </tr>
+                <tr>
+                  <td>贝叶斯推断</td>
+                  <td>rstan / brms</td>
+                  <td>PyMC</td>
+                </tr>
+                <tr>
+                  <td>时间序列</td>
+                  <td>forecast（成熟）</td>
+                  <td>statsmodels / sktime</td>
+                </tr>
+                <tr>
+                  <td>空间统计</td>
+                  <td>sp / sf / gstat</td>
+                  <td>geopandas / PySAL</td>
+                </tr>
+                <tr>
+                  <td>生存分析</td>
+                  <td>survival（成熟）</td>
+                  <td>lifelines</td>
+                </tr>
+                <tr>
+                  <td>报告生成</td>
+                  <td>R Markdown / Quarto（最成熟）</td>
+                  <td>Jupyter</td>
+                </tr>
+                <tr>
+                  <td>地震学工具</td>
+                  <td>较少</td>
+                  <td>ObsPy（生态完整）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>选择建议</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>推荐</th><th>理由</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>统计建模</td>
+                  <td>R</td>
+                  <td>内置函数丰富、包成熟</td>
+                </tr>
+                <tr>
+                  <td>数据探索与可视化</td>
+                  <td>R</td>
+                  <td>tidyverse + ggplot2</td>
+                </tr>
+                <tr>
+                  <td>极值分析</td>
+                  <td>R</td>
+                  <td>evd、extRemes 权威</td>
+                </tr>
+                <tr>
+                  <td>贝叶斯建模</td>
+                  <td>R / Python 均可</td>
+                  <td>rstan vs PyMC</td>
+                </tr>
+                <tr>
+                  <td>深度学习</td>
+                  <td>Python</td>
+                  <td>PyTorch 生态</td>
+                </tr>
+                <tr>
+                  <td>生产部署</td>
+                  <td>Python</td>
+                  <td>工程生态完善</td>
+                </tr>
+                <tr>
+                  <td>地震数据处理</td>
+                  <td>Python</td>
+                  <td>ObsPy</td>
+                </tr>
+                <tr>
+                  <td>重复性报告</td>
+                  <td>R</td>
+                  <td>R Markdown / Quarto</td>
+                </tr>
+                <tr>
+                  <td>混合使用</td>
+                  <td>reticulate</td>
+                  <td>在 R 中调用 Python</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>reticulate：在 R 中调用 Python</h3>
+          <pre><code class="language-r">library(reticulate)
+
+# 指定 Python 环境
+use_python("/usr/bin/python3")
+# 或 use_condaenv("myenv")
+
+# 导入 Python 模块
+np <- import("numpy")
+obspy <- import("obspy")
+
+# 使用 NumPy
+a <- np$array(c(1, 2, 3))
+b <- np$sqrt(a)
+print(b)
+
+# 使用 ObsPy
+st <- obspy$read("data.mseed")
+print(st)
+
+# R 数据框与 Pandas 互转
+df_r <- data.frame(x = 1:5, y = letters[1:5])
+df_py <- r_to_py(df_r)      # R → Python
+df_r2 <- py_to_r(df_py)     # Python → R</code></pre>
+
+          <h3>Quarto：统一报告生成</h3>
+          <p>
+            Quarto 是 R Markdown 的下一代，
+            支持 R、Python、Julia 混排，
+            生成 HTML、PDF、Word、幻灯片等：
+          </p>
+
+          <pre><code>---
+title: "地震目录分析"
+format: html
+---
+
+```{r}
+#| echo: true
+library(dplyr)
+catalog |> group_by(station) |> summarize(n = n())

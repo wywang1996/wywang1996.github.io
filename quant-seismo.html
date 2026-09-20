@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="quant-seismo">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>定量地震学 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="quant-seismo">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#moment">一、震源矩张量</a></li>
+      <li><a href="#radiation">二、辐射图型</a></li>
+      <li><a href="#magnitude">三、震级标度关系</a></li>
+      <li><a href="#attenuation">四、地震波衰减</a></li>
+      <li><a href="#site">五、场地响应</a></li>
+      <li><a href="#inversion">六、波形反演</a></li>
+      <li><a href="#summary">七、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 定量地震学
+        </div>
+        <h1>定量地震学</h1>
+        <p class="lead">
+          从震源矩张量出发，定量描述地震波的辐射、传播与场地效应，
+          最终落到波形反演——用观测波形反推震源参数。
+          这是连接地震学观测与震源物理的完整链条。
+        </p>
+        <div class="article-meta">
+          <span>震源</span>
+          <span>矩张量</span>
+          <span>波形反演</span>
+          <span class="blue">定量地震学</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            定量地震学的目标，是用物理量描述“地震发生了什么”，并预测“观测到的波形会是什么样”。
+            这需要一个从<strong>震源</strong>到<strong>传播路径</strong>再到<strong>台站场地</strong>
+            的完整模型链：
+          </p>
+
+          $$ u(t) = s(t) * g(t) * h(t) $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            其中 $s$ 为震源项，$g$ 为路径项，$h$ 为场地项，$*$ 表示卷积
+          </p>
+
+          <p>
+            本笔记按这条链条展开：矩张量描述震源，辐射图型刻画空间分布，
+            震级建立经验标度，衰减与场地描述传播与放大，
+            波形反演则将观测反推回震源参数。
+          </p>
+        </section>
+
+        <section id="moment">
+          <h2><span class="num">01</span>震源矩张量</h2>
+
+          <h3>定义</h3>
+          <p>
+            地震矩张量 $M_{ij}$ 是描述点源震源的最通用表示，
+            它由 9 个分量组成的对称二阶张量，物理意义是等效体积力系。
+          </p>
+
+          $$ M_{ij} = M_0 \, (\hat{u}_i \hat{n}_j + \hat{u}_j \hat{n}_i) $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            其中 $M_0 = \mu A \bar{D}$，$\mu$ 为剪切模量，$A$ 为断层面积，$\bar{D}$ 为平均滑动量
+          </p>
+
+          <h3>分量含义</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>分量</th><th>物理意义</th><th>典型特征</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>$M_{xx}$、$M_{yy}$、$M_{zz}$</strong></td>
+                  <td>正应力偶极子</td>
+                  <td>爆炸源、塌陷源、体积变化</td>
+                </tr>
+                <tr>
+                  <td><strong>$M_{xy}$、$M_{xz}$、$M_{yz}$</strong></td>
+                  <td>剪应力偶极子</td>
+                  <td>构造地震的主要成分</td>
+                </tr>
+                <tr>
+                  <td><strong>迹 $\mathrm{tr}(M)$</strong></td>
+                  <td>各向同性部分</td>
+                  <td>非双力偶分量的度量</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>双力偶与最佳双力偶</h3>
+          <p>
+            大多数构造地震可以近似为<strong>双力偶（Double-Couple, DC）</strong>模型，
+            其特征是两个正交的力偶，对应断层的两个节面。
+            矩张量分解为 DC、CLVD（补偿线性矢量偶极）与 ISO（各向同性）三部分：
+          </p>
+
+          $$ M = M_{\mathrm{DC}} + M_{\mathrm{CLVD}} + M_{\mathrm{ISO}} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            通过特征值分解实现，反映震源的非双力偶成分
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么重要</strong>：矩张量不仅能给出震源机制解（走向、倾角、滑动角），
+              还能给出标量地震矩 $M_0$，从而与矩震级 $M_w$ 直接对应。
+              它是现代震源研究的基础语言。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="radiation">
+          <h2><span class="num">02</span>辐射图型</h2>
+
+          <h3>基本原理</h3>
+          <p>
+            震源向各个方向辐射的波能量并不均匀，辐射强度随方位和离源角变化的图样称为
+            <strong>辐射图型（radiation pattern）</strong>。对双力偶源，P 波和 S 波的辐射系数分别为：
+          </p>
+
+          $$ R^{P}(\theta, \varphi) = \sin^2\theta \cdot \sin(2\varphi), \qquad
+             R^{SV}(\theta, \varphi) = \sin(2\theta) \cdot \sin(2\varphi) $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $\theta$ 为离源角（相对垂直轴），$\varphi$ 为方位角（相对断层走向）
+          </p>
+
+          <h3>典型特征</h3>
+          <ul>
+            <li><strong>P 波四象限分布</strong>：两条正交节线把辐射分成压缩区与膨胀区。</li>
+            <li><strong>S 波辐射更强</strong>：在断层滑动方向能量最集中。</li>
+            <li><strong>节面（nodal plane）</strong>：P 波辐射为零的方向，对应断层或辅助面。</li>
+          </ul>
+
+          <h3>与震源机制解的关系</h3>
+          <p>
+            通过观测 P 波初动极性（压缩/膨胀）的方位分布，可以反推节面方位，
+            得到<strong>震源机制解</strong>——通常用“沙滩球”图表示。
+            这是震源机制解的最经典确定方法，称为<strong>初动法</strong>。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>注意</strong>：初动法只能确定节面方位，无法区分主断层面与辅助面。
+              要区分两者，需要依赖余震分布、区域构造应力场或波形反演。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="magnitude">
+          <h2><span class="num">03</span>震级标度关系</h2>
+
+          <h3>主要震级类型</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>震级</th><th>基于</th><th>适用</th><th>饱和</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>$M_L$</strong>（近震）</td><td>Wood-Anderson 记录最大振幅</td><td>地方性小震</td><td>≈ 6.5</td></tr>
+                <tr><td><strong>$m_b$</strong>（体波）</td><td>P 波 1 s 周期振幅</td><td>深震、远震</td><td>≈ 6.0</td></tr>
+                <tr><td><strong>$M_S$</strong>（面波）</td><td>20 s 周期面波振幅</td><td>浅源远震</td><td>≈ 8.0</td></tr>
+                <tr><td><strong>$M_w$</strong>（矩）</td><td>标量地震矩 $M_0$</td><td>全范围</td><td>不饱和</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>矩震级公式</h3>
+          <p>矩震级由 Kanamori (1977) 提出，直接从地震矩换算：</p>
+
+          $$ M_w = \frac{2}{3} \log_{10} M_0 - 6.07 $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $M_0$ 单位 N·m，6.07 为经验常数（也有用 6.03 或 10.7 的版本）
+          </p>
+
+          <h3>能量与震级</h3>
+          <p>Gutenberg-Richter 能量-震级关系：</p>
+
+          $$ \log_{10} E = 1.5 \, M_S + 4.8 $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $E$ 单位 J，震级每增加 1，能量增加约 31.6 倍
+          </p>
+
+          <h3>经验换算</h3>
+          <p>
+            不同震级之间并无严格的物理等价关系，只能通过经验回归近似。
+            例如 Wells &amp; Coppersmith (1994) 给出的 $m_b$–$M_w$ 关系：
+          </p>
+
+          $$ M_w = 0.85 \, m_b + 1.03 $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            适用于 $m_b \in [4, 7]$ 范围的全球地震
+          </p>
+        </section>
+
+        <section id="attenuation">
+          <h2><span class="num">04</span>地震波衰减</h2>
+
+          <h3>几何扩散</h3>
+          <p>
+            地震波从震源向外传播，能量分布在越来越大的波前上，振幅随距离衰减。
+            对体波（球面扩散）：
+          </p>
+
+          $$ A \propto 1 / R $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $R$ 为震源距，面波为柱面扩散 $A \propto 1/\sqrt{R}$
+          </p>
+
+          <h3>非弹性衰减</h3>
+          <p>介质的非弹性吸收使振幅随距离<strong>指数</strong>衰减：</p>
+
+          $$ A(R) = A_0 \, R^{-n} \, e^{-\pi f R / (Q V)} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $n$ 为几何扩散指数，$Q$ 为品质因子，$V$ 为波速
+          </p>
+
+          <h3>品质因子 Q</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>介质</th><th>P 波 $Q_P$</th><th>S 波 $Q_S$</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>地壳（稳定区）</td><td>800 – 2000</td><td>400 – 1000</td></tr>
+                <tr><td>地壳（活动区）</td><td>300 – 600</td><td>150 – 300</td></tr>
+                <tr><td>地幔（上部）</td><td>200 – 500</td><td>100 – 300</td></tr>
+                <tr><td>沉积层</td><td>20 – 100</td><td>10 – 50</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Q 的物理意义</strong>：$Q$ 越大，介质越“弹性”，衰减越弱。
+              $Q$ 定义为每个周期内耗散能量与储存能量之比的倒数：
+              $Q = 2\pi \cdot E_{\mathrm{stored}} / \Delta E_{\mathrm{dissipated}}$。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="site">
+          <h2><span class="num">05</span>场地响应</h2>
+
+          <h3>场地放大机制</h3>
+          <p>
+            软土场地对地震动具有<strong>放大</strong>作用，尤其是接近场地卓越频率的成分。
+            最简单的模型是<strong>单层土覆盖基岩</strong>：
+          </p>
+
+          $$ f_0 = \frac{V_S}{4H} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $f_0$ 为卓越频率，$V_S$ 为剪切波速，$H$ 为土层厚度
+          </p>
+
+          <h3>传递函数</h3>
+          <p>定义场地传递函数 $H(\omega)$ 为地表运动与基岩运动之比。在单层情况下：</p>
+
+          $$ H(\omega) = \frac{1}{\cos(\omega H / V_S) + i \, \xi \, \sin(\omega H / V_S)} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $\xi$ 为土层的等效阻尼比
+          </p>
+
+          <h3>常用估计方法</h3>
+          <ul>
+            <li><strong>H/V 谱比法</strong>：用单台三分量记录的水平/垂直谱比估计卓越频率，不需要参考基岩台。</li>
+            <li><strong>标准谱比法（SSR）</strong>：同时有基岩和地表台站，直接相除。</li>
+            <li><strong>广义反演法（GIT）</strong>：把震源、路径、场地三项分离，同时求解。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>H/V 的局限</strong>：H/V 谱比只对卓越频率比较可靠，
+              不能直接作为放大倍数使用。若需要定量放大，应结合 SSR 或数值模拟。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="inversion">
+          <h2><span class="num">06</span>波形反演</h2>
+
+          <h3>基本思路</h3>
+          <p>
+            波形反演的目标是：给定观测波形 $d_{\mathrm{obs}}(t)$，求解一组震源参数 $m$，
+            使得<strong>合成波形</strong> $d_{\mathrm{syn}}(t; m)$ 与观测波形尽可能接近。
+          </p>
+
+          $$ \hat{m} = \arg\min_{m} \left\| d_{\mathrm{obs}}(t) - d_{\mathrm{syn}}(t; m) \right\|^2 $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $m$ 通常包含矩张量、深度、时间函数、位置等
+          </p>
+
+          <h3>常用方法</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>特点</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>最小二乘线性反演</strong></td>
+                  <td>假设震源为点源，格林函数预先计算</td>
+                  <td>中小地震矩张量反演</td>
+                </tr>
+                <tr>
+                  <td><strong>模拟退火 / 遗传算法</strong></td>
+                  <td>全局搜索，不依赖初始模型</td>
+                  <td>非线性强、参数空间大</td>
+                </tr>
+                <tr>
+                  <td><strong>邻域算法（NA）</strong></td>
+                  <td>在模型空间中“随机游走”，效率高</td>
+                  <td>多参数联合反演</td>
+                </tr>
+                <tr>
+                  <td><strong>全波形反演（FWI）</strong></td>
+                  <td>利用完整波形，分辨率高</td>
+                  <td>地震勘探、区域结构</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例</h3>
+          <p>一个简化的矩张量反演流程（示意，不含完整格林函数计算）：</p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>moment_tensor_inversion.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy.optimize import least_squares
+
+def synthesize(mt, green):
+    """根据矩张量 mt 和格林函数 green 合成波形"""
+    # mt: 6 维向量 [Mxx, Myy, Mzz, Mxy, Mxz, Myz]
+    # green: 对应的 6 分量格林函数字典
+    syn = np.zeros_like(green['xx'])
+    syn += mt[0] * green['xx']
+    syn += mt[1] * green['yy']
+    syn += mt[2] * green['zz']
+    syn += mt[3] * green['xy']
+    syn += mt[4] * green['xz']
+    syn += mt[5] * green['yz']
+    return syn
+
+def invert_moment_tensor(obs, green, mt0=None):
+    """最小二乘反演矩张量"""
+    if mt0 is None:
+        mt0 = np.zeros(6)
+    def residual(mt):
+        return synthesize(mt, green) - obs
+    # 求解
+    result = least_squares(residual, mt0)
+    mt_est = result.x
+    # 计算残差范数
+    rms = np.sqrt(np.mean(result.fun ** 2))
+    return mt_est, rms
+
+def decompose_mt(mt):
+    """将矩张量分解为 DC + CLVD + ISO 三部分"""
+    # 构造 3×3 对称矩阵
+    M = np.array([[mt[0], mt[3], mt[4]],
+                  [mt[3], mt[1], mt[5]],
+                  [mt[4], mt[5], mt[2]]])
+    # 特征值分解
+    eigvals, eigvecs = np.linalg.eigh(M)
+    eigvals = np.sort(eigvals)[::-1]   # 降序
+    tr = np.sum(eigvals)
+    iso = tr / 3.0
+    dev = eigvals - iso
+    # DC 与 CLVD 分配（Silver &amp; Jordan 简化）
+    dc_mag = 0.5 * (dev[0] - dev[2] - np.abs(dev[0] + dev[2] - 2*dev[1]))
+    clvd_mag = dev[0] - dc_mag
+    return {
+        'iso': iso,
+        'dc': dc_mag,
+        'clvd': clvd_mag,
+        'total_deviatoric': dev.sum()
+    }</code></pre>
+          </div>
+
+          <h3>震源机制解的图件</h3>
+          <p>反演得到的矩张量通常用<strong>沙滩球（beach ball）</strong>表示：</p>
+          <ul>
+            <li>黑色区域：P 波初动为压缩的方位（正象限）</li>
+            <li>白色区域：P 波初动为膨胀的方位（负象限）</li>
+            <li>两条曲线：节面，分别对应主断层面和辅助面</li>
+            <li>颜色/纹理：反映非双力偶分量比例</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>常用工具</strong>：GMT 的 <code>psmeca</code>、ObsPy 的
+              <code>obspy.imaging.beachball</code>、PyGMT 的 <code>meca</code> 模块，
+              都可以根据矩张量分量绘制沙滩球。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">07</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>矩张量</strong>是描述震源的统一语言，双力偶是构造地震的主要成分。</li>
+              <li><strong>辐射图型</strong>决定了 P/S 波在不同方位的强度分布，是震源机制解的基础。</li>
+              <li><strong>矩震级 $M_w$</strong>直接从 $M_0$ 换算，不饱和，是跨尺度比较的标准。</li>
+              <li><strong>衰减与场地</strong>共同塑造观测波形，$Q$ 与 $f_0$ 是核心参数。</li>
+              <li><strong>波形反演</strong>将观测反推回震源参数，是定量地震学的最终闭环。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Aki &amp; Richards, <em>Quantitative Seismology</em> — 定量地震学的经典教材</li>
+            <li>Stein &amp; Wysession, <em>An Introduction to Seismology, Earthquakes, and Earth Structure</em></li>
+            <li>Kanamori (1977), <em>The Energy Release in Great Earthquakes</em></li>
+            <li>Wells &amp; Coppersmith (1994), <em>New Empirical Relationships among Magnitude, Rupture Length, Rupture Width, Rupture Area, and Surface Displacement</em></li>
+            <li>ObsPy 文档：<code>obspy.imaging.beachball</code> 模块</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

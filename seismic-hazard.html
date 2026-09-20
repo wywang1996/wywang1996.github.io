@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="seismic-hazard">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震危险性分析 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="seismic-hazard">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+
+      <li>
+        <a href="index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/>
+            <path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#overview" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4"/>
+            <path d="M12 8h.01"/>
+          </svg>
+          <span>概述</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#features" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>主要功能</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#f-hazard-curve">危险性曲线计算</a></li>
+          <li><a href="#f-uhs">一致危险性反应谱</a></li>
+          <li><a href="#f-deagg">危险性分解</a></li>
+          <li><a href="#f-logic-tree">逻辑树与不确定性</a></li>
+          <li><a href="#f-site">场地效应</a></li>
+          <li><a href="#f-catalog">活动性参数标定</a></li>
+          <li><a href="#f-gmpe">GMPE 库管理</a></li>
+          <li><a href="#f-maps">区划图与网格计算</a></li>
+          <li><a href="#f-io">数据导入与导出</a></li>
+          <li><a href="#f-viz">可视化与报告</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#workflow" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          <span>工作流程</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#method" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 4h6v6H4z"/>
+            <path d="M14 4h6v6h-6z"/>
+            <path d="M4 14h6v6H4z"/>
+            <path d="M14 14h6v6h-6z"/>
+          </svg>
+          <span>方法与公式</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#m-source">地震活动性模型</a></li>
+          <li><a href="#m-gmpe">地震动预测方程</a></li>
+          <li><a href="#m-integral">危险性积分</a></li>
+          <li><a href="#m-uhs">一致危险性反应谱</a></li>
+          <li><a href="#m-site">场地效应</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#code" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          <span>代码示例</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#data" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
+          </svg>
+          <span>数据与依赖</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#refs" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          </svg>
+          <span>参考资料</span>
+        </a>
+      </li>
+
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="index.html">主页</a> &nbsp;/&nbsp; 项目 &nbsp;/&nbsp; 地震危险性分析
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Project · PSHA</div>
+      <h1>地震危险性分析</h1>
+      <p class="lead">
+        基于 Cornell–McGuire 概率地震危险性分析（PSHA）框架的场点危险性计算工具：
+        从震源模型、地震活动性参数与地震动预测方程出发，给出危险性曲线、
+        一致危险性反应谱与危险性分解结果，为抗震设防与结构时程分析提供地震动输入。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">开发中</span>
+        <span class="pill">Python 3.10+</span>
+        <span class="pill">NumPy · SciPy</span>
+        <span class="pill blue">兼容 OpenQuake</span>
+        <span class="pill">2026</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+      <p>
+        地震危险性分析要回答的是一个概率问题：<strong>在未来一段时间内，某一场点遭受到超过给定强度地震动的可能性有多大？</strong>
+        与只给出单一“最不利情景”的确定性方法不同，概率方法把震级、距离与地震动残差都视为随机变量，
+        最终输出的是与超越概率水平相对应的地震动参数。
+      </p>
+      <p>
+        本项目实现了完整的一套计算链路：把断层与地震带离散化为点源、线源与面源，
+        用古登堡–里克特关系描述震级分布，用地震动预测方程（GMPE）给出给定震级与距离下
+        IM 的对数正态分布，再沿震级与距离积分得到年超越概率
+        λ(IM&nbsp;&gt;&nbsp;im)，最后按泊松模型换算成设计基准期内的超越概率。
+      </p>
+      <div class="callout">
+        <strong>PSHA 与 DSHA 的区别：</strong>确定性方法（DSHA）选取一个“最大可信地震”加上最不利距离，
+        得到一条设计地震动；概率方法（PSHA）则给出“50 年超越概率 10% 对应的 PGA 是多少”
+        这类可比较、可设防的量。两者服务于不同的决策场景，但概率结果更便于纳入规范体系。
+      </div>
+    </section>
+
+    <!-- ===== 主要功能（十个编号模块） ===== -->
+    <section id="features">
+      <div class="section-head">
+        <span class="section-label">Features</span>
+        <h2>主要功能</h2>
+      </div>
+
+      <div class="feature-list">
+
+        <article class="feature" id="f-hazard-curve">
+          <div class="feature-head">
+            <span class="feature-num">01</span>
+            <h3>危险性曲线计算</h3>
+          </div>
+          <p>
+            对指定场点与目标 IM，沿震级、距离积分并跨全部震源求和，输出年超越概率
+            λ(IM &gt; im) 随 IM 变化的完整曲线。这是 PSHA 最核心的产出，
+            也是后续一致危险性反应谱、分解与区划图的计算基础。
+          </p>
+          <ul class="feature-points">
+            <li>支持 PGA、PGV、PGD、Sa(T)、Arias 强度等多种 IM</li>
+            <li>震级积分采用截断 G-R 分布，默认 200 采样点，可调</li>
+            <li>点源、线源、面源三类震源几何统一处理</li>
+            <li>同时给出年超越概率与设计基准期超越概率</li>
+            <li>支持多场点批量计算与曲线叠加对比</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-uhs">
+          <div class="feature-head">
+            <span class="feature-num">02</span>
+            <h3>一致危险性反应谱（UHS）</h3>
+          </div>
+          <p>
+            对一组周期逐一执行完整的危险性计算，取同一超越概率水平对应的谱值拼装成谱。
+            每个周期独立求解，因此 UHS 反映的是各周期各自的危险性水平，
+            适合直接与规范设计谱对比、校核设防参数。
+          </p>
+          <ul class="feature-points">
+            <li>周期范围 0.01s–10s 任意指定，默认 50 个对数分布点</li>
+            <li>支持 50 年超越概率 63%、10%、2% 等常用设防水准</li>
+            <li>同时输出均值谱与逻辑树分位数谱</li>
+            <li>可导出为 CSV / JSON，供结构时程分析直接调用</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-deagg">
+          <div class="feature-head">
+            <span class="feature-num">03</span>
+            <h3>危险性分解（Deaggregation）</h3>
+          </div>
+          <p>
+            把总危险性按贡献来源拆解，回答“是哪个震级、哪个距离的地震主导了危险性”，
+            为天然波选取与人工波合成提供定量依据，避免凭经验挑波。
+          </p>
+          <ul class="feature-points">
+            <li>按震级 M、震中距 R、残差 ε 三维分箱统计贡献占比</li>
+            <li>输出各箱体贡献率，以及均值、众数震级与距离</li>
+            <li>支持按震源、按周期分别分解</li>
+            <li>分解结果可直接指导目标谱匹配与选波</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-logic-tree">
+          <div class="feature-head">
+            <span class="feature-num">04</span>
+            <h3>逻辑树与不确定性</h3>
+          </div>
+          <p>
+            把震源模型、b 值、Mmax、GMPE 选择等认知不确定性用带权重的分支表达，
+            给出加权平均结果及其分位数，量化危险性估计的不确定区间。
+          </p>
+          <ul class="feature-points">
+            <li>多层逻辑树，支持任意分支结构与权重归一化</li>
+            <li>输出加权平均危险性曲线与 16 / 50 / 84 分位数</li>
+            <li>支持分支贡献分析，识别主导不确定源</li>
+            <li>认知不确定性与偶然不确定性分离报告</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-site">
+          <div class="feature-head">
+            <span class="feature-num">05</span>
+            <h3>场地效应</h3>
+          </div>
+          <p>
+            把基岩面危险性转换到工程地表，考虑 Vs30、覆盖层厚度与土层非线性，
+            使结果能直接用于场地相关的抗震设计。
+          </p>
+          <ul class="feature-points">
+            <li>支持 GMPE 内置 Vs30 场地项直接计算</li>
+            <li>支持基岩结果乘场地放大因子 AF(Vs30, im)</li>
+            <li>可对接一维等效线性化土层反应分析结果</li>
+            <li>中国场地类别 I₀–IV 与 Vs30 双向映射</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-catalog">
+          <div class="feature-head">
+            <span class="feature-num">06</span>
+            <h3>地震活动性参数标定</h3>
+          </div>
+          <p>
+            从地震目录出发，估计各震源区的 a、b 值与年发生率，并处理目录完整性问题，
+            为危险性积分提供可靠的活动性输入。
+          </p>
+          <ul class="feature-points">
+            <li>最大似然估计 b 值及其标准差</li>
+            <li>完整性震级 Mc 自动识别（最大曲率法、b 值稳定法）</li>
+            <li>震级–频度关系拟合与残差诊断</li>
+            <li>去丛集（Gardner–Knopoff）与泊松检验</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-gmpe">
+          <div class="feature-head">
+            <span class="feature-num">07</span>
+            <h3>GMPE 库管理</h3>
+          </div>
+          <p>
+            统一管理多个地震动预测方程，按构造类型与适用范围自动筛选并组合，
+            避免单一模型带来的系统性偏差。
+          </p>
+          <ul class="feature-points">
+            <li>内置国内外常用 GMPE，支持自定义方程注册</li>
+            <li>按震级、距离、场地条件检查适用范围并给出警告</li>
+            <li>支持 GMPE 逻辑树加权与平滑过渡</li>
+            <li>输出中位数、对数标准差与各周期分量</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-maps">
+          <div class="feature-head">
+            <span class="feature-num">08</span>
+            <h3>危险性区划图与网格计算</h3>
+          </div>
+          <p>
+            对规则网格批量执行危险性计算，生成指定概率水平下的等值线与分级着色图，
+            用于区域抗震规划与场地初筛。
+          </p>
+          <ul class="feature-points">
+            <li>支持任意分辨率网格与并行加速</li>
+            <li>输出等值线图、栅格图与 GeoJSON</li>
+            <li>可叠加断层、场点与行政区划底图</li>
+            <li>支持多概率水平分级与色标自定义</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-io">
+          <div class="feature-head">
+            <span class="feature-num">09</span>
+            <h3>数据导入与导出</h3>
+          </div>
+          <p>
+            兼容主流地震目录与震源模型格式，计算结果可直接用于后续的结构分析与报告。
+          </p>
+          <ul class="feature-points">
+            <li>目录格式：CSV、ISF、QuakeML、NDK</li>
+            <li>震源模型：OpenQuake XML、GeoJSON 断层</li>
+            <li>结果导出：CSV、JSON、HDF5、GeoJSON</li>
+            <li>波形输入对接 SAC / MiniSEED</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-viz">
+          <div class="feature-head">
+            <span class="feature-num">10</span>
+            <h3>可视化与报告</h3>
+          </div>
+          <p>
+            内置交互式图表与报告生成，便于结果复核、参数敏感性检查与对外汇报。
+          </p>
+          <ul class="feature-points">
+            <li>双对数危险性曲线、UHS、分解直方图、区划图</li>
+            <li>交互式悬停读数与曲线对比</li>
+            <li>一键生成含参数、图表与结论的 HTML / PDF 报告</li>
+            <li>支持命令行批处理与脚本化调用</li>
+          </ul>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== 工作流程 ===== -->
+    <section id="workflow">
+      <div class="section-head">
+        <span class="section-label">Workflow</span>
+        <h2>工作流程</h2>
+      </div>
+      <ol class="steps">
+        <li><b>定义目标</b>：确定场点坐标、目标 IM（PGA / Sa(T) / PGV）与设防概率水平（如 50 年超越概率 10%）。</li>
+        <li><b>构建震源模型</b>：把活动断层、地震带离散为点源、线源与面源，给出几何参数与震源深度分布。</li>
+        <li><b>标定地震活动性</b>：由地震目录统计 a、b 值，确定 Mmin、Mmax 与年发生率 ν，并做完整性震级校正。</li>
+        <li><b>选择 GMPE</b>：按构造类型、震级与距离适用范围、场地条件挑选预测方程，设定逻辑树权重与对数标准差 σ。</li>
+        <li><b>计算条件概率</b>：对每个 (m, r) 组合得到 IM 的对数正态分布，求 P(IM &gt; im | m, r)。</li>
+        <li><b>积分求危险性</b>：沿震级与距离积分并跨震源求和，得到 λ(IM &gt; im)（次/年）。</li>
+        <li><b>换算超越概率</b>：按泊松模型转换为 T 年内的超越概率，或反求目标概率下的 IM。</li>
+        <li><b>输出与后处理</b>：生成危险性曲线、UHS、分解直方图与区划图，导出 CSV / GeoJSON。</li>
+      </ol>
+    </section>
+
+    <!-- ===== 方法 ===== -->
+    <section id="method">
+      <div class="section-head">
+        <span class="section-label">Method</span>
+        <h2>方法与公式</h2>
+      </div>
+
+      <h3 class="sub" id="m-source">地震活动性模型</h3>
+      <p>
+        震级分布通常采用古登堡–里克特关系，并做上、下截断（截断指数分布），
+        以保证 Mmax 以上不发生、Mmin 以下不参与积分：
+      </p>
+      <div class="formula">log₁₀ N(m) = a − b·m          <em># 古登堡–里克特关系</em>
+
+f_M(m) = b·ln10 · 10^(−b(m − Mmin)) / [1 − 10^(−b(Mmax − Mmin))]
+         Mmin ≤ m ≤ Mmax       <em># 截断 G-R 的震级概率密度</em></div>
+      <p>
+        面源的距离分布 f_R(r) 由源区几何归一化得到；若源区面积远小于场点距离，
+        可简化为点源，此时 R 为确定值。
+      </p>
+
+      <h3 class="sub" id="m-gmpe">地震动预测方程（GMPE）</h3>
+      <p>
+        GMPE 给出给定震级、距离与场地条件下 IM 的中位数与离散度。
+        多数模型采用震级项、几何衰减项与场地项相加的形式，残差服从对数正态分布：
+      </p>
+      <div class="formula">ln Y = f(M, R, Vs30, …) + ε·σ_lnY ,   ε ~ N(0, 1)
+
+P(IM &gt; im | m, r) = 1 − Φ( [ln im − μ_lnY(m, r)] / σ_lnY )
+
+<em># Φ 为标准正态累积分布函数；σ_lnY 通常取 0.5 ~ 0.8</em></div>
+      <div class="callout">
+        <strong>选型要点：</strong>注意 GMPE 的适用范围（震级区间、距离区间、构造类型、是否含近断层项），
+        超出适用范围外推会显著放大不确定性；同类模型之间用逻辑树加权可以缓和模型选择偏倚。
+      </div>
+
+      <h3 class="sub" id="m-integral">危险性积分</h3>
+      <p>
+        对全部震源求和，并对震级与距离做全概率积分，即得该 IM 水平的年超越概率：
+      </p>
+      <div class="formula">λ(IM &gt; im) = Σᵢ νᵢ · ∬ P(IM &gt; im | m, r) · f_Mᵢ(m) · f_Rᵢ(r) dm dr
+
+P(IM &gt; im, T 年内) = 1 − exp( −λ(IM &gt; im) · T )    <em># 泊松模型</em>
+
+λ_target = −ln(1 − P) / T                            <em># 由目标概率反求年发生率</em></div>
+
+      <h3 class="sub" id="m-uhs">一致危险性反应谱（UHS）</h3>
+      <p>
+        对每个周期 Tₖ 重复一次完整的危险性计算，解出满足
+        λ(Sa(Tₖ) &gt; sa) = λ_target 的 sa，把这些点连起来就得到 UHS。
+        注意 UHS 是一条<strong>等概率</strong>谱，各周期对应的控制性震级与距离并不相同，
+        不能把它当作某一次地震的反应谱。
+      </p>
+
+      <h3 class="sub" id="m-site">场地效应</h3>
+      <p>
+        把基岩结果转换到地表常用两种方式：直接选用含 Vs30 项的 GMPE；
+        或在基岩结果上乘以场地放大因子 AF(Vs30, im)，后者可进一步与
+        一维等效线性化土层反应分析的结果校核。
+      </p>
+    </section>
+
+    <!-- ===== 代码示例 ===== -->
+    <section id="code">
+      <div class="section-head">
+        <span class="section-label">Code</span>
+        <h2>代码示例</h2>
+      </div>
+      <p>
+        下面是一个最小可运行的 PSHA 实现：单个点源 + 截断 G-R + 对数正态 GMPE，
+        输出危险性曲线与 50 年超越概率。真实项目在此结构上扩展多源、多 GMPE 逻辑树与场地项即可。
+      </p>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang">
+            <span>simple_psha.py</span>
+            <span class="lang">Python</span>
+          </div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code class="language-python">"""
+简化 PSHA：点源 + 截断 G-R + 对数正态 GMPE
+输出危险性曲线与 50 年超越概率
+"""
+import numpy as np
+from scipy.stats import norm
+
+
+def gmpe_median(M, R):
+    """返回 PGA 中位数（单位 g）——示意用简化式，实际应替换为选定 GMPE"""
+    return np.exp(0.5 * M - 1.2 * np.log(R + 10.0) - 1.0)
+
+
+def hazard_curve(Mmin, Mmax, b, nu, R, im_levels, sigma=0.55, n_m=200):
+    """点源 PSHA：返回各 IM 水平的年超越概率 lambda"""
+    m = np.linspace(Mmin, Mmax, n_m)
+
+    # 截断 G-R 的震级概率密度 f_M(m)
+    denom = 1.0 - 10 ** (-b * (Mmax - Mmin))
+    fm = b * np.log(10) * 10 ** (-b * (m - Mmin)) / denom
+
+    mu = np.log(gmpe_median(m, R))          # 各震级下的对数中位数
+    lam = np.empty(len(im_levels))
+
+    for i, im in enumerate(im_levels):
+        # 条件超越概率 P(IM &gt; im | m, R)
+        p = 1.0 - norm.cdf((np.log(im) - mu) / sigma)
+        lam[i] = nu * np.trapz(p * fm, m)   # 沿震级积分
+
+    return lam
+
+
+if __name__ == "__main__":
+    im = np.array([0.05, 0.1, 0.2, 0.3, 0.5, 0.8, 1.0])
+    lam = hazard_curve(Mmin=4.5, Mmax=7.5, b=0.9, nu=0.5, R=15.0, im_levels=im)
+    p50 = 1.0 - np.exp(-lam * 50.0)         # 50 年超越概率
+
+    for i, l, p in zip(im, lam, p50):
+        print(f"PGA={i:4.2f} g   lambda={l:.5f}/yr   P50={p * 100:5.2f}%")</code></pre>
+      </div>
+
+      <div class="callout">
+        这段代码只做演示：<strong>没有</strong>包含多震源叠加、距离分布积分、逻辑树加权与场地放大，
+        也没有处理地震目录的完整性震级。用于实际工程时必须补齐这些环节并做敏感性检验。
+      </div>
+    </section>
+
+    <!-- ===== 数据与依赖 ===== -->
+    <section id="data">
+      <div class="section-head">
+        <span class="section-label">Data &amp; Stack</span>
+        <h2>数据与依赖</h2>
+      </div>
+      <div class="split">
+        <div>
+          <div class="split-title">输入数据</div>
+          <div class="chips">
+            <span class="chip">中国地震台网目录</span>
+            <span class="chip">USGS ANSS 目录</span>
+            <span class="chip">ISC-GEM 目录</span>
+            <span class="chip blue">GEM 全球活动断层库</span>
+            <span class="chip blue">Vs30 地形坡度外推</span>
+            <span class="chip">GB 18306-2015 区划图</span>
+            <span class="chip">钻孔剪切波速剖面</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">技术栈</div>
+          <div class="chips">
+            <span class="chip">Python 3.10+</span>
+            <span class="chip">NumPy</span>
+            <span class="chip">SciPy</span>
+            <span class="chip">pandas</span>
+            <span class="chip">Matplotlib</span>
+            <span class="chip">Cartopy</span>
+            <span class="chip blue">ObsPy</span>
+            <span class="chip blue">OpenQuake Engine</span>
+            <span class="chip blue">openquake.hazardlib</span>
+            <span class="chip blue">pygmm</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 参考资料 ===== -->
+    <section id="refs">
+      <div class="section-head">
+        <span class="section-label">References</span>
+        <h2>参考资料</h2>
+      </div>
+      <ol class="refs">
+        <li>Cornell, C. A. (1968). Engineering seismic risk analysis. <i>Bulletin of the Seismological Society of America</i>, 58(5), 1583–1606.</li>
+        <li>McGuire, R. K. (1976). FORTRAN computer program for seismic risk analysis. <i>USGS Open-File Report</i> 76-67.</li>
+        <li>Baker, J. W. (2013). An Introduction to Probabilistic Seismic Hazard Analysis. <i>White Paper</i>, Stanford University.</li>
+        <li>Bommer, J. J., &amp; Abrahamson, N. A. (2006). Why do modern probabilistic seismic-hazard analyses often lead to increased hazard estimates? <i>BSSA</i>, 96(6), 1967–1977.</li>
+        <li>Petersen, M. D., et al. (2018). The 2018 update of the US National Seismic Hazard Model. <i>Earthquake Spectra</i>, 36(1).</li>
+        <li>Pagani, M., et al. (2014). OpenQuake Engine: An open hazard (and risk) software for the global earthquake model. <i>Seismological Research Letters</i>, 85(3), 692–702.</li>
+        <li>GB 18306-2015《中国地震动参数区划图》. 中国标准出版社.</li>
+      </ol>
+    </section>
+
+    <footer>
+      © 2026 wayione · Built with ❤️ and Python
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

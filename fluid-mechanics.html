@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流体力学 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="fluid-mechanics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#properties">一、流体物理性质</a></li>
+      <li><a href="#hydrostatics">二、流体静力学</a></li>
+      <li><a href="#kinematics">三、流体运动学</a></li>
+      <li><a href="#bernoulli">四、伯努利方程</a></li>
+      <li><a href="#ns">五、N-S 方程</a></li>
+      <li><a href="#viscous">六、粘性流动与层流湍流</a></li>
+      <li><a href="#boundary">七、边界层理论</a></li>
+      <li><a href="#similarity">八、量纲分析与相似</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 流体力学
+        </div>
+        <h1>流体力学</h1>
+        <p class="lead">
+          从流体的物理性质到 N-S 方程，梳理连续介质力学中描述流动的完整框架。
+          流体力学是风工程、水工结构、海啸与风暴潮模拟、
+          以及地震液化分析中渗流问题的共同基础。
+        </p>
+        <div class="article-meta">
+          <span>连续介质</span>
+          <span>N-S 方程</span>
+          <span>边界层</span>
+          <span class="blue">量纲分析</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            流体力学研究液体与气体在外力作用下的<strong>宏观运动规律</strong>，
+            以及流体与固壁之间的相互作用。它的基本思想是：
+            把流体视为<strong>连续介质</strong>，用质量守恒、动量守恒、能量守恒
+            三大方程描述其运动。
+          </p>
+          <p>
+            在土木与地震工程中，流体力学的应用非常广泛：
+          </p>
+          <ul>
+            <li><strong>风工程</strong>：高层建筑与桥梁的抗风设计，气动弹性问题。</li>
+            <li><strong>水工结构</strong>：大坝泄洪、水轮机、明渠流动。</li>
+            <li><strong>海洋工程</strong>：海啸、风暴潮、波浪与结构相互作用。</li>
+            <li><strong>岩土工程</strong>：地震液化、地下水渗流、饱和土固结。</li>
+          </ul>
+          <p>
+            本笔记按"流体性质 → 静力学 → 运动学 → 动力学 → 粘性流动 → 边界层 → 相似"展开，
+            覆盖流体力学的基本框架。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>两大视角</strong>：拉格朗日法跟踪每个流体质点，
+              欧拉法关注空间固定点的流速变化。流体力学主要用欧拉法——
+              因为流体的分子数太多，无法逐个跟踪。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="properties">
+          <h2><span class="num">01</span>流体物理性质</h2>
+
+          <h3>密度与重度</h3>
+          <p>
+            流体密度 $\rho$ 是单位体积的质量，重度 $\gamma$ 是单位体积的重量：
+          </p>
+
+          $$ \rho = \frac{m}{V}, \qquad \gamma = \rho g $$
+
+          <p>
+            水在 4 ℃ 时密度最大，约 $1000 \, \mathrm{kg/m^3}$；
+            空气常温常压下约 $1.2 \, \mathrm{kg/m^3}$。
+          </p>
+
+          <h3>压缩性</h3>
+          <p>
+            流体体积随压强的变化用体积模量 $K$ 描述：
+          </p>
+
+          $$ K = -V \frac{dp}{dV} = \rho \frac{dp}{d\rho} $$
+
+          <p>
+            液体的 $K$ 很大（水约 $2.2 \times 10^9 \ \mathrm{Pa}$），
+            因此通常视为<strong>不可压缩</strong>；
+            气体的 $K$ 小，压强变化会引起显著的密度变化。
+          </p>
+
+          <h3>粘性</h3>
+          <p>
+            流体内部相邻流层之间因速度差产生内摩擦力，
+            这种性质称为<strong>粘性</strong>。牛顿内摩擦定律：
+          </p>
+
+          $$ \tau = \mu \frac{du}{dy} $$
+
+          <p>
+            其中 $\mu$ 为动力粘度，$\dfrac{du}{dy}$ 为速度梯度。
+            工程中也常用<strong>运动粘度</strong>：
+          </p>
+
+          $$ \nu = \frac{\mu}{\rho} $$
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>流体</th><th>温度</th><th>μ (mPa·s)</th><th>ν (mm²/s)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>水</strong></td><td>20 ℃</td><td>1.00</td><td>1.00</td></tr>
+                <tr><td><strong>空气</strong></td><td>20 ℃</td><td>0.018</td><td>15.1</td></tr>
+                <tr><td><strong>甘油</strong></td><td>20 ℃</td><td>1500</td><td>1190</td></tr>
+                <tr><td><strong>沥青</strong></td><td>常温</td><td>极大</td><td>极大</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>表面张力与毛细现象</h3>
+          <p>
+            液面因分子引力不对称而具有缩小面积的趋势，
+            单位长度上的拉力称为<strong>表面张力</strong> $\sigma_s$。
+            细管中液面上升或下降的高度：
+          </p>
+
+          $$ h = \frac{2 \sigma_s \cos\theta}{\rho g r} $$
+
+          <p>
+            $\theta$ 为接触角，$r$ 为管半径。这一现象在土体渗流、微小裂缝中不可忽略。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>牛顿流体与非牛顿流体</strong>：满足 $\tau = \mu \, du/dy$ 的为牛顿流体（水、空气、油），
+              否则为非牛顿流体（血液、泥浆、聚合物熔体）。本笔记主要讨论牛顿流体。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="hydrostatics">
+          <h2><span class="num">02</span>流体静力学</h2>
+
+          <h3>静压强及其性质</h3>
+          <p>
+            静止流体中一点的压强各向等值，只与位置有关。
+            静力学基本方程为：
+          </p>
+
+          $$ \frac{dp}{dz} = -\rho g $$
+
+          <p>
+            对于不可压缩流体，积分得：
+          </p>
+
+          $$ p + \rho g z = \text{常数} $$
+
+          <p>
+            这是<strong>测压管水头</strong>守恒的表达：
+            $z$ 为位置水头，$p / (\rho g)$ 为压强水头，两者之和称为<strong>测压管水头</strong>。
+          </p>
+
+          <h3>绝对压强、相对压强与真空度</h3>
+          <ul>
+            <li><strong>绝对压强</strong> $p_{abs}$：以完全真空为零点。</li>
+            <li><strong>相对压强</strong> $p$：以大气压 $p_a$ 为零点，$p = p_{abs} - p_a$。</li>
+            <li><strong>真空度</strong> $p_v$：当 $p_{abs} < p_a$ 时，$p_v = p_a - p_{abs}$。</li>
+          </ul>
+
+          <h3>平面上的静水压力</h3>
+          <p>
+            作用在平面上的静水总压力 $P$ 等于形心处压强乘以面积：
+          </p>
+
+          $$ P = p_C A = \rho g h_C A $$
+
+          <p>
+            作用点（压力中心）在形心之下：
+          </p>
+
+          $$ y_D = y_C + \frac{I_C}{y_C A} $$
+
+          <p>
+            其中 $I_C$ 为平面关于形心轴的惯性矩。
+          </p>
+
+          <h3>曲面上的静水压力</h3>
+          <p>
+            曲面上的静水压力可分解为水平分力与垂直分力：
+          </p>
+
+          $$ P_x = \rho g h_C A_x, \qquad P_z = \rho g V_{\text{压力体}} $$
+
+          <p>
+            合力 $P = \sqrt{P_x^2 + P_z^2}$。
+            拱坝、闸门、挡水墙的设计都依赖这一结果。
+          </p>
+
+          <h3>浮力与浮体稳定</h3>
+          <p>
+            阿基米德原理：浸没物体所受浮力等于排开液体的重力：
+          </p>
+
+          $$ F_b = \rho g V_{\text{排}} $$
+
+          <p>
+            浮体稳定性由<strong>稳心</strong>（metacenter）位置判断：
+            稳心高于重心则稳定，低于重心则倾覆。
+            这一原理用于船舶设计与海底管道浮力控制。
+          </p>
+        </section>
+
+        <section id="kinematics">
+          <h2><span class="num">03</span>流体运动学</h2>
+
+          <h3>两种描述方法</h3>
+          <ul>
+            <li><strong>拉格朗日法</strong>：跟踪单个流体质点，用初始位置与时间描述运动。</li>
+            <li><strong>欧拉法</strong>：关注空间各点的流速，即 $\mathbf{u}(\mathbf{x}, t)$。</li>
+          </ul>
+
+          <h3>流动分类</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>分类</th><th>特征</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>定常 / 非定常</strong></td><td>物理量是否随时间变化</td></tr>
+                <tr><td><strong>均匀 / 非均匀</strong></td><td>物理量是否随空间变化</td></tr>
+                <tr><td><strong>层流 / 湍流</strong></td><td>流体质点是否规则分层</td></tr>
+                <tr><td><strong>一维 / 二维 / 三维</strong></td><td>描述所需的独立空间坐标数</td></tr>
+                <tr><td><strong>有旋 / 无旋</strong></td><td>速度旋度是否为零</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>迹线、流线与脉线</h3>
+          <ul>
+            <li><strong>迹线</strong>：同一质点的运动轨迹。</li>
+            <li><strong>流线</strong>：某时刻与各点速度相切的曲线。定常流中流线与迹线重合。</li>
+            <li><strong>脉线</strong>：连续流过同一点的质点所形成的曲线（烟囱冒烟的形态）。</li>
+          </ul>
+
+          <h3>连续性方程</h3>
+          <p>
+            质量守恒的微分形式：
+          </p>
+
+          $$ \frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \mathbf{u}) = 0 $$
+
+          <p>
+            对不可压缩流体（$\rho$ 为常数）：
+          </p>
+
+          $$ \nabla \cdot \mathbf{u} = 0
+             \quad \Leftrightarrow \quad
+             \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}
+             + \frac{\partial w}{\partial z} = 0 $$
+
+          <p>
+            对一维定常管流：
+          </p>
+
+          $$ \rho_1 A_1 u_1 = \rho_2 A_2 u_2
+             \quad \xrightarrow{\text{不可压}} \quad
+             A_1 u_1 = A_2 u_2 $$
+
+          <h3>旋转与涡量</h3>
+          <p>
+            速度场的旋度称为<strong>涡量</strong>：
+          </p>
+
+          $$ \boldsymbol{\omega} = \nabla \times \mathbf{u} $$
+
+          <p>
+            若 $\boldsymbol{\omega} = 0$，流动为<strong>无旋流动</strong>，
+            此时速度可表示为势函数 $\phi$ 的梯度：$\mathbf{u} = \nabla \phi$。
+            无旋流动理论在地下水渗流、绕流问题中有广泛应用。
+          </p>
+        </section>
+
+        <section id="bernoulli">
+          <h2><span class="num">04</span>伯努利方程</h2>
+
+          <h3>沿流线的伯努利方程</h3>
+          <p>
+            对不可压缩、定常、无粘性流体，沿一条流线的欧拉方程积分得：
+          </p>
+
+          $$ z + \frac{p}{\rho g} + \frac{u^2}{2g} = H = \text{常数} $$
+
+          <p>
+            三项分别称为<strong>位置水头</strong>、<strong>压强水头</strong>、
+            <strong>速度水头</strong>，$H$ 为<strong>总水头</strong>。
+            这就是经典的伯努利方程。
+          </p>
+
+          <h3>实际流体的能量方程</h3>
+          <p>
+            实际流体存在粘性，机械能会转化为热。以平均流速表示的方程：
+          </p>
+
+          $$ z_1 + \frac{p_1}{\rho g} + \frac{\alpha_1 v_1^2}{2g}
+             = z_2 + \frac{p_2}{\rho g} + \frac{\alpha_2 v_2^2}{2g} + h_w $$
+
+          <p>
+            其中 $\alpha$ 为动能修正系数（层流取 2，湍流取 1.0–1.1），
+            $h_w$ 为水头损失。
+          </p>
+
+          <h3>文丘里管与毕托管</h3>
+          <p>
+            利用伯努利方程可以测量流速和流量。
+            文丘里管通过收缩段前后的压强差推出流量：
+          </p>
+
+          $$ Q = C_d \frac{A_2}{\sqrt{1 - (A_2 / A_1)^2}}
+             \sqrt{ \frac{2 (p_1 - p_2)}{\rho} } $$
+
+          <p>
+            $C_d$ 为流量系数，通常由实验标定。
+            毕托管测量的是<strong>总压</strong>与<strong>静压</strong>之差，
+            即动压 $\rho u^2 / 2$，从而求出流速。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>适用条件</strong>：伯努利方程成立的前提是——不可压缩、定常、
+              无粘、沿同一条流线。实际工程中常做近似，但若粘性效应显著
+              （如长管道、突扩突缩），必须加上水头损失项。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="ns">
+          <h2><span class="num">05</span>N-S 方程</h2>
+
+          <h3>动量方程</h3>
+          <p>
+            牛顿第二定律应用到流体微元，可得<strong>纳维-斯托克斯方程</strong>
+            （不可压缩牛顿流体）：
+          </p>
+
+          $$ \rho \left( \frac{\partial \mathbf{u}}{\partial t}
+             + (\mathbf{u} \cdot \nabla) \mathbf{u} \right)
+             = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{f} $$
+
+          <p>
+            方程左侧是惯性项，右侧依次是压强梯度项、粘性项与体积力项。
+          </p>
+
+          <h3>分量形式</h3>
+          <p>展开到直角坐标：</p>
+
+          $$ \begin{aligned}
+             \rho \left( \frac{\partial u}{\partial t} + u \frac{\partial u}{\partial x}
+                + v \frac{\partial u}{\partial y} + w \frac{\partial u}{\partial z} \right)
+             &= -\frac{\partial p}{\partial x} + \mu \nabla^2 u + \rho f_x \\
+             \rho \left( \frac{\partial v}{\partial t} + u \frac{\partial v}{\partial x}
+                + v \frac{\partial v}{\partial y} + w \frac{\partial v}{\partial z} \right)
+             &= -\frac{\partial p}{\partial y} + \mu \nabla^2 v + \rho f_y \\
+             \rho \left( \frac{\partial w}{\partial t} + u \frac{\partial w}{\partial x}
+                + v \frac{\partial w}{\partial y} + w \frac{\partial w}{\partial z} \right)
+             &= -\frac{\partial p}{\partial z} + \mu \nabla^2 w + \rho f_z
+             \end{aligned} $$
+
+          <h3>方程的性质</h3>
+          <ul>
+            <li><strong>非线性</strong>：对流项 $(\mathbf{u} \cdot \nabla)\mathbf{u}$ 使方程非线性，
+              这是湍流复杂性的根源。</li>
+            <li><strong>不可压缩 N-S</strong>：加上连续性方程 $\nabla \cdot \mathbf{u} = 0$，
+              共 4 个方程 4 个未知量（$u, v, w, p$）。</li>
+            <li><strong>解析解极少</strong>：只有少数典型流动有解析解，
+              如平板间 Couette 流、圆管 Poiseuille 流、Stokes 绕球流。</li>
+            <li><strong>数值求解</strong>：工程中主要靠 CFD（有限体积、有限元、谱方法）。</li>
+          </ul>
+
+          <h3>雷诺数</h3>
+          <p>
+            对方程无量纲化，可以得到唯一的无量纲参数——<strong>雷诺数</strong>：
+          </p>
+
+          $$ Re = \frac{\rho U L}{\mu} = \frac{U L}{\nu} $$
+
+          <p>
+            惯性力与粘性力之比。$Re$ 小时粘性主导，流动稳定（层流）；
+            $Re$ 大时惯性主导，流动趋于湍流。
+            这是流体力学中最重要的无量纲数。
+          </p>
+        </section>
+
+        <section id="viscous">
+          <h2><span class="num">06</span>粘性流动与层流湍流</h2>
+
+          <h3>两种典型解析解</h3>
+          <p>
+            <strong>Couette 流</strong>——两平行平板间，上板匀速运动：
+          </p>
+
+          $$ u(y) = U \frac{y}{h} $$
+
+          <p>
+            速度沿板间线性分布。
+          </p>
+
+          <p>
+            <strong>Poiseuille 流</strong>——圆管中充分发展的层流：
+          </p>
+
+          $$ u(r) = \frac{\Delta p}{4 \mu L} (R^2 - r^2) $$
+
+          <p>
+            速度呈抛物线分布，平均流速是最大流速的一半。
+            流量由哈根-泊肃叶公式给出：
+          </p>
+
+          $$ Q = \frac{\pi R^4 \Delta p}{8 \mu L} $$
+
+          <h3>雷诺实验与临界雷诺数</h3>
+          <p>
+            雷诺通过染色实验发现：
+          </p>
+          <ul>
+            <li>圆管流动：$Re < 2000$ 为层流，$Re > 4000$ 为湍流，之间为过渡区。</li>
+            <li>平板边界层：$Re_x \approx 5 \times 10^5$ 时转捩。</li>
+            <li>绕流圆柱：$Re \approx 2 \times 10^5$ 时边界层分离模式突变。</li>
+          </ul>
+
+          <h3>湍流特征</h3>
+          <ul>
+            <li><strong>随机性</strong>：速度随时间和空间剧烈不规则脉动。</li>
+            <li><strong>多尺度</strong>：包含从大涡到 Kolmogorov 微尺度的连续谱。</li>
+            <li><strong>耗散性</strong>：动能通过涡串级传递到小尺度并被粘性耗散。</li>
+            <li><strong>扩散性</strong>：动量、热量、质量输运远强于层流。</li>
+          </ul>
+
+          <h3>雷诺平均（RANS）</h3>
+          <p>
+            把速度分解为平均值与脉动值 $u = \bar{u} + u'$，
+            代入 N-S 方程并取平均，会多出<strong>雷诺应力</strong>项：
+          </p>
+
+          $$ \tau_{ij}^{(t)} = -\rho \overline{u_i' u_j'} $$
+
+          <p>
+            这一项使方程不封闭，需要引入湍流模型（$k$-$\varepsilon$、$k$-$\omega$、
+            SST、Spalart-Allmaras 等）来近似。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>CFD 中的三种方法</strong>：
+              <strong>RANS</strong> 只解平均量，计算量最小，工程最常用；
+              <strong>LES</strong> 直接解大涡、模化小涡，精度高、代价大；
+              <strong>DNS</strong> 直接解所有尺度，计算量极大，只能用于低雷诺数典型流动。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="boundary">
+          <h2><span class="num">07</span>边界层理论</h2>
+
+          <h3>基本概念</h3>
+          <p>
+            普朗特提出：高雷诺数下，粘性效应只集中在固壁附近的薄层内，
+            这一薄层称为<strong>边界层</strong>。边界层外可近似视为无粘流动。
+          </p>
+          <p>
+            边界层厚度 $\delta(x)$ 通常定义为流速达到外流速度 99% 处的距离。
+            对层流平板边界层：
+          </p>
+
+          $$ \delta(x) \approx \frac{5.0 \, x}{\sqrt{Re_x}} $$
+
+          <h3>边界层方程</h3>
+          <p>
+            对 N-S 方程做量级分析，可简化为普朗特边界层方程：
+          </p>
+
+          $$ u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y}
+             = -\frac{1}{\rho} \frac{dp}{dx}
+             + \nu \frac{\partial^2 u}{\partial y^2} $$
+
+          <h3>分离与压差阻力</h3>
+          <p>
+            在逆压梯度区（$dp/dx > 0$），边界层内流体动量不足，
+            可能发生<strong>边界层分离</strong>，形成尾涡。
+            分离会导致：
+          </p>
+          <ul>
+            <li>压差阻力急剧增加</li>
+            <li>升力下降甚至失速</li>
+            <li>结构受到周期性涡激振动（如卡门涡街）</li>
+          </ul>
+
+          <p>
+            卡门涡街的脱落频率由斯特劳哈尔数给出：
+          </p>
+
+          $$ St = \frac{f D}{U} \approx 0.2 $$
+
+          <p>
+            这一现象是桥梁颤振、烟囱涡激振动、海洋立管疲劳的根源，
+            在风工程与海洋工程中极为关键。
+          </p>
+        </section>
+
+        <section id="similarity">
+          <h2><span class="num">08</span>量纲分析与相似</h2>
+
+          <h3>白金汉 π 定理</h3>
+          <p>
+            若一个物理现象涉及 $n$ 个有量纲量、$k$ 个基本量纲，
+            则可以构造 $n - k$ 个独立的无量纲数，现象可以由这些无量纲数之间的关系描述。
+          </p>
+
+          <h3>常用无量纲数</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>名称</th><th>符号</th><th>定义</th><th>物理意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>雷诺数</strong></td>
+                  <td>$Re$</td>
+                  <td>$\rho U L / \mu$</td>
+                  <td>惯性 / 粘性</td>
+                </tr>
+                <tr>
+                  <td><strong>弗劳德数</strong></td>
+                  <td>$Fr$</td>
+                  <td>$U / \sqrt{g L}$</td>
+                  <td>惯性 / 重力</td>
+                </tr>
+                <tr>
+                  <td><strong>欧拉数</strong></td>
+                  <td>$Eu$</td>
+                  <td>$\Delta p / (\rho U^2)$</td>
+                  <td>压强 / 惯性</td>
+                </tr>
+                <tr>
+                  <td><strong>马赫数</strong></td>
+                  <td>$Ma$</td>
+                  <td>$U / c$</td>
+                  <td>流速 / 声速</td>
+                </tr>
+                <tr>
+                  <td><strong>韦伯数</strong></td>
+                  <td>$We$</td>
+                  <td>$\rho U^2 L / \sigma_s$</td>
+                  <td>惯性 / 表面张力</td>
+                </tr>
+                <tr>
+                  <td><strong>斯特劳哈尔数</strong></td>
+                  <td>$St$</td>
+                  <td>$f L / U$</td>
+                  <td>非定常 / 惯性</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>相似准则</h3>
+          <p>
+            两个流动系统相似需要满足：
+          </p>
+          <ul>
+            <li><strong>几何相似</strong>：所有长度成比例。</li>
+            <li><strong>运动相似</strong>：速度场相似，即对应点速度成比例。</li>
+            <li><strong>动力相似</strong>：对应点力成比例，即主要无量纲数相等。</li>
+          </ul>
+          <p>
+            风洞实验、水槽实验、离心机模型试验的设计都依赖相似准则。
+            例如桥梁节段模型风洞试验，需保证 $Re$ 与 $St$ 在合理范围内。
+          </p>
+
+          <h3>Python 示例：圆管沿程阻力</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>pipe_friction.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+圆管沿程阻力计算
+层流用 Hagen-Poiseuille 公式，湍流用 Colebrook-White 方程
+"""
+import numpy as np
+
+
+def reynolds(rho, U, D, mu):
+    """雷诺数"""
+    return rho * U * D / mu
+
+
+def friction_factor_laminar(Re):
+    """层流：f = 64 / Re"""
+    return 64.0 / Re
+
+
+def friction_factor_turbulent(Re, rel_rough):
+    """
+    湍流：Colebrook-White 方程
+    1/sqrt(f) = -2 log10( rel_rough/3.7 + 2.51/(Re sqrt(f)) )
+    用不动点迭代求解
+    """
+    if Re < 4000:
+        return friction_factor_laminar(Re)
+
+    f = 0.02  # 初值
+    for _ in range(50):
+        rhs = -2.0 * np.log10(rel_rough / 3.7 + 2.51 / (Re * np.sqrt(f)))
+        f_new = 1.0 / rhs**2
+        if abs(f_new - f) < 1e-8:
+            break
+        f = f_new
+    return f
+
+
+def head_loss(rho, U, D, L, mu, rel_rough=0.0):
+    """沿程水头损失 h_f = f * (L/D) * U^2 / (2g)"""
+    g = 9.81
+    Re = reynolds(rho, U, D, mu)
+    f = friction_factor_turbulent(Re, rel_rough)
+    h_f = f * (L / D) * U**2 / (2.0 * g)
+    return Re, f, h_f
+
+
+if __name__ == "__main__":
+    # 示例：DN100 钢管，水，流速 2 m/s
+    rho, mu = 1000.0, 1.0e-3
+    D, L = 0.1, 100.0
+    U = 2.0
+
+    for eps in [0.0, 0.00005, 0.0005]:
+        Re, f, h_f = head_loss(rho, U, D, L, mu, rel_rough=eps)
+        print(f"粗糙度 {eps:.5f} m  →  Re = {Re:.0f},  f = {f:.4f},  h_f = {h_f:.2f} m")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>摩迪图（Moody Chart）</strong>：把摩擦因子 $f$ 画成
+              $Re$ 与相对粗糙度的函数，是管道水力计算的经典工具。
+              Colebrook-White 方程是摩迪图的解析表达。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>流体性质</strong>：密度、粘性、压缩性是三个最基本的物性；牛顿流体的内摩擦遵循 $\tau = \mu \, du/dy$。</li>
+              <li><strong>流体静力学</strong>：$p + \rho g z = \text{常数}$，平面上静水总压力等于形心压强乘面积。</li>
+              <li><strong>运动学</strong>：用欧拉法描述速度场；连续性方程 $\nabla \cdot \mathbf{u} = 0$ 表达质量守恒。</li>
+              <li><strong>伯努利方程</strong>：$z + p/(\rho g) + u^2/(2g) = H$，适用于不可压、定常、无粘、沿流线。</li>
+              <li><strong>N-S 方程</strong>：流体力学的基本方程，惯性项非线性是湍流复杂性的根源。</li>
+              <li><strong>层流湍流</strong>：雷诺数是判别准则；湍流的 RANS 平均会引入雷诺应力，需湍流模型封闭。</li>
+              <li><strong>边界层</strong>：粘性效应集中在固壁附近薄层；分离产生压差阻力与涡激振动。</li>
+              <li><strong>相似准则</strong>：$Re$、$Fr$、$Eu$、$St$ 等无量纲数是模型试验与理论分析的核心工具。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>吴望一，《流体力学》— 国内经典教材</li>
+            <li>张兆顺等，《流体力学》— 系统全面</li>
+            <li>White, <em>Fluid Mechanics</em> — 国际主流教材，例题丰富</li>
+            <li>Pope, <em>Turbulent Flows</em> — 湍流理论权威著作</li>
+            <li>Batchelor, <em>An Introduction to Fluid Dynamics</em> — 大师经典</li>
+            <li>Simiu &amp; Scanlan, <em>Wind Effects on Structures</em> — 风工程应用</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

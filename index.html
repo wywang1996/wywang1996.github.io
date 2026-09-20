@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wayione · 个人主页</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body data-nav="home">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <span>wayionelove@outlook.com</span>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+
+      <!-- 项目 -->
+      <li>
+        <a href="#projects" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+          </svg>
+          <span>项目</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="strong-motion.html">强震动数据处理</a></li>
+          <li><a href="ground-motion.html">地震动参数分析</a></li>
+          <li><a href="seismic-hazard.html">地震危险性分析</a></li>
+        </ul>
+      </li>
+
+      <!-- 笔记（按分类） -->
+      <li>
+        <a href="#notes" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+            <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+            <path d="M10 9H8"/>
+            <path d="M16 13H8"/>
+            <path d="M16 17H8"/>
+          </svg>
+          <span>笔记</span>
+        </a>
+        <ul class="nav-sub">
+	  <li class="nav-group">数学</li>
+	  <li><a href="linear-algebra.html" data-nav="linear-algebra">线性代数</a></li>
+	  <li><a href="numerical-analysis.html" data-nav="numerical-analysis">数值分析</a></li>
+	  <li><a href="probability-statistics.html" data-nav="probability-statistics">概率论与数理统计</a></li>
+	  <li><a href="complex-analysis.html" data-nav="complex-analysis">复变函数与积分变换</a></li>
+	  <li><a href="pde.html" data-nav="pde">偏微分方程</a></li>
+
+          <li class="nav-group">力学</li>
+          <li><a href="theoretical-mechanics.html" data-nav="theoretical-mechanics">理论力学</a></li>
+          <li><a href="material-mechanics.html" data-nav="material-mechanics">材料力学</a></li>
+          <li><a href="fluid-mechanics.html" data-nav="fluid-mechanics">流体力学</a></li>
+          <li><a href="structural-mechanics.html" data-nav="structural-mechanics">结构力学</a></li>
+          <li><a href="elasticity.html" data-nav="elasticity">弹性力学</a></li>
+          <li><a href="vibration.html" data-nav="vibration">振动力学</a></li>
+          <li><a href="structural-dynamics.html" data-nav="structural-dynamics">结构动力学</a></li>
+          <li><a href="plasticity.html" data-nav="plasticity">塑性力学</a></li>
+          <li><a href="fracture-mechanics.html" data-nav="fracture-mechanics">断裂力学</a></li>
+          <li><a href="plate-shell.html" data-nav="plate-shell">板壳理论</a></li>
+          <li><a href="fem.html" data-nav="fem">有限元方法</a></li>
+
+	  <li class="nav-group">计算机</li>
+	  <li><a href="dsp.html" data-nav="dsp">数字信号处理</a></li>
+	  <li><a href="data-structures.html" data-nav="data-structures">数据结构</a></li>
+	  <li><a href="algorithm-design.html" data-nav="algorithm-design">算法设计与分析</a></li>
+	  <li><a href="machine-learning.html" data-nav="machine-learning">机器学习基础</a></li>
+	  <li><a href="scientific-computing-python.html" data-nav="scientific-computing-python">科学计算与 Python</a></li>
+	  <li><a href="scientific-computing-matlab.html" data-nav="scientific-computing-matlab">科学计算与 MATLAB</a></li>
+	  <li><a href="scientific-computing-r.html" data-nav="scientific-computing-r">科学计算与 R</a></li>
+	  <li><a href="database-data-engineering.html" data-nav="database-data-engineering">数据库与数据工程</a></li>
+	  <li><a href="parallel-high-performance-computing.html" data-nav="parallel-high-performance-computing">并行与高性能计算</a></li>
+
+          <li class="nav-group">地震学</li>
+	  <li><a href="spectral-analysis.html">地震动谱分析入门</a></li>
+	  <li><a href="quant-seismo.html">定量地震学</a></li>
+	  <li><a href="earthquake-geology.html" data-nav="earthquake-geology">地震地质</a></li>
+	  <li><a href="engineering-seismology.html" data-nav="engineering-seismology">工程地震学</a></li>
+	  <li><a href="site-seismic-safety-evaluation.html" data-nav="site-seismic-safety-evaluation">场地地震安全性评价</a></li>
+	  <li><a href="earthquake-engineering.html" data-nav="earthquake-engineering">地震工程</a></li>
+	  <li><a href="strong-motion-observation.html" data-nav="strong-motion-observation">强震动观测</a></li>
+	  <li><a href="soil-dynamics.html" data-nav="soil-dynamics">土动力学</a></li>
+	  <li><a href="earthquake-early-warning.html" data-nav="earthquake-early-warning">地震预警</a></li>
+        </ul>
+      </li>
+
+      <!-- 小工具 -->
+      <li>
+        <a href="#tools" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          <span>小工具</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#t-pga">地震动参数计算器</a></li>
+          <li><a href="magnitude.html">震级能量换算器</a></li>
+          <li><a href="waveform.html">波形格式转换器</a></li>
+        </ul>
+      </li>
+
+      <!-- 关于 -->
+      <li>
+        <a href="#about" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>关于</span>
+        </a>
+      </li>
+
+      <!-- 联系 -->
+      <li>
+        <a href="#contact" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="20" height="16" x="2" y="4" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          <span>联系</span>
+        </a>
+      </li>
+
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <header class="hero">
+      <img class="hero-avatar" src="avatar.jpg" alt="wayione" width="76" height="76">
+      <div class="hero-text">
+        <h1>你好，我是 wayione</h1>
+        <p class="tagline">工程力学 / 防灾减灾工程及防护工程。</p>
+        <div class="meta">
+          <span>💼 地震工程，工程地震</span>
+          <span>📧 wayionelove@outlook.com</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== 项目 ===== -->
+    <section id="projects">
+      <div class="section-head">
+        <span class="section-label">Projects</span>
+        <h2>项目</h2>
+      </div>
+      <div class="grid">
+
+        <a class="card" id="p-strong-motion" href="strong-motion.html">
+          <div class="card-head">
+            <h3>强震动数据处理</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            强震动记录预处理工具，支持基线校正、滤波、去尖峰、重采样，
+            以及加速度时程的积分与校正，输出可供结构时程分析使用的数据。
+          </p>
+          <div class="tags">
+            <span class="tag">强震动</span>
+            <span class="tag">Python</span>
+            <span class="tag blue">信号处理</span>
+          </div>
+        </a>
+
+        <a class="card" id="p-ground-motion" href="ground-motion.html">
+          <div class="card-head">
+            <h3>地震动参数分析</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            从地震动时程中提取常用参数，包括 PGA、PGV、PGD、Arias 强度、
+            有效持时、反应谱等，并支持多记录批量对比与可视化。
+          </p>
+          <div class="tags">
+            <span class="tag">地震动</span>
+            <span class="tag">反应谱</span>
+            <span class="tag blue">参数分析</span>
+          </div>
+        </a>
+
+        <a class="card" id="p-seismic-hazard" href="seismic-hazard.html">
+          <div class="card-head">
+            <h3>地震危险性分析</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            基于概率地震危险性分析（PSHA）框架，结合地震活动性模型、
+            地震动预测方程与场地效应，计算不同周期下的地震危险性曲线与
+            一致危险性反应谱。
+          </p>
+          <div class="tags">
+            <span class="tag">PSHA</span>
+            <span class="tag">危险性曲线</span>
+            <span class="tag blue">UHS</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===== 笔记（按分类） ===== -->
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>笔记</h2>
+      </div>
+
+<!-- 数学 -->
+<div class="notes-group">
+  <div class="notes-group-title">
+    <span>数学</span>
+    <span class="count">5</span>
+  </div>
+  <div class="grid">
+
+    <div class="card card-parent" id="n-linear-algebra">
+      <div class="card-head">
+        <h3><a href="linear-algebra.html">线性代数</a></h3>
+      </div>
+      <p class="desc">
+        从矩阵运算到特征值分解，覆盖向量空间、线性变换、二次型与 SVD，
+        是有限元、模态分析与结构动力学的数学基础。
+      </p>
+      <div class="subnotes">
+        <a href="linear-algebra.html#matrix">矩阵与行列式</a>
+        <a href="linear-algebra.html#space">向量空间</a>
+        <a href="linear-algebra.html#eigen">特征值分解</a>
+        <a href="linear-algebra.html#quadratic">二次型</a>
+        <a href="linear-algebra.html#svd">奇异值分解</a>
+      </div>
+      <div class="tags">
+        <span class="tag">矩阵</span>
+        <span class="tag">特征值</span>
+        <span class="tag blue">有限元基础</span>
+      </div>
+    </div>
+
+    <div class="card card-parent" id="n-numerical-analysis">
+      <div class="card-head">
+        <h3><a href="numerical-analysis.html">数值分析</a></h3>
+      </div>
+      <p class="desc">
+        从误差分析到常微分方程数值解，覆盖非线性求根、插值、数值积分、
+        时程分析与特征值算法，是结构动力响应计算的直接工具。
+      </p>
+      <div class="subnotes">
+        <a href="numerical-analysis.html#error">误差与条件数</a>
+        <a href="numerical-analysis.html#root">非线性求根</a>
+        <a href="numerical-analysis.html#linear">线性方程组</a>
+        <a href="numerical-analysis.html#interp">插值与逼近</a>
+        <a href="numerical-analysis.html#integral">数值积分</a>
+        <a href="numerical-analysis.html#ode">常微分方程</a>
+      </div>
+      <div class="tags">
+        <span class="tag">数值方法</span>
+        <span class="tag">时程分析</span>
+        <span class="tag blue">Newmark-β</span>
+      </div>
+    </div>
+
+    <div class="card card-parent" id="n-probability-statistics">
+      <div class="card-head">
+        <h3><a href="probability-statistics.html">概率论与数理统计</a></h3>
+      </div>
+      <p class="desc">
+        从概率公理到参数估计与假设检验，覆盖随机变量、大数定律、
+        蒙特卡洛模拟与回归分析，是地震危险性分析与可靠度理论的数学基础。
+      </p>
+      <div class="subnotes">
+        <a href="probability-statistics.html#axioms">概率公理</a>
+        <a href="probability-statistics.html#random-var">随机变量</a>
+        <a href="probability-statistics.html#limit">大数定律</a>
+        <a href="probability-statistics.html#estimate">参数估计</a>
+        <a href="probability-statistics.html#test">假设检验</a>
+        <a href="probability-statistics.html#monte-carlo">蒙特卡洛</a>
+      </div>
+      <div class="tags">
+        <span class="tag">随机变量</span>
+        <span class="tag">参数估计</span>
+        <span class="tag blue">PSHA 基础</span>
+      </div>
+    </div>
+
+    <div class="card card-parent" id="n-complex-analysis">
+      <div class="card-head">
+        <h3><a href="complex-analysis.html">复变函数与积分变换</a></h3>
+      </div>
+      <p class="desc">
+        从复数运算到留数定理，从傅里叶变换到拉普拉斯变换，
+        覆盖解析函数、复积分与积分变换，是振动分析、信号处理
+        与频域方法的共同数学基础。
+      </p>
+      <div class="subnotes">
+        <a href="complex-analysis.html#complex">复数与复平面</a>
+        <a href="complex-analysis.html#analytic">解析函数</a>
+        <a href="complex-analysis.html#integral">复积分与柯西定理</a>
+        <a href="complex-analysis.html#series">级数与洛朗展开</a>
+        <a href="complex-analysis.html#residue">留数定理</a>
+        <a href="complex-analysis.html#fourier">傅里叶变换</a>
+        <a href="complex-analysis.html#laplace">拉普拉斯变换</a>
+      </div>
+      <div class="tags">
+        <span class="tag">复变函数</span>
+        <span class="tag">积分变换</span>
+        <span class="tag blue">频域方法</span>
+      </div>
+    </div>
+
+    <div class="card card-parent" id="n-pde">
+      <div class="card-head">
+        <h3><a href="pde.html">偏微分方程</a></h3>
+      </div>
+      <p class="desc">
+        从一阶特征线法到波动方程、热传导与拉普拉斯方程，
+        覆盖分离变量、格林函数与数值解法，是连续介质力学、
+        地震波传播与热力分析的共同数学基础。
+      </p>
+      <div class="subnotes">
+        <a href="pde.html#classification">方程分类</a>
+        <a href="pde.html#first-order">一阶方程</a>
+        <a href="pde.html#wave">波动方程</a>
+        <a href="pde.html#heat">热传导方程</a>
+        <a href="pde.html#laplace">拉普拉斯方程</a>
+        <a href="pde.html#separation">分离变量法</a>
+        <a href="pde.html#numerical">数值方法</a>
+      </div>
+      <div class="tags">
+        <span class="tag">波动方程</span>
+        <span class="tag">分离变量</span>
+        <span class="tag blue">连续介质</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+      <!-- 力学 -->
+      <div class="notes-group">
+        <div class="notes-group-title">
+          <span>力学</span>
+          <span class="count">11</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="n-theoretical-mechanics">
+            <div class="card-head">
+              <h3><a href="theoretical-mechanics.html">理论力学</a></h3>
+            </div>
+            <p class="desc">
+              从静力学到分析力学，覆盖牛顿力学、拉格朗日方程与哈密顿正则方程。
+            </p>
+            <div class="subnotes">
+              <a href="theoretical-mechanics.html#statics">静力学基础</a>
+              <a href="theoretical-mechanics.html#kinetics">质点动力学</a>
+              <a href="theoretical-mechanics.html#lagrange">拉格朗日力学</a>
+              <a href="theoretical-mechanics.html#hamilton">哈密顿力学</a>
+            </div>
+            <div class="tags">
+              <span class="tag">经典力学</span>
+              <span class="tag">拉格朗日</span>
+              <span class="tag blue">结构动力学</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-material-mechanics">
+            <div class="card-head">
+              <h3><a href="material-mechanics.html">材料力学</a></h3>
+            </div>
+            <p class="desc">
+              从杆件基本变形到复杂应力状态，覆盖强度、刚度与稳定性的计算与校核。
+            </p>
+            <div class="subnotes">
+              <a href="material-mechanics.html#axial">轴向拉压</a>
+              <a href="material-mechanics.html#torsion">圆轴扭转</a>
+              <a href="material-mechanics.html#bending">弯曲</a>
+              <a href="material-mechanics.html#stress">强度理论</a>
+              <a href="material-mechanics.html#buckling">压杆稳定</a>
+            </div>
+            <div class="tags">
+              <span class="tag">应力分析</span>
+              <span class="tag">强度理论</span>
+              <span class="tag blue">结构设计</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-fluid-mechanics">
+            <div class="card-head">
+              <h3><a href="fluid-mechanics.html">流体力学</a></h3>
+            </div>
+            <p class="desc">
+              从流体物性到 N-S 方程，覆盖静力学、伯努利方程、边界层与量纲分析。
+            </p>
+            <div class="subnotes">
+              <a href="fluid-mechanics.html#hydrostatics">流体静力学</a>
+              <a href="fluid-mechanics.html#bernoulli">伯努利方程</a>
+              <a href="fluid-mechanics.html#ns">N-S 方程</a>
+              <a href="fluid-mechanics.html#boundary">边界层</a>
+              <a href="fluid-mechanics.html#similarity">量纲分析</a>
+            </div>
+            <div class="tags">
+              <span class="tag">连续介质</span>
+              <span class="tag">N-S 方程</span>
+              <span class="tag blue">边界层</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-structural-mechanics">
+            <div class="card-head">
+              <h3><a href="structural-mechanics.html">结构力学</a></h3>
+            </div>
+            <p class="desc">
+              从几何组成到矩阵位移法，覆盖静定与超静定结构的内力与位移分析。
+            </p>
+            <div class="subnotes">
+              <a href="structural-mechanics.html#geometry">几何组成</a>
+              <a href="structural-mechanics.html#virtual">虚功原理</a>
+              <a href="structural-mechanics.html#force">力法</a>
+              <a href="structural-mechanics.html#displacement">位移法</a>
+              <a href="structural-mechanics.html#matrix">矩阵位移法</a>
+            </div>
+            <div class="tags">
+              <span class="tag">静定结构</span>
+              <span class="tag">超静定</span>
+              <span class="tag blue">有限元雏形</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-elasticity">
+            <div class="card-head">
+              <h3><a href="elasticity.html">弹性力学</a></h3>
+            </div>
+            <p class="desc">
+              从应力张量到变分原理，覆盖平面问题、极坐标解法与有限元基础。
+            </p>
+            <div class="subnotes">
+              <a href="elasticity.html#stress">应力分析</a>
+              <a href="elasticity.html#plane">平面问题</a>
+              <a href="elasticity.html#polar">极坐标解法</a>
+              <a href="elasticity.html#energy">能量原理</a>
+              <a href="elasticity.html#fem">到有限元</a>
+            </div>
+            <div class="tags">
+              <span class="tag">应力张量</span>
+              <span class="tag">变分原理</span>
+              <span class="tag blue">有限元基础</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-vibration">
+            <div class="card-head">
+              <h3><a href="vibration.html">振动力学</a></h3>
+            </div>
+            <p class="desc">
+              从单自由度到多自由度、从离散到连续，覆盖自由振动、受迫振动与模态分析。
+            </p>
+            <div class="subnotes">
+              <a href="vibration.html#sdof">单自由度</a>
+              <a href="vibration.html#duhamel">Duhamel 积分</a>
+              <a href="vibration.html#mdof">多自由度</a>
+              <a href="vibration.html#modal">模态分析</a>
+              <a href="vibration.html#continuous">连续系统</a>
+            </div>
+            <div class="tags">
+              <span class="tag">单自由度</span>
+              <span class="tag">模态分析</span>
+              <span class="tag blue">结构动力学</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-structural-dynamics">
+            <div class="card-head">
+              <h3><a href="structural-dynamics.html">结构动力学</a></h3>
+            </div>
+            <p class="desc">
+              从运动方程到反应谱、时程分析与 Pushover，覆盖结构抗震分析的完整方法。
+            </p>
+            <div class="subnotes">
+              <a href="structural-dynamics.html#spectrum">地震反应谱</a>
+              <a href="structural-dynamics.html#design">设计反应谱</a>
+              <a href="structural-dynamics.html#modal">振型分解</a>
+              <a href="structural-dynamics.html#timestep">时程分析</a>
+              <a href="structural-dynamics.html#pushover">Pushover</a>
+            </div>
+            <div class="tags">
+              <span class="tag">反应谱</span>
+              <span class="tag">时程分析</span>
+              <span class="tag blue">抗震设计</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-plasticity">
+            <div class="card-head">
+              <h3><a href="plasticity.html">塑性力学</a></h3>
+            </div>
+            <p class="desc">
+              从屈服准则到极限分析，覆盖弹塑性本构、塑性铰与结构的延性设计。
+            </p>
+            <div class="subnotes">
+              <a href="plasticity.html#yield">屈服准则</a>
+              <a href="plasticity.html#hardening">加载与硬化</a>
+              <a href="plasticity.html#constitutive">弹塑性本构</a>
+              <a href="plasticity.html#limit">极限分析</a>
+              <a href="plasticity.html#seismic">抗震应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">屈服准则</span>
+              <span class="tag">极限分析</span>
+              <span class="tag blue">延性设计</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-fracture-mechanics">
+            <div class="card-head">
+              <h3><a href="fracture-mechanics.html">断裂力学</a></h3>
+            </div>
+            <p class="desc">
+              从裂纹尖端应力场到 J 积分，覆盖应力强度因子、能量释放率与疲劳裂纹扩展。
+            </p>
+            <div class="subnotes">
+              <a href="fracture-mechanics.html#stress">裂纹尖端应力场</a>
+              <a href="fracture-mechanics.html#g">能量释放率</a>
+              <a href="fracture-mechanics.html#j">J 积分</a>
+              <a href="fracture-mechanics.html#fatigue">疲劳扩展</a>
+              <a href="fracture-mechanics.html#seismic">抗震应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">应力强度因子</span>
+              <span class="tag">J 积分</span>
+              <span class="tag blue">损伤评估</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-plate-shell">
+            <div class="card-head">
+              <h3><a href="plate-shell.html">板壳理论</a></h3>
+            </div>
+            <p class="desc">
+              从 Kirchhoff 薄板到 Mindlin 中厚板，覆盖板的弯曲、振动、屈曲与壳的薄膜理论。
+            </p>
+            <div class="subnotes">
+              <a href="plate-shell.html#kirchhoff">薄板弯曲</a>
+              <a href="plate-shell.html#mindlin">中厚板</a>
+              <a href="plate-shell.html#vibration">板的振动</a>
+              <a href="plate-shell.html#cylinder">圆柱壳</a>
+              <a href="plate-shell.html#fem">板壳单元</a>
+            </div>
+            <div class="tags">
+              <span class="tag">薄板弯曲</span>
+              <span class="tag">圆柱壳</span>
+              <span class="tag blue">板壳单元</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-fem">
+            <div class="card-head">
+              <h3><a href="fem.html">有限元方法</a></h3>
+            </div>
+            <p class="desc">
+              从离散化到非线性，覆盖等参单元、板壳单元、动力学与 Newton-Raphson 求解。
+            </p>
+            <div class="subnotes">
+              <a href="fem.html#element">单元刚度矩阵</a>
+              <a href="fem.html#isoparametric">等参单元</a>
+              <a href="fem.html#plate-shell">板壳单元</a>
+              <a href="fem.html#dynamics">动力学</a>
+              <a href="fem.html#nonlinear">非线性</a>
+            </div>
+            <div class="tags">
+              <span class="tag">等参单元</span>
+              <span class="tag">动力学</span>
+              <span class="tag blue">数值实现</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+            <!-- 计算机 -->
+      <div class="notes-group">
+        <div class="notes-group-title">
+          <span>计算机</span>
+          <span class="count">9</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="n-dsp">
+            <div class="card-head">
+              <h3><a href="dsp.html">数字信号处理</a></h3>
+            </div>
+            <p class="desc">
+              离散信号与系统、采样定理、变换与数字滤波器设计。
+            </p>
+            <div class="subnotes">
+              <a href="dsp.html#sampling">采样定理</a>
+              <a href="dsp.html#ztransform">Z 变换</a>
+              <a href="dsp.html#fft">DFT 与 FFT</a>
+              <a href="dsp.html#filter">数字滤波器设计</a>
+              <a href="dsp.html#window">窗函数与频谱泄漏</a>
+            </div>
+            <div class="tags">
+              <span class="tag">DSP</span>
+              <span class="tag">FFT</span>
+              <span class="tag blue">滤波</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-data-structures">
+            <div class="card-head">
+              <h3><a href="data-structures.html">数据结构</a></h3>
+            </div>
+            <p class="desc">
+              从数组链表到图与排序，覆盖栈、队列、树、哈希、堆与图算法，
+              是科学计算、有限元组装与地震数据处理的基础工具。
+            </p>
+            <div class="subnotes">
+              <a href="data-structures.html#complexity">算法分析</a>
+              <a href="data-structures.html#linear">线性结构</a>
+              <a href="data-structures.html#tree">树结构</a>
+              <a href="data-structures.html#hash">哈希表</a>
+              <a href="data-structures.html#heap">堆与优先队列</a>
+              <a href="data-structures.html#graph">图与图算法</a>
+              <a href="data-structures.html#sort">排序与查找</a>
+              <a href="data-structures.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">算法分析</span>
+              <span class="tag">树与图</span>
+              <span class="tag blue">科学计算</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-algorithm-design">
+            <div class="card-head">
+              <h3><a href="algorithm-design.html">算法设计与分析</a></h3>
+            </div>
+            <p class="desc">
+              从分治到动态规划，覆盖贪心、回溯、分支限界与 NP 完全性，
+              是科学计算、优化求解与高性能实现的方法论基础。
+            </p>
+            <div class="subnotes">
+              <a href="algorithm-design.html#paradigm">算法设计范式</a>
+              <a href="algorithm-design.html#divide">分治法</a>
+              <a href="algorithm-design.html#greedy">贪心算法</a>
+              <a href="algorithm-design.html#dp">动态规划</a>
+              <a href="algorithm-design.html#backtrack">回溯与分支限界</a>
+              <a href="algorithm-design.html#randomized">随机化算法</a>
+              <a href="algorithm-design.html#np">NP 完全性</a>
+              <a href="algorithm-design.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">动态规划</span>
+              <span class="tag">贪心</span>
+              <span class="tag blue">优化求解</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-machine-learning">
+            <div class="card-head">
+              <h3><a href="machine-learning.html">机器学习基础</a></h3>
+            </div>
+            <p class="desc">
+              从线性回归到神经网络，覆盖监督学习、无监督学习、
+              模型评估与正则化，是地震学数据挖掘、震相拾取与地震预测研究的新工具。
+            </p>
+            <div class="subnotes">
+              <a href="machine-learning.html#workflow">机器学习流程</a>
+              <a href="machine-learning.html#regression">线性回归</a>
+              <a href="machine-learning.html#classification">分类</a>
+              <a href="machine-learning.html#clustering">聚类</a>
+              <a href="machine-learning.html#neural">神经网络</a>
+              <a href="machine-learning.html#evaluation">模型评估</a>
+              <a href="machine-learning.html#regularization">正则化与优化</a>
+              <a href="machine-learning.html#application">地震学应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">监督学习</span>
+              <span class="tag">神经网络</span>
+              <span class="tag blue">地震学应用</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-scientific-computing-python">
+            <div class="card-head">
+              <h3><a href="scientific-computing-python.html">科学计算与 Python</a></h3>
+            </div>
+            <p class="desc">
+              从 NumPy 向量化到 SciPy 数值算法，覆盖数组运算、优化、
+              积分、信号处理与性能调优，是工程计算与地震数据处理的核心工具链。
+            </p>
+            <div class="subnotes">
+              <a href="scientific-computing-python.html#ecosystem">科学计算生态</a>
+              <a href="scientific-computing-python.html#numpy">NumPy 基础</a>
+              <a href="scientific-computing-python.html#vectorize">向量化与广播</a>
+              <a href="scientific-computing-python.html#scipy">SciPy 数值算法</a>
+              <a href="scientific-computing-python.html#matplotlib">Matplotlib 可视化</a>
+              <a href="scientific-computing-python.html#pandas">Pandas 数据处理</a>
+              <a href="scientific-computing-python.html#performance">性能优化</a>
+              <a href="scientific-computing-python.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">NumPy</span>
+              <span class="tag">SciPy</span>
+              <span class="tag blue">向量化</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-scientific-computing-matlab">
+            <div class="card-head">
+              <h3><a href="scientific-computing-matlab.html">科学计算与 MATLAB</a></h3>
+            </div>
+            <p class="desc">
+              从矩阵运算到 Simulink 建模，覆盖 MATLAB 语言特性、数值计算、
+              信号处理与工程可视化，是工程仿真与地震数据处理的重要工具。
+            </p>
+            <div class="subnotes">
+              <a href="scientific-computing-matlab.html#language">语言特性</a>
+              <a href="scientific-computing-matlab.html#matrix">矩阵与数组</a>
+              <a href="scientific-computing-matlab.html#function">函数与脚本</a>
+              <a href="scientific-computing-matlab.html#numeric">数值计算</a>
+              <a href="scientific-computing-matlab.html#plot">可视化</a>
+              <a href="scientific-computing-matlab.html#toolbox">工具箱</a>
+              <a href="scientific-computing-matlab.html#simulink">Simulink</a>
+              <a href="scientific-computing-matlab.html#vs-python">与 Python 对比</a>
+              <a href="scientific-computing-matlab.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">矩阵运算</span>
+              <span class="tag">Simulink</span>
+              <span class="tag blue">工程仿真</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-scientific-computing-r">
+            <div class="card-head">
+              <h3><a href="scientific-computing-r.html">科学计算与 R</a></h3>
+            </div>
+            <p class="desc">
+              从向量化到统计建模，覆盖 R 语言特性、数据操作、可视化与
+              时间序列分析，是地震目录统计、极值分析与 ETAS 建模的专用工具。
+            </p>
+            <div class="subnotes">
+              <a href="scientific-computing-r.html#language">语言特性</a>
+              <a href="scientific-computing-r.html#data">数据结构</a>
+              <a href="scientific-computing-r.html#functional">函数式与 apply</a>
+              <a href="scientific-computing-r.html#tidyverse">tidyverse 数据操作</a>
+              <a href="scientific-computing-r.html#stats">统计建模</a>
+              <a href="scientific-computing-r.html#timeseries">时间序列</a>
+              <a href="scientific-computing-r.html#plot">可视化</a>
+              <a href="scientific-computing-r.html#vs-python">与 Python 对比</a>
+              <a href="scientific-computing-r.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">向量化</span>
+              <span class="tag">统计建模</span>
+              <span class="tag blue">地震统计</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-database-data-engineering">
+            <div class="card-head">
+              <h3><a href="database-data-engineering.html">数据库与数据工程</a></h3>
+            </div>
+            <p class="desc">
+              从关系模型到时序数据库，覆盖 SQL、索引、事务、
+              数据仓库与数据管道，是地震目录管理、波形归档与
+              大规模数据处理的基础设施。
+            </p>
+            <div class="subnotes">
+              <a href="database-data-engineering.html#model">数据模型</a>
+              <a href="database-data-engineering.html#sql">SQL 与查询</a>
+              <a href="database-data-engineering.html#index">索引与优化</a>
+              <a href="database-data-engineering.html#transaction">事务与并发</a>
+              <a href="database-data-engineering.html#timeseries">时序数据库</a>
+              <a href="database-data-engineering.html#warehouse">数据仓库</a>
+              <a href="database-data-engineering.html#pipeline">数据管道</a>
+              <a href="database-data-engineering.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">SQL</span>
+              <span class="tag">时序数据库</span>
+              <span class="tag blue">数据管道</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-parallel-high-performance-computing">
+            <div class="card-head">
+              <h3><a href="parallel-high-performance-computing.html">并行与高性能计算</a></h3>
+            </div>
+            <p class="desc">
+              从多核到 GPU 集群，覆盖 OpenMP、MPI、CUDA 与 Python 并行，
+              是有限元求解、地震波模拟与大规模数据分析的加速关键。
+            </p>
+            <div class="subnotes">
+              <a href="parallel-high-performance-computing.html#basis">并行计算基础</a>
+              <a href="parallel-high-performance-computing.html#hardware">并行硬件架构</a>
+              <a href="parallel-high-performance-computing.html#openmp">共享内存 OpenMP</a>
+              <a href="parallel-high-performance-computing.html#mpi">消息传递 MPI</a>
+              <a href="parallel-high-performance-computing.html#gpu">GPU 与 CUDA</a>
+              <a href="parallel-high-performance-computing.html#python">Python 并行</a>
+              <a href="parallel-high-performance-computing.html#algorithm">并行算法设计</a>
+              <a href="parallel-high-performance-computing.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">OpenMP</span>
+              <span class="tag">MPI</span>
+              <span class="tag blue">GPU</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+            <!-- 地震学 -->
+      <div class="notes-group">
+        <div class="notes-group-title">
+          <span>地震学</span>
+          <span class="count">9</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="n-spectral">
+            <div class="card-head">
+              <h3><a href="spectral-analysis.html">地震动谱分析入门</a></h3>
+            </div>
+            <p class="desc">
+              从傅里叶谱到反应谱的基本概念与计算方法。
+            </p>
+            <div class="subnotes">
+              <a href="spectral-analysis.html#fourier">傅里叶谱</a>
+              <a href="spectral-analysis.html#response">反应谱</a>
+              <a href="spectral-analysis.html#psa-psv">谱加速度与谱速度</a>
+              <a href="spectral-analysis.html#damping">阻尼比影响</a>
+            </div>
+            <div class="tags">
+              <span class="tag">反应谱</span>
+              <span class="tag">傅里叶谱</span>
+              <span class="tag blue">谱分析</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-quant-seismo">
+            <div class="card-head">
+              <h3><a href="quant-seismo.html">定量地震学</a></h3>
+            </div>
+            <p class="desc">
+              地震震源物理与波传播的定量描述。
+            </p>
+            <div class="subnotes">
+              <a href="quant-seismo.html#moment">震源矩张量</a>
+              <a href="quant-seismo.html#radiation">辐射图型</a>
+              <a href="quant-seismo.html#magnitude">震级标度关系</a>
+              <a href="quant-seismo.html#attenuation">地震波衰减</a>
+              <a href="quant-seismo.html#site">场地响应</a>
+              <a href="quant-seismo.html#inversion">波形反演</a>
+            </div>
+            <div class="tags">
+              <span class="tag">震源</span>
+              <span class="tag">矩张量</span>
+              <span class="tag blue">波形反演</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-earthquake-geology">
+            <div class="card-head">
+              <h3><a href="earthquake-geology.html">地震地质</a></h3>
+            </div>
+            <p class="desc">
+              从活动断层到古地震，覆盖断层活动性鉴定、滑动速率、
+              地震复发间隔与构造地貌，是地震危险性分析的地质基础。
+            </p>
+            <div class="subnotes">
+              <a href="earthquake-geology.html#fault">活动断层</a>
+              <a href="earthquake-geology.html#paleoseismology">古地震</a>
+              <a href="earthquake-geology.html#slip-rate">滑动速率</a>
+              <a href="earthquake-geology.html#recurrence">复发间隔</a>
+              <a href="earthquake-geology.html#tectonic">构造地貌</a>
+              <a href="earthquake-geology.html#segmentation">断层分段</a>
+              <a href="earthquake-geology.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">活动断层</span>
+              <span class="tag">古地震</span>
+              <span class="tag blue">地震危险性</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-engineering-seismology">
+            <div class="card-head">
+              <h3><a href="engineering-seismology.html">工程地震学</a></h3>
+            </div>
+            <p class="desc">
+              从地震危险性分析到地震动预测方程，覆盖 PSHA、GMPE、
+              一致危险性谱与设计地震动选取，是连接地震学与结构抗震设计的桥梁。
+            </p>
+            <div class="subnotes">
+              <a href="engineering-seismology.html#hazard">地震危险性分析</a>
+              <a href="engineering-seismology.html#source">震源模型</a>
+              <a href="engineering-seismology.html#gmpe">地震动预测方程</a>
+              <a href="engineering-seismology.html#psha">PSHA 方法</a>
+              <a href="engineering-seismology.html#uhs">一致危险性谱</a>
+              <a href="engineering-seismology.html#selection">设计地震动选取</a>
+              <a href="engineering-seismology.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">PSHA</span>
+              <span class="tag">GMPE</span>
+              <span class="tag blue">设计地震动</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-site-seismic-safety-evaluation">
+            <div class="card-head">
+              <h3><a href="site-seismic-safety-evaluation.html">场地地震安全性评价</a></h3>
+            </div>
+            <p class="desc">
+              从法规框架到工作流程，覆盖地震危险性分析、场地效应评估、
+              设计地震动确定与地震地质灾害评估，是重大工程抗震设防的法定环节。
+            </p>
+            <div class="subnotes">
+              <a href="site-seismic-safety-evaluation.html#regulation">法规框架</a>
+              <a href="site-seismic-safety-evaluation.html#workflow">工作流程</a>
+              <a href="site-seismic-safety-evaluation.html#hazard">地震危险性分析</a>
+              <a href="site-seismic-safety-evaluation.html#site">场地效应评估</a>
+              <a href="site-seismic-safety-evaluation.html#design">设计地震动</a>
+              <a href="site-seismic-safety-evaluation.html#geohazard">地震地质灾害</a>
+              <a href="site-seismic-safety-evaluation.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">地震安全性评价</span>
+              <span class="tag">设计地震动</span>
+              <span class="tag blue">重大工程</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-earthquake-engineering">
+            <div class="card-head">
+              <h3><a href="earthquake-engineering.html">地震工程</a></h3>
+            </div>
+            <p class="desc">
+              从地震动输入到结构响应，覆盖反应谱、振型分解、抗震设计、
+              隔震消能与性能化设计，是结构抗震分析与设计的核心方法论。
+            </p>
+            <div class="subnotes">
+              <a href="earthquake-engineering.html#input">地震动输入</a>
+              <a href="earthquake-engineering.html#sdof">反应谱</a>
+              <a href="earthquake-engineering.html#mdof">振型分解</a>
+              <a href="earthquake-engineering.html#design">抗震设计</a>
+              <a href="earthquake-engineering.html#isolation">隔震与消能</a>
+              <a href="earthquake-engineering.html#site">场地效应</a>
+              <a href="earthquake-engineering.html#performance">性能化设计</a>
+            </div>
+            <div class="tags">
+              <span class="tag">反应谱</span>
+              <span class="tag">抗震设计</span>
+              <span class="tag blue">隔震消能</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-strong-motion-observation">
+            <div class="card-head">
+              <h3><a href="strong-motion-observation.html">强震动观测</a></h3>
+            </div>
+            <p class="desc">
+              从台网布设到数据质量控制，覆盖强震仪原理、记录格式、
+              基线校正、滤波与去噪，是地震工程数据获取与处理的基础环节。
+            </p>
+            <div class="subnotes">
+              <a href="strong-motion-observation.html#network">台网与仪器</a>
+              <a href="strong-motion-observation.html#format">数据格式</a>
+              <a href="strong-motion-observation.html#qc">质量控制</a>
+              <a href="strong-motion-observation.html#baseline">基线校正</a>
+              <a href="strong-motion-observation.html#filter">滤波与去噪</a>
+              <a href="strong-motion-observation.html#derived">积分与导出</a>
+              <a href="strong-motion-observation.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">强震仪</span>
+              <span class="tag">数据格式</span>
+              <span class="tag blue">信号处理</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-soil-dynamics">
+            <div class="card-head">
+              <h3><a href="soil-dynamics.html">土动力学</a></h3>
+            </div>
+            <p class="desc">
+              从土的动力特性到场地地震反应，覆盖动剪切模量、阻尼比、
+              液化判别、一维土层反应分析与土-结构相互作用，
+              是场地效应评估与岩土地震工程的理论基础。
+            </p>
+            <div class="subnotes">
+              <a href="soil-dynamics.html#properties">土的动力特性</a>
+              <a href="soil-dynamics.html#wave">土中波的传播</a>
+              <a href="soil-dynamics.html#site">场地地震反应</a>
+              <a href="soil-dynamics.html#liquefaction">液化</a>
+              <a href="soil-dynamics.html#ssi">土-结构相互作用</a>
+              <a href="soil-dynamics.html#lab">室内试验</a>
+              <a href="soil-dynamics.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">动剪切模量</span>
+              <span class="tag">场地效应</span>
+              <span class="tag blue">液化</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="n-earthquake-early-warning">
+            <div class="card-head">
+              <h3><a href="earthquake-early-warning.html">地震预警</a></h3>
+            </div>
+            <p class="desc">
+              从 P 波到 S 波的时间差，覆盖预警原理、台网架构、
+              震源参数快速估计与预警信息发布，是减轻地震灾害的实时防线。
+            </p>
+            <div class="subnotes">
+              <a href="earthquake-early-warning.html#principle">预警原理</a>
+              <a href="earthquake-early-warning.html#types">预警类型</a>
+              <a href="earthquake-early-warning.html#network">台网与算法</a>
+              <a href="earthquake-early-warning.html#magnitude">震级快速估计</a>
+              <a href="earthquake-early-warning.html#ground-motion">地震动预测</a>
+              <a href="earthquake-early-warning.html#dissemination">信息发布</a>
+              <a href="earthquake-early-warning.html#application">工程应用</a>
+            </div>
+            <div class="tags">
+              <span class="tag">P 波</span>
+              <span class="tag">实时处理</span>
+              <span class="tag blue">防灾减灾</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===== 小工具 ===== -->
+    <section id="tools">
+      <div class="section-head">
+        <span class="section-label">Tools</span>
+        <h2>小工具</h2>
+      </div>
+      <div class="grid">
+
+        <a class="card" id="t-pga" href="#">
+          <div class="card-head">
+            <h3>地震动参数计算器</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            输入地震动加速度时程，自动计算 PGA、PGV、PGD、Arias 强度、
+            有效持时等常用参数，支持导出 CSV。
+          </p>
+          <div class="tags">
+            <span class="tag">地震动</span>
+            <span class="tag">Python</span>
+            <span class="tag blue">计算器</span>
+          </div>
+        </a>
+
+        <a class="card" id="t-magnitude" href="magnitude.html">
+          <div class="card-head">
+            <h3>震级能量换算器</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            在不同震级标度（ML、mb、MS、Mw）之间进行经验换算，
+            估算地震释放能量与地震矩，含震级饱和预警。
+          </p>
+          <div class="tags">
+            <span class="tag">震级</span>
+            <span class="tag">能量</span>
+            <span class="tag blue">换算</span>
+          </div>
+        </a>
+
+        <a class="card" id="t-waveform" href="waveform.html">
+          <div class="card-head">
+            <h3>波形格式转换器</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            上传 SAC、MiniSEED、ASCII 等波形文件，在浏览器本地解析、
+            预览波形，并导出为 SAC、MiniSEED、CSV 等格式。
+          </p>
+          <div class="tags">
+            <span class="tag">波形</span>
+            <span class="tag">ObsPy</span>
+            <span class="tag blue">转换</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===== 关于 ===== -->
+    <section id="about">
+      <div class="section-head">
+        <span class="section-label">About</span>
+        <h2>关于我</h2>
+      </div>
+      <div class="about-wrap">
+        <div class="about-text">
+          <p>
+            从事地震工程与工程地震研究，关注结构抗震与地震动特性分析。
+          </p>
+          <p>
+            这个主页用来整理我的项目、笔记和小工具。如果你对其中任何内容感兴趣，
+            欢迎通过下方的联系方式与我交流。
+          </p>
+        </div>
+        <div>
+          <div class="skills-title">技能</div>
+          <div class="skills">
+            <span class="skill">Python</span>
+            <span class="skill">MATLAB</span>
+            <span class="skill">地震学数据处理</span>
+            <span class="skill">有限元分析</span>
+            <span class="skill">建模与仿真</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 联系 ===== -->
+    <section id="contact">
+      <div class="section-head">
+        <span class="section-label">Contact</span>
+        <h2>联系我</h2>
+      </div>
+      <div class="contact-grid">
+        <a class="contact-item" href="mailto:wayionelove@outlook.com">
+          <div class="label">Email</div>
+          <div class="value">wayionelove@outlook.com</div>
+        </a>
+        <a class="contact-item" href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">
+          <div class="label">GitHub</div>
+          <div class="value">@wywang1996</div>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      © 2026 wayione · Built with ❤️ and Python
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

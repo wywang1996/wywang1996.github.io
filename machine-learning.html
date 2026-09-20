@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机器学习基础 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="machine-learning">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#workflow">一、机器学习流程</a></li>
+      <li><a href="#regression">二、线性回归与正则化</a></li>
+      <li><a href="#classification">三、分类与逻辑回归</a></li>
+      <li><a href="#tree">四、决策树与集成方法</a></li>
+      <li><a href="#clustering">五、聚类与降维</a></li>
+      <li><a href="#neural">六、神经网络与深度学习</a></li>
+      <li><a href="#evaluation">七、模型评估与选择</a></li>
+      <li><a href="#optimization">八、优化与训练技巧</a></li>
+      <li><a href="#application">九、地震学应用</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 机器学习基础
+        </div>
+        <h1>机器学习基础</h1>
+        <p class="lead">
+          从线性回归到神经网络，覆盖监督学习、无监督学习、
+          模型评估与正则化。机器学习正在改变地震学的数据处理方式——
+          震相自动拾取、震级快速估计、地震目录去噪、地震动预测，
+          都开始采用数据驱动的方法。
+        </p>
+        <div class="article-meta">
+          <span>监督学习</span>
+          <span>无监督学习</span>
+          <span>神经网络</span>
+          <span class="blue">地震学应用</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            机器学习研究<strong>如何让计算机从数据中自动学习规律</strong>，
+            并用学到的规律对新数据进行预测或决策。
+          </p>
+
+          <p>
+            它与传统物理建模的根本区别：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>物理建模</th><th>机器学习</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>出发点</td>
+                  <td>从物理定律推导</td>
+                  <td>从数据中发现</td>
+                </tr>
+                <tr>
+                  <td>模型形式</td>
+                  <td>偏微分方程、本构关系</td>
+                  <td>参数化函数（神经网络等）</td>
+                </tr>
+                <tr>
+                  <td>参数来源</td>
+                  <td>实验测定</td>
+                  <td>数据拟合</td>
+                </tr>
+                <tr>
+                  <td>可解释性</td>
+                  <td>强（有物理意义）</td>
+                  <td>弱（黑箱）</td>
+                </tr>
+                <tr>
+                  <td>外推能力</td>
+                  <td>较好（有物理约束）</td>
+                  <td>差（依赖训练分布）</td>
+                </tr>
+                <tr>
+                  <td>数据需求</td>
+                  <td>少</td>
+                  <td>多</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            在地震学中，两类方法并非对立，而是<strong>互补</strong>：
+          </p>
+          <ul>
+            <li><strong>物理模型强、数据少</strong>：用物理建模（如 PSHA、GMPE）。</li>
+            <li><strong>数据多、规律难显式表达</strong>：用机器学习（如震相拾取、事件分类）。</li>
+            <li><strong>物理 + 数据</strong>：混合方法（PINN、物理约束网络）正在兴起。</li>
+          </ul>
+
+          <p>
+            典型的机器学习地震学应用：
+          </p>
+          <ul>
+            <li><strong>震相自动拾取</strong>：PhaseNet、EQTransformer 等深度网络超越传统 STA/LTA。</li>
+            <li><strong>震级快速估计</strong>：用 P 波前几秒波形直接估计震级，用于地震预警。</li>
+            <li><strong>地震事件分类</strong>：区分天然地震、爆破、滑坡、噪声。</li>
+            <li><strong>地震目录去噪</strong>：自动剔除误检与噪声事件。</li>
+            <li><strong>地震动预测</strong>：用神经网络拟合 GMPE，考虑更多输入特征。</li>
+            <li><strong>地震预警</strong>：快速震级估计与地震动预测。</li>
+            <li><strong>波形反演</strong>：用神经网络加速正演或替代反演。</li>
+            <li><strong>地震目录聚类</strong>：识别地震丛集、余震序列。</li>
+          </ul>
+
+          <p>
+            这份笔记按"流程 $\to$ 回归 $\to$ 分类 $\to$ 树 $\to$ 聚类 $\to$ 神经网络 $\to$ 评估 $\to$ 优化 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="workflow">
+          <h2><span class="num">01</span>机器学习流程</h2>
+
+          <h3>三种学习范式</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>范式</th><th>数据</th><th>目标</th><th>典型方法</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>监督学习</td>
+                  <td>输入 + 标签</td>
+                  <td>学习映射 $y = f(x)$</td>
+                  <td>回归、分类</td>
+                </tr>
+                <tr>
+                  <td>无监督学习</td>
+                  <td>只有输入</td>
+                  <td>发现数据结构</td>
+                  <td>聚类、降维</td>
+                </tr>
+                <tr>
+                  <td>强化学习</td>
+                  <td>交互 + 奖励</td>
+                  <td>学习策略</td>
+                  <td>Q-learning、策略梯度</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            在半监督学习中，只有部分数据有标签——
+            这在标注昂贵的地震学中非常常见。
+          </p>
+
+          <h3>标准流程</h3>
+          <ol class="steps">
+            <li><strong>问题定义</strong>：明确输入、输出、评价指标。</li>
+            <li><strong>数据收集</strong>：采集、清洗、标注。</li>
+            <li><strong>特征工程</strong>：提取有信息量的特征。</li>
+            <li><strong>数据划分</strong>：训练 / 验证 / 测试集。</li>
+            <li><strong>模型选择</strong>：线性模型、树、神经网络等。</li>
+            <li><strong>训练</strong>：优化损失函数。</li>
+            <li><strong>调参</strong>：交叉验证选超参数。</li>
+            <li><strong>评估</strong>：测试集上的最终性能。</li>
+            <li><strong>部署与监控</strong>：上线、跟踪、更新。</li>
+          </ol>
+
+          <h3>数据划分</h3>
+          <p>
+            数据划分是机器学习中最容易被忽视、却最容易出错的环节：
+          </p>
+          <ul>
+            <li><strong>训练集</strong>（60%~80%）：用于学习模型参数。</li>
+            <li><strong>验证集</strong>（10%~20%）：用于选超参数、早停。</li>
+            <li><strong>测试集</strong>（10%~20%）：用于最终评估，只使用一次。</li>
+          </ul>
+
+          <p>
+            地震学中，划分要特别注意<strong>数据泄漏</strong>：
+          </p>
+          <ul>
+            <li><strong>时间泄漏</strong>：未来数据不能用于训练过去模型。</li>
+            <li><strong>事件泄漏</strong>：同一地震的多个台站记录应整体划分，不能混入训练与测试。</li>
+            <li><strong>台站泄漏</strong>：同一台站不能同时出现在训练与测试集（若要评估对新台站的泛化能力）。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>数据泄漏是机器学习地震学最常见的错误</strong>：
+              例如，随机划分同一地震的多个台站记录，
+              训练集与测试集共享相同的事件特征，
+              导致模型评估结果虚高。
+              正确做法是<strong>按事件划分</strong>——
+              把不同地震记录分到不同集合。
+              同理，地震预警中必须<strong>按时间划分</strong>，模拟真实场景。</p>
+            </div>
+          </div>
+
+          <h3>特征工程</h3>
+          <p>
+            特征工程是把原始数据转化为模型可用输入的过程：
+          </p>
+          <ul>
+            <li><strong>标准化</strong>：$(x - \mu) / \sigma$，让不同特征量纲一致。</li>
+            <li><strong>归一化</strong>：$(x - \min) / (\max - \min)$，把范围映射到 $[0, 1]$。</li>
+            <li><strong>对数变换</strong>：对右偏分布（如震级、能量）。</li>
+            <li><strong>独热编码</strong>：把类别变量转换为 0/1 向量。</li>
+            <li><strong>时序特征</strong>：滑动窗口统计量（均值、方差、峰值）。</li>
+            <li><strong>频域特征</strong>：傅里叶谱、小波系数。</li>
+          </ul>
+        </section>
+
+        <section id="regression">
+          <h2><span class="num">02</span>线性回归与正则化</h2>
+
+          <h3>线性回归</h3>
+          <p>
+            最简单的监督学习模型，假设输出是输入的线性函数：
+          </p>
+
+          $$ y = \mathbf{w}^{\mathsf{T}} \mathbf{x} + b + \varepsilon $$
+
+          <p>
+            目标是最小化均方误差：
+          </p>
+
+          $$ J(\mathbf{w}, b) = \frac{1}{n} \sum_{i=1}^{n}
+             (y_i - \mathbf{w}^{\mathsf{T}} \mathbf{x}_i - b)^2 $$
+
+          <p>
+            最小二乘的闭式解：
+          </p>
+
+          $$ \hat{\mathbf{w}} = (\mathbf{X}^{\mathsf{T}} \mathbf{X})^{-1} \mathbf{X}^{\mathsf{T}} \mathbf{y} $$
+
+          <p>
+            当特征数量大或存在共线性时，
+            $\mathbf{X}^{\mathsf{T}} \mathbf{X}$ 可能奇异，需要用正则化或 SVD。
+          </p>
+
+          <p>
+            地震学中，GMPE 就是线性回归的直接应用：
+          </p>
+
+          $$ \ln \mathrm{PGA} = c_1 + c_2 M + c_3 \ln(R + c_4) + c_5 R + \varepsilon $$
+
+          <p>
+            系数 $c_i$ 通过最小二乘从大量记录中拟合。
+          </p>
+
+          <h3>Ridge 回归（L2 正则化）</h3>
+          <p>
+            在损失函数中加入权重的 L2 范数：
+          </p>
+
+          $$ J = \frac{1}{n} \sum (y_i - \mathbf{w}^{\mathsf{T}} \mathbf{x}_i)^2
+             + \lambda \|\mathbf{w}\|_2^2 $$
+
+          <p>
+            闭式解：
+          </p>
+
+          $$ \hat{\mathbf{w}} = (\mathbf{X}^{\mathsf{T}} \mathbf{X} + \lambda \mathbf{I})^{-1}
+             \mathbf{X}^{\mathsf{T}} \mathbf{y} $$
+
+          <p>
+            L2 正则化让权重缩小但不为零，适合处理共线性。
+          </p>
+
+          <h3>Lasso 回归（L1 正则化）</h3>
+          <p>
+            加入权重的 L1 范数：
+          </p>
+
+          $$ J = \frac{1}{n} \sum (y_i - \mathbf{w}^{\mathsf{T}} \mathbf{x}_i)^2
+             + \lambda \|\mathbf{w}\|_1 $$
+
+          <p>
+            L1 正则化有<strong>稀疏性</strong>：会把不重要的权重压缩为零，
+            从而自动进行特征选择。
+          </p>
+
+          <h3>弹性网（Elastic Net）</h3>
+          <p>
+            结合 L1 与 L2：
+          </p>
+
+          $$ J = \frac{1}{n} \sum (y_i - \mathbf{w}^{\mathsf{T}} \mathbf{x}_i)^2
+             + \lambda_1 \|\mathbf{w}\|_1 + \lambda_2 \|\mathbf{w}\|_2^2 $$
+
+          <p>
+            在高维、特征相关性强时表现优于单独的 Lasso 或 Ridge。
+          </p>
+
+          <h3>Python 示例：线性回归与正则化</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>regression.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+
+def generate_data(n=200, noise=0.5, seed=42):
+    """
+    生成一个简单的非线性回归数据：
+        y = 2x + 0.5x² + noise
+    """
+    rng = np.random.default_rng(seed)
+    x = rng.uniform(-3, 3, n).reshape(-1, 1)
+    y = (2 * x + 0.5 * x**2 + noise * rng.normal(size=(n, 1))).ravel()
+    return x, y
+
+
+def compare_regressors(x_train, x_test, y_train, y_test):
+    """对比不同回归模型"""
+    models = {
+        "线性回归": LinearRegression(),
+        "多项式(2阶)": make_pipeline(
+            PolynomialFeatures(2), LinearRegression()
+        ),
+        "多项式(5阶)": make_pipeline(
+            PolynomialFeatures(5), LinearRegression()
+        ),
+        "Ridge (α=0.1)": make_pipeline(
+            PolynomialFeatures(10), Ridge(alpha=0.1)
+        ),
+        "Ridge (α=10)": make_pipeline(
+            PolynomialFeatures(10), Ridge(alpha=10)
+        ),
+        "Lasso (α=0.01)": make_pipeline(
+            PolynomialFeatures(10), Lasso(alpha=0.01, max_iter=10000)
+        ),
+    }
+
+    print(f"{'模型':<20}{'训练MSE':>12}{'测试MSE':>12}{'测试R²':>12}")
+    print("-" * 56)
+
+    for name, model in models.items():
+        model.fit(x_train, y_train)
+        y_train_pred = model.predict(x_train)
+        y_test_pred = model.predict(x_test)
+
+        train_mse = mean_squared_error(y_train, y_train_pred)
+        test_mse = mean_squared_error(y_test, y_test_pred)
+        test_r2 = r2_score(y_test, y_test_pred)
+
+        print(f"{name:<20}{train_mse:>12.4f}{test_mse:>12.4f}{test_r2:>12.4f}")
+
+
+if __name__ == "__main__":
+    x, y = generate_data(n=200, noise=0.5)
+
+    # 划分数据
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.3, random_state=42
+    )
+
+    print(f"训练集: {len(x_train)}, 测试集: {len(x_test)}")
+    print()
+
+    compare_regressors(x_train, x_test, y_train, y_test)
+
+    # ---- 演示 Lasso 的稀疏性 ----
+    print("\nLasso 的稀疏性演示：")
+    x_poly = PolynomialFeatures(10).fit_transform(x)
+    x_poly_train, x_poly_test, y_train2, y_test2 = train_test_split(
+        x_poly, y, test_size=0.3, random_state=42
+    )
+
+    for alpha in [0.001, 0.01, 0.1, 1.0]:
+        lasso = Lasso(alpha=alpha, max_iter=10000).fit(x_poly_train, y_train2)
+        n_nonzero = np.sum(np.abs(lasso.coef_) > 1e-6)
+        print(f"  α = {alpha:>6}: 非零权重数 {n_nonzero}/{len(lasso.coef_)}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>高阶多项式容易过拟合（训练误差小，测试误差大）。</li>
+            <li>Ridge 和 Lasso 通过正则化缓解过拟合。</li>
+            <li>Lasso 的 $\alpha$ 越大，被压缩为零的权重越多。</li>
+          </ul>
+        </section>
+
+        <section id="classification">
+          <h2><span class="num">03</span>分类与逻辑回归</h2>
+
+          <h3>分类问题</h3>
+          <p>
+            分类的目标是预测离散标签。常见类型：
+          </p>
+          <ul>
+            <li><strong>二分类</strong>：是/否，如"该波形是否为地震"。</li>
+            <li><strong>多分类</strong>：多个类别，如"P 波 / S 波 / 噪声"。</li>
+            <li><strong>多标签</strong>：一个样本可属于多个类别。</li>
+          </ul>
+
+          <h3>逻辑回归</h3>
+          <p>
+            逻辑回归虽然叫"回归"，但用于分类。
+            它用 sigmoid 函数把线性输出映射到概率：
+          </p>
+
+          $$ \sigma(z) = \frac{1}{1 + e^{-z}}, \qquad z = \mathbf{w}^{\mathsf{T}} \mathbf{x} + b $$
+
+          <p>
+            $P(y = 1 \mid \mathbf{x}) = \sigma(\mathbf{w}^{\mathsf{T}} \mathbf{x} + b)$。
+          </p>
+
+          <p>
+            训练用<strong>交叉熵损失</strong>：
+          </p>
+
+          $$ J = -\frac{1}{n} \sum_{i=1}^{n}
+             \left[ y_i \log \hat{y}_i + (1 - y_i) \log (1 - \hat{y}_i) \right] $$
+
+          <h3>Softmax 回归（多分类）</h3>
+          <p>
+            对 $K$ 个类别，用 softmax 输出概率分布：
+          </p>
+
+          $$ P(y = k \mid \mathbf{x}) = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}} $$
+
+          <p>
+            损失函数为多分类交叉熵。
+          </p>
+
+          <h3>评价指标</h3>
+          <p>
+            分类问题不能只看准确率。常用的混淆矩阵：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>—</th><th>预测正</th><th>预测负</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>实际正</strong></td>
+                  <td>TP（真阳性）</td>
+                  <td>FN（假阴性）</td>
+                </tr>
+                <tr>
+                  <td><strong>实际负</strong></td>
+                  <td>FP（假阳性）</td>
+                  <td>TN（真阴性）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>由混淆矩阵派生的指标：</p>
+
+          $$ \text{精确率} = \frac{TP}{TP + FP}, \qquad
+             \text{召回率} = \frac{TP}{TP + FN} $$
+
+          $$ F_1 = \frac{2 \cdot \text{Precision} \cdot \text{Recall}}
+             {\text{Precision} + \text{Recall}} $$
+
+          <p>
+            在地震学中：
+          </p>
+          <ul>
+            <li><strong>震相拾取</strong>：精度与召回率都重要，$F_1$ 是常用指标。</li>
+            <li><strong>事件分类</strong>：若漏检代价大，优先高召回率。</li>
+            <li><strong>地震预警</strong>：误报代价大，优先高精确率。</li>
+            <li><strong>地震目录去噪</strong>：优先高精确率（避免剔除真实事件）。</li>
+          </ul>
+
+          <h3>ROC 曲线与 AUC</h3>
+          <p>
+            ROC 曲线绘制真正率（TPR）与假正率（FPR）随阈值的变化：
+          </p>
+
+          $$ \mathrm{TPR} = \frac{TP}{TP + FN}, \qquad
+             \mathrm{FPR} = \frac{FP}{FP + TN} $$
+
+          <p>
+            AUC 是 ROC 曲线下的面积，
+            衡量模型的整体分类能力：
+          </p>
+          <ul>
+            <li>AUC = 0.5：随机猜测。</li>
+            <li>AUC = 0.7~0.8：可接受。</li>
+            <li>AUC = 0.8~0.9：良好。</li>
+            <li>AUC &gt; 0.9：优秀。</li>
+          </ul>
+
+          <h3>类别不平衡</h3>
+          <p>
+            地震学中类别不平衡非常普遍：
+            地震事件远少于噪声，大震远少于小震。
+            处理方法：
+          </p>
+          <ul>
+            <li><strong>重采样</strong>：过采样少数类或欠采样多数类。</li>
+            <li><strong>SMOTE</strong>：合成少数类样本。</li>
+            <li><strong>类别权重</strong>：在损失函数中给少数类更高权重。</li>
+            <li><strong>阈值调整</strong>：不取 0.5，根据业务需求调整。</li>
+            <li><strong>合适的指标</strong>：不用准确率，用 F1、AUC、PR 曲线。</li>
+          </ul>
+
+          <h3>Python 示例：逻辑回归与分类评价</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>classification.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    confusion_matrix, classification_report, roc_auc_score, roc_curve
+)
+from sklearn.preprocessing import StandardScaler
+
+
+if __name__ == "__main__":
+    # ---- 生成一个不平衡的分类数据集 ----
+    # 模拟"是否为地震事件"分类问题
+    X, y = make_classification(
+        n_samples=5000,
+        n_features=20,
+        n_informative=10,
+        n_redundant=5,
+        weights=[0.9, 0.1],   # 90% 负样本，10% 正样本
+        flip_y=0.02,
+        random_state=42
+    )
+
+    print(f"数据：{X.shape}, 正样本占比：{y.mean():.3f}")
+
+    # 划分
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42, stratify=y
+    )
+
+    # 标准化
+    scaler = StandardScaler()
+    X_train_s = scaler.fit_transform(X_train)
+    X_test_s = scaler.transform(X_test)
+
+    # ---- 训练逻辑回归（含类别权重） ----
+    clf = LogisticRegression(
+        class_weight="balanced",   # 类别权重自动平衡
+        max_iter=1000,
+        random_state=42,
+    )
+    clf.fit(X_train_s, y_train)
+
+    # 预测
+    y_pred = clf.predict(X_test_s)
+    y_proba = clf.predict_proba(X_test_s)[:, 1]
+
+    # ---- 评价 ----
+    print("\n混淆矩阵：")
+    cm = confusion_matrix(y_test, y_pred)
+    print(f"  TN={cm[0,0]}, FP={cm[0,1]}")
+    print(f"  FN={cm[1,0]}, TP={cm[1,1]}")
+
+    print("\n分类报告：")
+    print(classification_report(y_test, y_pred, digits=4))
+
+    print(f"\nAUC = {roc_auc_score(y_test, y_proba):.4f}")
+
+    # ---- 阈值调整 ----
+    print("\n不同阈值下的精确率/召回率：")
+    print(f"{'阈值':>8}{'精确率':>12}{'召回率':>12}{'F1':>12}")
+    for thresh in [0.3, 0.5, 0.7, 0.9]:
+        y_pred_t = (y_proba >= thresh).astype(int)
+        from sklearn.metrics import precision_score, recall_score, f1_score
+        p = precision_score(y_test, y_pred_t, zero_division=0)
+        r = recall_score(y_test, y_pred_t, zero_division=0)
+        f1 = f1_score(y_test, y_pred_t, zero_division=0)
+        print(f"{thresh:>8.2f}{p:>12.4f}{r:>12.4f}{f1:>12.4f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+            类别权重平衡后的逻辑回归在少数类上有较好召回，
+            阈值调整可以在精确率与召回率之间权衡。
+          </p>
+        </section>
+
+        <section id="tree">
+          <h2><span class="num">04</span>决策树与集成方法</h2>
+
+          <h3>决策树</h3>
+          <p>
+            决策树通过一系列<strong>if-else 规则</strong>把输入空间划分为若干区域，
+            每个区域对应一个输出。
+          </p>
+
+          <p>常用分裂准则：</p>
+          <ul>
+            <li><strong>信息增益</strong>：$IG = H(\text{parent}) - \sum \frac{n_i}{n} H(\text{child})$。</li>
+            <li><strong>基尼不纯度</strong>：$G = 1 - \sum p_i^2$（CART）。</li>
+            <li><strong>均方误差</strong>：回归树用。</li>
+          </ul>
+
+          <p>树的优点：</p>
+          <ul>
+            <li>可解释性强：路径可以直接读出规则。</li>
+            <li>不需要特征缩放。</li>
+            <li>能处理非线性、特征交互。</li>
+            <li>能处理缺失值。</li>
+          </ul>
+
+          <p>缺点：</p>
+          <ul>
+            <li>容易过拟合。</li>
+            <li>对数据扰动敏感。</li>
+            <li>单棵树泛化能力弱。</li>
+          </ul>
+
+          <h3>集成方法</h3>
+          <p>
+            集成方法把多个弱学习器组合成强学习器：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>策略</th><th>代表</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Bagging</td>
+                  <td>并行训练，投票/平均</td>
+                  <td>随机森林</td>
+                  <td>降低方差</td>
+                </tr>
+                <tr>
+                  <td>Boosting</td>
+                  <td>串行训练，纠错</td>
+                  <td>AdaBoost、GBDT</td>
+                  <td>降低偏差</td>
+                </tr>
+                <tr>
+                  <td>Stacking</td>
+                  <td>元学习器组合</td>
+                  <td>多模型融合</td>
+                  <td>综合多种模型</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>随机森林</h3>
+          <p>
+            随机森林的"两重随机"：
+          </p>
+          <ul>
+            <li><strong>样本随机</strong>：Bootstrap 抽样（有放回）。</li>
+            <li><strong>特征随机</strong>：每个节点随机选一部分特征。</li>
+          </ul>
+
+          <p>
+            这使森林中的树互不相同，最终投票/平均降低方差。
+            随机森林是目前工程中<strong>最稳健的通用方法之一</strong>，
+            在表格数据上往往优于神经网络。
+          </p>
+
+          <h3>梯度提升（GBDT）</h3>
+          <p>
+            梯度提升逐步训练新树拟合前一轮的残差：
+          </p>
+
+          $$ F_m(\mathbf{x}) = F_{m-1}(\mathbf{x}) + \eta \cdot h_m(\mathbf{x}) $$
+
+          <p>
+            其中 $h_m$ 是第 $m$ 棵树，$\eta$ 是学习率。
+          </p>
+
+          <p>
+            现代实现：
+          </p>
+          <ul>
+            <li><strong>XGBoost</strong>：加入正则化、二阶信息、并行化。</li>
+            <li><strong>LightGBM</strong>：基于直方图、叶子生长策略，速度更快。</li>
+            <li><strong>CatBoost</strong>：对类别特征友好。</li>
+          </ul>
+
+          <p>
+            梯度提升在<strong>表格数据</strong>上往往是最强的通用方法，
+            在地震学中用于：
+          </p>
+          <ul>
+            <li>地震动预测（GMPE 的机器学习版本）。</li>
+            <li>液化判别。</li>
+            <li>地震事件分类。</li>
+            <li>地震危险性参数回归。</li>
+          </ul>
+
+          <h3>特征重要性</h3>
+          <p>
+            树模型能给出特征重要性，用于解释与筛选：
+          </p>
+          <ul>
+            <li><strong>不纯度减少</strong>：该特征减少了多少不纯度。</li>
+            <li><strong>排列重要性</strong>：打乱该特征后模型性能下降多少。</li>
+            <li><strong>SHAP 值</strong>：基于博弈论的特征贡献分解。</li>
+          </ul>
+
+          <h3>Python 示例：随机森林与梯度提升</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>ensemble.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import (
+    RandomForestRegressor, GradientBoostingRegressor,
+    HistGradientBoostingRegressor
+)
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.inspection import permutation_importance
+
+
+if __name__ == "__main__":
+    # ---- 生成回归数据 ----
+    # 模拟 GMPE 拟合问题
+    X, y = make_regression(
+        n_samples=2000, n_features=15, n_informative=8,
+        noise=10.0, random_state=42
+    )
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42
+    )
+
+    feature_names = [f"f{i}" for i in range(X.shape[1])]
+
+    # ---- 三种集成模型 ----
+    models = {
+        "随机森林": RandomForestRegressor(
+            n_estimators=200, max_depth=10, random_state=42, n_jobs=-1
+        ),
+        "梯度提升(GBDT)": GradientBoostingRegressor(
+            n_estimators=200, max_depth=3, learning_rate=0.1, random_state=42
+        ),
+        "HistGBDT": HistGradientBoostingRegressor(
+            max_iter=200, max_depth=5, learning_rate=0.1, random_state=42
+        ),
+    }
+
+    print(f"{'模型':<18}{'测试MSE':>15}{'测试R²':>12}")
+    print("-" * 45)
+
+    for name, model in models.items():
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        print(f"{name:<18}{mse:>15.4f}{r2:>12.4f}")
+
+    # ---- 特征重要性 ----
+    print("\n随机森林特征重要性（前 5 个）：")
+    rf = models["随机森林"]
+    importances = rf.feature_importances_
+    idx = np.argsort(importances)[::-1][:5]
+    for i in idx:
+        print(f"  {feature_names[i]}: {importances[i]:.4f}")
+
+    # ---- 排列重要性（更可靠） ----
+    print("\n排列重要性（前 5 个）：")
+    perm = permutation_importance(
+        rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=-1
+    )
+    idx = np.argsort(perm.importances_mean)[::-1][:5]
+    for i in idx:
+        print(f"  {feature_names[i]}: {perm.importances_mean[i]:.4f} "
+              f"± {perm.importances_std[i]:.4f}")
+
+    # ---- 交叉验证 ----
+    print("\n5 折交叉验证 (R²)：")
+    for name, model in models.items():
+        scores = cross_val_score(model, X_train, y_train, cv=5, scoring="r2")
+        print(f"  {name}: {scores.mean():.4f} ± {scores.std():.4f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>梯度提升通常优于随机森林（在表格数据上）。</li>
+            <li>特征重要性可以识别关键输入。</li>
+            <li>交叉验证给出更稳健的性能估计。</li>
+          </ul>
+        </section>
+
+        <section id="clustering">
+          <h2><span class="num">05</span>聚类与降维</h2>
+
+          <h3>无监督学习</h3>
+          <p>
+            无监督学习在无标签数据中发现结构。
+            地震学中大量数据无标签，无监督方法尤为重要：
+          </p>
+          <ul>
+            <li>地震目录聚类：识别地震丛集、余震序列。</li>
+            <li>波形聚类：分类不同震源类型。</li>
+            <li>地震动聚类：识别不同场地效应。</li>
+            <li>地震目录降维：可视化高维特征。</li>
+          </ul>
+
+          <h3>K-means 聚类</h3>
+          <p>
+            最经典的聚类算法。目标是最小化簇内平方和：
+          </p>
+
+          $$ J = \sum_{k=1}^{K} \sum_{\mathbf{x} \in C_k}
+             \|\mathbf{x} - \boldsymbol{\mu}_k\|^2 $$
+
+          <p>
+            算法：
+          </p>
+          <ol class="steps">
+            <li>随机初始化 $K$ 个簇中心。</li>
+            <li>把每个样本分到最近的簇。</li>
+            <li>更新簇中心为簇内均值。</li>
+            <li>重复 2~3 直到收敛。</li>
+          </ol>
+
+          <p>
+            K-means 的局限：
+          </p>
+          <ul>
+            <li>需要预先指定 $K$。</li>
+            <li>假设簇是球形的，对非凸簇表现差。</li>
+            <li>对初始化和异常值敏感。</li>
+            <li>只能找到局部最优。</li>
+          </ul>
+
+          <h3>DBSCAN</h3>
+          <p>
+            基于密度的聚类，不需要指定 $K$，能识别任意形状的簇和噪声：
+          </p>
+          <ul>
+            <li><strong>核心点</strong>：邻域内至少有 minPts 个点。</li>
+            <li><strong>边界点</strong>：在核心点邻域内但自身不是核心点。</li>
+            <li><strong>噪声点</strong>：既非核心点也非边界点。</li>
+          </ul>
+
+          <p>
+            DBSCAN 在地震目录聚类中非常有用：
+            地震丛集往往形状不规则，
+            且存在孤立事件（噪声），
+            DBSCAN 能自然识别。
+          </p>
+
+          <h3>层次聚类</h3>
+          <p>
+            自底向上或自顶向下构建聚类树：
+          </p>
+          <ul>
+            <li><strong>凝聚式</strong>：每个点开始一个簇，逐步合并最近的簇。</li>
+            <li><strong>分裂式</strong>：所有点一个簇，逐步分裂。</li>
+            <li>结果可以画成树状图（dendrogram）。</li>
+          </ul>
+
+          <h3>主成分分析（PCA）</h3>
+          <p>
+            PCA 通过线性变换把数据投影到方差最大的方向：
+          </p>
+
+          $$ \mathbf{Z} = \mathbf{X} \mathbf{W} $$
+
+          <p>
+            其中 $\mathbf{W}$ 的列是协方差矩阵 $\mathbf{X}^{\mathsf{T}} \mathbf{X}$ 的特征向量。
+          </p>
+
+          <p>
+            PCA 的性质：
+          </p>
+          <ul>
+            <li>降维：保留前 $k$ 个主成分，解释大部分方差。</li>
+            <li>去相关：主成分之间正交。</li>
+            <li>可视化：投影到 2D / 3D。</li>
+            <li>去噪：丢弃方差小（噪声大）的成分。</li>
+          </ul>
+
+          <h3>t-SNE 与 UMAP</h3>
+          <p>
+            对高维数据的非线性降维：
+          </p>
+          <ul>
+            <li><strong>t-SNE</strong>：保留局部结构，适合可视化。</li>
+            <li><strong>UMAP</strong>：更快、保留全局结构更好。</li>
+          </ul>
+
+          <p>
+            地震学中用于波形特征、震源参数的可视化与聚类分析。
+          </p>
+
+          <h3>Python 示例：K-means 与 DBSCAN</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>clustering.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
+from sklearn.datasets import make_blobs, make_moons
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+
+def evaluate_clustering(X, labels, name=""):
+    """简单的聚类评价"""
+    from sklearn.metrics import silhouette_score
+    n_clusters = len(set(labels) - {-1})   # 排除噪声标签 -1
+    n_noise = np.sum(labels == -1)
+    if n_clusters > 1:
+        sil = silhouette_score(X, labels)
+    else:
+        sil = -1.0
+    print(f"  {name}: 簇数={n_clusters}, 噪声点={n_noise}, "
+          f"轮廓系数={sil:.4f}")
+
+
+if __name__ == "__main__":
+    # ---- 数据集 1：凸簇 ----
+    X_blobs, y_blobs = make_blobs(
+        n_samples=1000, centers=4, cluster_std=0.8, random_state=42
+    )
+    X_blobs = StandardScaler().fit_transform(X_blobs)
+
+    # ---- 数据集 2：非凸簇 ----
+    X_moons, y_moons = make_moons(n_samples=1000, noise=0.1, random_state=42)
+    X_moons = StandardScaler().fit_transform(X_moons)
+
+    print("== 凸簇数据集 ==")
+    kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+    labels_km = kmeans.fit_predict(X_blobs)
+    evaluate_clustering(X_blobs, labels_km, "K-means (k=4)")
+
+    dbscan = DBSCAN(eps=0.3, min_samples=5)
+    labels_db = dbscan.fit_predict(X_blobs)
+    evaluate_clustering(X_blobs, labels_db, "DBSCAN")
+
+    print("\n== 非凸簇数据集 ==")
+    kmeans = KMeans(n_clusters=2, random_state=42, n_init=10)
+    labels_km = kmeans.fit_predict(X_moons)
+    evaluate_clustering(X_moons, labels_km, "K-means (k=2)")
+
+    dbscan = DBSCAN(eps=0.3, min_samples=5)
+    labels_db = dbscan.fit_predict(X_moons)
+    evaluate_clustering(X_moons, labels_db, "DBSCAN")
+
+    # ---- PCA 降维演示 ----
+    print("\n== PCA 降维 ==")
+    rng = np.random.default_rng(42)
+    # 生成 50 维数据，其中 5 个方向有信息
+    X_high = rng.normal(size=(500, 50))
+    X_high[:, :5] *= 5    # 放大前 5 个方向
+
+    pca = PCA(n_components=10)
+    X_pca = pca.fit_transform(X_high)
+    print(f"  原始维度: {X_high.shape[1]}")
+    print(f"  前 5 个主成分解释方差: "
+          f"{pca.explained_variance_ratio_[:5].sum():.4f}")
+    print(f"  前 10 个主成分累计方差: "
+          f"{pca.explained_variance_ratio_.sum():.4f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>K-means 在凸簇上表现好，但在月亮形数据上失败。</li>
+            <li>DBSCAN 在两种数据上都能识别正确的簇。</li>
+            <li>PCA 能用少数主成分解释大部分方差。</li>
+          </ul>
+        </section>
+
+        <section id="neural">
+          <h2><span class="num">06</span>神经网络与深度学习</h2>
+
+          <h3>感知机与多层网络</h3>
+          <p>
+            单个神经元：
+          </p>
+
+          $$ y = \sigma\!\left(\sum_i w_i x_i + b\right) $$
+
+          <p>
+            常见激活函数：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>名称</th><th>公式</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Sigmoid</td>
+                  <td>$\sigma(z) = \frac{1}{1 + e^{-z}}$</td>
+                  <td>输出 $[0, 1]$，易梯度消失</td>
+                </tr>
+                <tr>
+                  <td>Tanh</td>
+                  <td>$\tanh(z)$</td>
+                  <td>输出 $[-1, 1]$，零中心</td>
+                </tr>
+                <tr>
+                  <td>ReLU</td>
+                  <td>$\max(0, z)$</td>
+                  <td>最常用，缓解梯度消失</td>
+                </tr>
+                <tr>
+                  <td>Leaky ReLU</td>
+                  <td>$\max(\alpha z, z)$</td>
+                  <td>避免 ReLU 神经元"死亡"</td>
+                </tr>
+                <tr>
+                  <td>GELU</td>
+                  <td>$\approx 0.5 z (1 + \tanh(\cdots))$</td>
+                  <td>Transformer 常用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>反向传播</h3>
+          <p>
+            反向传播是链式法则的高效实现：
+          </p>
+
+          $$ \frac{\partial L}{\partial w^{(l)}} = \frac{\partial L}{\partial a^{(L)}}
+             \cdot \frac{\partial a^{(L)}}{\partial z^{(L)}}
+             \cdots \frac{\partial z^{(l)}}{\partial w^{(l)}} $$
+
+          <p>
+            它从输出层往回传播梯度，
+            利用动态规划思想复用中间结果，
+            复杂度与网络规模成正比。
+          </p>
+
+          <h3>卷积神经网络（CNN）</h3>
+          <p>
+            CNN 通过<strong>卷积核</strong>提取局部特征，
+            适合处理图像、时序信号：
+          </p>
+          <ul>
+            <li><strong>局部连接</strong>：每个神经元只连接输入的局部区域。</li>
+            <li><strong>权重共享</strong>：同一卷积核在整张图上共享。</li>
+            <li><strong>池化</strong>：降低空间维度，增加平移不变性。</li>
+          </ul>
+
+          <p>
+            地震学中，CNN 是震相拾取的主流方法：
+          </p>
+          <ul>
+            <li><strong>PhaseNet</strong>：U-Net 结构，同时拾取 P 波与 S 波。</li>
+            <li><strong>EQTransformer</strong>：Transformer + CNN，检测 + 拾取一体。</li>
+            <li><strong>GPD</strong>：通用相位检测器。</li>
+            <li><strong>DeepDenoiser</strong>：波形去噪。</li>
+          </ul>
+
+          <h3>循环神经网络（RNN）与 LSTM</h3>
+          <p>
+            RNN 处理序列数据，通过隐状态传递信息：
+          </p>
+
+          $$ h_t = \sigma(W_h h_{t-1} + W_x x_t + b) $$
+
+          <p>
+            简单 RNN 有梯度消失问题。
+            LSTM 通过<strong>门控机制</strong>（输入门、遗忘门、输出门）
+            保留长距离依赖，适合波形序列处理。
+          </p>
+
+          <h3>Transformer 与注意力</h3>
+          <p>
+            注意力机制：
+          </p>
+
+          $$ \mathrm{Attention}(Q, K, V) = \mathrm{softmax}
+             \left(\frac{Q K^{\mathsf{T}}}{\sqrt{d}}\right) V $$
+
+          <p>
+            Transformer 完全基于注意力，
+            在自然语言、时间序列、地震波形上都取得了优秀效果。
+            近年来的地震学模型越来越多采用 Transformer 结构。
+          </p>
+
+          <h3>训练技巧</h3>
+          <ul>
+            <li><strong>批归一化</strong>：加速训练、稳定梯度。</li>
+            <li><strong>Dropout</strong>：随机丢弃神经元，防止过拟合。</li>
+            <li><strong>早停</strong>：验证损失开始上升时停止训练。</li>
+            <li><strong>数据增强</strong>：加噪、时移、缩放，扩充训练数据。</li>
+            <li><strong>迁移学习</strong>：在大数据集预训练，小数据集微调。</li>
+          </ul>
+
+          <h3>Python 示例：简单 CNN 震相拾取</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>cnn_picking.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 PyTorch 演示一个简单的 CNN 震相拾取模型。
+安装：pip install torch
+"""
+import numpy as np
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+    print("未安装 PyTorch，仅展示代码结构。")
+
+
+if HAS_TORCH:
+    class SimplePhaseNet(nn.Module):
+        """
+        简化的震相拾取 CNN：
+        输入：三分量波形 (3, T)
+        输出：每个时刻的 P 波/S 波/噪声概率 (3, T)
+        """
+        def __init__(self, n_channels=32):
+            super().__init__()
+            self.encoder = nn.Sequential(
+                nn.Conv1d(3, n_channels, kernel_size=11, padding=5),
+                nn.ReLU(),
+                nn.Conv1d(n_channels, n_channels, kernel_size=11, padding=5),
+                nn.ReLU(),
+                nn.MaxPool1d(2),
+                nn.Conv1d(n_channels, n_channels * 2, kernel_size=7, padding=3),
+                nn.ReLU(),
+                nn.MaxPool1d(2),
+            )
+            self.decoder = nn.Sequential(
+                nn.ConvTranspose1d(n_channels * 2, n_channels, kernel_size=2, stride=2),
+                nn.ReLU(),
+                nn.ConvTranspose1d(n_channels, 3, kernel_size=2, stride=2),
+            )
+
+        def forward(self, x):
+            z = self.encoder(x)
+            out = self.decoder(z)
+            return out   # (batch, 3, T)
+
+
+    def generate_synthetic_data(n_samples=100, T=1000, seed=42):
+        """
+        生成合成的三分量波形与标签：
+        标签 0=噪声, 1=P 波, 2=S 波
+        """
+        rng = np.random.default_rng(seed)
+        X = np.zeros((n_samples, 3, T), dtype=np.float32)
+        Y = np.zeros((n_samples, 3, T), dtype=np.float32)
+
+        for i in range(n_samples):
+            # 噪声
+            X[i] = rng.normal(0, 0.1, size=(3, T))
+
+            # P 波（在 t_p 处加入）
+            t_p = rng.integers(200, 400)
+            p_wave = rng.normal(0, 0.5, size=T) * \
+                     np.exp(-((np.arange(T) - t_p) / 30) ** 2)
+            X[i, 0] += p_wave   # 主要在垂直分量
+            Y[i, 1, max(0, t_p - 20):t_p + 20] = 1
+
+            # S 波（在 t_s 处加入）
+            t_s = t_p + rng.integers(100, 300)
+            s_wave = rng.normal(0, 1.0, size=T) * \
+                     np.exp(-((np.arange(T) - t_s) / 50) ** 2)
+            X[i, 1] += s_wave   # 水平分量
+            X[i, 2] += s_wave * 0.5
+            Y[i, 2, max(0, t_s - 30):t_s + 30] = 1
+
+            # 噪声标签
+            Y[i, 0] = 1 - Y[i, 1] - Y[i, 2]
+
+        return X, Y
+
+
+    if __name__ == "__main__":
+        # 生成数据
+        X, Y = generate_synthetic_data(n_samples=200, T=1000)
+        print(f"数据形状: X={X.shape}, Y={Y.shape}")
+
+        # 划分
+        n_train = 160
+        X_train = torch.from_numpy(X[:n_train])
+        Y_train = torch.from_numpy(Y[:n_train])
+        X_test = torch.from_numpy(X[n_train:])
+        Y_test = torch.from_numpy(Y[n_train:])
+
+        # 模型
+        model = SimplePhaseNet(n_channels=16)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=1e-3)
+
+        # 训练
+        print("\n开始训练...")
+        n_epochs = 10
+        batch_size = 16
+
+        for epoch in range(n_epochs):
+            model.train()
+            perm = torch.randperm(n_train)
+            total_loss = 0.0
+
+            for i in range(0, n_train, batch_size):
+                idx = perm[i:i + batch_size]
+                xb = X_train[idx]
+                yb = Y_train[idx]   # (B, 3, T)
+
+                optimizer.zero_grad()
+                logits = model(xb)  # (B, 3, T)
+
+                # 交叉熵：需要形状 (B, C, T) -> (B*T, C) 与 (B*T,)
+                loss = criterion(
+                    logits.permute(0, 2, 1).reshape(-1, 3),
+                    yb.argmax(dim=1).reshape(-1)
+                )
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
+
+            if (epoch + 1) % 2 == 0:
+                print(f"  Epoch {epoch+1}: loss = {total_loss:.4f}")
+
+        # 评估
+        model.eval()
+        with torch.no_grad():
+            logits = model(X_test)
+            pred = logits.argmax(dim=1)   # (B, T)
+
+        # 简单准确率
+        true = Y_test.argmax(dim=1)
+        acc = (pred == true).float().mean().item()
+        print(f"\n测试集准确率: {acc:.4f}")
+else:
+    print("跳过 PyTorch 演示。")
+    print("核心思路：")
+    print("  1. 输入三分量波形 (3, T)")
+    print("  2. 编码器：Conv1d + ReLU + Pooling，提取多尺度特征")
+    print("  3. 解码器：ConvTranspose1d，恢复到原时间长度")
+    print("  4. 输出：每个时刻 3 类概率（噪声/P/S）")
+    print("  5. 损失：交叉熵；优化器：Adam")
+    print("  6. 实际模型：PhaseNet、EQTransformer 采用类似结构但更深")</code></pre>
+          </div>
+
+          <p>
+            这个简化模型演示了震相拾取 CNN 的核心结构。
+            实际模型（如 PhaseNet）有更深的编码-解码结构与更多技巧，
+            但基本思想一致：把波形映射到每个时刻的类别概率。
+          </p>
+        </section>
+
+        <section id="evaluation">
+          <h2><span class="num">07</span>模型评估与选择</h2>
+
+          <h3>偏差-方差权衡</h3>
+          <p>
+            模型的泛化误差可以分解为：
+          </p>
+
+          $$ \text{误差} = \text{偏差}^2 + \text{方差} + \text{噪声} $$
+
+          <ul>
+            <li><strong>偏差</strong>：模型假设与真实规律的差距。高偏差 → 欠拟合。</li>
+            <li><strong>方差</strong>：模型对训练数据扰动的敏感度。高方差 → 过拟合。</li>
+            <li><strong>噪声</strong>：数据本身的随机性，不可消除。</li>
+          </ul>
+
+          <p>典型诊断：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>训练误差</th><th>验证误差</th><th>诊断</th><th>对策</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>高</td>
+                  <td>高</td>
+                  <td>欠拟合（高偏差）</td>
+                  <td>增加模型复杂度、特征</td>
+                </tr>
+                <tr>
+                  <td>低</td>
+                  <td>高</td>
+                  <td>过拟合（高方差）</td>
+                  <td>正则化、更多数据、简化模型</td>
+                </tr>
+                <tr>
+                  <td>低</td>
+                  <td>低</td>
+                  <td>良好</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>高</td>
+                  <td>更高</td>
+                  <td>数据泄漏或划分错误</td>
+                  <td>检查流程</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>交叉验证</h3>
+          <p>
+            当数据量不够时，用交叉验证充分利用数据：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>特点</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>K 折</td>
+                  <td>分成 K 份，轮流验证</td>
+                  <td>通用</td>
+                </tr>
+                <tr>
+                  <td>留一（LOOCV）</td>
+                  <td>每次留一个样本</td>
+                  <td>小数据集</td>
+                </tr>
+                <tr>
+                  <td>分层 K 折</td>
+                  <td>保持类别比例</td>
+                  <td>不平衡分类</td>
+                </tr>
+                <tr>
+                  <td>时间序列 CV</td>
+                  <td>按时间顺序划分</td>
+                  <td>时序数据</td>
+                </tr>
+                <tr>
+                  <td>分组 CV</td>
+                  <td>同组样本不跨折</td>
+                  <td>事件/台站分组</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            地震学中必须用<strong>分组交叉验证</strong>：
+            按事件或台站分组，避免数据泄漏。
+          </p>
+
+          <h3>超参数调优</h3>
+          <ul>
+            <li><strong>网格搜索</strong>：暴力遍历参数组合。</li>
+            <li><strong>随机搜索</strong>：随机采样，效率更高。</li>
+            <li><strong>贝叶斯优化</strong>：用概率模型指导搜索。</li>
+            <li><strong>Hyperband</strong>：早停表现差的组合。</li>
+          </ul>
+
+          <h3>模型选择原则</h3>
+          <p>
+            "没有免费的午餐"定理告诉我们：
+            <strong>没有对所有问题都最优的算法</strong>。
+            模型选择要结合：
+          </p>
+          <ul>
+            <li>数据规模与维度。</li>
+            <li>问题类型（回归/分类/聚类）。</li>
+            <li>可解释性要求。</li>
+            <li>计算资源。</li>
+            <li>部署环境。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>经验法则</strong>：
+              ① <strong>小数据（&lt; 1000）</strong>：简单模型（线性、小树、SVM）。
+              ② <strong>中等数据 + 表格</strong>：梯度提升（XGBoost、LightGBM）。
+              ③ <strong>大数据 + 图像/波形</strong>：深度学习（CNN、Transformer）。
+              ④ <strong>无标签</strong>：聚类（DBSCAN、K-means）+ 降维（PCA、UMAP）。
+              从简单模型开始，只有当简单模型明显不足时才用复杂模型。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="optimization">
+          <h2><span class="num">08</span>优化与训练技巧</h2>
+
+          <h3>梯度下降族</h3>
+          <p>
+            最基本的优化方法：
+          </p>
+
+          $$ \theta_{t+1} = \theta_t - \eta \nabla L(\theta_t) $$
+
+          <p>三种变体：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>每次用多少样本</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>批量梯度下降</td>
+                  <td>全部</td>
+                  <td>稳定但慢</td>
+                </tr>
+                <tr>
+                  <td>随机梯度下降（SGD）</td>
+                  <td>1 个</td>
+                  <td>快但噪声大</td>
+                </tr>
+                <tr>
+                  <td>小批量梯度下降</td>
+                  <td>32~256</td>
+                  <td>实践中最常用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>改进的优化器</h3>
+          <p>
+            为解决 SGD 的收敛慢、调参难问题，出现了多种自适应优化器：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>优化器</th><th>核心思想</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Momentum</td>
+                  <td>累积历史梯度方向</td>
+                  <td>加速收敛、减少振荡</td>
+                </tr>
+                <tr>
+                  <td>AdaGrad</td>
+                  <td>按参数自适应学习率</td>
+                  <td>适合稀疏数据</td>
+                </tr>
+                <tr>
+                  <td>RMSProp</td>
+                  <td>滑动平均梯度平方</td>
+                  <td>处理非平稳目标</td>
+                </tr>
+                <tr>
+                  <td>Adam</td>
+                  <td>Momentum + RMSProp</td>
+                  <td>最常用</td>
+                </tr>
+                <tr>
+                  <td>AdamW</td>
+                  <td>Adam + 权重衰减</td>
+                  <td>Transformer 常用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>学习率调度</h3>
+          <p>
+            训练过程中动态调整学习率：
+          </p>
+          <ul>
+            <li><strong>Step decay</strong>：每隔若干 epoch 减半。</li>
+            <li><strong>Cosine annealing</strong>：余弦曲线下降。</li>
+            <li><strong>Warmup</strong>：前几个 epoch 线性增加，再衰减。</li>
+            <li><strong>Reduce on plateau</strong>：验证损失不下降时降低。</li>
+          </ul>
+
+          <h3>批量归一化与层归一化</h3>
+          <p>
+            归一化能加速训练、稳定梯度：
+          </p>
+
+          $$ \hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \qquad
+             y = \gamma \hat{x} + \beta $$
+
+          <ul>
+            <li><strong>Batch Norm</strong>：按批次统计，适合 CNN。</li>
+            <li><strong>Layer Norm</strong>：按特征统计，适合 RNN / Transformer。</li>
+          </ul>
+
+          <h3>防止过拟合</h3>
+          <ul>
+            <li><strong>正则化</strong>：L1 / L2 / Elastic Net。</li>
+            <li><strong>Dropout</strong>：随机丢弃神经元。</li>
+            <li><strong>早停</strong>：验证误差上升时停止。</li>
+            <li><strong>数据增强</strong>：扩充训练集。</li>
+            <li><strong>模型集成</strong>：多模型平均。</li>
+            <li><strong>简化模型</strong>：减少参数或深度。</li>
+          </ul>
+
+          <h3>迁移学习</h3>
+          <p>
+            在小数据集上，从大规模预训练模型微调：
+          </p>
+          <ol class="steps">
+            <li>加载在大数据集上预训练的模型。</li>
+            <li>冻结前面的层（保留通用特征）。</li>
+            <li>只训练最后的几层（适应新任务）。</li>
+            <li>可选：解冻全部或部分层，用小学习率微调。</li>
+          </ol>
+
+          <p>
+            迁移学习在地震学中特别重要——
+            大规模标注数据稀缺，
+            从 ImageNet、语音数据集、
+            或大规模地震数据集预训练，
+            能显著提高小数据集上的性能。
+          </p>
+
+          <h3>Python 示例：优化器与正则化对比</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>optimization.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
+
+if HAS_TORCH:
+    class MLP(nn.Module):
+        """简单的多层感知机"""
+        def __init__(self, n_in, n_hidden=64, dropout=0.0):
+            super().__init__()
+            layers = [
+                nn.Linear(n_in, n_hidden),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(n_hidden, n_hidden),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(n_hidden, 2),
+            ]
+            self.net = nn.Sequential(*layers)
+
+        def forward(self, x):
+            return self.net(x)
+
+
+    def train_model(X_train, y_train, X_val, y_val,
+                    optimizer_name="adam", weight_decay=0.0,
+                    dropout=0.0, n_epochs=50, batch_size=64):
+        """训练一个 MLP，返回验证集最终准确率"""
+        n_in = X_train.shape[1]
+        model = MLP(n_in, n_hidden=32, dropout=dropout)
+
+        if optimizer_name == "sgd":
+            opt = optim.SGD(model.parameters(), lr=0.01, momentum=0.9,
+                            weight_decay=weight_decay)
+        elif optimizer_name == "adam":
+            opt = optim.Adam(model.parameters(), lr=1e-3,
+                             weight_decay=weight_decay)
+        elif optimizer_name == "adamw":
+            opt = optim.AdamW(model.parameters(), lr=1e-3,
+                              weight_decay=weight_decay)
+        else:
+            raise ValueError("未知优化器")
+
+        criterion = nn.CrossEntropyLoss()
+
+        X_train_t = torch.from_numpy(X_train).float()
+        y_train_t = torch.from_numpy(y_train).long()
+        X_val_t = torch.from_numpy(X_val).float()
+        y_val_t = torch.from_numpy(y_val).long()
+
+        n = len(X_train_t)
+        for epoch in range(n_epochs):
+            model.train()
+            perm = torch.randperm(n)
+            for i in range(0, n, batch_size):
+                idx = perm[i:i + batch_size]
+                xb = X_train_t[idx]
+                yb = y_train_t[idx]
+
+                opt.zero_grad()
+                logits = model(xb)
+                loss = criterion(logits, yb)
+                loss.backward()
+                opt.step()
+
+        # 验证
+        model.eval()
+        with torch.no_grad():
+            logits = model(X_val_t)
+            pred = logits.argmax(dim=1)
+            acc = (pred == y_val_t).float().mean().item()
+        return acc
+
+
+    if __name__ == "__main__":
+        # ---- 生成数据 ----
+        X, y = make_classification(
+            n_samples=2000, n_features=30, n_informative=15,
+            n_redundant=10, random_state=42
+        )
+        X_train, X_val, y_train, y_val = train_test_split(
+            X, y, test_size=0.3, random_state=42, stratify=y
+        )
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train).astype(np.float32)
+        X_val = scaler.transform(X_val).astype(np.float32)
+
+        print("优化器对比：")
+        print(f"{'优化器':<15}{'验证准确率':>15}")
+        print("-" * 30)
+        for name in ["sgd", "adam", "adamw"]:
+            acc = train_model(X_train, y_train, X_val, y_val,
+                              optimizer_name=name)
+            print(f"{name:<15}{acc:>15.4f}")
+
+        print("\n正则化对比（Adam）：")
+        print(f"{'配置':<30}{'验证准确率':>15}")
+        print("-" * 46)
+        for wd, dp in [(0.0, 0.0), (1e-4, 0.0),
+                       (1e-3, 0.0), (1e-4, 0.3),
+                       (1e-3, 0.5)]:
+            acc = train_model(X_train, y_train, X_val, y_val,
+                              optimizer_name="adam",
+                              weight_decay=wd, dropout=dp)
+            print(f"weight_decay={wd}, dropout={dp}    {acc:>15.4f}")
+else:
+    print("未安装 PyTorch，无法运行演示。")
+    print("\n演示的核心内容：")
+    print("  1. 对比 SGD、Adam、AdamW 三种优化器的收敛速度")
+    print("  2. 对比不同 weight_decay 与 dropout 的防过拟合效果")
+    print("  3. 观察验证准确率随训练的变化")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>Adam 系列收敛快于 SGD。</li>
+            <li>适当的正则化（weight_decay、dropout）能提升验证性能。</li>
+            <li>过度正则化反而降低性能——需要调参。</li>
+          </ul>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">09</span>地震学应用</h2>
+
+          <h3>典型应用场景</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>模型类型</th><th>输入</th><th>输出</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>震相拾取</td>
+                  <td>CNN / Transformer</td>
+                  <td>三分量波形</td>
+                  <td>每时刻 P/S/噪声</td>
+                </tr>
+                <tr>
+                  <td>事件检测</td>
+                  <td>CNN + 分类</td>
+                  <td>连续波形</td>
+                  <td>是否有事件</td>
+                </tr>
+                <tr>
+                  <td>震级估计</td>
+                  <td>CNN / 回归</td>
+                  <td>P 波前 3 秒</td>
+                  <td>震级</td>
+                </tr>
+                <tr>
+                  <td>事件分类</td>
+                  <td>树 / CNN</td>
+                  <td>波形特征</td>
+                  <td>类型（地震/爆破等）</td>
+                </tr>
+                <tr>
+                  <td>震中定位</td>
+                  <td>CNN / 回归</td>
+                  <td>多台站波形</td>
+                  <td>经纬度</td>
+                </tr>
+                <tr>
+                  <td>波形去噪</td>
+                  <td>自编码器</td>
+                  <td>含噪波形</td>
+                  <td>干净波形</td>
+                </tr>
+                <tr>
+                  <td>地震动预测</td>
+                  <td>树 / 神经网络</td>
+                  <td>M、R、$V_{S30}$</td>
+                  <td>PGA、谱值</td>
+                </tr>
+                <tr>
+                  <td>液化判别</td>
+                  <td>树 / 随机森林</td>
+                  <td>SPT、CPT 等</td>
+                  <td>是否液化</td>
+                </tr>
+                <tr>
+                  <td>地震目录聚类</td>
+                  <td>DBSCAN / HDBSCAN</td>
+                  <td>时空特征</td>
+                  <td>丛集标签</td>
+                </tr>
+                <tr>
+                  <td>地震预警</td>
+                  <td>CNN + 在线推断</td>
+                  <td>实时波形</td>
+                  <td>震级、地震动</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>代表性模型</h3>
+          <ul>
+            <li><strong>PhaseNet</strong>（Zhu &amp; Beroza, 2019）：
+              U-Net 结构，同时拾取 P 波与 S 波。</li>
+            <li><strong>EQTransformer</strong>（Mousavi et al., 2020）：
+              Transformer + CNN，检测 + 拾取 + 震级估计一体。</li>
+            <li><strong>GPD</strong>（Ross et al., 2018）：
+              通用相位检测器，用 CNN 检测 P 波。</li>
+            <li><strong>DeepDenoiser</strong>（Zhu et al., 2019）：
+              用卷积自编码器做波形去噪。</li>
+            <li><strong>MagNet</strong>（Mousavi &amp; Beroza, 2020）：
+              用生成对抗网络做地震事件检测。</li>
+            <li><strong>Cnn-Rnn 事件分类</strong>：
+              用 CNN + LSTM 区分地震与爆破。</li>
+          </ul>
+
+          <h3>数据资源</h3>
+          <ul>
+            <li><strong>STEAD</strong>：STanford Earthquake Dataset，100 万+ 标注波形。</li>
+            <li><strong>INSTANCE</strong>：意大利地震数据集。</li>
+            <li><strong>SeisBench</strong>：地震学机器学习基准与数据平台。</li>
+            <li><strong>IRIS</strong>：全球地震波形数据中心。</li>
+            <li><strong>K-NET / KiK-net</strong>：日本强震记录。</li>
+            <li><strong>PEER NGA-West2</strong>：全球强震记录库。</li>
+          </ul>
+
+          <h3>挑战与陷阱</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>挑战</th><th>表现</th><th>对策</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>数据泄漏</td>
+                  <td>评估虚高</td>
+                  <td>按事件/时间/台站分组</td>
+                </tr>
+                <tr>
+                  <td>分布偏移</td>
+                  <td>新区域性能下降</td>
+                  <td>跨区域泛化测试、迁移学习</td>
+                </tr>
+                <tr>
+                  <td>标签噪声</td>
+                  <td>训练不稳定</td>
+                  <td>半监督、标签清洗、损失修正</td>
+                </tr>
+                <tr>
+                  <td>类别不平衡</td>
+                  <td>少数类召回低</td>
+                  <td>重采样、类权重、合适指标</td>
+                </tr>
+                <tr>
+                  <td>可解释性差</td>
+                  <td>难以信任</td>
+                  <td>注意力可视化、SHAP、物理约束</td>
+                </tr>
+                <tr>
+                  <td>计算资源</td>
+                  <td>训练慢、部署难</td>
+                  <td>迁移学习、模型压缩、量化</td>
+                </tr>
+                <tr>
+                  <td>真实场景退化</td>
+                  <td>实验室好、实际差</td>
+                  <td>考虑真实条件、在线测试</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>机器学习在地震学中的常见误区</strong>：
+              ① 把不同事件、不同台站的记录随机划分训练/测试，
+              导致评估虚高——<strong>必须按事件或台站分组</strong>；
+              ② 用"实验室数据集"训练模型，直接部署到真实场景，
+              忽略数据分布差异；
+              ③ 追求高准确率而忽略物理约束，
+              产生"物理上不可能"的预测；
+              ④ 只用一个区域的数据训练，声称"通用"，
+              忽略区域差异（如不同构造、不同噪声环境）。
+              这些都是地震学机器学习论文中常见的错误，
+              在实际应用中必须避免。</p>
+            </div>
+          </div>
+
+          <h3>与物理模型的结合</h3>
+          <p>
+            纯粹的机器学习存在外推差、可解释性弱等局限。
+            物理约束的机器学习是重要方向：
+          </p>
+          <ul>
+            <li><strong>物理约束神经网络（PINN）</strong>：
+              在损失中加入物理方程残差。</li>
+            <li><strong>物理信息特征</strong>：
+              把物理量作为输入特征（如震中距、$V_{S30}$）。</li>
+            <li><strong>混合模型</strong>：
+              物理模型提供基线，机器学习修正残差。</li>
+            <li><strong>代理模型</strong>：
+              用神经网络拟合昂贵的物理模拟，加速迭代。</li>
+            <li><strong>贝叶斯神经网络</strong>：
+              输出概率分布，量化不确定性。</li>
+          </ul>
+
+          <p>
+            这类方法在 GMPE 拟合、地震动模拟、
+            场地效应评估中都有应用前景。
+          </p>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>概率论与数理统计</strong>（数学）：机器学习的数学基础，
+              交叉熵、极大似然、贝叶斯推断。</li>
+            <li><strong>线性代数</strong>（数学）：矩阵运算、SVD、PCA。</li>
+            <li><strong>数值分析</strong>（数学）：梯度下降、优化算法。</li>
+            <li><strong>数据结构</strong>（计算机）：哈希表、堆、图在数据预处理与模型中的应用。</li>
+            <li><strong>算法设计与分析</strong>（计算机）：反向传播是动态规划，
+              模型集成是分治，超参数搜索是搜索算法。</li>
+            <li><strong>数字信号处理</strong>（计算机）：波形预处理、频谱特征提取。</li>
+            <li><strong>强震动观测</strong>（地震学）：训练数据来源、质量控制。</li>
+            <li><strong>地震预警</strong>（地震学）：实时 ML 推断的典型应用。</li>
+            <li><strong>工程地震学</strong>（地震学）：GMPE 的 ML 版本。</li>
+            <li><strong>地震地质</strong>（地震学）：断层活动性的 ML 分类。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>机器学习与你的项目</strong>：
+              机器学习可以作为你项目的"升级方向"：
+              ① <strong>强震动数据处理</strong>：用 ML 自动质控、波形去噪；
+              ② <strong>地震动参数分析</strong>：用 ML 自动提取参数、
+              事件分类；
+              ③ <strong>地震危险性分析</strong>：用 ML 拟合 GMPE、
+              加速蒙特卡洛。
+              但要注意，机器学习<strong>不能替代物理模型</strong>，
+              而是增强已有方法。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>机器学习流程</strong>：问题定义 → 数据 → 特征 → 模型 → 训练 → 评估 → 部署；数据划分要避免泄漏。</li>
+              <li><strong>线性回归与正则化</strong>：Ridge（L2）缩小权重，Lasso（L1）稀疏化，Elastic Net 结合两者。</li>
+              <li><strong>分类与逻辑回归</strong>：交叉熵损失；关注精确率、召回率、F1、AUC；类别不平衡用类权重或重采样。</li>
+              <li><strong>决策树与集成</strong>：随机森林降低方差，梯度提升降低偏差；在表格数据上最强。</li>
+              <li><strong>聚类与降维</strong>：K-means 适合凸簇，DBSCAN 适合任意形状；PCA 线性降维，t-SNE / UMAP 非线性可视化。</li>
+              <li><strong>神经网络</strong>：CNN 适合波形/图像，RNN/LSTM 适合序列，Transformer 基于注意力。</li>
+              <li><strong>模型评估</strong>：偏差-方差权衡；交叉验证；分组 CV 避免数据泄漏。</li>
+              <li><strong>优化与训练</strong>：SGD、Adam、AdamW；批量归一化、Dropout、早停、迁移学习。</li>
+              <li><strong>地震学应用</strong>：震相拾取、事件检测、震级估计、波形去噪、地震动预测。</li>
+            </ul>
+          </div>
+
+          <h3>算法选择速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>推荐方法</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>线性回归</td>
+                  <td>OLS / Ridge / Lasso</td>
+                  <td>特征少用 OLS，共线性用 Ridge，稀疏用 Lasso</td>
+                </tr>
+                <tr>
+                  <td>分类</td>
+                  <td>逻辑回归 / 随机森林 / GBDT</td>
+                  <td>简单用逻辑回归，复杂用集成</td>
+                </tr>
+                <tr>
+                  <td>表格数据回归</td>
+                  <td>GBDT（XGBoost、LightGBM）</td>
+                  <td>往往是性能最好的</td>
+                </tr>
+                <tr>
+                  <td>波形/图像</td>
+                  <td>CNN / Transformer</td>
+                  <td>用深度模型</td>
+                </tr>
+                <tr>
+                  <td>时序预测</td>
+                  <td>LSTM / Transformer / 时序 GBDT</td>
+                  <td>根据序列长度选</td>
+                </tr>
+                <tr>
+                  <td>聚类</td>
+                  <td>DBSCAN / K-means / HDBSCAN</td>
+                  <td>任意形状用 DBSCAN</td>
+                </tr>
+                <tr>
+                  <td>降维</td>
+                  <td>PCA（线性）/ UMAP（非线性）</td>
+                  <td>可视化用 UMAP</td>
+                </tr>
+                <tr>
+                  <td>异常检测</td>
+                  <td>Isolation Forest / 自编码器</td>
+                  <td>无监督</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>数据结构</strong>（计算机）：k-d 树、哈希在数据预处理中的应用。</li>
+            <li><strong>算法设计与分析</strong>（计算机）：反向传播、EM、动态规划。</li>
+            <li><strong>数字信号处理</strong>（计算机）：波形特征提取、频谱分析。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：机器学习的数学基础。</li>
+            <li><strong>线性代数</strong>（数学）：矩阵、SVD、PCA、特征值。</li>
+            <li><strong>数值分析</strong>（数学）：梯度下降、优化、数值稳定性。</li>
+            <li><strong>复变函数与积分变换</strong>（数学）：傅里叶特征、卷积定理。</li>
+            <li><strong>偏微分方程</strong>（数学）：物理约束机器学习（PINN）。</li>
+            <li><strong>强震动观测</strong>（地震学）：训练数据、特征提取。</li>
+            <li><strong>地震预警</strong>（地震学）：实时推断、在线模型。</li>
+            <li><strong>工程地震学</strong>（地震学）：ML-GMPE。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Hastie, Tibshirani &amp; Friedman, <em>The Elements of Statistical Learning</em> — 统计学习权威</li>
+            <li>Bishop, <em>Pattern Recognition and Machine Learning</em> — 经典教材</li>
+            <li>Goodfellow, Bengio &amp; Courville, <em>Deep Learning</em> — 深度学习教材</li>
+            <li>Murphy, <em>Machine Learning: A Probabilistic Perspective</em> — 概率视角</li>
+            <li>Geron, <em>Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow</em> — 实践指南</li>
+            <li>Zhu &amp; Beroza, "PhaseNet: A deep-neural-network-based seismic arrival-time picking method" (2019) — 震相拾取里程碑</li>
+            <li>Mousavi et al., "Earthquake transformer — an attentive deep-learning model for simultaneous earthquake detection and phase picking" (2020) — EQTransformer</li>
+            <li>Ross et al., "Generalized seismic phase detection with deep learning" (2018) — GPD</li>
+            <li>Mousavi &amp; Beroza, "Deep-learning seismology" (2022) — 综述</li>
+            <li>SeisBench 平台文档 — 地震学 ML 基准</li>
+            <li>STEAD 数据集论文 — Stanford Earthquake Dataset</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

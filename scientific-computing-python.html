@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科学计算与 Python · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="scientific-computing-python">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#ecosystem">一、科学计算生态</a></li>
+      <li><a href="#numpy">二、NumPy 基础</a></li>
+      <li><a href="#vectorize">三、向量化与广播</a></li>
+      <li><a href="#scipy">四、SciPy 数值算法</a></li>
+      <li><a href="#matplotlib">五、Matplotlib 可视化</a></li>
+      <li><a href="#pandas">六、Pandas 数据处理</a></li>
+      <li><a href="#performance">七、性能优化</a></li>
+      <li><a href="#engineering">八、工程实践</a></li>
+      <li><a href="#application">九、地震学应用</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 科学计算与 Python
+        </div>
+        <h1>科学计算与 Python</h1>
+        <p class="lead">
+          从 NumPy 向量化到 SciPy 数值算法，覆盖数组运算、优化、积分、
+          信号处理与性能调优。Python 科学计算栈是工程计算与地震数据处理的
+          核心工具链，也是前面所有数学与算法笔记的实践载体。
+        </p>
+        <div class="article-meta">
+          <span>NumPy</span>
+          <span>SciPy</span>
+          <span>向量化</span>
+          <span class="blue">工程实践</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            Python 已成为科学计算的主流语言之一，
+            不是因为它的原生性能，而是因为它有一个<strong>完整的生态</strong>：
+            NumPy 提供高效数组，SciPy 提供数值算法，
+            Matplotlib 提供可视化，Pandas 提供数据处理，
+            ObsPy 提供地震学专用工具。
+          </p>
+
+          <p>
+            工程计算中，Python 的定位：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>Python 的角色</th><th>典型工具</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>数据处理与探索</td>
+                  <td>主力语言</td>
+                  <td>NumPy、Pandas、ObsPy</td>
+                </tr>
+                <tr>
+                  <td>数值算法开发</td>
+                  <td>快速原型</td>
+                  <td>NumPy、SciPy</td>
+                </tr>
+                <tr>
+                  <td>可视化</td>
+                  <td>主力语言</td>
+                  <td>Matplotlib、Plotly</td>
+                </tr>
+                <tr>
+                  <td>机器学习</td>
+                  <td>主力语言</td>
+                  <td>scikit-learn、PyTorch、TensorFlow</td>
+                </tr>
+                <tr>
+                  <td>高性能计算</td>
+                  <td>脚本 + 内核加速</td>
+                  <td>Numba、Cython、CuPy</td>
+                </tr>
+                <tr>
+                  <td>大型商业软件内核</td>
+                  <td>不适用</td>
+                  <td>FORTRAN / C++ / Julia</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            对地震工程师来说，Python 的三大价值：
+          </p>
+          <ul>
+            <li><strong>快速原型</strong>：把算法思想快速变成可运行的代码。</li>
+            <li><strong>数据接口</strong>：ObsPy 统一了 SAC、MiniSEED、SEED 等格式的读写。</li>
+            <li><strong>生态完整</strong>：从数据下载、处理、建模到可视化，全链路覆盖。</li>
+          </ul>
+
+          <p>
+            这份笔记按"生态 $\to$ NumPy $\to$ 向量化 $\to$ SciPy $\to$ 可视化 $\to$ Pandas $\to$ 性能 $\to$ 实践 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="ecosystem">
+          <h2><span class="num">01</span>科学计算生态</h2>
+
+          <h3>核心库一览</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>库</th><th>作用</th><th>核心数据结构</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>NumPy</td>
+                  <td>多维数组与基础运算</td>
+                  <td>ndarray</td>
+                  <td>所有科学计算的基础</td>
+                </tr>
+                <tr>
+                  <td>SciPy</td>
+                  <td>数值算法库</td>
+                  <td>基于 ndarray</td>
+                  <td>优化、积分、信号、稀疏</td>
+                </tr>
+                <tr>
+                  <td>Matplotlib</td>
+                  <td>绘图</td>
+                  <td>Figure、Axes</td>
+                  <td>数据可视化</td>
+                </tr>
+                <tr>
+                  <td>Pandas</td>
+                  <td>表格数据处理</td>
+                  <td>DataFrame、Series</td>
+                  <td>地震目录、实验结果</td>
+                </tr>
+                <tr>
+                  <td>ObsPy</td>
+                  <td>地震学专用工具</td>
+                  <td>Stream、Trace</td>
+                  <td>波形读写与处理</td>
+                </tr>
+                <tr>
+                  <td>scikit-learn</td>
+                  <td>机器学习</td>
+                  <td>基于 NumPy</td>
+                  <td>分类、回归、聚类</td>
+                </tr>
+                <tr>
+                  <td>Numba</td>
+                  <td>JIT 编译</td>
+                  <td>@njit 装饰器</td>
+                  <td>循环密集代码加速</td>
+                </tr>
+                <tr>
+                  <td>Dask</td>
+                  <td>并行与大数据</td>
+                  <td>Dask Array/DataFrame</td>
+                  <td>超过内存的数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>安装与环境管理</h3>
+          <p>
+            科学计算 Python 的最佳实践是用<strong>虚拟环境</strong>管理依赖：
+          </p>
+
+          <pre><code class="language-bash"># 创建虚拟环境（conda 或 venv 均可）
+conda create -n scipy python=3.11 numpy scipy matplotlib pandas
+conda activate scipy
+
+# 或用 venv
+python -m venv venv
+source venv/bin/activate   # Linux/macOS
+venv\Scripts\activate      # Windows
+pip install numpy scipy matplotlib pandas obspy</code></pre>
+
+          <h3>科学计算栈的分层</h3>
+          <p>
+            理解生态的分层结构有助于技术选型：
+          </p>
+          <ul>
+            <li><strong>底层</strong>：BLAS / LAPACK（Fortran / C），提供线性代数内核。</li>
+            <li><strong>数组层</strong>：NumPy，封装 BLAS / LAPACK，提供 Python 接口。</li>
+            <li><strong>算法层</strong>：SciPy、scikit-learn，基于 NumPy 实现算法。</li>
+            <li><strong>应用层</strong>：ObsPy、专业工具包。</li>
+            <li><strong>加速层</strong>：Numba、Cython、CuPy。</li>
+            <li><strong>可视化层</strong>：Matplotlib、Plotly、Seaborn。</li>
+          </ul>
+
+          <h3>包管理建议</h3>
+          <ul>
+            <li><strong>环境隔离</strong>：一个项目一个环境，避免依赖冲突。</li>
+            <li><strong>版本锁定</strong>：用 <code>pip freeze</code> 或 <code>conda env export</code> 记录版本。</li>
+            <li><strong>依赖清单</strong>：<code>requirements.txt</code> 或 <code>pyproject.toml</code>。</li>
+            <li><strong>科学包优先用 conda</strong>：conda 提供的二进制包含优化过的 BLAS。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么科学计算选 Python</strong>：
+              ① 数组运算的性能由底层 C / Fortran 保证，Python 只做调度；
+              ② 生态完整——数据处理、数值计算、可视化、机器学习一站式；
+              ③ 胶水语言特性——可以调用 C / Fortran / CUDA 扩展；
+              ④ 开源、跨平台、社区活跃。
+              这些让它成为工程计算与科研的默认选择。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="numpy">
+          <h2><span class="num">02</span>NumPy 基础</h2>
+
+          <h3>ndarray：核心数据结构</h3>
+          <p>
+            <code>ndarray</code> 是连续内存上的多维数组，
+            有三大属性：
+          </p>
+          <ul>
+            <li><strong>shape</strong>：形状，如 <code>(1000, 3)</code>。</li>
+            <li><strong>dtype</strong>：元素类型，如 <code>float64</code>、<code>int32</code>。</li>
+            <li><strong>strides</strong>：每个维度上相邻元素的字节步长。</li>
+          </ul>
+
+          <pre><code class="language-python">import numpy as np
+
+# 创建数组
+a = np.array([1, 2, 3])
+b = np.zeros((3, 4))         # 全零
+c = np.ones((2, 3))          # 全一
+d = np.arange(0, 10, 0.5)    # 等差
+e = np.linspace(0, 1, 100)   # 等间隔
+f = np.random.default_rng(42).normal(size=(100,))  # 随机
+
+# 属性
+print(a.shape, a.dtype, a.strides)
+# (3,) int64 (8,)  → 每个元素 8 字节
+
+# 重塑
+g = np.arange(12).reshape(3, 4)</code></pre>
+
+          <h3>索引与切片</h3>
+          <p>
+            NumPy 的切片返回<strong>视图</strong>而非拷贝，
+            这是高效的关键：
+          </p>
+
+          <pre><code class="language-python">a = np.arange(10)
+
+# 基本切片（返回视图）
+s = a[2:5]      # [2 3 4]
+
+# 修改视图影响原数组
+s[0] = 100      # a[2] 变为 100
+
+# 花式索引（返回拷贝）
+idx = [1, 3, 5]
+b = a[idx]      # 新数组
+
+# 布尔索引（返回拷贝）
+c = a[a > 5]    # 大于 5 的元素</code></pre>
+
+          <h3>矩阵运算</h3>
+          <p>
+            NumPy 的矩阵乘法与逐元素乘法要区分：
+          </p>
+
+          <pre><code class="language-python">A = np.random.rand(3, 4)
+B = np.random.rand(4, 5)
+
+# 矩阵乘法
+C = A @ B             # 或 np.dot(A, B)
+# 逐元素乘法
+D = A * A             # 形状相同才可行
+
+# 转置
+A_T = A.T
+
+# 求逆
+M = np.random.rand(4, 4)
+M_inv = np.linalg.inv(M)
+
+# 解线性方程组 M x = b
+b = np.random.rand(4)
+x = np.linalg.solve(M, b)   # 比 inv(M) @ b 更稳定
+
+# 特征值
+eigvals, eigvecs = np.linalg.eig(M)
+
+# 对称矩阵专用（更快、更稳定）
+S = M + M.T   # 对称化
+eigvals_s, eigvecs_s = np.linalg.eigh(S)  # 升序返回</code></pre>
+
+          <h3>dtype 的选择</h3>
+          <p>
+            dtype 影响内存与速度：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>dtype</th><th>字节</th><th>精度</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>float64</td>
+                  <td>8</td>
+                  <td>~15~16 位有效数字</td>
+                  <td>默认，科学计算</td>
+                </tr>
+                <tr>
+                  <td>float32</td>
+                  <td>4</td>
+                  <td>~7 位</td>
+                  <td>深度学习、大批量数据</td>
+                </tr>
+                <tr>
+                  <td>int32</td>
+                  <td>4</td>
+                  <td>±2×10⁹</td>
+                  <td>索引、小整数</td>
+                </tr>
+                <tr>
+                  <td>int64</td>
+                  <td>8</td>
+                  <td>±9×10¹⁸</td>
+                  <td>大整数、时间戳</td>
+                </tr>
+                <tr>
+                  <td>complex128</td>
+                  <td>16</td>
+                  <td>双精度复数</td>
+                  <td>FFT、频域分析</td>
+                </tr>
+                <tr>
+                  <td>bool</td>
+                  <td>1</td>
+                  <td>真/假</td>
+                  <td>掩码、条件索引</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>随机数</h3>
+          <p>
+            新版 NumPy 推荐用 <code>default_rng</code>：
+          </p>
+
+          <pre><code class="language-python">rng = np.random.default_rng(seed=42)
+
+# 均匀
+u = rng.uniform(0, 1, size=1000)
+
+# 正态
+n = rng.normal(loc=0, scale=1, size=1000)
+
+# 多项分布
+m = rng.multinomial(n=10, pvals=[0.2, 0.3, 0.5], size=100)
+
+# 打乱
+arr = np.arange(10)
+rng.shuffle(arr)
+
+# 抽样
+sample = rng.choice(arr, size=5, replace=False)</code></pre>
+
+          <p>
+            用固定 seed 保证结果可复现，
+            这对科学研究至关重要。
+          </p>
+        </section>
+
+        <section id="vectorize">
+          <h2><span class="num">03</span>向量化与广播</h2>
+
+          <h3>向量化：性能的关键</h3>
+          <p>
+            向量化是用数组运算代替 Python 循环。
+            性能差距通常在<strong>10~100 倍</strong>：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>vectorization.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import time
+
+n = 10_000_000
+a = np.random.rand(n)
+b = np.random.rand(n)
+
+# ---- 方式 1：Python 循环 ----
+t0 = time.time()
+c1 = [a[i] + b[i] for i in range(n)]
+t1 = time.time() - t0
+
+# ---- 方式 2：向量化 ----
+t0 = time.time()
+c2 = a + b
+t2 = time.time() - t0
+
+print(f"Python 循环: {t1:.3f} s")
+print(f"NumPy 向量化: {t2:.4f} s")
+print(f"加速比: {t1 / t2:.0f} 倍")</code></pre>
+          </div>
+
+          <p>
+            在 $10^7$ 规模上，向量化通常快 50~200 倍。
+          </p>
+
+          <h3>广播规则</h3>
+          <p>
+            广播让不同形状的数组可以运算，规则：
+          </p>
+          <ol class="steps">
+            <li>从尾部维度开始比较。</li>
+            <li>维度相等或其中一个为 1，则可以广播。</li>
+            <li>为 1 的维度会扩展到对方的维度。</li>
+          </ol>
+
+          <pre><code class="language-python"># 例子 1：标量与数组
+a = np.array([1, 2, 3])
+b = 10
+c = a + b         # [11 12 13]
+
+# 例子 2：一维 + 二维
+a = np.array([1, 2, 3])       # shape (3,)
+b = np.array([[1], [2], [3]]) # shape (3, 1)
+c = a + b                     # shape (3, 3)
+
+# 例子 3：列向量 + 行向量
+x = np.linspace(0, 1, 100).reshape(-1, 1)   # (100, 1)
+y = np.linspace(0, 1, 80).reshape(1, -1)    # (1, 80)
+z = x + y    # (100, 80)，可以生成 2D 网格</code></pre>
+
+          <p>
+            广播可以用少量代码表达复杂运算。
+            例如地震动衰减关系的批量计算：
+          </p>
+
+          <pre><code class="language-python"># 1000 个震级 × 500 个距离的 PGA 矩阵
+M = np.linspace(4, 8, 1000).reshape(-1, 1)      # (1000, 1)
+R = np.linspace(10, 300, 500).reshape(1, -1)    # (1, 500)
+
+# 用广播直接算出 1000×500 的 PGA
+ln_pga = 1.5 + 0.8 * M - 1.2 * np.log(R + 10) - 0.002 * R
+pga = np.exp(ln_pga)   # 形状 (1000, 500)</code></pre>
+
+          <h3>ufunc 与聚合</h3>
+          <p>
+            通用函数（ufunc）是 NumPy 的核心：
+          </p>
+
+          <pre><code class="language-python">a = np.array([1, 4, 9, 16])
+
+# 逐元素
+np.sqrt(a)          # [1. 2. 3. 4.]
+np.exp(a)
+np.log(a)
+
+# 聚合
+np.sum(a)           # 30
+np.mean(a)          # 7.5
+np.std(a)
+np.max(a), np.min(a)
+np.argmax(a)        # 返回下标
+
+# 沿轴聚合
+b = np.random.rand(100, 50)
+np.mean(b, axis=0)  # 沿第 0 轴平均 → shape (50,)
+np.mean(b, axis=1)  # 沿第 1 轴平均 → shape (100,)
+
+# 累积
+np.cumsum(a)        # [1 5 14 30]</code></pre>
+
+          <h3>避免循环的常见技巧</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>Python 循环</th><th>向量化</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>求和</td>
+                  <td>逐元素累加</td>
+                  <td><code>arr.sum()</code></td>
+                </tr>
+                <tr>
+                  <td>条件筛选</td>
+                  <td>for + if</td>
+                  <td><code>arr[arr &gt; 0]</code></td>
+                </tr>
+                <tr>
+                  <td>矩阵乘法</td>
+                  <td>三重循环</td>
+                  <td><code>A @ B</code></td>
+                </tr>
+                <tr>
+                  <td>距离计算</td>
+                  <td>双重循环</td>
+                  <td>广播 + <code>np.linalg.norm</code></td>
+                </tr>
+                <tr>
+                  <td>累积和</td>
+                  <td>循环累加</td>
+                  <td><code>np.cumsum</code></td>
+                </tr>
+                <tr>
+                  <td>卷积</td>
+                  <td>滑动窗口</td>
+                  <td><code>scipy.signal.convolve</code></td>
+                </tr>
+                <tr>
+                  <td>条件赋值</td>
+                  <td>if-else</td>
+                  <td><code>np.where</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>向量化的思维</strong>：
+              写 NumPy 代码时，先问自己：
+              "能不能一次处理整个数组，而不是逐元素？"
+              例如计算两条波形之间的所有时移相关性，
+              不要写两层循环，而是构造一个二维数组，
+              用广播或 FFT 一次性完成。
+              这种"以数组为中心"的思维方式，
+              是从"会 Python"到"会科学计算"的关键转变。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="scipy">
+          <h2><span class="num">04</span>SciPy 数值算法</h2>
+
+          <h3>SciPy 子模块一览</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>子模块</th><th>功能</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>scipy.linalg</td>
+                  <td>线性代数</td>
+                  <td>LU、Cholesky、特征值</td>
+                </tr>
+                <tr>
+                  <td>scipy.sparse</td>
+                  <td>稀疏矩阵</td>
+                  <td>有限元刚度矩阵</td>
+                </tr>
+                <tr>
+                  <td>scipy.optimize</td>
+                  <td>优化</td>
+                  <td>最小二乘、非线性求解</td>
+                </tr>
+                <tr>
+                  <td>scipy.integrate</td>
+                  <td>数值积分</td>
+                  <td>ODE 求解、定积分</td>
+                </tr>
+                <tr>
+                  <td>scipy.interpolate</td>
+                  <td>插值</td>
+                  <td>样条、曲线拟合</td>
+                </tr>
+                <tr>
+                  <td>scipy.signal</td>
+                  <td>信号处理</td>
+                  <td>滤波、FFT、卷积</td>
+                </tr>
+                <tr>
+                  <td>scipy.stats</td>
+                  <td>统计</td>
+                  <td>分布、假设检验、回归</td>
+                </tr>
+                <tr>
+                  <td>scipy.ndimage</td>
+                  <td>多维图像处理</td>
+                  <td>滤波、形态学</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>线性代数与稀疏矩阵</h3>
+          <pre><code class="language-python">from scipy import linalg
+from scipy.sparse import csr_matrix, diags
+from scipy.sparse.linalg import spsolve, eigsh
+
+# 稠密
+A = np.random.rand(5, 5)
+b = np.random.rand(5)
+
+# Cholesky 分解（需要 A 对称正定）
+S = A @ A.T
+L = linalg.cholesky(S, lower=True)
+
+# QR 分解
+Q, R = linalg.qr(A)
+
+# 稀疏矩阵：三对角
+n = 1000
+main = 2.0 * np.ones(n)
+off = -1.0 * np.ones(n - 1)
+K = diags([off, main, off], [-1, 0, 1], format="csr")
+
+# 稀疏求解
+F = np.ones(n)
+u = spsolve(K, F)
+
+# 稀疏特征值（前 6 阶）
+eigvals, eigvecs = eigsh(K, k=6, which="SM")</code></pre>
+
+          <h3>优化</h3>
+          <pre><code class="language-python">from scipy.optimize import minimize, least_squares, curve_fit
+
+# ---- 无约束最小化 ----
+def rosen(x):
+    return sum(100 * (x[1:] - x[:-1]**2)**2 + (1 - x[:-1])**2)
+
+x0 = np.array([0.0, 0.0, 0.0])
+res = minimize(rosen, x0, method="BFGS")
+print(res.x, res.fun, res.success)
+
+# ---- 最小二乘拟合 ----
+def model(x, a, b, c):
+    return a * np.exp(-b * x) + c
+
+x_data = np.linspace(0, 5, 100)
+y_data = model(x_data, 2.5, 0.8, 0.5) + 0.1 * np.random.randn(100)
+
+popt, pcov = curve_fit(model, x_data, y_data, p0=[2, 1, 0.5])
+print("拟合参数:", popt)
+print("参数协方差:", pcov)</code></pre>
+
+          <h3>数值积分与常微分方程</h3>
+          <pre><code class="language-python">from scipy.integrate import quad, solve_ivp
+
+# ---- 定积分 ----
+result, error = quad(lambda x: np.exp(-x**2), 0, np.inf)
+print(f"∫exp(-x²)dx = {result:.6f} (误差 {error:.2e})")
+# 理论值 √π/2 ≈ 0.886227
+
+# ---- ODE 求解：阻尼振子 ----
+def damped_oscillator(t, y, m=1.0, c=0.5, k=100.0):
+    x, v = y
+    dxdt = v
+    dvdt = (-c * v - k * x) / m
+    return [dxdt, dvdt]
+
+sol = solve_ivp(
+    damped_oscillator,
+    [0, 5], [1.0, 0.0],
+    t_eval=np.linspace(0, 5, 500),
+    method="RK45",
+)
+print(f"求解点数: {len(sol.t)}")
+print(f"最大位移: {np.max(np.abs(sol.y[0])):.4f}")</code></pre>
+
+          <h3>信号处理</h3>
+          <pre><code class="language-python">from scipy import signal
+
+# ---- 滤波器设计 ----
+fs = 100.0    # 采样率
+fc = 10.0     # 截止频率
+b, a = signal.butter(4, fc / (fs / 2), btype="low")
+
+# ---- 零相位滤波 ----
+x = np.random.randn(1000)   # 模拟信号
+y = signal.filtfilt(b, a, x)
+
+# ---- 频谱 ----
+f, Pxx = signal.welch(x, fs=fs, nperseg=256)
+print(f"频率轴长度: {len(f)}")
+
+# ---- 卷积 ----
+h = np.array([1, 2, 3, 2, 1]) / 9   # 简单平滑核
+smooth = np.convolve(x, h, mode="same")</code></pre>
+
+          <h3>插值</h3>
+          <pre><code class="language-python">from scipy.interpolate import interp1d, CubicSpline, UnivariateSpline
+
+x = np.linspace(0, 10, 20)
+y = np.sin(x) + 0.1 * np.random.randn(20)
+
+# 线性插值
+f_lin = interp1d(x, y, kind="linear")
+
+# 三次样条
+f_spline = CubicSpline(x, y)
+
+# 平滑样条（带噪声时）
+f_smooth = UnivariateSpline(x, y, s=0.5)
+
+x_new = np.linspace(0, 10, 200)
+print(f"线性: {f_lin(x_new[:3])}")
+print(f"样条: {f_spline(x_new[:3])}")
+print(f"平滑: {f_smooth(x_new[:3])}")</code></pre>
+
+          <h3>统计</h3>
+          <pre><code class="language-python">from scipy import stats
+
+# 分布拟合
+data = np.random.gumbel(loc=5, scale=0.5, size=1000)
+params = stats.gumbel_r.fit(data)
+print(f"Gumbel 参数: loc={params[0]:.4f}, scale={params[1]:.4f}")
+
+# 假设检验
+stat, p_value = stats.normaltest(data)
+print(f"正态性检验 p 值: {p_value:.4f}")
+
+# 分位数
+q95 = stats.gumbel_r.ppf(0.95, *params)
+print(f"95% 分位: {q95:.4f}")
+
+# KS 检验
+stat, p = stats.kstest(data, "gumbel_r", args=params)
+print(f"KS 检验 p 值: {p:.4f}")</code></pre>
+        </section>
+
+        <section id="matplotlib">
+          <h2><span class="num">05</span>Matplotlib 可视化</h2>
+
+          <h3>两种接口</h3>
+          <p>
+            Matplotlib 有两个接口：
+          </p>
+          <ul>
+            <li><strong>pyplot 接口</strong>：类似 MATLAB，简洁快速。</li>
+            <li><strong>面向对象接口</strong>：显式管理 Figure / Axes，适合复杂图。</li>
+          </ul>
+
+          <pre><code class="language-python">import matplotlib.pyplot as plt
+import numpy as np
+
+# ---- pyplot 接口 ----
+x = np.linspace(0, 2 * np.pi, 100)
+plt.plot(x, np.sin(x), label="sin")
+plt.plot(x, np.cos(x), label="cos")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.title("三角函数")
+plt.show()
+
+# ---- 面向对象接口 ----
+fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+
+axes[0, 0].plot(x, np.sin(x))
+axes[0, 0].set_title("sin")
+
+axes[0, 1].plot(x, np.cos(x), color="#db2777")
+axes[0, 1].set_title("cos")
+
+axes[1, 0].scatter(np.random.randn(100), np.random.randn(100),
+                    s=10, alpha=0.6)
+axes[1, 0].set_title("scatter")
+
+axes[1, 1].hist(np.random.randn(1000), bins=30)
+axes[1, 1].set_title("hist")
+
+plt.tight_layout()
+plt.show()</code></pre>
+
+          <h3>常用图类型</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>图类型</th><th>函数</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>折线</td>
+                  <td>plot</td>
+                  <td>时序、频谱</td>
+                </tr>
+                <tr>
+                  <td>散点</td>
+                  <td>scatter</td>
+                  <td>相关性、聚类</td>
+                </tr>
+                <tr>
+                  <td>直方图</td>
+                  <td>hist</td>
+                  <td>分布</td>
+                </tr>
+                <tr>
+                  <td>误差条</td>
+                  <td>errorbar</td>
+                  <td>置信区间</td>
+                </tr>
+                <tr>
+                  <td>等高线</td>
+                  <td>contour / contourf</td>
+                  <td>二维标量场</td>
+                </tr>
+                <tr>
+                  <td>热图</td>
+                  <td>imshow / pcolormesh</td>
+                  <td>矩阵、相关性</td>
+                </tr>
+                <tr>
+                  <td>对数图</td>
+                  <td>semilogx / loglog</td>
+                  <td>衰减关系、幂律</td>
+                </tr>
+                <tr>
+                  <td>极坐标</td>
+                  <td>polar</td>
+                  <td>方位分布</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>出版级图的要素</h3>
+          <ul>
+            <li><strong>标签</strong>：轴标签、单位、图例。</li>
+            <li><strong>字体</strong>：正文字体统一，字号合适。</li>
+            <li><strong>线宽</strong>：一般 1~2 pt。</li>
+            <li><strong>颜色</strong>：用色盲友好配色。</li>
+            <li><strong>网格</strong>：适度使用，一般 alpha 0.3。</li>
+            <li><strong>矢量输出</strong>：PDF 或 SVG 而非 PNG。</li>
+          </ul>
+
+          <pre><code class="language-python"># 出版级配置
+import matplotlib as mpl
+mpl.rcParams.update({
+    "font.family": "serif",
+    "font.size": 10,
+    "axes.labelsize": 11,
+    "axes.titlesize": 11,
+    "legend.fontsize": 9,
+    "xtick.labelsize": 9,
+    "ytick.labelsize": 9,
+    "figure.dpi": 120,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
+    "axes.grid": True,
+    "grid.alpha": 0.3,
+})
+
+# 保存为 PDF（矢量，适合论文）
+fig.savefig("figure.pdf")</code></pre>
+
+          <h3>地震波形绘制示例</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>wave_plot.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+# 合成三分量地震波形
+dt = 0.01
+t = np.arange(0, 40, dt)
+rng = np.random.default_rng(42)
+
+def synth_wave(t, t_arrival, freq=2.0, width=2.0, amp=1.0):
+    envelope = np.exp(-((t - t_arrival) ** 2) / (2 * width ** 2))
+    return amp * envelope * np.sin(2 * np.pi * freq * t)
+
+# P 波在 5 s，S 波在 9 s
+z = 0.05 * synth_wave(t, 5.0, freq=5.0, width=0.3) \
+    + 0.8 * synth_wave(t, 9.0, freq=2.0, width=1.5)
+n = 0.5 * synth_wave(t, 9.2, freq=1.5, width=1.8)
+e = 0.5 * synth_wave(t, 9.1, freq=1.8, width=1.6)
+
+# 加噪声
+z += 0.01 * rng.normal(size=len(t))
+n += 0.01 * rng.normal(size=len(t))
+e += 0.01 * rng.normal(size=len(t))
+
+# 绘图
+fig, axes = plt.subplots(3, 1, figsize=(10, 6), sharex=True)
+labels = ["Z (垂直)", "N (南北)", "E (东西)"]
+data = [z, n, e]
+
+for ax, label, d in zip(axes, labels, data):
+    ax.plot(t, d, linewidth=0.7, color="black")
+    ax.axvline(5.0, color="#16a34a", linestyle="--", alpha=0.7, label="P")
+    ax.axvline(9.0, color="#dc2626", linestyle="--", alpha=0.7, label="S")
+    ax.set_ylabel(label)
+    ax.grid(True, alpha=0.3)
+
+axes[0].legend(loc="upper right", ncol=2)
+axes[-1].set_xlabel("t / s")
+axes[0].set_title("三分量地震波形（合成）")
+
+plt.tight_layout()
+plt.show()</code></pre>
+          </div>
+        </section>
+
+        <section id="pandas">
+          <h2><span class="num">06</span>Pandas 数据处理</h2>
+
+          <h3>DataFrame 与 Series</h3>
+          <p>
+            Pandas 的核心数据结构：
+          </p>
+          <ul>
+            <li><strong>Series</strong>：带索引的一维数组。</li>
+            <li><strong>DataFrame</strong>：带索引的二维表格。</li>
+          </ul>
+
+          <pre><code class="language-python">import pandas as pd
+import numpy as np
+
+# ---- 创建 DataFrame ----
+df = pd.DataFrame({
+    "time": pd.date_range("2024-01-01", periods=10, freq="D"),
+    "magnitude": np.random.uniform(3, 7, 10),
+    "depth_km": np.random.uniform(5, 50, 10),
+    "latitude": np.random.uniform(30, 32, 10),
+    "longitude": np.random.uniform(100, 102, 10),
+    "station": ["ST01", "ST02"] * 5,
+})
+
+print(df.head())
+print(df.describe())
+print(df.dtypes)</code></pre>
+
+          <h3>数据操作</h3>
+          <pre><code class="language-python"># ---- 选择列 ----
+df["magnitude"]
+
+# ---- 条件筛选 ----
+df[df["magnitude"] > 5.0]
+df[(df["magnitude"] > 5.0) & (df["depth_km"] < 20)]
+
+# ---- 排序 ----
+df.sort_values("magnitude", ascending=False).head()
+
+# ---- 分组聚合 ----
+df.groupby("station")["magnitude"].agg(["mean", "count", "std"])
+
+# ---- 新增列 ----
+df["energy_log10"] = 1.5 * df["magnitude"] + 4.8
+
+# ---- 缺失值处理 ----
+df.dropna()                     # 删除含缺失的行
+df.fillna(0)                    # 填零
+df["magnitude"].fillna(df["magnitude"].mean())
+
+# ---- 合并 ----
+df1 = pd.DataFrame({"id": [1, 2], "a": [10, 20]})
+df2 = pd.DataFrame({"id": [2, 3], "b": [30, 40]})
+merged = pd.merge(df1, df2, on="id", how="inner")   # 或 "left", "outer"</code></pre>
+
+          <h3>时间序列处理</h3>
+          <pre><code class="language-python"># 以时间为索引
+df = df.set_index("time")
+
+# 重采样（按周取平均）
+df.resample("W").mean()
+
+# 滚动统计
+df["mag_rolling"] = df["magnitude"].rolling(window=3).mean()
+
+# 时间范围切片
+df.loc["2024-01-03":"2024-01-07"]</code></pre>
+
+          <h3>地震目录处理示例</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>catalog.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import pandas as pd
+
+# ---- 生成模拟地震目录 ----
+rng = np.random.default_rng(42)
+n = 5000
+
+catalog = pd.DataFrame({
+    "event_id": [f"ev{i:05d}" for i in range(n)],
+    "time": pd.date_range("2000-01-01", periods=n, freq="6h"),
+    "magnitude": rng.gumbel(loc=3.5, scale=0.5, size=n),
+    "depth_km": rng.exponential(10, size=n),
+    "latitude": rng.uniform(30, 32, n),
+    "longitude": rng.uniform(100, 102, n),
+    "station": rng.choice(["ST01", "ST02", "ST03"], size=n),
+})
+
+catalog = catalog[catalog["magnitude"] > 0].reset_index(drop=True)
+print(f"总事件数: {len(catalog)}")
+print(catalog.head())
+
+# ---- 统计 ----
+print(f"\n震级统计:")
+print(catalog["magnitude"].describe())
+
+# ---- G-R 关系 ----
+# 计算每个震级的累计频次
+mag_bins = np.arange(2, 8, 0.2)
+counts = []
+for mc in mag_bins:
+    counts.append((catalog["magnitude"] >= mc).sum())
+counts = np.array(counts)
+
+# 拟合 log10 N = a - b*M
+mask = counts > 0
+log_N = np.log10(counts[mask])
+fit = np.polyfit(mag_bins[mask], log_N, 1)
+b_value = -fit[0]
+a_value = fit[1]
+
+print(f"\nG-R 关系: log10(N) = {a_value:.3f} - {b_value:.3f} M")
+print(f"b 值 = {b_value:.3f}")
+
+# ---- 按站点分组 ----
+print(f"\n各台站统计:")
+print(catalog.groupby("station").agg({
+    "event_id": "count",
+    "magnitude": ["mean", "max"],
+}))
+
+# ---- 导出 ----
+catalog.to_csv("catalog.csv", index=False)
+print(f"\n已导出 catalog.csv ({len(catalog)} 行)")</code></pre>
+          </div>
+        </section>
+
+        <section id="performance">
+          <h2><span class="num">07</span>性能优化</h2>
+
+          <h3>性能诊断</h3>
+          <p>
+            优化前先<strong>测量</strong>：
+          </p>
+
+          <pre><code class="language-python">import time
+import cProfile
+
+# 简单计时
+t0 = time.perf_counter()
+result = my_function()
+print(f"耗时: {time.perf_counter() - t0:.3f} s")
+
+# 详细剖析
+cProfile.run("my_function()", sort="cumulative")
+
+# IPython / Jupyter
+# %timeit my_function()
+# %prun my_function()</code></pre>
+
+          <h3>优化的层次</h3>
+          <p>
+            按性价比排序：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>层次</th><th>手段</th><th>加速倍数</th><th>复杂度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>算法</td>
+                  <td>换复杂度更低的算法</td>
+                  <td>10~1000 倍</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>向量化</td>
+                  <td>用 NumPy 代替循环</td>
+                  <td>10~100 倍</td>
+                  <td>低</td>
+                </tr>
+                <tr>
+                  <td>数据结构</td>
+                  <td>稀疏矩阵、哈希、kd 树</td>
+                  <td>10~100 倍</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>内存布局</td>
+                  <td>连续数组、避免拷贝</td>
+                  <td>2~10 倍</td>
+                  <td>低</td>
+                </tr>
+                <tr>
+                  <td>JIT 编译</td>
+                  <td>Numba、Cython</td>
+                  <td>10~100 倍</td>
+                  <td>中</td>
+                </tr>
+                <tr>
+                  <td>并行</td>
+                  <td>多进程、多线程、GPU</td>
+                  <td>2~50 倍</td>
+                  <td>中~高</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Numba：JIT 加速</h3>
+          <p>
+            Numba 用装饰器把 Python 函数编译成机器码：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>numba_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import time
+from numba import njit, prange
+
+# 纯 Python 版本
+def sum_squares_py(arr):
+    s = 0.0
+    for x in arr:
+        s += x * x
+    return s
+
+# Numba 加速版本
+@njit
+def sum_squares_numba(arr):
+    s = 0.0
+    for i in range(len(arr)):
+        s += arr[i] * arr[i]
+    return s
+
+# Numba 并行版本
+@njit(parallel=True)
+def sum_squares_parallel(arr):
+    n = len(arr)
+    partial = np.zeros(n, dtype=np.float64)
+    for i in prange(n):
+        partial[i] = arr[i] * arr[i]
+    return partial.sum()
+
+if __name__ == "__main__":
+    arr = np.random.rand(10_000_000)
+
+    # 第一次调用 Numba 会编译，之后很快
+    _ = sum_squares_numba(arr[:100])
+
+    t0 = time.perf_counter()
+    s1 = sum_squares_py(arr)
+    t1 = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    s2 = sum_squares_numba(arr)
+    t2 = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    s3 = sum_squares_parallel(arr)
+    t3 = time.perf_counter() - t0
+
+    print(f"Python:        {t1:.4f} s")
+    print(f"Numba JIT:     {t2:.4f} s  加速 {t1/t2:.0f} 倍")
+    print(f"Numba 并行:    {t3:.4f} s  加速 {t1/t3:.0f} 倍")</code></pre>
+          </div>
+
+          <h3>内存优化</h3>
+          <pre><code class="language-python"># ---- 用视图代替拷贝 ----
+a = np.arange(1000)
+b = a[100:200]       # 视图，不占用新内存
+c = a[100:200].copy()  # 拷贝
+
+# ---- 就地运算 ----
+a = np.random.rand(1000000)
+a += 1.0             # 就地，不创建新数组
+# a = a + 1.0        # 会创建新数组，占用双倍内存
+
+# ---- 用 float32 减少内存 ----
+a32 = a.astype(np.float32)   # 内存减半，精度略降
+
+# ---- 稀疏矩阵 ----
+from scipy.sparse import csr_matrix
+# 稠密 n×n 矩阵 O(n²)，稀疏 O(nnz)</code></pre>
+
+          <h3>并行计算</h3>
+          <pre><code class="language-python">from concurrent.futures import ProcessPoolExecutor
+import numpy as np
+
+def compute_heavy(n):
+    """CPU 密集型任务"""
+    return sum(i * i for i in range(n))
+
+if __name__ == "__main__":
+    tasks = [10**6] * 8
+
+    # 串行
+    import time
+    t0 = time.perf_counter()
+    results_serial = [compute_heavy(n) for n in tasks]
+    t_serial = time.perf_counter() - t0
+
+    # 并行
+    t0 = time.perf_counter()
+    with ProcessPoolExecutor() as executor:
+        results_parallel = list(executor.map(compute_heavy, tasks))
+    t_parallel = time.perf_counter() - t0
+
+    print(f"串行: {t_serial:.2f} s")
+    print(f"并行: {t_parallel:.2f} s")
+    print(f"加速: {t_serial / t_parallel:.1f} 倍")</code></pre>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>过早优化是万恶之源</strong>：
+              ① 先让代码正确，再让它快；
+              ② 用 profiler 找出真正的瓶颈，而不是猜测；
+              ③ 优先优化热点（通常 20% 的代码占 80% 的时间）；
+              ④ 优化后要重新测试正确性；
+              ⑤ 记录优化的版本，保留对照。
+              工程实践中最常见的问题不是"不够快"，
+              而是"没先测好就在优化"，结果花大量时间优化了非关键路径。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="engineering">
+          <h2><span class="num">08</span>工程实践</h2>
+
+          <h3>项目结构</h3>
+          <p>
+            一个规范的科学计算项目结构：
+          </p>
+
+          <pre><code>project/
+├── README.md
+├── pyproject.toml          # 依赖与元数据
+├── requirements.txt
+├── data/
+│   ├── raw/                # 原始数据（只读）
+│   ├── processed/          # 处理后的数据
+│   └── README.md
+├── src/
+│   └── mypackage/
+│       ├── __init__.py
+│       ├── io.py           # 读写
+│       ├── processing.py   # 数据处理
+│       ├── models.py       # 模型
+│       └── viz.py          # 可视化
+├── scripts/                # 可执行脚本
+│   ├── run_pipeline.py
+│   └── plot_results.py
+├── notebooks/              # 探索性分析
+│   └── exploration.ipynb
+├── tests/                  # 单元测试
+│   ├── test_io.py
+│   └── test_processing.py
+└── results/
+    ├── figures/
+    └── tables/</code></pre>
+
+          <h3>代码规范</h3>
+          <ul>
+            <li><strong>PEP 8</strong>：Python 官方风格指南。</li>
+            <li><strong>类型提示</strong>：<code>def func(x: np.ndarray) -> float:</code>。</li>
+            <li><strong>文档字符串</strong>：NumPy 或 Google 风格。</li>
+            <li><strong>命名</strong>：模块/函数小写下划线，类用 CamelCase。</li>
+            <li><strong>格式化</strong>：black 自动格式化。</li>
+            <li><strong>静态检查</strong>：flake8、pylint、mypy。</li>
+          </ul>
+
+          <pre><code class="language-python">def compute_pga(
+    acceleration: np.ndarray,
+    dt: float,
+    detrend: bool = True,
+) -> float:
+    """
+    计算加速度时程的峰值加速度（PGA）。
+
+    Parameters
+    ----------
+    acceleration : np.ndarray
+        加速度时程，单位 m/s²。
+    dt : float
+        采样间隔，单位 s。
+    detrend : bool, optional
+        是否去除线性趋势，默认为 True。
+
+    Returns
+    -------
+    pga : float
+        峰值加速度，单位 m/s²。
+
+    Examples
+    --------
+    >>> acc = np.random.randn(1000)
+    >>> pga = compute_pga(acc, dt=0.01)
+    """
+    if detrend:
+        from scipy.signal import detrend as sp_detrend
+        acceleration = sp_detrend(acceleration)
+    return float(np.max(np.abs(acceleration)))</code></pre>
+
+          <h3>可复现性</h3>
+          <ul>
+            <li><strong>固定随机种子</strong>：<code>rng = np.random.default_rng(42)</code>。</li>
+            <li><strong>记录版本</strong>：NumPy、SciPy 等的版本影响结果。</li>
+            <li><strong>配置文件</strong>：所有参数放到 YAML / JSON，不硬编码。</li>
+            <li><strong>日志</strong>：用 logging 而非 print。</li>
+            <li><strong>数据校验</strong>：检查输入范围、缺失值、异常。</li>
+            <li><strong>单元测试</strong>：pytest 保证核心函数正确。</li>
+          </ul>
+
+          <h3>单元测试</h3>
+          <pre><code class="language-python">import numpy as np
+import pytest
+from mypackage.processing import compute_pga
+
+
+def test_pga_constant():
+    """常量信号的 PGA 应等于该常量"""
+    acc = np.full(100, 2.5)
+    assert compute_pga(acc, dt=0.01, detrend=False) == 2.5
+
+
+def test_pga_zero():
+    """零信号的 PGA 为 0"""
+    acc = np.zeros(100)
+    assert compute_pga(acc, dt=0.01, detrend=False) == 0.0
+
+
+def test_pga_sine():
+    """正弦信号的 PGA 应等于振幅"""
+    t = np.linspace(0, 1, 1000)
+    acc = 3.0 * np.sin(2 * np.pi * 5 * t)
+    assert abs(compute_pga(acc, dt=0.001, detrend=False) - 3.0) < 0.01
+
+
+def test_pga_detrend():
+    """去趋势后，线性漂移不应影响 PGA"""
+    t = np.linspace(0, 1, 1000)
+    acc = np.sin(2 * np.pi * 5 * t) + 10 * t   # 叠加线性漂移
+    assert abs(compute_pga(acc, dt=0.001, detrend=True) - 1.0) < 0.1</code></pre>
+
+          <h3>日志与调试</h3>
+          <pre><code class="language-python">import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+logger.info("开始处理数据")
+logger.warning("检测到 3 条异常记录")
+logger.error("文件不存在: input.sac")</code></pre>
+
+          <h3>依赖管理</h3>
+          <p>
+            用 <code>pyproject.toml</code> 声明依赖：
+          </p>
+
+          <pre><code class="language-toml">[project]
+name = "my-seismic-tool"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+    "pandas>=2.1",
+    "obspy>=1.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "flake8", "mypy"]</code></pre>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">09</span>地震学应用</h2>
+
+          <h3>ObsPy 简介</h3>
+          <p>
+            ObsPy 是 Python 的地震学标准工具库，
+            统一了数据读写、处理与可视化：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>模块</th><th>功能</th><th>典型用法</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>obspy.read</td>
+                  <td>读取多种格式</td>
+                  <td>SAC、MiniSEED、SEED</td>
+                </tr>
+                <tr>
+                  <td>Stream / Trace</td>
+                  <td>波形数据容器</td>
+                  <td>组织与操作波形</td>
+                </tr>
+                <tr>
+                  <td>obspy.signal</td>
+                  <td>信号处理</td>
+                  <td>滤波、反应谱</td>
+                </tr>
+                <tr>
+                  <td>obspy.taup</td>
+                  <td>走时计算</td>
+                  <td>P/S 波到时</td>
+                </tr>
+                <tr>
+                  <td>obspy.clients</td>
+                  <td>数据下载</td>
+                  <td>IRIS、FDSN</td>
+                </tr>
+                <tr>
+                  <td>obspy.geodetics</td>
+                  <td>地理计算</td>
+                  <td>距离、方位角</td>
+                </tr>
+                <tr>
+                  <td>obspy.io</td>
+                  <td>格式转换</td>
+                  <td>SAC ↔ MiniSEED</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>典型工作流</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>obspy_workflow.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 ObsPy 处理强震记录的典型工作流（示意）。
+安装：pip install obspy
+"""
+import numpy as np
+
+try:
+    from obspy import read, read_inventory
+    from obspy.signal.trigger import classic_sta_lta
+    HAS_OBSPY = True
+except ImportError:
+    HAS_OBSPY = False
+    print("未安装 ObsPy，仅展示代码结构。")
+
+
+if HAS_OBSPY:
+    def process_record(file_path, output_path):
+        """
+        处理一条强震记录的完整流程：
+        1. 读取
+        2. 去趋势
+        3. 滤波
+        4. 质控检查
+        5. 保存
+        """
+        # 1. 读取
+        st = read(file_path)
+        print(f"读取 {len(st)} 条记录")
+        for tr in st:
+            print(f"  {tr.id}: {tr.stats.npts} 点, "
+                  f"{tr.stats.sampling_rate} Hz")
+
+        # 2. 去趋势
+        st.detrend("linear")
+        st.detrend("demean")
+
+        # 3. 带通滤波（0.1~25 Hz）
+        st.filter("bandpass", freqmin=0.1, freqmax=25.0,
+                  corners=4, zerophase=True)
+
+        # 4. 质控检查：PGA 与 STA/LTA
+        for tr in st:
+            pga = np.max(np.abs(tr.data))
+            print(f"  {tr.id} PGA = {pga:.4f}")
+
+            # STA/LTA 检测
+            cft = classic_sta_lta(tr.data, int(0.5 * tr.stats.sampling_rate),
+                                  int(5.0 * tr.stats.sampling_rate))
+            print(f"    STA/LTA 最大值: {cft.max():.2f}")
+
+        # 5. 保存
+        st.write(output_path, format="MSEED")
+        print(f"已保存到 {output_path}")
+
+    # 用实际文件替换
+    # process_record("input.mseed", "processed.mseed")
+else:
+    print("\n核心流程：")
+    print("  1. read() 读取 SAC / MiniSEED / SEED")
+    print("  2. detrend() 去趋势")
+    print("  3. filter() 带通滤波（零相位）")
+    print("  4. 计算 PGA、PGV、PGD、STA/LTA 等质控指标")
+    print("  5. write() 保存为 MSEED / SAC")</code></pre>
+          </div>
+
+          <h3>地震动参数计算</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>ground_motion.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy import signal
+
+
+def integrate_trapezoid(acc, dt):
+    """梯形法积分"""
+    vel = np.cumsum(acc) * dt
+    disp = np.cumsum(vel) * dt
+    return vel, disp
+
+
+def arias_intensity(acc, dt, g=9.81):
+    """
+    Arias 强度：
+        I_A = (π / 2g) ∫ a² dt
+    单位：m/s
+    """
+    return np.pi / (2 * g) * np.sum(acc ** 2) * dt
+
+
+def significant_duration(acc, dt, g=9.81, low=0.05, high=0.95):
+    """
+    有效持时：Arias 强度从 5% 累积到 95% 的时间。
+    """
+    cum = np.cumsum(acc ** 2)
+    total = cum[-1]
+    t5 = np.searchsorted(cum, low * total) * dt
+    t95 = np.searchsorted(cum, high * total) * dt
+    return t95 - t5
+
+
+def compute_intensity_measures(acc, dt):
+    """
+    计算常见地震动参数。
+    """
+    pga = np.max(np.abs(acc))
+    vel, disp = integrate_trapezoid(acc, dt)
+    pgv = np.max(np.abs(vel))
+    pgd = np.max(np.abs(disp))
+    ia = arias_intensity(acc, dt)
+    t_d = significant_duration(acc, dt)
+
+    return {
+        "PGA": pga,
+        "PGV": pgv,
+        "PGD": pgd,
+        "Arias": ia,
+        "T5-95": t_d,
+        "PGV_PGA": pgv / pga if pga > 0 else 0.0,
+    }
+
+
+if __name__ == "__main__":
+    # 合成一条地震动
+    rng = np.random.default_rng(42)
+    dt = 0.01
+    t = np.arange(0, 40, dt)
+
+    # 多频率叠加 + 包络
+    acc = np.zeros_like(t)
+    for f, amp in [(0.5, 0.5), (1.5, 1.0), (3.0, 0.8), (5.0, 0.3)]:
+        acc += amp * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi))
+    envelope = np.exp(-((t - 10) ** 2) / (2 * 4 ** 2))
+    acc *= envelope
+    acc *= 5.0    # 放大
+
+    measures = compute_intensity_measures(acc, dt)
+    print("地震动参数：")
+    for k, v in measures.items():
+        print(f"  {k:>10}: {v:.5f}")</code></pre>
+          </div>
+
+          <h3>反应谱计算</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>response_spectrum_fast.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from numba import njit
+
+
+@njit
+def _newmark_sdof(acc, dt, omega, zeta):
+    """
+    Newmark-β 法求解单自由度体系响应（Numba 编译）。
+    返回最大相对位移、最大绝对加速度。
+    """
+    n = len(acc)
+    beta = 0.25
+    gamma = 0.5
+    m = 1.0
+    k = m * omega ** 2
+    c = 2 * m * omega * zeta
+
+    u = 0.0
+    v = 0.0
+    a = -acc[0] - 2 * zeta * omega * v - omega ** 2 * u
+
+    K_eff = k + gamma / (beta * dt) * c + 1.0 / (beta * dt ** 2) * m
+
+    u_max = 0.0
+    a_max = 0.0
+
+    for i in range(n - 1):
+        P_eff = (
+            -m * acc[i + 1]
+            + m * (1.0 / (beta * dt ** 2) * u
+                   + 1.0 / (beta * dt) * v
+                   + (1.0 / (2 * beta) - 1.0) * a)
+            + c * (gamma / (beta * dt) * u
+                   + (gamma / beta - 1.0) * v
+                   + dt * (gamma / (2 * beta) - 1.0) * a)
+        )
+        u_new = P_eff / K_eff
+        v = (gamma / (beta * dt) * (u_new - u)
+             - (gamma / beta - 1.0) * v
+             - dt * (gamma / (2 * beta) - 1.0) * a)
+        a = (1.0 / (beta * dt ** 2) * (u_new - u)
+             - 1.0 / (beta * dt) * v
+             - (1.0 / (2 * beta) - 1.0) * a)
+        u = u_new
+
+        if abs(u) > u_max:
+            u_max = abs(u)
+        a_abs = abs(a + acc[i + 1])
+        if a_abs > a_max:
+            a_max = a_abs
+
+    return u_max, a_max
+
+
+def response_spectrum(acc, dt, periods, zeta=0.05):
+    """
+    计算加速度反应谱 Sa。
+    用 Numba 加速的单自由度求解器。
+    """
+    Sa = np.zeros(len(periods))
+    for i in range(len(periods)):
+        T = periods[i]
+        if T <= 0.01:
+            Sa[i] = np.max(np.abs(acc))
+            continue
+        omega = 2 * np.pi / T
+        _, a_max = _newmark_sdof(acc, dt, omega, zeta)
+        Sa[i] = a_max
+    return Sa
+
+
+if __name__ == "__main__":
+    import time
+
+    # 合成地震动
+    rng = np.random.default_rng(42)
+    dt = 0.01
+    t = np.arange(0, 60, dt)
+    acc = np.zeros_like(t)
+    for f, amp in [(0.3, 0.8), (1.0, 1.0), (3.0, 0.6), (8.0, 0.3)]:
+        acc += amp * np.sin(2 * np.pi * f * t + rng.uniform(0, 6.28))
+    acc *= np.exp(-((t - 15) ** 2) / (2 * 8 ** 2))
+    acc *= 3.0
+
+    # 周期范围
+    periods = np.logspace(np.log10(0.05), np.log10(5.0), 100)
+
+    # 首次运行会编译
+    _ = response_spectrum(acc[:100], dt, periods[:3])
+
+    t0 = time.perf_counter()
+    Sa = response_spectrum(acc, dt, periods, zeta=0.05)
+    elapsed = time.perf_counter() - t0
+
+    print(f"计算 {len(periods)} 个周期的反应谱，耗时 {elapsed:.3f} s")
+    print(f"PGA = {Sa[0]:.4f} m/s²")
+    print(f"T = 1.0 s 处 Sa = {Sa[np.argmin(np.abs(periods - 1.0))]:.4f}")</code></pre>
+          </div>
+
+          <h3>GMPE 批量计算与可视化</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>gmpe_batch.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def gmpe(M, R, Vs30=760.0):
+    """简化 GMPE，用广播支持任意形状输入"""
+    return np.exp(1.5 + 0.8 * M - 1.2 * np.log(R + 10) - 0.002 * R
+                  - 0.3 * np.log(Vs30 / 760.0))
+
+
+if __name__ == "__main__":
+    # ---- 广播生成 PGA 矩阵 ----
+    M_arr = np.linspace(4.0, 8.0, 200).reshape(-1, 1)
+    R_arr = np.logspace(np.log10(5), np.log10(300), 200).reshape(1, -1)
+
+    PGA = gmpe(M_arr, R_arr)   # shape (200, 200)
+
+    # ---- 绘图 ----
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+    # 等值线
+    im = axes[0].pcolormesh(R_arr.ravel(), M_arr.ravel(), PGA,
+                             shading="auto", cmap="YlOrRd")
+    axes[0].set_xscale("log")
+    axes[0].set_xlabel("距离 R / km")
+    axes[0].set_ylabel("震级 M")
+    axes[0].set_title("PGA 分布 (m/s²)")
+    plt.colorbar(im, ax=axes[0])
+
+    # 不同震级的衰减曲线
+    for M in [5.0, 6.0, 7.0, 8.0]:
+        pga_curve = gmpe(M, R_arr.ravel())
+        axes[1].loglog(R_arr.ravel(), pga_curve, label=f"M = {M}")
+    axes[1].set_xlabel("距离 R / km")
+    axes[1].set_ylabel("PGA / (m/s²)")
+    axes[1].set_title("不同震级的衰减关系")
+    axes[1].legend()
+    axes[1].grid(True, which="both", alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    print(f"PGA 矩阵形状: {PGA.shape}")
+    print(f"PGA 范围: {PGA.min():.4f} ~ {PGA.max():.4f} m/s²")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Python 与你的项目</strong>：
+              你主页上的三个项目都可用 Python 科学计算栈高效实现：
+              ① <strong>强震动数据处理</strong>：ObsPy + SciPy
+              （读写、滤波、质控）；
+              ② <strong>地震动参数分析</strong>：NumPy + Numba
+              （PGA/PGV/反应谱批量计算）；
+              ③ <strong>地震危险性分析</strong>：SciPy + 向量化
+              （PSHA 积分、蒙特卡洛、GMPE 拟合）。
+              这份笔记可以作为项目文档的"技术栈说明"，
+              链接到对应章节解释实现细节。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>科学计算生态</strong>：NumPy（数组）+ SciPy（算法）+ Matplotlib（可视化）+ Pandas（表格）+ ObsPy（地震学）。</li>
+              <li><strong>NumPy 基础</strong>：ndarray、索引、切片、矩阵运算、dtype 选择、随机数。</li>
+              <li><strong>向量化与广播</strong>：用数组运算代替 Python 循环，性能提升 10~100 倍。</li>
+              <li><strong>SciPy 数值算法</strong>：线性代数、稀疏矩阵、优化、积分、ODE、信号、插值、统计。</li>
+              <li><strong>Matplotlib</strong>：pyplot 快速绘图 + 面向对象接口；出版级图的配置。</li>
+              <li><strong>Pandas</strong>：DataFrame 处理表格数据；分组、合并、时间序列。</li>
+              <li><strong>性能优化</strong>：算法 → 向量化 → 数据结构 → Numba → 并行。</li>
+              <li><strong>工程实践</strong>：项目结构、代码规范、测试、日志、依赖管理、可复现性。</li>
+              <li><strong>地震学应用</strong>：ObsPy 工作流、地震动参数、反应谱、GMPE 批量计算。</li>
+            </ul>
+          </div>
+
+          <h3>Python 科学计算速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>工具</th><th>关键函数</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>数组创建</td>
+                  <td>NumPy</td>
+                  <td>array、zeros、arange、linspace</td>
+                </tr>
+                <tr>
+                  <td>矩阵运算</td>
+                  <td>NumPy</td>
+                  <td>@、linalg.inv、linalg.solve</td>
+                </tr>
+                <tr>
+                  <td>特征值</td>
+                  <td>NumPy</td>
+                  <td>linalg.eig、linalg.eigh</td>
+                </tr>
+                <tr>
+                  <td>稀疏矩阵</td>
+                  <td>SciPy</td>
+                  <td>sparse.csr_matrix、sparse.linalg</td>
+                </tr>
+                <tr>
+                  <td>优化</td>
+                  <td>SciPy</td>
+                  <td>optimize.minimize、curve_fit</td>
+                </tr>
+                <tr>
+                  <td>积分</td>
+                  <td>SciPy</td>
+                  <td>integrate.quad、solve_ivp</td>
+                </tr>
+                <tr>
+                  <td>滤波</td>
+                  <td>SciPy</td>
+                  <td>signal.butter、filtfilt</td>
+                </tr>
+                <tr>
+                  <td>插值</td>
+                  <td>SciPy</td>
+                  <td>interpolate.CubicSpline</td>
+                </tr>
+                <tr>
+                  <td>统计</td>
+                  <td>SciPy</td>
+                  <td>stats.gumbel_r、kstest</td>
+                </tr>
+                <tr>
+                  <td>绘图</td>
+                  <td>Matplotlib</td>
+                  <td>plot、scatter、pcolormesh</td>
+                </tr>
+                <tr>
+                  <td>表格处理</td>
+                  <td>Pandas</td>
+                  <td>DataFrame、groupby、resample</td>
+                </tr>
+                <tr>
+                  <td>波形读写</td>
+                  <td>ObsPy</td>
+                  <td>read、read_inventory、write</td>
+                </tr>
+                <tr>
+                  <td>JIT 加速</td>
+                  <td>Numba</td>
+                  <td>@njit、@njit(parallel=True)</td>
+                </tr>
+                <tr>
+                  <td>机器学习</td>
+                  <td>scikit-learn</td>
+                  <td>Pipeline、cross_val_score</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>数据结构</strong>（计算机）：ndarray 是数组的实现，稀疏矩阵是 CSR 的应用。</li>
+            <li><strong>算法设计与分析</strong>（计算机）：SciPy 内部实现了排序、分治、DP、优化。</li>
+            <li><strong>数字信号处理</strong>（计算机）：SciPy.signal 是 DSP 的实现工具。</li>
+            <li><strong>机器学习基础</strong>（计算机）：NumPy 是 ML 的数组基础，scikit-learn 是工具库。</li>
+            <li><strong>数值分析</strong>（数学）：SciPy 是数值分析算法的工程实现。</li>
+            <li><strong>线性代数</strong>（数学）：NumPy.linalg 是线代的实现。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：SciPy.stats 提供统计工具。</li>
+            <li><strong>复变函数与积分变换</strong>（数学）：FFT 与频域分析。</li>
+            <li><strong>偏微分方程</strong>（数学）：solve_ivp 与 PDE 数值解。</li>
+            <li><strong>工程地震学</strong>（地震学）：GMPE 拟合与批量计算。</li>
+            <li><strong>强震动观测</strong>（地震学）：ObsPy 处理流程。</li>
+            <li><strong>地震预警</strong>（地震学）：实时算法与 Numba 加速。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Harris et al., "Array programming with NumPy" (2020) — NumPy 权威论文</li>
+            <li>Virtanen et al., "SciPy 1.0: fundamental algorithms for scientific computing in Python" (2020) — SciPy 论文</li>
+            <li>Hunter, "Matplotlib: A 2D graphics environment" (2007) — Matplotlib 论文</li>
+            <li>McKinney, "Data structures for statistical computing in Python" (2010) — Pandas 论文</li>
+            <li>Beyreuther et al., "ObsPy: A Python toolbox for seismology" (2010) — ObsPy 论文</li>
+            <li>Lam, Pitrou &amp; Seibert, "Numba: A LLVM-based Python JIT compiler" (2015) — Numba 论文</li>
+            <li>VanderPlas, <em>Python Data Science Handbook</em> — 实用手册</li>
+            <li>Nunez-Iglesias, van der Walt &amp; Dashnow, <em>Elegant SciPy</em> — SciPy 深入</li>
+            <li>Geron, <em>Hands-On Machine Learning</em> — 机器学习实践</li>
+            <li>McKinney, <em>Python for Data Analysis</em> — Pandas 作者的书</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

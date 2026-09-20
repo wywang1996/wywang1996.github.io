@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>土动力学 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="soil-dynamics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#properties">一、土的动力特性</a></li>
+      <li><a href="#wave">二、土中波的传播</a></li>
+      <li><a href="#site">三、场地地震反应</a></li>
+      <li><a href="#liquefaction">四、液化</a></li>
+      <li><a href="#ssi">五、土-结构相互作用</a></li>
+      <li><a href="#lab">六、室内与现场试验</a></li>
+      <li><a href="#application">七、工程应用</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 土动力学
+        </div>
+        <h1>土动力学</h1>
+        <p class="lead">
+          从土的动力特性到场地地震反应，覆盖动剪切模量、阻尼比、
+          液化判别、一维土层反应分析与土-结构相互作用。
+          它是场地效应评估与岩土地震工程的理论基础，
+          也是连接地震学与地震工程的关键环节。
+        </p>
+        <div class="article-meta">
+          <span>动剪切模量</span>
+          <span>场地效应</span>
+          <span>液化</span>
+          <span class="blue">土-结构相互作用</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            土动力学研究<strong>土体在动荷载（地震、爆破、机器振动、波浪）作用下的力学行为</strong>。
+            它与静力土力学有本质区别：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>静力土力学</th><th>土动力学</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>荷载性质</td>
+                  <td>恒定或缓慢施加</td>
+                  <td>循环、快速、往复</td>
+                </tr>
+                <tr>
+                  <td>应变水平</td>
+                  <td>$10^{-2} \sim 10^{-1}$</td>
+                  <td>$10^{-6} \sim 10^{-2}$</td>
+                </tr>
+                <tr>
+                  <td>变形特性</td>
+                  <td>以强度为主</td>
+                  <td>以刚度与阻尼为主</td>
+                </tr>
+                <tr>
+                  <td>关键参数</td>
+                  <td>$c$、$\varphi$、$E_s$</td>
+                  <td>$G$、$D$、$V_s$</td>
+                </tr>
+                <tr>
+                  <td>核心问题</td>
+                  <td>承载力、沉降</td>
+                  <td>场地反应、液化、SSI</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            土动力学在地震工程中的位置，是<strong>从基岩到地表的关键环节</strong>：
+          </p>
+          <ul>
+            <li><strong>输入</strong>：从地震学得到基岩地震动。</li>
+            <li><strong>传递</strong>：土动力学计算土层对地震动的放大与滤波。</li>
+            <li><strong>输出</strong>：给出地表地震动，作为结构抗震设计的输入。</li>
+          </ul>
+
+          <p>
+            一个典型例子：1985 年墨西哥城地震，
+            距震中约 400 km 的墨西哥城，中高层建筑大量倒塌，
+            而低层建筑损伤较轻。原因正是湖积软土层的卓越周期（约 2 s）
+            与中高层建筑的自振周期接近，发生共振放大。
+            这就是土动力学要解决的核心问题。
+          </p>
+
+          <p>
+            这份笔记按"土性 $\to$ 波传播 $\to$ 场地反应 $\to$ 液化 $\to$ SSI $\to$ 试验 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="properties">
+          <h2><span class="num">01</span>土的动力特性</h2>
+
+          <h3>动剪切模量</h3>
+          <p>
+            动剪切模量 $G$ 是土动力学最基本参数，定义为剪应力与剪应变之比：
+          </p>
+
+          $$ G = \frac{\tau}{\gamma} $$
+
+          <p>
+            它随剪应变水平变化：
+          </p>
+          <ul>
+            <li><strong>小应变</strong>（$\gamma < 10^{-5}$）：$G$ 达到最大值 $G_{\max}$，土体近似弹性。</li>
+            <li><strong>中等应变</strong>（$10^{-5} < \gamma < 10^{-3}$）：$G$ 随 $\gamma$ 增大而降低。</li>
+            <li><strong>大应变</strong>（$\gamma > 10^{-3}$）：$G$ 显著降低，土体进入非线性甚至破坏。</li>
+          </ul>
+
+          <p>
+            最大剪切模量 $G_{\max}$ 与剪切波速 $V_s$ 的关系：
+          </p>
+
+          $$ G_{\max} = \rho V_s^2 $$
+
+          <p>
+            其中 $\rho$ 是土的质量密度。这就是为什么 $V_s$ 是场地分类的核心指标——
+            它直接反映土体的刚度。
+          </p>
+
+          <h3>小应变剪切模量的经验公式</h3>
+          <p>
+            常用的经验关系：
+          </p>
+
+          $$ G_{\max} = A \cdot \frac{(e_g - e)^2}{1 + e} \cdot p_a^{1-n} \cdot (\sigma'_m)^n $$
+
+          <p>
+            其中 $e$ 是孔隙比，$\sigma'_m$ 是平均有效应力，$p_a$ 是大气压。
+            常见形式（Hardin 公式）：
+          </p>
+
+          $$ G_{\max} = 625 \cdot \frac{\mathrm{OCR}^k}{0.3 + 0.7 e^2}
+             \cdot p_a^{1-n} \cdot (\sigma'_m)^n $$
+
+          <p>
+            其中 OCR 是超固结比，$n$ 通常取 0.5。
+          </p>
+
+          <h3>模量衰减曲线与阻尼比</h3>
+          <p>
+            归一化动剪切模量 $G/G_{\max}$ 与阻尼比 $D$ 随剪应变 $\gamma$ 的变化，
+            是土动力学最核心的两条曲线：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>剪应变 $\gamma$</th><th>$G/G_{\max}$</th><th>阻尼比 $D$</th><th>土体状态</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$10^{-6}$</td>
+                  <td>≈ 1.00</td>
+                  <td>&lt; 1%</td>
+                  <td>弹性</td>
+                </tr>
+                <tr>
+                  <td>$10^{-5}$</td>
+                  <td>0.95~1.00</td>
+                  <td>1%~2%</td>
+                  <td>准弹性</td>
+                </tr>
+                <tr>
+                  <td>$10^{-4}$</td>
+                  <td>0.70~0.95</td>
+                  <td>2%~5%</td>
+                  <td>非线性开始</td>
+                </tr>
+                <tr>
+                  <td>$10^{-3}$</td>
+                  <td>0.30~0.70</td>
+                  <td>5%~15%</td>
+                  <td>显著非线性</td>
+                </tr>
+                <tr>
+                  <td>$10^{-2}$</td>
+                  <td>0.10~0.30</td>
+                  <td>15%~25%</td>
+                  <td>接近破坏</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            常用模型：
+          </p>
+          <ul>
+            <li><strong>Hardin–Drnevich 模型</strong>：
+              $G/G_{\max} = 1/(1 + \gamma/\gamma_r)$，$\gamma_r$ 是参考剪应变。</li>
+            <li><strong>Ramberg–Osgood 模型</strong>：可同时描述骨架曲线与滞回圈。</li>
+            <li><strong>Davidenkov 模型</strong>：适合砂土。</li>
+            <li><strong>Seed–Idriss 曲线</strong>：工程中最常用的经验曲线族。</li>
+          </ul>
+
+          <h3>滞回特性</h3>
+          <p>
+            土在循环荷载下应力-应变关系形成<strong>滞回圈</strong>，
+            圈的面积代表一个循环内耗散的能量。
+            阻尼比 $D$ 定义为：
+          </p>
+
+          $$ D = \frac{W_D}{4\pi W_S} $$
+
+          <p>
+            其中 $W_D$ 是滞回圈面积（耗能），$W_S$ 是最大弹性应变能：
+          </p>
+
+          $$ W_S = \frac{1}{2} G \gamma_c^2 $$
+
+          <p>
+            阻尼比越大，耗能能力越强，地震动的高频成分衰减越快。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么土动力学关注 $G$ 和 $D$</strong>：在小应变下，土可以看作线性粘弹性体，
+              其动力行为完全由 $G$（刚度）与 $D$（阻尼）决定。
+              场地地震反应分析（SHAKE 类程序）就是逐层迭代求解
+              <strong>等效线性</strong>的 $G$、$D$，使得应变水平与参数一致。
+              这就是"等效线性化"方法的基本思想。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="wave">
+          <h2><span class="num">02</span>土中波的传播</h2>
+
+          <h3>三类体波</h3>
+          <p>
+            在弹性半空间中，存在三种体波：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>波型</th><th>质点运动</th><th>波速</th><th>工程意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P 波（压缩波）</td>
+                  <td>沿传播方向</td>
+                  <td>$V_P = \sqrt{\dfrac{\lambda + 2\mu}{\rho}}$</td>
+                  <td>纵波、声波</td>
+                </tr>
+                <tr>
+                  <td>S 波（剪切波）</td>
+                  <td>垂直传播方向</td>
+                  <td>$V_S = \sqrt{\dfrac{\mu}{\rho}} = \sqrt{\dfrac{G}{\rho}}$</td>
+                  <td>场地分类核心指标</td>
+                </tr>
+                <tr>
+                  <td>面波（Rayleigh、Love）</td>
+                  <td>椭圆或水平</td>
+                  <td>略小于 $V_S$</td>
+                  <td>地脉动、表面波法</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            对饱和土，还要考虑<strong>孔隙水压力</strong>的耦合，
+            分为排水（慢）与不排水（快）两种极端情形，
+            对应 Biot 理论中的两类 P 波。
+          </p>
+
+          <h3>波阻抗与反射</h3>
+          <p>
+            波阻抗定义为：
+          </p>
+
+          $$ Z = \rho V $$
+
+          <p>
+            两种介质的阻抗比决定反射系数与透射系数：
+          </p>
+
+          $$ R = \frac{Z_2 - Z_1}{Z_2 + Z_1}, \qquad
+             T = \frac{2 Z_2}{Z_2 + Z_1} $$
+
+          <p>
+            阻抗差异越大，反射越强。
+            这就是为什么<strong>基岩-土层界面</strong>是重要的波阻抗界面，
+            土层对基岩入射波有显著放大作用。
+          </p>
+
+          <h3>波在层状介质中的传播</h3>
+          <p>
+            对水平成层介质，SH 波（水平偏振剪切波）的传播可以精确求解。
+            每层的位移由上行波与下行波组成：
+          </p>
+
+          $$ u(z, t) = A e^{i(\omega t - kz)} + B e^{i(\omega t + kz)} $$
+
+          <p>
+            其中 $k = \omega / V_s$ 是波数。
+            层间通过位移连续与应力连续条件连接，
+            形成传递矩阵。
+          </p>
+
+          <p>
+            自由地表处剪应力为零，这是重要的边界条件：
+          </p>
+
+          $$ \tau\big|_{z=0} = G \frac{\partial u}{\partial z}\bigg|_{z=0} = 0 $$
+          <p>
+            该条件导致地表位移振幅约为基岩入射波的 2 倍，
+            这是<strong>自由地表放大效应</strong>的来源。
+          </p>
+
+          <h3>一维波动方程</h3>
+          <p>
+            对垂直向上传播的 SH 波：
+          </p>
+
+          $$ \rho \frac{\partial^2 u}{\partial t^2}
+             = G \frac{\partial^2 u}{\partial z^2}
+             + \eta \frac{\partial^3 u}{\partial z^2 \partial t} $$
+
+          <p>
+            其中第二项是粘性阻尼。这就是一维土层地震反应的<strong>控制方程</strong>。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么关注 SH 波</strong>：
+              ① 水平地震动对结构破坏最大，SH 波贡献主要水平剪切分量；
+              ② SH 波是反平面问题，数学上比 P-SV 耦合简单；
+              ③ 实际场地效应分析中的"一维假设"就是只考虑 SH 波垂直传播。
+              SHAKE、DEEPSOIL 等程序的核心就是求解 SH 波方程。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="site">
+          <h2><span class="num">03</span>场地地震反应</h2>
+
+          <h3>基本概念</h3>
+          <p>
+            场地地震反应分析的目标：
+            <strong>给定基岩地震动，计算地表（或任意深度）的地震动</strong>。
+          </p>
+          <p>
+            三种典型情形：
+          </p>
+          <ul>
+            <li><strong>一维问题</strong>：水平成层介质，SH 波垂直传播。用 SHAKE 类程序求解。</li>
+            <li><strong>二维问题</strong>：河谷、边坡、地下结构。用有限元或边界元。</li>
+            <li><strong>三维问题</strong>：复杂地形与地质构造。用大规模数值模拟。</li>
+          </ul>
+
+          <h3>单层覆盖土的解析解</h3>
+          <p>
+            覆盖层厚度 $H$、剪切波速 $V_s$，下卧基岩为刚体。
+            SH 波从基岩垂直入射，则地表与基岩的传递函数为：
+          </p>
+
+          $$ |H(\omega)| = \frac{1}{\sqrt{\cos^2(\omega H / V_s)
+             + \left[ \zeta \cdot (\omega H / V_s) \right]^2}} $$
+
+          <p>
+            在 $\omega H / V_s = \pi/2$ 时，即：
+          </p>
+
+          $$ f_0 = \frac{V_s}{4H} $$
+
+          <p>
+            传递函数达到峰值（考虑阻尼时有限）。
+            这就是场地<strong>卓越频率</strong>，对应卓越周期 $T_0 = 4H/V_s$。
+          </p>
+
+          <h3>多层土的传递矩阵法</h3>
+          <p>
+            对 $n$ 层土，逐层建立位移与应力的传递关系：
+          </p>
+
+          $$ \begin{bmatrix} u_{k+1} \\ \tau_{k+1} \end{bmatrix}
+             = [\mathbf{T}_k]
+             \begin{bmatrix} u_k \\ \tau_k \end{bmatrix} $$
+
+          <p>
+            其中 $[\mathbf{T}_k]$ 是第 $k$ 层的传递矩阵，包含波速、密度、厚度与阻尼。
+            从基岩向上逐层相乘，得到地表与基岩的传递函数。
+          </p>
+
+          <h3>等效线性化方法</h3>
+          <p>
+            由于土的 $G$、$D$ 依赖应变，而应变又依赖响应，
+            需要迭代求解。SHAKE 类程序的流程：
+          </p>
+          <ol class="steps">
+            <li>假定初始的 $G$、$D$ 分布（通常取小应变值）。</li>
+            <li>用传递矩阵法计算土层中各点的剪应变时程。</li>
+            <li>取有效剪应变 $\gamma_{\text{eff}} = 0.65 \gamma_{\max}$。</li>
+            <li>根据 $G/G_{\max}$–$\gamma$ 与 $D$–$\gamma$ 曲线，更新 $G$、$D$。</li>
+            <li>重复 2~4，直到 $G$、$D$ 收敛（相对误差 &lt; 5%）。</li>
+            <li>输出地表地震动、反应谱、各层剪应变。</li>
+          </ol>
+
+          <p>
+            有效剪应变取 $0.65 \gamma_{\max}$ 是经验约定，
+            使得线性化后的响应与真实非线性响应吻合。
+          </p>
+
+          <h3>频域与时域方法</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>优点</th><th>缺点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>频域等效线性</td>
+                  <td>快、稳定、成熟</td>
+                  <td>不能处理真正非线性</td>
+                </tr>
+                <tr>
+                  <td>时域等效线性</td>
+                  <td>可与结构相互作用</td>
+                  <td>计算量稍大</td>
+                </tr>
+                <tr>
+                  <td>时域非线性</td>
+                  <td>可处理强非线性、液化</td>
+                  <td>参数要求高、计算量大</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：单层土场地传递函数</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>site_response.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def transfer_single_layer(freq, Vs, H, zeta, rho_soil=1800, rho_rock=2200):
+    """
+    单层覆盖土的传递函数（SH 波垂直入射）。
+    freq: 频率数组 Hz
+    Vs:   土层剪切波速 m/s
+    H:    土层厚度 m
+    zeta: 阻尼比
+    rho_soil, rho_rock: 土与基岩密度
+
+    简化公式（假设基岩为弹性半空间，阻抗比影响振幅）：
+      |H(ω)| = 1 / sqrt(cos²(kH) + (ζ·kH)²)
+    """
+    omega = 2 * np.pi * freq
+    kH = omega * H / Vs
+    # 考虑小阻尼的传递函数
+    H_amp = 1.0 / np.sqrt(np.cos(kH)**2 + (zeta * kH)**2)
+    return H_amp
+
+
+def transfer_single_layer_exact(freq, Vs, H, zeta, rho_soil, rho_rock):
+    """
+    精确传递函数（含阻抗比）。
+    """
+    omega = 2 * np.pi * freq
+    # 复波数（考虑阻尼：Vs* = Vs * (1 + i·ζ)）
+    Vs_c = Vs * (1 + 1j * zeta)
+    k = omega / Vs_c
+
+    # 阻抗比
+    alpha = rho_rock * Vs / (rho_soil * Vs)  # 简化：假设基岩 Vs 相同
+
+    # 传递函数
+    cos_kH = np.cos(k * H)
+    H_amp = 1.0 / np.abs(cos_kH)
+    return H_amp
+
+
+if __name__ == "__main__":
+    # ---- 场地参数 ----
+    Vs = 200.0        # 剪切波速 m/s
+    H = 30.0          # 土层厚度 m
+    f0 = Vs / (4 * H)  # 卓越频率 Hz
+    print(f"卓越频率 f0 = {f0:.3f} Hz，对应周期 T0 = {1/f0:.3f} s")
+
+    # 频率轴
+    freq = np.linspace(0.01, 10, 2000)
+
+    plt.figure(figsize=(10, 5))
+
+    # 不同阻尼比
+    for zeta in [0.02, 0.05, 0.10, 0.20]:
+        H_amp = transfer_single_layer(freq, Vs, H, zeta)
+        plt.plot(freq, H_amp, label=f"ζ = {zeta}")
+
+    plt.axvline(f0, color="gray", linestyle="--", alpha=0.5,
+                label=f"f0 = {f0:.2f} Hz")
+    plt.axvline(3 * f0, color="gray", linestyle=":", alpha=0.5,
+                label=f"3f0")
+    plt.xlabel("频率 f / Hz")
+    plt.ylabel("传递函数 |H(f)|")
+    plt.title(f"单层土场地传递函数（Vs={Vs} m/s, H={H} m）")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 参数研究：Vs 变化对 f0 的影响 ----
+    print("\n卓越频率随 Vs 与 H 的变化：")
+    print(f"{'Vs (m/s)':>12}{'H (m)':>10}{'f0 (Hz)':>12}{'T0 (s)':>10}")
+    for Vs_i in [100, 200, 400, 800]:
+        for H_i in [10, 30, 50]:
+            f0_i = Vs_i / (4 * H_i)
+            print(f"{Vs_i:>12}{H_i:>10}{f0_i:>12.3f}{1/f0_i:>10.3f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：传递函数在卓越频率处达到峰值，
+            阻尼比越大峰值越低，且存在高阶卓越频率（$3f_0$、$5f_0$ 等）。
+          </p>
+        </section>
+
+        <section id="liquefaction">
+          <h2><span class="num">04</span>液化</h2>
+
+          <h3>液化机理</h3>
+          <p>
+            液化是<strong>饱和松散砂土在地震作用下失去抗剪强度</strong>的现象。
+            物理过程：
+          </p>
+          <ol class="steps">
+            <li>地震动引起土体循环剪切变形。</li>
+            <li>松散砂土有剪胀/剪缩趋势，循环过程中趋于压密。</li>
+            <li>若不排水，孔隙水压力迅速上升。</li>
+            <li>有效应力 $\sigma' = \sigma - u$ 不断降低。</li>
+            <li>当 $u = \sigma$ 时，$\sigma' = 0$，土体失去抗剪强度。</li>
+            <li>土体表现为液态，地表出现喷砂冒水、建筑物下沉或上浮。</li>
+          </ol>
+
+          <h3>影响液化的因素</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>因素</th><th>易液化</th><th>不易液化</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>土类</td>
+                  <td>粉砂、细砂</td>
+                  <td>砾石、黏土</td>
+                </tr>
+                <tr>
+                  <td>密实度</td>
+                  <td>松散（$D_r < 50\%$）</td>
+                  <td>密实（$D_r > 70\%$）</td>
+                </tr>
+                <tr>
+                  <td>颗粒级配</td>
+                  <td>均匀</td>
+                  <td>良好级配</td>
+                </tr>
+                <tr>
+                  <td>地下水位</td>
+                  <td>浅</td>
+                  <td>深</td>
+                </tr>
+                <tr>
+                  <td>地震烈度</td>
+                  <td>高</td>
+                  <td>低</td>
+                </tr>
+                <tr>
+                  <td>地震持时</td>
+                  <td>长</td>
+                  <td>短</td>
+                </tr>
+                <tr>
+                  <td>排水条件</td>
+                  <td>不排水</td>
+                  <td>排水良好</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>液化判别方法</h3>
+
+          <h4>1. 标准贯入试验（SPT）法</h4>
+          <p>
+            中国规范（GB 50011）的判别公式：
+          </p>
+
+          $$ N_{\text{cr}} = N_0 \beta [\ln(0.6 d_s + 1.5) - 0.1 d_w]
+             \sqrt{\frac{3}{\rho_c}} $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$N_{\text{cr}}$：液化判别标准贯入锤击数临界值</li>
+            <li>$N_0$：基准值，与设计地震分组有关</li>
+            <li>$d_s$：标准贯入点深度（m）</li>
+            <li>$d_w$：地下水位深度（m）</li>
+            <li>$\rho_c$：黏粒含量百分率（%）</li>
+            <li>$\beta$：调整系数</li>
+          </ul>
+          <p>
+            当实测 $N < N_{\text{cr}}$ 时，判为液化。
+          </p>
+
+          <h4>2. 抗液化剪应力法（Seed-Idriss 简化法）</h4>
+          <p>
+            由地震作用产生的等效循环剪应力比：
+          </p>
+
+          $$ \mathrm{CSR} = 0.65 \cdot \frac{a_{\max}}{g}
+             \cdot \frac{\sigma_v}{\sigma'_v} \cdot r_d $$
+
+          <p>
+            其中 $r_d$ 是应力折减系数（随深度变化）。
+            土的抗液化能力用循环抗力比（CRR）表示，由 SPT 或 CPT 得到：
+          </p>
+
+          $$ \mathrm{CRR} = \exp\!\left[
+             \frac{(N_1)_{60}}{14.1} + \left(\frac{(N_1)_{60}}{126}\right)^2
+             - \left(\frac{(N_1)_{60}}{23.6}\right)^3
+             + \left(\frac{(N_1)_{60}}{25.4}\right)^4 - 2.8
+             \right] $$
+
+          <p>
+            安全系数：
+          </p>
+
+          $$ \mathrm{FS} = \frac{\mathrm{CRR}}{\mathrm{CSR}} \cdot \mathrm{MSF} \cdot K_\sigma $$
+
+          <p>
+            FS &lt; 1 判为液化，1.0~1.2 为可能液化，&gt; 1.2 为不液化。
+          </p>
+
+          <h4>3. 剪切波速法</h4>
+          <p>
+            用 $V_{s1}$（修正到 100 kPa 的剪切波速）判别：
+          </p>
+
+          $$ V_{s1} = V_s \left(\frac{100}{\sigma'_v}\right)^{0.25} $$
+
+          <p>
+            当 $V_{s1} < 200$ m/s 时，需要进一步判别；
+            当 $V_{s1} > 250$ m/s 时，一般不液化。
+          </p>
+
+          <h4>4. 静力触探（CPT）法</h4>
+          <p>
+            用锥尖阻力 $q_c$ 或 $q_{c1N}$ 判别，与 SPT 法类似。
+            CPT 数据连续、可重复性好，是欧美常用的方法。
+          </p>
+
+          <h3>液化后果</h3>
+          <ul>
+            <li><strong>地面喷砂冒水</strong>：最直观的宏观现象。</li>
+            <li><strong>地基失效</strong>：建筑物倾斜、下沉或上浮。</li>
+            <li><strong>侧向位移</strong>：缓坡或临空面处土体侧向流动。</li>
+            <li><strong>地面沉降</strong>：体积压缩引起地面下沉。</li>
+            <li><strong>桩基负摩阻与屈曲</strong>：液化土层侧向约束丧失。</li>
+          </ul>
+
+          <h3>液化防治措施</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类别</th><th>措施</th><th>原理</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>换土</td>
+                  <td>挖除液化层、换填非液化土</td>
+                  <td>直接消除液化层</td>
+                </tr>
+                <tr>
+                  <td>加密</td>
+                  <td>振冲、强夯、挤密砂桩</td>
+                  <td>提高密实度，降低液化势</td>
+                </tr>
+                <tr>
+                  <td>排水</td>
+                  <td>砂井、塑料排水板</td>
+                  <td>加快孔压消散</td>
+                </tr>
+                <tr>
+                  <td>固化</td>
+                  <td>水泥搅拌桩、注浆</td>
+                  <td>提高强度与刚度</td>
+                </tr>
+                <tr>
+                  <td>基础</td>
+                  <td>桩基穿越液化层</td>
+                  <td>支撑在非液化层</td>
+                </tr>
+                <tr>
+                  <td>围封</td>
+                  <td>地下连续墙、碎石桩围护</td>
+                  <td>限制侧向流动</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>工程教训</strong>：1964 年日本新潟地震、1964 年美国阿拉斯加地震、
+              1976 年中国唐山地震都出现了严重的液化灾害。
+              1976 年唐山地震中，天津、塘沽等地大量建筑物因液化下沉或倾斜。
+              这些震害推动了液化判别方法与防治技术的系统研究，
+              也是今天规范中液化条款的重要来源。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="ssi">
+          <h2><span class="num">05</span>土-结构相互作用</h2>
+
+          <h3>SSI 的物理本质</h3>
+          <p>
+            经典抗震分析假设结构固定于刚性地基。
+            但实际地基是柔性的，结构振动会反过来影响地基，
+            这种耦合称为<strong>土-结构相互作用（SSI）</strong>。
+          </p>
+
+          <h3>三个基本效应</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>效应</th><th>物理机制</th><th>后果</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>运动学相互作用</td>
+                  <td>基础的存在改变入射波场（散射）</td>
+                  <td>基础输入地震动不同于自由场</td>
+                </tr>
+                <tr>
+                  <td>惯性相互作用</td>
+                  <td>结构惯性力反馈作用于地基</td>
+                  <td>结构周期延长、阻尼增加</td>
+                </tr>
+                <tr>
+                  <td>地基柔度效应</td>
+                  <td>地基并非刚性，允许基础转动与平动</td>
+                  <td>周期延长、基底转动</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>周期延长与阻尼增加</h3>
+          <p>
+            固定基础结构的周期 $T_{\text{fix}}$ 与 SSI 系统周期 $T_{\text{ssi}}$ 的关系：
+          </p>
+
+          $$ T_{\text{ssi}} = T_{\text{fix}} \sqrt{1 + \frac{k_{\text{fix}}}{k_h}
+             + \frac{k_{\text{fix}} h^2}{k_r}} $$
+
+          <p>
+            其中 $k_h$、$k_r$ 分别是地基的平动与转动刚度，
+            $h$ 是结构高度。SSI 使周期延长、系统阻尼增加。
+          </p>
+
+          <h3>地基阻抗函数</h3>
+          <p>
+            地基对基础的反力可以用<strong>阻抗函数</strong>描述，
+            通常表示为频率相关的复数：
+          </p>
+
+          $$ K(\omega) = K_s \left[ k(\omega) + i \omega c(\omega) \right] $$
+
+          <p>
+            其中 $K_s$ 是静刚度，$k(\omega)$ 是动力刚度系数，
+            $c(\omega)$ 是阻尼系数。
+          </p>
+
+          <p>
+            对圆形基础（半径 $r$）置于弹性半空间：
+          </p>
+
+          $$ K_h = \frac{8 G r}{2 - \nu}, \qquad
+             K_r = \frac{8 G r^3}{3 (1 - \nu)} $$
+
+          <p>
+            其中 $G$ 是土体剪切模量，$\nu$ 是泊松比。
+          </p>
+
+          <h3>SSI 对结构响应的影响</h3>
+          <p>
+            SSI 的影响不是简单的"增大"或"减小"，而是<strong>取决于结构特性与场地特性的相对关系</strong>：
+          </p>
+          <ul>
+            <li><strong>刚性地基上的刚性结构</strong>：SSI 使周期延长、基底剪力降低。</li>
+            <li><strong>软土地基上的高层建筑</strong>：SSI 显著影响响应，需要专门分析。</li>
+            <li><strong>基础埋深较大</strong>：运动学相互作用使基础输入减小。</li>
+            <li><strong>地震动卓越周期与结构周期接近</strong>：SSI 可能放大响应。</li>
+          </ul>
+
+          <h3>分析方法</h3>
+          <ul>
+            <li><strong>直接法</strong>：把土体与结构放在同一个有限元模型中求解，
+              最准确但计算量大。</li>
+            <li><strong>子结构法</strong>：把土体用阻抗函数表达，结构用有限元，
+              两者在基础处耦合。计算效率高，但需要频率相关的阻抗。</li>
+            <li><strong>简化法</strong>：用弹簧-阻尼器替代地基（Winkler 地基），
+              适合初步设计与规范方法。</li>
+          </ul>
+
+          <h3>规范规定</h3>
+          <p>
+            中国规范（GB 50011）规定：
+          </p>
+          <ul>
+            <li>一般情况下可不考虑 SSI。</li>
+            <li>对软弱地基、高层建筑、长周期结构，宜考虑 SSI 影响。</li>
+            <li>具体方法可参考《建筑抗震设计规范》与《高层建筑混凝土结构技术规程》。</li>
+          </ul>
+
+          <p>
+            美国 ASCE 7 与 FEMA 系列给出了 SSI 的实用方法，
+            包括基于弹簧-阻尼的简化模型。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>SSI 的实际影响</strong>：历史上，SSI 的显著影响案例不多，
+              但有两类结构需要特别注意：
+              ① <strong>大型核电站</strong>：体积大、刚度高，SSI 效应显著；
+              ② <strong>软弱地基上的高层建筑</strong>：土体刚度与结构刚度可比，耦合强。
+              对普通建筑，SSI 通常使基底剪力降低 5%~20%，可偏安全地忽略。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="lab">
+          <h2><span class="num">06</span>室内与现场试验</h2>
+
+          <h3>室内试验</h3>
+          <p>
+            测定土的动剪切模量 $G$、阻尼比 $D$ 及液化强度，常用三类设备：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>设备</th><th>应变范围</th><th>可测参数</th><th>应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>共振柱</td>
+                  <td>$10^{-6} \sim 10^{-4}$</td>
+                  <td>$G_{\max}$、$D$（小应变）</td>
+                  <td>小应变动力特性</td>
+                </tr>
+                <tr>
+                  <td>动三轴</td>
+                  <td>$10^{-4} \sim 10^{-2}$</td>
+                  <td>$G$、$D$、液化强度</td>
+                  <td>中等应变、液化</td>
+                </tr>
+                <tr>
+                  <td>循环扭剪</td>
+                  <td>$10^{-4} \sim 10^{-1}$</td>
+                  <td>$G$、$D$、液化强度</td>
+                  <td>大应变、复杂应力路径</td>
+                </tr>
+                <tr>
+                  <td>空心圆柱扭剪</td>
+                  <td>$10^{-5} \sim 10^{-1}$</td>
+                  <td>全应力-应变状态</td>
+                  <td>主应力轴旋转</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>现场测试</h3>
+
+          <h4>1. 剪切波速测试</h4>
+          <p>
+            剪切波速 $V_s$ 是最重要的现场参数。常用方法：
+          </p>
+          <ul>
+            <li><strong>钻孔法（Down-hole / Cross-hole）</strong>：
+              在钻孔内不同深度测量波的到时，精度最高。</li>
+            <li><strong>面波法（SASW / MASW）</strong>：
+              利用面波的频散特性反演 $V_s$ 剖面，
+              非侵入、成本低、适合场地初步调查。</li>
+            <li><strong>微动法（HVSR）</strong>：
+              利用环境噪声的水平/垂直谱比估算场地卓越频率。</li>
+          </ul>
+
+          <h4>2. 标准贯入试验（SPT）</h4>
+          <p>
+            在钻孔中用标准锤击贯入器，记录贯入 30 cm 所需锤击数 $N$。
+            用于液化判别、土体密实度评价。
+          </p>
+          <p>
+            上覆有效应力修正：
+          </p>
+
+          $$ (N_1)_{60} = N_{60} \cdot \sqrt{\frac{100}{\sigma'_v}} $$
+
+          <p>
+            其中 $N_{60}$ 是能量比修正后的击数，$(N_1)_{60}$ 是归一化击数。
+          </p>
+
+          <h4>3. 静力触探（CPT）</h4>
+          <p>
+            连续贯入探头，记录锥尖阻力 $q_c$、侧壁摩阻力 $f_s$、
+            孔隙水压力 $u$（CPTU）。数据连续、分辨率高，
+            用于土层划分、参数估计、液化判别。
+          </p>
+
+          <h4>4. 波速与密度的联合测试</h4>
+          <p>
+            由 $V_s$ 与密度 $\rho$ 直接计算：
+          </p>
+
+          $$ G_{\max} = \rho V_s^2 $$
+
+          <p>
+            这是现场获取 $G_{\max}$ 最直接的方法。
+          </p>
+
+          <h3>参数选取原则</h3>
+          <p>
+            场地反应分析需要以下参数：
+          </p>
+          <ul>
+            <li><strong>分层信息</strong>：土层厚度、土类。</li>
+            <li><strong>物理参数</strong>：密度 $\rho$、含水率。</li>
+            <li><strong>动力参数</strong>：$V_s$、$G_{\max}$、$\zeta$。</li>
+            <li><strong>非线性曲线</strong>：$G/G_{\max}$–$\gamma$、$D$–$\gamma$。</li>
+            <li><strong>地下水位</strong>：影响有效应力与液化判别。</li>
+          </ul>
+
+          <p>
+            对于缺少试验数据的场地，可参考经验曲线：
+          </p>
+          <ul>
+            <li>Seed &amp; Idriss（1970）砂土曲线</li>
+            <li>Vucetic &amp; Dobry（1991）黏土曲线</li>
+            <li>Rollins 等（1998）砾石曲线</li>
+            <li>EPRI（1993）综合曲线</li>
+          </ul>
+
+          <h3>Python 示例：SPT 数据插值与 G/Gmax 曲线</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>spt_ggmax.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def ggmax_hardin_drnevich(gamma, gamma_r=0.05):
+    """
+    Hardin-Drnevich 归一化模量衰减曲线：
+        G/Gmax = 1 / (1 + γ/γ_r)
+    gamma: 剪应变
+    gamma_r: 参考剪应变（G/Gmax = 0.5 时的剪应变）
+    """
+    return 1.0 / (1.0 + gamma / gamma_r)
+
+
+def damping_hardin(gamma, gamma_r=0.05, D_max=0.28):
+    """
+    Hardin-Drnevich 阻尼比曲线（简化）：
+        D = D_max · (γ/γ_r) / (1 + γ/γ_r)
+    """
+    return D_max * (gamma / gamma_r) / (1.0 + gamma / gamma_r)
+
+
+def spt_to_vs(N60, soil_type="sand"):
+    """
+    由 SPT 击数估算剪切波速（经验公式，仅作示意）。
+    sand: Vs = 100 · N60^(1/3)
+    clay: Vs = 120 · N60^(1/3)
+    """
+    if soil_type == "sand":
+        return 100.0 * N60**(1/3)
+    else:
+        return 120.0 * N60**(1/3)
+
+
+if __name__ == "__main__":
+    # ---- G/Gmax 与 D 曲线 ----
+    gamma = np.logspace(-6, -1, 100)
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+    # 不同参考剪应变的 G/Gmax 曲线
+    for gamma_r in [0.01, 0.05, 0.1]:
+        axes[0].plot(gamma, ggmax_hardin_drnevich(gamma, gamma_r),
+                     label=f"γr = {gamma_r}")
+    axes[0].set_xscale("log")
+    axes[0].set_xlabel("剪应变 γ")
+    axes[0].set_ylabel("G / Gmax")
+    axes[0].set_title("归一化模量衰减曲线")
+    axes[0].axhline(0.5, color="gray", linestyle="--", alpha=0.5)
+    axes[0].legend()
+    axes[0].grid(True, which="both", alpha=0.3)
+
+    for gamma_r in [0.01, 0.05, 0.1]:
+        axes[1].plot(gamma, damping_hardin(gamma, gamma_r),
+                     label=f"γr = {gamma_r}")
+    axes[1].set_xscale("log")
+    axes[1].set_xlabel("剪应变 γ")
+    axes[1].set_ylabel("阻尼比 D")
+    axes[1].set_title("阻尼比曲线")
+    axes[1].legend()
+    axes[1].grid(True, which="both", alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # ---- SPT → Vs 估算 ----
+    print("SPT 击数 → 剪切波速估算：")
+    print(f"{'N60':>6}{'Vs(sand)':>12}{'Vs(clay)':>12}")
+    for N in [5, 10, 20, 30, 50]:
+        print(f"{N:>6}{spt_to_vs(N, 'sand'):>12.1f}{spt_to_vs(N, 'clay'):>12.1f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到 $G/G_{\max}$ 随剪应变单调衰减，
+            $D$ 随剪应变先快速上升后趋于饱和。这正是等效线性化需要迭代的根本原因。
+          </p>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">07</span>工程应用</h2>
+
+          <h3>场地地震安全性评价</h3>
+          <p>
+            重大工程（核电站、大坝、超高层）必须做场地地震安全性评价，流程：
+          </p>
+          <ol class="steps">
+            <li>地震危险性分析：给出基岩地震动参数（PGA、反应谱）。</li>
+            <li>场地勘察：钻孔、波速测试、SPT/CPT、室内试验。</li>
+            <li>土层模型建立：分层、参数、本构模型。</li>
+            <li>场地反应分析：等效线性或非线性时程分析。</li>
+            <li>输出：地表设计地震动（PGA、反应谱、时程）。</li>
+            <li>液化判别与地基处理建议。</li>
+          </ol>
+
+          <h3>设计地震动的确定</h3>
+          <p>
+            场地反应分析给出的地表地震动，是结构抗震设计的直接输入。
+            常用形式：
+          </p>
+          <ul>
+            <li><strong>地表设计谱</strong>：考虑场地效应的反应谱。</li>
+            <li><strong>人工合成地表时程</strong>：与设计谱匹配的加速度时程。</li>
+            <li><strong>地震动参数</strong>：PGA、PGV、PGD、Arias 强度、持时。</li>
+          </ul>
+
+          <h3>岩土工程抗震设计</h3>
+          <p>
+            土动力学直接支持的工程决策：
+          </p>
+          <ul>
+            <li><strong>地基基础选型</strong>：天然地基、桩基、复合地基。</li>
+            <li><strong>液化处理方案</strong>：换填、加密、固化、桩基。</li>
+            <li><strong>边坡抗震稳定性</strong>：地震作用下的安全系数。</li>
+            <li><strong>挡土墙抗震设计</strong>：动土压力计算。</li>
+            <li><strong>地下结构抗震</strong>：地铁车站、隧道、综合管廊。</li>
+            <li><strong>土石坝抗震</strong>：坝体动力反应与永久变形。</li>
+          </ul>
+
+          <h3>与结构工程的耦合</h3>
+          <p>
+            土动力学与结构动力学在 SSI 问题中耦合：
+          </p>
+          <ul>
+            <li>土体提供<strong>地基阻抗</strong>（弹簧 + 阻尼）。</li>
+            <li>结构提供<strong>惯性力反馈</strong>。</li>
+            <li>共同求解得到系统响应。</li>
+          </ul>
+          <p>
+            在时程分析中，SSI 通常用弹簧-阻尼器或等效地基模型实现，
+            这是许多商用软件（SAP2000、MIDAS、ABAQUS）的标准功能。
+          </p>
+
+          <h3>典型工程案例</h3>
+          <ul>
+            <li><strong>1985 墨西哥城地震</strong>：软土场地放大导致中高层建筑集中破坏。</li>
+            <li><strong>1964 新潟地震</strong>：液化引起建筑物倾斜、桥梁落梁。</li>
+            <li><strong>1976 唐山地震</strong>：天津、塘沽地区严重液化，喷砂冒水。</li>
+            <li><strong>1995 阪神地震</strong>：人工填岛液化，港口设施严重破坏。</li>
+            <li><strong>2011 东日本地震</strong>：大范围液化，影响生命线工程。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>土动力学与你的项目</strong>：
+              如果"地震动参数分析"项目包含场地效应或场地分类功能，
+              可以对应这份笔记的<strong>场地地震反应</strong>章节。
+              如果"地震危险性分析"项目考虑了场地放大，
+              可以链接到<strong>波传播</strong>与<strong>场地效应</strong>章节。
+              这样工程笔记与工具项目就能形成对应关系。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>土的动力特性</strong>：$G$ 与 $D$ 是核心参数；随剪应变增大，$G$ 降低、$D$ 增大。</li>
+              <li><strong>土中波传播</strong>：P 波、S 波、面波；$V_s$ 是场地分类的关键指标。</li>
+              <li><strong>场地地震反应</strong>：一维 SH 波垂直传播是基本模型；卓越周期 $T_0 = 4H/V_s$。</li>
+              <li><strong>等效线性化</strong>：迭代求解 $G$、$D$ 与应变的一致性；有效剪应变取 $0.65\gamma_{\max}$。</li>
+              <li><strong>液化</strong>：饱和松散砂土失去抗剪强度；判别用 SPT、CPT、$V_s$ 方法。</li>
+              <li><strong>SSI</strong>：土-结构相互作用使周期延长、阻尼增加；分运动学与惯性两类效应。</li>
+              <li><strong>试验</strong>：室内（共振柱、动三轴、扭剪）+ 现场（$V_s$、SPT、CPT）。</li>
+              <li><strong>工程应用</strong>：场地安全性评价、设计地震动、岩土抗震设计、SSI 分析。</li>
+            </ul>
+          </div>
+
+          <h3>参数与公式速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>参数/公式</th><th>物理含义</th><th>典型取值</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$V_s$</td>
+                  <td>剪切波速</td>
+                  <td>软土 100~200 m/s，硬土 300~500 m/s</td>
+                </tr>
+                <tr>
+                  <td>$G_{\max} = \rho V_s^2$</td>
+                  <td>最大剪切模量</td>
+                  <td>由 $V_s$ 与 $\rho$ 计算</td>
+                </tr>
+                <tr>
+                  <td>$G/G_{\max}$–$\gamma$</td>
+                  <td>模量衰减曲线</td>
+                  <td>由室内试验或经验曲线</td>
+                </tr>
+                <tr>
+                  <td>$D$–$\gamma$</td>
+                  <td>阻尼比曲线</td>
+                  <td>小应变 &lt; 1%，大应变 15%~25%</td>
+                </tr>
+                <tr>
+                  <td>$f_0 = V_s/(4H)$</td>
+                  <td>场地卓越频率</td>
+                  <td>由土层参数计算</td>
+                </tr>
+                <tr>
+                  <td>CSR</td>
+                  <td>地震循环应力比</td>
+                  <td>由 PGA 与有效应力计算</td>
+                </tr>
+                <tr>
+                  <td>CRR</td>
+                  <td>循环抗力比</td>
+                  <td>由 SPT / CPT / $V_s$ 得到</td>
+                </tr>
+                <tr>
+                  <td>FS = CRR/CSR</td>
+                  <td>抗液化安全系数</td>
+                  <td>&lt; 1 液化，&gt; 1.2 不液化</td>
+                </tr>
+                <tr>
+                  <td>$K_h, K_r$</td>
+                  <td>地基平动/转动刚度</td>
+                  <td>由 $G$、$r$、$\nu$ 计算</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>偏微分方程</strong>（数学）：一维波动方程、波的传播理论。</li>
+            <li><strong>数值分析</strong>（数学）：等效线性化迭代、时程积分、特征值分析。</li>
+            <li><strong>复变函数与积分变换</strong>（数学）：频域传递函数、傅里叶变换。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：液化概率、场地参数不确定性。</li>
+            <li><strong>强震动观测</strong>（地震学）：波速测试、井下台阵、场地反应记录。</li>
+            <li><strong>地震工程</strong>（地震学）：场地效应与设计地震动。</li>
+            <li><strong>结构动力学</strong>（力学）：SSI 中的结构响应分析。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Kramer, <em>Geotechnical Earthquake Engineering</em> — 岩土地震工程权威教材</li>
+            <li>Ishihara, <em>Soil Behaviour in Earthquake Geotechnics</em> — 土动力学经典</li>
+            <li>Seed &amp; Idriss, <em>Ground Motions and Soil Liquefaction During Earthquakes</em> — 液化经典文献</li>
+            <li>Schnabel, Lysmer &amp; Seed, "SHAKE: A computer program for earthquake response analysis of horizontally layered sites" (1972) — SHAKE 程序报告</li>
+            <li>Hardin &amp; Drnevich, "Shear modulus and damping in soils" (1972) — 模量与阻尼经典公式</li>
+            <li>Vucetic &amp; Dobry, "Effect of soil plasticity on cyclic response" (1991) — 黏土曲线</li>
+            <li>Rollins 等, "Shear modulus and damping relationships for gravels" (1998) — 砾石曲线</li>
+            <li>Wolf, <em>Dynamic Soil-Structure Interaction</em> — SSI 经典教材</li>
+            <li>GB 50011《建筑抗震设计规范》— 中国液化判别与场地分类标准</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

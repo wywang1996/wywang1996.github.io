@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塑性力学 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="plasticity">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#stress">一、应力与应变分解</a></li>
+      <li><a href="#yield">二、屈服准则</a></li>
+      <li><a href="#hardening">三、加载与硬化</a></li>
+      <li><a href="#constitutive">四、弹塑性本构</a></li>
+      <li><a href="#simple">五、简单弹塑性问题</a></li>
+      <li><a href="#limit">六、极限分析</a></li>
+      <li><a href="#seismic">七、与抗震工程的关系</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 塑性力学
+        </div>
+        <h1>塑性力学</h1>
+        <p class="lead">
+          从屈服准则到极限分析，梳理材料与结构超出弹性范围后的力学行为。
+          塑性力学是抗震设计中延性设计、Pushover 分析与非线性时程分析的理论基础。
+        </p>
+        <div class="article-meta">
+          <span>屈服准则</span>
+          <span>弹塑性本构</span>
+          <span>极限分析</span>
+          <span class="blue">延性设计</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            弹性力学假设材料应力与应变之间是单值、可逆的关系；
+            但大多数工程材料（钢材、混凝土、岩土）在应力超过某一水平后，
+            会进入<strong>不可逆的塑性变形阶段</strong>。
+            塑性力学研究的就是这一阶段材料的力学行为。
+          </p>
+          <p>
+            与弹性力学的根本区别：
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>特征</th><th>弹性力学</th><th>塑性力学</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>卸载路径</strong></td>
+                  <td>沿原路返回</td>
+                  <td>与加载路径不同</td>
+                </tr>
+                <tr>
+                  <td><strong>应力应变关系</strong></td>
+                  <td>单值、可逆</td>
+                  <td>依赖历史与路径</td>
+                </tr>
+                <tr>
+                  <td><strong>叠加原理</strong></td>
+                  <td>适用</td>
+                  <td>不适用</td>
+                </tr>
+                <tr>
+                  <td><strong>本构描述</strong></td>
+                  <td>代数方程</td>
+                  <td>增量方程（率形式）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            在结构抗震设计中，塑性力学的核心价值在于：
+          </p>
+          <ul>
+            <li><strong>延性设计</strong>：允许结构在强震下进入塑性，通过塑性变形耗散地震能量。</li>
+            <li><strong>Pushover 分析</strong>：用静力推覆模拟结构塑性发展，评估性能点。</li>
+            <li><strong>非线性时程分析</strong>：每一步都要更新弹塑性本构，是 OpenSees 等软件的核心。</li>
+            <li><strong>极限承载力分析</strong>：用上限/下限定理估算结构的极限荷载。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>本笔记的主线</strong>：从应力应变分解出发，建立屈服准则；
+              然后引入加载历史与硬化规律，得到完整的弹塑性本构；
+              再用它解决梁、轴等简单构件的弹塑性问题；
+              最后推广到整个结构的极限分析与抗震应用。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="stress">
+          <h2><span class="num">01</span>应力与应变分解</h2>
+
+          <h3>应力分解</h3>
+          <p>
+            和弹性力学一样，应力张量分解为<strong>球张量</strong>（静水压力）与
+            <strong>偏张量</strong>：
+          </p>
+
+          $$ \sigma_{ij} = \sigma_m \delta_{ij} + s_{ij}, \qquad
+             \sigma_m = \frac{1}{3} \sigma_{kk} $$
+
+          <p>
+            其中 $s_{ij}$ 为应力偏张量。
+            这一分解在塑性力学中有特殊意义：
+            <strong>金属材料的塑性变形主要由偏应力引起</strong>，
+            球张量只引起弹性体积变化。
+          </p>
+
+          <h3>主应力与不变量</h3>
+          <p>三个主应力 $\sigma_1 \ge \sigma_2 \ge \sigma_3$，与三个应力不变量：</p>
+
+          $$ I_1 = \sigma_{kk}, \qquad
+             I_2 = \frac{1}{2} (\sigma_{ii} \sigma_{jj} - \sigma_{ij} \sigma_{ij}), \qquad
+             I_3 = \det(\sigma_{ij}) $$
+
+          <p>
+            对偏张量，也有类似的定义，但第一不变量恒为零（$s_{kk} = 0$）。
+            更常用的是<strong>第二偏不变量</strong> $J_2$ 与<strong>第三偏不变量</strong> $J_3$：
+          </p>
+
+          $$ J_2 = \frac{1}{2} s_{ij} s_{ij}, \qquad
+             J_3 = \frac{1}{3} s_{ij} s_{jk} s_{ki} $$
+
+          <p>用主应力表示 $J_2$：</p>
+
+          $$ J_2 = \frac{1}{6} \left[ (\sigma_1 - \sigma_2)^2 + (\sigma_2 - \sigma_3)^2
+             + (\sigma_3 - \sigma_1)^2 \right] $$
+
+          <h3>等效应力与等效塑性应变</h3>
+          <p>
+            为了把复杂应力状态与单轴试验结果联系起来，
+            引入<strong>von Mises 等效应力</strong>：
+          </p>
+
+          $$ \sigma_{eq} = \sqrt{3 J_2} = \sqrt{\frac{1}{2} \left[
+             (\sigma_1 - \sigma_2)^2 + (\sigma_2 - \sigma_3)^2 + (\sigma_3 - \sigma_1)^2 \right]} $$
+
+          <p>以及<strong>等效塑性应变增量</strong>：</p>
+
+          $$ d\varepsilon_{p,eq} = \sqrt{\frac{2}{3} d\varepsilon_{ij}^p d\varepsilon_{ij}^p} $$
+
+          <p>
+            这两个量都与坐标系无关，可以直接与单轴试验的应力-应变曲线对比。
+          </p>
+
+          <h3>应力空间与主应力空间</h3>
+          <p>
+            应力张量有 6 个独立分量，可以映射到 6 维应力空间。
+            主应力空间（3 维）中，一个应力状态对应一个点，
+            沿静水压力轴（$\sigma_1 = \sigma_2 = \sigma_3$）的移动不引起塑性变形，
+            因此屈服面是以静水压力轴为轴的柱面（von Mises）或锥面（Drucker-Prager）。
+          </p>
+
+          <p>
+            在 $\pi$ 平面（垂直于静水压力轴）上，屈服轨迹是：
+          </p>
+          <ul>
+            <li><strong>von Mises</strong>：圆（半径 $\sqrt{2/3} \sigma_y$）。</li>
+            <li><strong>Tresca</strong>：正六边形（内接于 von Mises 圆）。</li>
+          </ul>
+        </section>
+
+        <section id="yield">
+          <h2><span class="num">02</span>屈服准则</h2>
+
+          <h3>屈服的概念</h3>
+          <p>
+            屈服准则定义了材料从弹性进入塑性的条件。
+            可以写成<strong>屈服函数</strong>的形式：
+          </p>
+
+          $$ f(\sigma_{ij}) = 0 \quad \text{（屈服面）} $$
+
+          <ul>
+            <li>$f < 0$：应力在屈服面内，纯弹性状态。</li>
+            <li>$f = 0$：应力在屈服面上，开始或继续塑性变形。</li>
+            <li>$f > 0$：不允许（应力不能超出屈服面）。</li>
+          </ul>
+
+          <h3>Tresca 准则（最大切应力）</h3>
+          <p>
+            当最大切应力达到临界值时材料屈服：
+          </p>
+
+          $$ \tau_{\max} = \frac{\sigma_1 - \sigma_3}{2} = k $$
+
+          <p>
+            对单轴拉伸（$\sigma_1 = \sigma_y$、$\sigma_2 = \sigma_3 = 0$）：
+            $k = \sigma_y / 2$。写成一般形式：
+          </p>
+
+          $$ \sigma_1 - \sigma_3 = \sigma_y $$
+
+          <p>
+            优点：物理意义明确，适合塑性材料。
+            缺点：在主应力空间中是不光滑的六边形，不便于数学处理，
+            也忽略了中间主应力 $\sigma_2$ 的影响。
+          </p>
+
+          <h3>von Mises 准则（最大畸变能）</h3>
+          <p>
+            当畸变能达到临界值时材料屈服：
+          </p>
+
+          $$ J_2 = \frac{\sigma_y^2}{3} \quad \text{或} \quad
+             \sigma_{eq} = \sigma_y $$
+
+          <p>展开写：</p>
+
+          $$ \sqrt{\frac{1}{2} \left[ (\sigma_1 - \sigma_2)^2 + (\sigma_2 - \sigma_3)^2
+             + (\sigma_3 - \sigma_1)^2 \right]} = \sigma_y $$
+
+          <p>
+            优点：数学光滑，在 $\pi$ 平面上是圆，便于数值实现。
+            是金属塑性力学最常用的准则。
+          </p>
+
+          <h3>其他常用准则</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>准则</th><th>屈服函数</th><th>适用材料</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Tresca</strong></td>
+                  <td>$\sigma_1 - \sigma_3 - \sigma_y = 0$</td>
+                  <td>金属（保守估计）</td>
+                </tr>
+                <tr>
+                  <td><strong>von Mises</strong></td>
+                  <td>$\sqrt{3 J_2} - \sigma_y = 0$</td>
+                  <td>金属（最常用）</td>
+                </tr>
+                <tr>
+                  <td><strong>Mohr-Coulomb</strong></td>
+                  <td>$\sigma_1 - \sigma_3 = 2 c \cos\phi - (\sigma_1 + \sigma_3) \sin\phi$</td>
+                  <td>岩土、混凝土</td>
+                </tr>
+                <tr>
+                  <td><strong>Drucker-Prager</strong></td>
+                  <td>$\sqrt{J_2} + \alpha I_1 - k = 0$</td>
+                  <td>岩土（光滑版 M-C）</td>
+                </tr>
+                <tr>
+                  <td><strong>Hill</strong></td>
+                  <td>二次型各向异性函数</td>
+                  <td>金属板材、正交异性</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>为什么有多个准则</strong>：不同材料的主导破坏机制不同。
+              金属以剪切滑移为主，Tresca 与 von Mises 都适用；
+              岩土材料强度依赖围压，必须用 Mohr-Coulomb 或 Drucker-Prager；
+              混凝土是准脆性材料，需要用 Willam-Warnke 等多参数准则。
+              <strong>选择准则要与材料相匹配</strong>。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="hardening">
+          <h2><span class="num">03</span>加载与硬化</h2>
+
+          <h3>加载面与加载准则</h3>
+          <p>
+            屈服之后，屈服面随塑性变形演化，称为<strong>加载面</strong>。
+            材料当前是否继续塑性变形，由<strong>加载准则</strong>判断：
+          </p>
+
+          <ul>
+            <li><strong>加载</strong>：$f = 0$ 且 $df > 0$ → 继续塑性变形。</li>
+            <li><strong>中性加载</strong>：$f = 0$ 且 $df = 0$ → 塑性变形不增加。</li>
+            <li><strong>卸载</strong>：$f = 0$ 且 $df < 0$ → 回到弹性状态。</li>
+          </ul>
+
+          <p>其中 $df$ 为加载面的全微分：</p>
+
+          $$ df = \frac{\partial f}{\partial \sigma_{ij}} d\sigma_{ij}
+             + \frac{\partial f}{\partial q} dq = 0 $$
+
+          <p>
+            这里 $q$ 为硬化参数（如等效塑性应变）。
+            上式称为<strong>一致性条件</strong>，是弹塑性本构推导的核心。
+          </p>
+
+          <h3>硬化规律</h3>
+          <p>三种常见的硬化模式：</p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            等向硬化：屈服面大小变化，中心不变
+          </p>
+          $$ f(\sigma_{ij}) = \sigma_{eq} - \sigma_y(\varepsilon_{p,eq}) = 0 $$
+
+          <p>对线性等向硬化：</p>
+
+          $$ \sigma_y(\varepsilon_{p,eq}) = \sigma_{y0} + H \varepsilon_{p,eq} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            随动硬化（Prager 模型）：屈服面大小不变，中心平移
+          </p>
+          $$ f(\sigma_{ij}, \alpha_{ij}) = \sqrt{\frac{3}{2} (s_{ij} - \alpha_{ij})(s_{ij} - \alpha_{ij})}
+             - \sigma_{y0} = 0 $$
+
+          <p>背应力 $\alpha_{ij}$ 的演化：</p>
+
+          $$ d\alpha_{ij} = \frac{2}{3} C \, d\varepsilon_{ij}^p $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            混合硬化：等向 + 随动的组合
+          </p>
+
+          <p>
+            大多数金属在循环荷载下会表现<strong>包辛格效应</strong>——
+            反向加载时的屈服应力低于正向。
+            等向硬化无法描述这一现象，随动硬化可以。
+            这对地震作用下的循环加载分析至关重要。
+          </p>
+
+          <h3>理想弹塑性</h3>
+          <p>
+            当 $\sigma_y$ 为常数、屈服面固定不动时，材料为<strong>理想弹塑性</strong>：
+          </p>
+
+          $$ f(\sigma_{ij}) = \sigma_{eq} - \sigma_y = 0 $$
+
+          <p>
+            理想弹塑性模型形式最简单，
+            在钢结构抗震分析中应用广泛——因为钢材屈服平台很长，
+            硬化效应在初期并不显著。
+          </p>
+        </section>
+
+        <section id="constitutive">
+          <h2><span class="num">04</span>弹塑性本构</h2>
+
+          <h3>关联流动法则</h3>
+          <p>
+            塑性应变增量的方向由<strong>塑性势</strong> $g$ 的梯度给出：
+          </p>
+
+          $$ d\varepsilon_{ij}^p = d\lambda \frac{\partial g}{\partial \sigma_{ij}} $$
+
+          <p>
+            其中 $d\lambda \ge 0$ 为塑性乘子。
+            若 $g = f$（屈服函数），称为<strong>关联流动</strong>，
+            适用于金属；岩土材料常用非关联流动。
+          </p>
+
+          <p>
+            对 von Mises（$J_2$ 塑性理论），$g = f = \sqrt{3 J_2} - \sigma_y$，
+            于是：
+          </p>
+
+          $$ \frac{\partial f}{\partial \sigma_{ij}} = \frac{3 s_{ij}}{2 \sigma_{eq}} $$
+
+          <p>代入流动法则：</p>
+
+          $$ d\varepsilon_{ij}^p = d\lambda \frac{3 s_{ij}}{2 \sigma_{eq}} $$
+
+          <p>
+            <strong>物理意义</strong>：塑性应变增量方向与应力偏张量方向一致，
+            即沿屈服面的外法线方向——
+            这保证了塑性变形不改变体积（$d\varepsilon_{kk}^p = 0$），
+            符合金属塑性的实验结果。
+          </p>
+
+          <h3>弹塑性刚度矩阵</h3>
+          <p>
+            由一致性条件可以推出应力增量与应变增量之间的关系：
+          </p>
+
+          $$ d\sigma_{ij} = D_{ijkl}^{ep} \, d\varepsilon_{kl} $$
+
+          <p>其中弹塑性刚度张量为：</p>
+
+          $$ D_{ijkl}^{ep} = D_{ijkl}^e
+             - \frac{D_{ijmn}^e \dfrac{\partial f}{\partial \sigma_{mn}}
+                     \dfrac{\partial f}{\partial \sigma_{pq}} D_{pqkl}^e}
+                    {H + \dfrac{\partial f}{\partial \sigma_{rs}} D_{rsmn}^e
+                           \dfrac{\partial f}{\partial \sigma_{mn}}} $$
+
+          <p>分母中的 $H$ 为硬化模量：</p>
+
+          $$ H = -\frac{\partial f}{\partial q} \frac{dq}{d\lambda} $$
+
+          <p>
+            对理想弹塑性，$H = 0$；对有硬化材料，$H > 0$。
+          </p>
+
+          <p>写成矩阵形式（数值实现中更常用）：</p>
+
+          $$ \mathbf{D}^{ep} = \mathbf{D}^e
+             - \frac{\mathbf{D}^e \mathbf{a} \mathbf{a}^T \mathbf{D}^e}
+                    {H + \mathbf{a}^T \mathbf{D}^e \mathbf{a}} $$
+
+          <p>
+            其中 $\mathbf{a} = \partial f / \partial \boldsymbol{\sigma}$ 为流动方向。
+            这是有限元程序中最核心的弹塑性本构公式。
+          </p>
+
+          <h3>全量理论与增量理论</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>理论</th><th>核心</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>全量理论（形变理论）</strong></td>
+                  <td>应力与应变全量之间直接建立关系</td>
+                  <td>简单加载、比例加载</td>
+                </tr>
+                <tr>
+                  <td><strong>增量理论（流动理论）</strong></td>
+                  <td>应变增量由应力增量与历史决定</td>
+                  <td>一般加载、复杂加载路径</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>全量理论</strong>（Hencky 理论）虽然形式简单，
+            但只适用于比例加载（应力各分量按比例增长）；
+            <strong>增量理论</strong>（Prandtl-Reuss 理论）虽然复杂，
+            但能处理任意加载路径，是有限元实现的标准选择。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>返回映射算法</strong>：弹塑性本构在有限元中的实现通常用
+              <strong>返回映射（Return Mapping）</strong>：
+              先做弹性试探，若试探应力超出屈服面，则"投影"回屈服面。
+              这是 Simo &amp; Hughes 提出的经典算法，具有极高的稳定性和精度。
+              ABAQUS、OpenSees 等软件都基于此。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="simple">
+          <h2><span class="num">05</span>简单弹塑性问题</h2>
+
+          <h3>矩形截面梁的弹塑性弯曲</h3>
+          <p>
+            随弯矩增加，梁截面从弹性弯曲逐步过渡到塑性弯曲。
+            当最外层纤维达到屈服应力 $\sigma_y$ 时：
+          </p>
+
+          $$ M_y = \sigma_y W_e, \qquad
+             W_e = \frac{b h^2}{6} $$
+
+          <p>
+            随着弯矩继续增大，塑性区从表面向中性轴扩展。
+            当整个截面都进入塑性时，形成<strong>塑性铰</strong>，
+            此时的弯矩为<strong>极限弯矩</strong>：
+          </p>
+
+          $$ M_p = \sigma_y W_p, \qquad
+             W_p = \frac{b h^2}{4} $$
+
+          <p>
+            形状系数（塑性/弹性模量比）：
+          </p>
+
+          $$ S = \frac{M_p}{M_y} = \frac{W_p}{W_e} = 1.5 \quad \text{（矩形）} $$
+
+          <p>常见截面的形状系数：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>截面</th><th>形状系数 S</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>矩形</td><td>1.50</td></tr>
+                <tr><td>圆形</td><td>1.70</td></tr>
+                <tr><td>工字形（强轴）</td><td>1.12–1.15</td></tr>
+                <tr><td>薄壁圆管</td><td>1.27</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>圆轴的塑性扭转</h3>
+          <p>
+            弹性阶段最大切应力 $\tau_{\max} = T R / I_p$。
+            当外缘切应力达到 $\tau_y$ 时：
+          </p>
+
+          $$ T_y = \frac{\pi R^3}{2} \tau_y $$
+
+          <p>
+            完全塑性状态（截面全部屈服）时的扭矩为：
+          </p>
+
+          $$ T_p = \frac{2 \pi R^3}{3} \tau_y $$
+
+          <p>
+            形状系数 $S = T_p / T_y = 4/3 \approx 1.333$。
+          </p>
+
+          <h3>厚壁圆筒的弹塑性分析</h3>
+          <p>
+            内压增大时，内壁首先屈服，塑性区逐渐向外扩展。
+            当塑性区扩展到外壁时，圆筒达到<strong>极限内压</strong>：
+          </p>
+
+          $$ p_{\text{lim}} = \frac{2 \sigma_y}{\sqrt{3}} \ln \frac{b}{a} $$
+
+          <p>
+            其中 $a$、$b$ 为内、外半径。这一结果用于压力容器与管道设计，
+            也是"自增强"（autofrettage）工艺的理论基础。
+          </p>
+
+          <h3>Python 示例：一维弹塑性滞回</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>plasticity_1d.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+一维弹塑性本构：等向硬化 + 随动硬化 + 混合硬化
+演示循环加载下的滞回曲线与包辛格效应
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+class Plasticity1D:
+    """
+    一维弹塑性本构
+    sigma = E * (eps - eps_p)
+    屈服条件：|sigma - alpha| - sigma_y(eps_p_eq) = 0
+    其中 alpha 为背应力（随动硬化），sigma_y 随累积塑性应变变化（等向硬化）
+    """
+
+    def __init__(self, E=200e9, sigma_y0=250e6,
+                 H_iso=2e9, H_kin=5e9):
+        self.E = E
+        self.sigma_y0 = sigma_y0
+        self.H_iso = H_iso      # 等向硬化模量
+        self.H_kin = H_kin      # 随动硬化模量
+        # 状态变量
+        self.eps_p = 0.0        # 塑性应变
+        self.eps_p_eq = 0.0     # 等效塑性应变（累积量）
+        self.alpha = 0.0        # 背应力
+
+    def yield_stress(self):
+        """当前屈服应力（含等向硬化）"""
+        return self.sigma_y0 + self.H_iso * self.eps_p_eq
+
+    def trial_stress(self, eps):
+        """弹性试探应力"""
+        return self.E * (eps - self.eps_p)
+
+    def update(self, eps):
+        """
+        应力更新（返回映射）
+        输入总应变 eps，返回应力 sigma
+        """
+        # 1. 弹性试探
+        sigma_tr = self.trial_stress(eps)
+        xi_tr = sigma_tr - self.alpha
+        f_tr = abs(xi_tr) - self.yield_stress()
+
+        if f_tr <= 0.0:
+            # 弹性
+            return sigma_tr
+
+        # 2. 塑性修正
+        # 塑性乘子增量
+        H_total = self.H_iso + self.H_kin
+        d_lambda = f_tr / (self.E + H_total)
+        sign = 1.0 if xi_tr > 0 else -1.0
+
+        # 更新状态变量
+        d_eps_p = d_lambda * sign
+        self.eps_p += d_eps_p
+        self.eps_p_eq += abs(d_eps_p)
+        self.alpha += self.H_kin * d_eps_p
+
+        # 3. 返回映射后的应力
+        sigma = sigma_tr - self.E * d_eps_p
+        return sigma
+
+
+def cyclic_test(model_cls, n_cycles=3, eps_amp=0.005):
+    """对给定本构模型做循环加载"""
+    model = model_cls()
+    # 生成加载路径：正弦循环
+    n_steps = 400 * n_cycles
+    eps_history = eps_amp * np.sin(np.linspace(0, 2 * np.pi * n_cycles, n_steps))
+    # 从 0 开始
+    eps_history = np.concatenate([[0.0], eps_history])
+
+    sigma_history = np.zeros_like(eps_history)
+    for i, eps in enumerate(eps_history):
+        sigma_history[i] = model.update(eps)
+
+    return eps_history, sigma_history
+
+
+if __name__ == "__main__":
+    # 三组对比：理想弹塑性 / 等向硬化 / 随动硬化
+    cases = {
+        "理想弹塑性": dict(H_iso=0.0, H_kin=0.0),
+        "等向硬化":   dict(H_iso=5e9, H_kin=0.0),
+        "随动硬化":   dict(H_iso=0.0, H_kin=5e9),
+        "混合硬化":   dict(H_iso=2e9, H_kin=4e9),
+    }
+
+    fig, axes = plt.subplots(2, 2, figsize=(11, 8))
+    axes = axes.flatten()
+
+    for ax, (name, params) in zip(axes, cases.items()):
+        model_cls = lambda p=params: Plasticity1D(**p)
+        eps, sigma = cyclic_test(model_cls, n_cycles=3, eps_amp=0.004)
+
+        ax.plot(eps * 100, sigma / 1e6, color="#db2777", linewidth=1.2)
+        ax.axhline(0, color="gray", linewidth=0.5, alpha=0.5)
+        ax.axvline(0, color="gray", linewidth=0.5, alpha=0.5)
+        ax.set_title(name, fontsize=12)
+        ax.set_xlabel("应变 ε (%)")
+        ax.set_ylabel("应力 σ (MPa)")
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # 打印典型特征
+    print("=== 各模型的循环响应特征 ===")
+    for name, params in cases.items():
+        model_cls = lambda p=params: Plasticity1D(**p)
+        eps, sigma = cyclic_test(model_cls, n_cycles=3, eps_amp=0.004)
+        # 正、负峰值应力
+        idx_pos = np.argmax(eps)
+        idx_neg = np.argmin(eps)
+        print(f"{name}:")
+        print(f"  正向峰值应力: {sigma[idx_pos] / 1e6:.2f} MPa")
+        print(f"  反向峰值应力: {sigma[idx_neg] / 1e6:.2f} MPa")
+        print(f"  峰值应力差:   {(sigma[idx_pos] - sigma[idx_neg]) / 1e6:.2f} MPa")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从简到繁</strong>：简单弹塑性问题（梁、轴、圆筒）
+              虽然几何简单，但已经体现了塑性力学的全部核心概念——
+              屈服准则、加载历史、塑性铰、极限荷载。
+              理解这些后，推广到复杂结构只是"用什么单元、什么本构"的工程问题。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="limit">
+          <h2><span class="num">06</span>极限分析</h2>
+
+          <h3>极限分析的基本假设</h3>
+          <ul>
+            <li><strong>理想弹塑性材料</strong>：屈服后应力不增加，塑性流动无硬化。</li>
+            <li><strong>小变形</strong>：几何关系线性。</li>
+            <li><strong>比例加载</strong>：所有荷载按同一比例增加。</li>
+            <li><strong>稳定材料</strong>：满足 Drucker 公设，保证解的唯一性。</li>
+          </ul>
+
+          <h3>上下限定理</h3>
+          <p>
+            极限分析的核心是两个定理：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            下限定理（静力法）：
+          </p>
+          <p>
+            如果存在一个<strong>静力许可</strong>的应力场
+            （满足平衡方程与应力边界条件，处处不违反屈服准则），
+            那么与它对应的荷载是真实极限荷载的<strong>下限</strong>。
+          </p>
+          <p>
+            原理：$\lambda^- \le \lambda_{\text{lim}}$
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            上限定理（机动法）：
+          </p>
+          <p>
+            如果存在一个<strong>机动许可</strong>的位移场
+            （满足位移边界条件与几何关系），
+            那么由它的耗散功率对应的荷载是真实极限荷载的<strong>上限</strong>。
+          </p>
+          <p>
+            原理：$\lambda^+ \ge \lambda_{\text{lim}}$
+          </p>
+
+          <p>对刚塑性材料，上限定理对应的计算式为：</p>
+
+          $$ \lambda^+ P \cdot \delta = \int_V \sigma_y \, \dot{\varepsilon}_{eq}^p \, dV
+             + \int_{S_d} \tau_y \, |\Delta \dot{u}_t| \, dS $$
+
+          <p>
+            左侧为外荷载功率，右侧为体内塑性耗散与界面（塑性铰）耗散。
+          </p>
+
+          <h3>简单应用：连续梁的极限荷载</h3>
+          <p>
+            对两跨连续梁，中间支座为超静定约束。
+            当跨中弯矩与支座弯矩同时达到塑性弯矩 $M_p$ 时，
+            结构形成机构（塑性铰数 = 超静定次数 + 1），达到极限状态。
+          </p>
+
+          <p>
+            设每跨长度 $l$、均布荷载 $q$。由虚功原理，
+            让两个跨中塑性铰与中间支座塑性铰各自产生虚转角 $\theta$：
+          </p>
+
+          $$ 2 M_p \theta + M_p \cdot 2\theta + M_p \cdot 2\theta
+             = q l \cdot \frac{l}{2} \theta \times 2 $$
+
+          <p>解得：</p>
+
+          $$ q_{\text{lim}} = \frac{8 M_p}{l^2} $$
+
+          <p>
+            对比弹性极限荷载 $q_y = 12 M_y / l^2$，
+            考虑塑性后承载力提高约 33%（$8 / 6 = 1.33$，
+            因为 $M_p / M_y = 1.5$）。
+            这种"塑性内力重分布"是结构设计中的重要概念。
+          </p>
+
+          <h3>塑性铰与机构</h3>
+          <p>
+            塑性铰是结构中的一个<strong>局部转动集中区</strong>：
+          </p>
+          <ul>
+            <li>弯矩达到 $M_p$ 后不再增加，但可以自由转动。</li>
+            <li>能传递弯矩，但不能传递超过 $M_p$ 的弯矩。</li>
+            <li>结构整体变成机构（可动）时，达到极限荷载。</li>
+          </ul>
+
+          <p>对 $n$ 次超静定结构，形成机构所需塑性铰数：</p>
+
+          $$ n_p = n + 1 $$
+
+          <p>
+            这是判断结构极限状态的基本规则。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>极限分析的局限</strong>：上下限定理基于理想弹塑性假设。
+              实际材料存在硬化，且极限状态往往伴随大变形。
+              此外，下限定理只给出安全的下界，
+              上限定理只给出不安全的上界——
+              只有找到<strong>静力场与机动场同时满足</strong>时，才能确定真实的极限荷载。
+              对复杂结构，通常结合有限元做增量弹塑性分析。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="seismic">
+          <h2><span class="num">07</span>与抗震工程的关系</h2>
+
+          <h3>延性设计</h3>
+          <p>
+            现代抗震设计的核心理念是<strong>延性设计</strong>：
+            允许结构在强震下进入塑性，通过塑性变形耗散地震能量，
+            但必须保证结构不发生脆性破坏或整体倒塌。
+          </p>
+
+          <p>
+            延性系数是衡量结构延性的重要指标：
+          </p>
+
+          $$ \mu = \frac{\delta_u}{\delta_y} $$
+
+          <p>
+            其中 $\delta_y$ 为屈服位移，$\delta_u$ 为极限位移。
+            钢筋混凝土结构的延性系数通常要求不小于 3–5，
+            钢结构可以更高。
+          </p>
+
+          <h3>塑性铰与抗震机制</h3>
+          <p>
+            通过合理设计（如"强柱弱梁""强剪弱弯"），
+            引导塑性铰出现在<strong>梁端而不是柱端</strong>，
+            从而形成稳定的耗能机制：
+          </p>
+          <ul>
+            <li><strong>梁铰机制</strong>：塑性铰主要出现在梁端，是理想的抗震机制。</li>
+            <li><strong>柱铰机制</strong>：塑性铰出现在柱端，可能导致层屈服甚至整体倒塌，必须避免。</li>
+            <li><strong>节点破坏</strong>：梁柱节点区脆性破坏，是最不利的失效模式。</li>
+          </ul>
+
+          <h3>Pushover 分析中的塑性发展</h3>
+          <p>
+            在 Pushover 分析中，塑性力学提供：
+          </p>
+          <ul>
+            <li><strong>塑性铰模型</strong>：集中塑性铰或纤维模型，定义塑性铰的弯矩-转角关系。</li>
+            <li><strong>屈服准则</strong>：判断每个截面是否进入塑性，并定义屈服面。</li>
+            <li><strong>硬化规律</strong>：定义塑性铰的屈服后刚度，影响结构整体响应。</li>
+            <li><strong>卸载准则</strong>：循环荷载下的卸载路径，决定滞回耗能。</li>
+          </ul>
+
+          <h3>能量耗散与等效阻尼</h3>
+          <p>
+            一个完整滞回环的面积等于该循环中耗散的能量。
+            对弹性理想塑性模型：
+          </p>
+
+          $$ W_d = 4 F_y (\delta_u - \delta_y) $$
+
+          <p>
+            其中 $F_y$ 为屈服力。
+            等效粘滞阻尼比可由耗散能量与弹性应变能之比得到：
+          </p>
+
+          $$ \zeta_{eq} = \frac{W_d}{4 \pi W_e}, \qquad
+             W_e = \frac{1}{2} F_y \delta_y $$
+
+          <p>
+            这一等效阻尼比用于 Pushover 分析中的需求谱折减，
+            也是基于性能抗震设计的重要参数。
+          </p>
+
+          <h3>非线性时程分析</h3>
+          <p>
+            结构非线性时程分析的核心是<strong>每步都要更新弹塑性本构</strong>：
+          </p>
+          <ol class="steps">
+            <li>计算当前时刻的位移增量 $d\mathbf{u}$。</li>
+            <li>由几何关系得到应变增量 $d\boldsymbol{\varepsilon}$。</li>
+            <li>用弹塑性本构计算应力增量 $d\boldsymbol{\sigma}$。</li>
+            <li>判断是否加载/卸载，更新状态变量（塑性应变、背应力）。</li>
+            <li>用返回映射修正试探应力，保证 $f \le 0$。</li>
+            <li>组装切线刚度矩阵，迭代至收敛。</li>
+          </ol>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从塑性力学到抗震设计</strong>：
+              塑性力学给出了"材料超出弹性后如何响应"的物理规律；
+              抗震设计则利用这些规律，
+              <strong>主动引导结构进入有利的塑性机制</strong>——
+              用延性代替强度、用耗能代替硬抗。
+              这是现代抗震设计哲学的核心：<strong>小震不坏、中震可修、大震不倒</strong>。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>应力分解</strong>：$\sigma_{ij} = \sigma_m \delta_{ij} + s_{ij}$；塑性变形只由偏应力引起。</li>
+              <li><strong>屈服准则</strong>：Tresca（最大切应力）、von Mises（$J_2$）、Mohr-Coulomb / Drucker-Prager（岩土）。</li>
+              <li><strong>加载准则</strong>：$f = 0$ 且 $df > 0$ 时加载；$df < 0$ 时卸载；一致性条件 $df = 0$ 是推导核心。</li>
+              <li><strong>硬化规律</strong>：等向硬化（屈服面扩大）、随动硬化（屈服面平移）、混合硬化。</li>
+              <li><strong>关联流动</strong>：$d\varepsilon_{ij}^p = d\lambda \, \partial f / \partial \sigma_{ij}$；金属塑性不改变体积。</li>
+              <li><strong>弹塑性刚度</strong>：$\mathbf{D}^{ep} = \mathbf{D}^e - \mathbf{D}^e \mathbf{a} \mathbf{a}^T \mathbf{D}^e / (H + \mathbf{a}^T \mathbf{D}^e \mathbf{a})$。</li>
+              <li><strong>简单问题</strong>：梁的 $M_p / M_y = 1.5$、轴的 $T_p / T_y = 4/3$、圆筒极限内压 $p_{\text{lim}} = 2\sigma_y \ln(b/a) / \sqrt{3}$。</li>
+              <li><strong>极限分析</strong>：上限定理（机动法）与下限定理（静力法），塑性铰数 = 超静定次数 + 1 时形成机构。</li>
+              <li><strong>抗震应用</strong>：延性设计、塑性铰机制、Pushover、非线性时程分析。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Hill, <em>The Mathematical Theory of Plasticity</em> — 塑性力学经典</li>
+            <li>Lubliner, <em>Plasticity Theory</em> — 系统完整，适合研究生</li>
+            <li>Chen &amp; Han, <em>Plasticity for Structural Engineers</em> — 结构工程视角</li>
+            <li>Simo &amp; Hughes, <em>Computational Inelasticity</em> — 数值实现权威</li>
+            <li>王仁、熊祝华、黄文彬，《塑性力学基础》— 国内经典教材</li>
+            <li>GB 50011-2010《建筑抗震设计规范》— 延性设计的工程规定</li>
+            <li>FEMA-356 / ASCE 41 — 基于性能的抗震评估标准</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

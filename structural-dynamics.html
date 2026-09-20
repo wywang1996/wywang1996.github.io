@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结构动力学 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="structural-dynamics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#equation">一、运动方程的建立</a></li>
+      <li><a href="#spectrum">二、地震反应谱</a></li>
+      <li><a href="#design">三、设计反应谱</a></li>
+      <li><a href="#modal">四、振型分解反应谱法</a></li>
+      <li><a href="#timestep">五、时程分析</a></li>
+      <li><a href="#pushover">六、Pushover 分析</a></li>
+      <li><a href="#isolation">七、隔震与耗能</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 结构动力学
+        </div>
+        <h1>结构动力学</h1>
+        <p class="lead">
+          把振动力学与地震工程结合：从运动方程的建立，到反应谱、
+          时程分析与 Pushover 三大抗震分析方法。
+          这是结构抗震设计的直接理论依据。
+        </p>
+        <div class="article-meta">
+          <span>地震反应谱</span>
+          <span>时程分析</span>
+          <span>Pushover</span>
+          <span class="blue">抗震设计</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            结构动力学是振动力学在土木工程中的延伸，
+            研究对象是<strong>工程结构在地震、风、车辆等动力作用下的响应</strong>。
+            与振动力学的区别在于：
+          </p>
+          <ul>
+            <li>结构动力学更强调<strong>工程实用方法</strong>：
+              反应谱法、时程分析法、Pushover 分析。</li>
+            <li>结构动力学关注<strong>地震作用</strong>这一特殊的动力输入：
+              随机、宽带、地面运动。</li>
+            <li>结构动力学与<strong>设计规范</strong>紧密结合：
+              几乎所有抗震设计规范都建立在结构动力学理论之上。</li>
+          </ul>
+          <p>
+            本笔记按工程实践的主线组织：
+            先建立运动方程，再依次讨论三大抗震分析方法
+            （反应谱法、时程分析、Pushover），最后简介隔震与耗能。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>结构动力学 vs 振动力学</strong>：振动力学讲"理论"——
+              自由振动、受迫振动、模态分析；结构动力学讲"应用"——
+              地震作用下如何求结构响应、如何进行抗震设计。
+              两者一脉相承，前者是后者的基础。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="equation">
+          <h2><span class="num">01</span>运动方程的建立</h2>
+
+          <h3>动力学三原理</h3>
+          <p>
+            建立结构运动方程有三种等价方法：
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>原理</th><th>核心思想</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>达朗贝尔原理</strong></td>
+                  <td>引入惯性力，动力问题化为静力平衡</td>
+                  <td>简单结构、直观推导</td>
+                </tr>
+                <tr>
+                  <td><strong>虚功原理</strong></td>
+                  <td>外力虚功 = 内力虚功 + 惯性力虚功</td>
+                  <td>复杂结构、有限元推导</td>
+                </tr>
+                <tr>
+                  <td><strong>拉格朗日方程</strong></td>
+                  <td>$\dfrac{d}{dt}\!\left(\dfrac{\partial L}{\partial \dot{q}}\right) - \dfrac{\partial L}{\partial q} = Q$</td>
+                  <td>多自由度、解析推导</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>地震作用下的运动方程</h3>
+          <p>
+            设结构相对地面的位移为 $\mathbf{u}$，地面加速度为 $\ddot{u}_g(t)$，
+            则运动方程为：
+          </p>
+
+          $$ \mathbf{M} \ddot{\mathbf{u}} + \mathbf{C} \dot{\mathbf{u}} + \mathbf{K} \mathbf{u}
+             = -\mathbf{M} \mathbf{1} \ddot{u}_g(t) $$
+
+          <p>
+            右侧的 $-\mathbf{M} \mathbf{1} \ddot{u}_g(t)$ 称为<strong>等效地震荷载</strong>。
+            注意：地震作用并非外力，而是由于地面运动引起的<strong>惯性力</strong>。
+            这一点与静力荷载有本质区别。
+          </p>
+
+          <h3>自由度与简化模型</h3>
+          <p>工程中常用的三种简化模型：</p>
+          <ul>
+            <li><strong>剪切型模型</strong>：每层一个水平自由度，假设楼板刚性、层间只有剪切变形。适合多层框架。</li>
+            <li><strong>弯剪型模型</strong>：考虑层间弯曲与剪切耦合。适合高层建筑。</li>
+            <li><strong>有限元模型</strong>：把结构离散为梁、柱、墙、板单元，可以得到最精细的响应。</li>
+          </ul>
+
+          <h3>集中质量矩阵</h3>
+          <p>
+            剪切型结构常用<strong>集中质量矩阵</strong>——把每层的质量集中到楼板处：
+          </p>
+
+          $$ \mathbf{M} = \begin{bmatrix}
+             m_1 & 0 & \cdots & 0 \\
+             0 & m_2 & \cdots & 0 \\
+             \vdots & \vdots & \ddots & \vdots \\
+             0 & 0 & \cdots & m_n
+             \end{bmatrix} $$
+
+          <p>
+            对 $n$ 层剪切型框架，层间刚度矩阵为三对角带状矩阵：
+          </p>
+
+          $$ \mathbf{K} = \begin{bmatrix}
+             k_1 + k_2 & -k_2 & & \\
+             -k_2 & k_2 + k_3 & -k_3 & \\
+             & \ddots & \ddots & \ddots \\
+             & & -k_n & k_n
+             \end{bmatrix} $$
+
+          <p>
+            这种稀疏结构使大型问题的求解非常高效。
+          </p>
+        </section>
+
+        <section id="spectrum">
+          <h2><span class="num">02</span>地震反应谱</h2>
+
+          <h3>反应谱的定义</h3>
+          <p>
+            给定一条地震动 $\ddot{u}_g(t)$，把所有可能的单自由度体系
+            （不同周期 $T$、同一阻尼比 $\zeta$）作用其上，
+            记录每个体系的最大响应，就得到<strong>反应谱</strong>：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            谱加速度（绝对加速度峰值）：
+          </p>
+          $$ S_a(T, \zeta) = \max_t |\ddot{u}(t) + \ddot{u}_g(t)| $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            谱速度（相对速度峰值）：
+          </p>
+          $$ S_v(T, \zeta) = \max_t |\dot{u}(t)| $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            谱位移（相对位移峰值）：
+          </p>
+          $$ S_d(T, \zeta) = \max_t |u(t)| $$
+
+          <h3>伪谱与近似关系</h3>
+          <p>工程中更常用<strong>伪谱</strong>（pseudo-spectrum）：</p>
+
+          $$ \mathrm{PSa} = \omega^2 S_d, \qquad \mathrm{PSv} = \omega S_d $$
+
+          <p>三者之间的近似关系为：</p>
+
+          $$ S_a \approx \omega \, S_v \approx \omega^2 \, S_d $$
+
+          <p>
+            在阻尼比较小时（$\zeta \le 0.1$）误差在 1% 以内，
+            工程上通常直接使用伪谱。
+          </p>
+
+          <h3>三联谱</h3>
+          <p>
+            把 $S_a$、$S_v$、$S_d$ 画在同一张双对数坐标图上，
+            三个量呈 45°、135°、-45° 三条刻度线。
+            这种图称为<strong>三联反应谱</strong>或<strong>Newmark-Hall 谱</strong>：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>周期区间</th><th>控制量</th><th>近似关系</th><th>物理意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>短周期（$T < T_0$）</td>
+                  <td>$S_a$ 恒定</td>
+                  <td>$S_a = \mathrm{PGA} \cdot \beta$</td>
+                  <td>惯性力控制</td>
+                </tr>
+                <tr>
+                  <td>中周期（$T_0 < T < T_g$）</td>
+                  <td>$S_v$ 恒定</td>
+                  <td>$S_a \propto 1/T$</td>
+                  <td>速度控制</td>
+                </tr>
+                <tr>
+                  <td>长周期（$T > T_g$）</td>
+                  <td>$S_d$ 恒定</td>
+                  <td>$S_a \propto 1/T^2$</td>
+                  <td>位移控制</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>反应谱的特征</h3>
+          <ul>
+            <li><strong>场地效应</strong>：软土场地的谱峰向长周期偏移，硬土场地峰值周期较短。</li>
+            <li><strong>震中距效应</strong>：近场地震的谱峰更尖锐，远场地震的谱更宽缓。</li>
+            <li><strong>震级效应</strong>：大震的长周期成分更丰富。</li>
+            <li><strong>阻尼效应</strong>：阻尼比越大，谱值越低，长周期处最明显。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>反应谱的局限</strong>：反应谱只给出<strong>最大响应</strong>，
+              不反映响应随时间的变化。对需要考虑累积损伤的结构
+              （如长持时地震、重复余震），必须用时程分析。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="design">
+          <h2><span class="num">03</span>设计反应谱</h2>
+
+          <h3>标准设计谱的形式</h3>
+          <p>
+            真实反应谱是一条随机曲线，无法直接用于设计。
+            工程上用<strong>标准化设计谱</strong>——一条规则的曲线——
+            来描述地震作用的频域特征。中国《建筑抗震设计规范》GB 50011
+            给出的地震影响系数曲线为：
+          </p>
+
+          $$ \alpha(T) = \begin{cases}
+             \left[ 0.45 + 10 (\eta_2 - 0.45) T \right] \alpha_{\max} & T < 0.1 \text{s} \\[4pt]
+             \eta_2 \alpha_{\max} & 0.1 \text{s} \le T \le T_g \\[4pt]
+             \eta_2 \left( \dfrac{T_g}{T} \right)^{\gamma} \alpha_{\max} & T_g < T < 5T_g \\[4pt]
+             \left[ \eta_2 \, 0.2^{\gamma} - \eta_1 (T - 5T_g) \right] \alpha_{\max} & T \ge 5T_g
+             \end{cases} $$
+
+          <p>其中：</p>
+          <ul>
+            <li>$\alpha_{\max}$ 为地震影响系数最大值，与设防烈度有关。</li>
+            <li>$T_g$ 为特征周期，与场地类别和设计地震分组有关。</li>
+            <li>$\gamma$ 为衰减指数，$\eta_1$、$\eta_2$ 为调整系数，与阻尼比有关。</li>
+          </ul>
+
+          <h3>设计参数</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>设防烈度</th><th>多遇地震 α<sub>max</sub></th><th>罕遇地震 α<sub>max</sub></th></tr>
+              </thead>
+              <tbody>
+                <tr><td>6 度</td><td>0.04</td><td>0.28</td></tr>
+                <tr><td>7 度</td><td>0.08 (0.12)</td><td>0.50 (0.72)</td></tr>
+                <tr><td>8 度</td><td>0.16 (0.24)</td><td>0.90 (1.20)</td></tr>
+                <tr><td>9 度</td><td>0.32</td><td>1.40</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>特征周期 $T_g$ 的取值（单位 s）：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>设计地震分组</th><th>Ⅰ₀</th><th>Ⅰ₁</th><th>Ⅱ</th><th>Ⅲ</th><th>Ⅳ</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>第一组</td><td>0.20</td><td>0.25</td><td>0.35</td><td>0.45</td><td>0.65</td></tr>
+                <tr><td>第二组</td><td>0.25</td><td>0.30</td><td>0.40</td><td>0.55</td><td>0.75</td></tr>
+                <tr><td>第三组</td><td>0.30</td><td>0.35</td><td>0.45</td><td>0.65</td><td>0.90</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>底部剪力法</h3>
+          <p>
+            对高度不超过 40 m、质量和刚度沿高度分布较均匀的结构，
+            规范允许用<strong>底部剪力法</strong>简化计算：
+          </p>
+
+          $$ F_{Ek} = \alpha_1 G_{eq}, \qquad
+             G_{eq} = 0.85 \sum_{i=1}^{n} G_i $$
+
+          <p>
+            其中 $\alpha_1$ 为根据第一自振周期查设计谱得到的地震影响系数，
+            $G_{eq}$ 为结构等效总重力荷载。
+            各层水平地震作用按高度分配：
+          </p>
+
+          $$ F_i = \frac{G_i H_i}{\sum_{j=1}^{n} G_j H_j} F_{Ek} (1 - \delta_n), \qquad
+             \Delta F_n = \delta_n F_{Ek} $$
+
+          <p>
+            $\delta_n$ 为顶部附加地震作用系数，用于考虑高振型的影响。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>设计谱的物理含义</strong>：设计谱是<strong>统计意义</strong>上的谱，
+              由大量地震动的平均谱平滑而来。
+              其本质是"给定场地、给定设防烈度下，结构可能遇到的最大地震作用"。
+              设计谱法（振型分解反应谱法）由于简单快速，是抗震设计的主流方法。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="modal">
+          <h2><span class="num">04</span>振型分解反应谱法</h2>
+
+          <h3>基本思路</h3>
+          <p>
+            把多自由度体系的响应分解为多个单自由度的贡献：
+          </p>
+          <ol class="steps">
+            <li>对结构做模态分析，得到前 $n$ 阶自振周期 $T_i$ 与振型 $\boldsymbol{\phi}_i$。</li>
+            <li>由设计谱查出每阶周期对应的地震影响系数 $\alpha_i$。</li>
+            <li>计算每阶模态的等效地震作用。</li>
+            <li>得到每阶模态的最大响应（层剪力、层位移等）。</li>
+            <li>用 SRSS 或 CQC 组合各阶响应得到总响应。</li>
+          </ol>
+
+          <h3>振型等效地震作用</h3>
+          <p>
+            第 $j$ 阶振型的等效水平地震作用为：
+          </p>
+
+          $$ F_{ji} = \alpha_j \gamma_j X_{ji} G_i, \qquad i = 1, \ldots, n $$
+
+          <p>其中：</p>
+          <ul>
+            <li>$\alpha_j$ 为第 $j$ 阶周期对应的地震影响系数。</li>
+            <li>$X_{ji}$ 为第 $j$ 阶振型在第 $i$ 层的相对位移。</li>
+            <li>$G_i$ 为第 $i$ 层的重力荷载代表值。</li>
+            <li>$\gamma_j = \dfrac{\sum X_{ji} G_i}{\sum X_{ji}^2 G_i}$ 为振型参与系数。</li>
+          </ul>
+
+          <h3>响应组合</h3>
+          <p>
+            <strong>SRSS（平方和开平方）</strong>——适用于频率分离较好的情况：
+          </p>
+
+          $$ S = \sqrt{\sum_{j=1}^{m} S_j^2} $$
+
+          <p>
+            <strong>CQC（完全二次组合）</strong>——适用于频率密集或需要考虑模态相关性的情况：
+          </p>
+
+          $$ S = \sqrt{\sum_{i=1}^{m} \sum_{j=1}^{m} \rho_{ij} S_i S_j} $$
+
+          <p>其中模态相关系数为：</p>
+
+          $$ \rho_{ij} = \frac{8 \sqrt{\zeta_i \zeta_j} (\zeta_i + \beta \zeta_j) \beta^{3/2}}
+             {(1 - \beta^2)^2 + 4 \zeta_i \zeta_j \beta (1 + \beta^2)
+              + 4 (\zeta_i^2 + \zeta_j^2) \beta^2} $$
+
+          <p>
+            其中 $\beta = \omega_j / \omega_i$，$\zeta_i$、$\zeta_j$ 为对应模态的阻尼比。
+            当 $\beta$ 远离 1 时 $\rho_{ij} \approx 0$，此时 CQC 退化为 SRSS。
+          </p>
+
+          <h3>需要多少阶模态</h3>
+          <ul>
+            <li><strong>质量参与系数法</strong>：累计模态质量参与系数应大于 90%。</li>
+            <li><strong>周期法</strong>：取到自振周期小于 0.1 s 的阶数。</li>
+            <li><strong>经验法</strong>：一般取前 9–15 阶足够。</li>
+          </ul>
+
+          <p>累计模态质量参与系数定义为：</p>
+
+          $$ \eta_j = \frac{\sum_{i=1}^{j} M_i^* \Gamma_i^2}{\sum_{i=1}^{n} m_i}
+             \times 100\% $$
+
+          <h3>地震作用效应组合</h3>
+          <p>
+            得到各振型的地震作用后，与静力荷载组合，采用规范规定的组合方式：
+          </p>
+
+          $$ S = \gamma_G S_{GE} + \gamma_{Eh} S_{Ek} + \gamma_{Ev} S_{Evk}
+             + \psi_w \gamma_w S_{wk} $$
+
+          <p>
+            其中 $\gamma$ 为分项系数，$S$ 为荷载效应，
+            $\psi_w$ 为风荷载组合值系数。
+          </p>
+        </section>
+
+        <section id="timestep">
+          <h2><span class="num">05</span>时程分析</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            时程分析（Time History Analysis）直接对运动方程做<strong>逐步数值积分</strong>，
+            得到结构在整个地震过程中的响应时程。
+            它比反应谱法更精确，但计算量更大，通常用于：
+          </p>
+          <ul>
+            <li>超限高层建筑的补充计算。</li>
+            <li>复杂结构（大跨、长悬臂、隔震）的分析。</li>
+            <li>需要考察结构非线性行为的情况。</li>
+          </ul>
+
+          <h3>Newmark-β 法</h3>
+          <p>
+            最常用的逐步积分方法。它把位移与速度在时间步 $\Delta t$ 内做如下近似：
+          </p>
+
+          $$ \begin{aligned}
+             \mathbf{u}_{n+1} &= \mathbf{u}_n + \Delta t \dot{\mathbf{u}}_n
+                + \Delta t^2 \left[ \left( \tfrac{1}{2} - \beta \right) \ddot{\mathbf{u}}_n
+                + \beta \ddot{\mathbf{u}}_{n+1} \right] \\
+             \dot{\mathbf{u}}_{n+1} &= \dot{\mathbf{u}}_n + \Delta t \left[
+                (1 - \gamma) \ddot{\mathbf{u}}_n + \gamma \ddot{\mathbf{u}}_{n+1} \right]
+             \end{aligned} $$
+
+          <p>代入时刻 $n+1$ 的运动方程：</p>
+
+          $$ \mathbf{M} \ddot{\mathbf{u}}_{n+1} + \mathbf{C} \dot{\mathbf{u}}_{n+1}
+             + \mathbf{K} \mathbf{u}_{n+1} = \mathbf{p}_{n+1} $$
+
+          <p>得到等效静力形式：</p>
+
+          $$ \hat{\mathbf{K}} \mathbf{u}_{n+1} = \hat{\mathbf{p}}_{n+1} $$
+
+          <p>其中：</p>
+
+          $$ \hat{\mathbf{K}} = \mathbf{K} + \frac{\gamma}{\beta \Delta t} \mathbf{C}
+             + \frac{1}{\beta \Delta t^2} \mathbf{M} $$
+
+          $$ \hat{\mathbf{p}}_{n+1} = \mathbf{p}_{n+1} + \mathbf{M}
+             \left[ \frac{1}{\beta \Delta t^2} \mathbf{u}_n
+             + \frac{1}{\beta \Delta t} \dot{\mathbf{u}}_n
+             + \left( \frac{1}{2\beta} - 1 \right) \ddot{\mathbf{u}}_n \right]
+             + \mathbf{C} \left[ \frac{\gamma}{\beta \Delta t} \mathbf{u}_n
+             + \left( \frac{\gamma}{\beta} - 1 \right) \dot{\mathbf{u}}_n
+             + \left( \frac{\gamma}{2\beta} - 1 \right) \Delta t \ddot{\mathbf{u}}_n \right] $$
+
+          <p>
+            每一步只需解一个线性方程组 $\hat{\mathbf{K}} \mathbf{u}_{n+1} = \hat{\mathbf{p}}_{n+1}$，
+            $\hat{\mathbf{K}}$ 在整个积分过程中不变，可以预先分解（如 Cholesky 分解），
+            因此每步计算量很小。
+          </p>
+
+          <h3>参数选择</h3>
+          <ul>
+            <li><strong>平均加速度法</strong>：$\gamma = 1/2$，$\beta = 1/4$，无条件稳定，精度高。</li>
+            <li><strong>线性加速度法</strong>：$\gamma = 1/2$，$\beta = 1/6$，有条件稳定，需 $\Delta t \le 0.55 T_{\min}$。</li>
+            <li><strong>Wilson-θ 法</strong>：$\theta \ge 1.37$ 时无条件稳定，引入人为阻尼。</li>
+          </ul>
+
+          <h3>时间步长</h3>
+          <p>
+            时间步长 $\Delta t$ 的选择应考虑：
+          </p>
+          <ul>
+            <li>精度要求：$\Delta t \le T_{\min} / 10$，$T_{\min}$ 为感兴趣的最小周期。</li>
+            <li>地震动采样间隔：通常取 $\Delta t$ 等于或小于地震波采样间隔。</li>
+            <li>稳定性要求：对条件稳定算法需满足稳定性条件。</li>
+          </ul>
+
+          <h3>非线性时程分析</h3>
+          <p>
+            结构进入非线性后，刚度矩阵随位移变化：
+          </p>
+
+          $$ \mathbf{M} \ddot{\mathbf{u}}_{n+1} + \mathbf{C} \dot{\mathbf{u}}_{n+1}
+             + \mathbf{f}_s(\mathbf{u}_{n+1}) = \mathbf{p}_{n+1} $$
+
+          <p>
+            其中 $\mathbf{f}_s$ 为恢复力向量，是位移的非线性函数。
+            求解方法包括 Newton-Raphson 法、修正 Newton 法、
+            BFGS 法等迭代法。这是 OpenSees、ABAQUS 等软件的核心算法。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>选波要求</strong>：规范要求时程分析至少选用<strong>3 组地震动</strong>，
+              其中实际强震记录不少于总数的 2/3。
+              每条时程曲线计算所得结构底部剪力不应小于
+              振型分解反应谱法计算结果的 65%，
+              多条时程曲线计算所得结构底部剪力的平均值不应小于 80%。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="pushover">
+          <h2><span class="num">06</span>Pushover 分析</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            Pushover 分析（推覆分析）是一种<strong>静力非线性</strong>方法：
+            在结构上施加按一定模式分布的侧向力，
+            逐步增大侧向力直至结构达到目标位移或倒塌，
+            记录每一步的内力、变形，得到结构的<strong>能力曲线</strong>。
+          </p>
+
+          <h3>分析步骤</h3>
+          <ol class="steps">
+            <li>建立结构的非线性有限元模型。</li>
+            <li>施加竖向荷载（重力代表值）。</li>
+            <li>施加某种分布形式的水平侧力（如倒三角、均匀、模态比例）。</li>
+            <li>逐步增大侧向力，每步更新结构的刚度与内力。</li>
+            <li>记录基底剪力与顶点位移，得到 Pushover 曲线。</li>
+            <li>把 Pushover 曲线转换为<strong>能力谱</strong>。</li>
+            <li>与<strong>需求谱</strong>（地震需求）比较，得到<strong>性能点</strong>。</li>
+          </ol>
+
+          <h3>能力谱法（ATC-40）</h3>
+          <p>
+            把 Pushover 曲线转换为 ADRS 格式（加速度-位移反应谱格式）：
+          </p>
+
+          $$ S_a = \frac{V}{W \alpha_1}, \qquad
+             S_d = \frac{\Delta_{roof}}{\gamma_1 \phi_{roof,1}} $$
+
+          <p>
+            其中 $V$ 为基底剪力，$W$ 为结构总重，$\Delta_{roof}$ 为顶点位移，
+            $\alpha_1$ 为模态质量参与系数，$\gamma_1$ 为模态参与系数，
+            $\phi_{roof,1}$ 为第一振型在顶点的值。
+          </p>
+
+          <p>
+            地震需求谱可以由弹性反应谱除以延性系数得到，
+            也可以通过等效线性化（如 ATC-40 的等效阻尼比、FEMA-440 的等效周期位移）得到。
+          </p>
+
+          <h3>N2 方法（FEMA / Eurocode 8）</h3>
+          <p>
+            把多自由度结构等效为单自由度体系：
+          </p>
+
+          $$ m^* = \sum m_i \phi_i, \qquad
+             F^* = \frac{V}{\Gamma}, \qquad
+             d^* = \frac{d_n}{\Gamma} $$
+
+          <p>
+            其中 $\Gamma$ 为模态参与系数。等效单自由度体系的
+            Pushover 曲线与需求谱相交，得到性能点，
+            再换算回原结构的位移与内力。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Pushover 的价值</strong>：与反应谱法和时程分析相比，
+              Pushover 兼顾了计算效率与非线性信息——比反应谱法更能反映结构的
+              弹塑性行为，比时程分析计算量小得多，且结果直观。
+              在<strong>基于性能的地震工程（PBEE）</strong>框架中，
+              Pushover 是评估结构性能点的核心工具。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="isolation">
+          <h2><span class="num">07</span>隔震与耗能</h2>
+
+          <h3>基础隔震</h3>
+          <p>
+            在结构与基础之间设置<strong>隔震层</strong>，
+            延长结构自振周期，避开地震动卓越周期，
+            从而显著减小地震作用。核心思想是：
+          </p>
+          <ul>
+            <li><strong>延长周期</strong>：隔震后结构周期从 0.5 s 延长到 2–4 s，
+              远离地震动卓越周期（通常 0.2–1 s）。</li>
+            <li><strong>增加阻尼</strong>：通过铅芯橡胶支座、摩擦摆支座等
+              提供 15%–30% 的等效阻尼。</li>
+            <li><strong>减小层间变形</strong>：隔震层承担大部分变形，
+              上部结构近似为整体平动。</li>
+          </ul>
+
+          <p>隔震层的运动方程为：</p>
+
+          $$ m (\ddot{u} + \ddot{u}_g) + c \dot{u} + k u = 0 $$
+
+          <p>其中 $u$ 为隔震层相对位移。当周期足够长时，结构加速度远小于地面加速度，
+          减小幅度与周期比 $\omega / \omega_n$ 相关。</p>
+
+          <h3>减震技术</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>原理</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>金属阻尼器</strong></td>
+                  <td>利用软钢屈服耗能</td>
+                  <td>框架支撑、节点</td>
+                </tr>
+                <tr>
+                  <td><strong>摩擦阻尼器</strong></td>
+                  <td>利用摩擦耗能</td>
+                  <td>支撑、隔震层</td>
+                </tr>
+                <tr>
+                  <td><strong>粘滞阻尼器</strong></td>
+                  <td>利用流体粘性耗能</td>
+                  <td>高层、桥梁</td>
+                </tr>
+                <tr>
+                  <td><strong>粘弹性阻尼器</strong></td>
+                  <td>利用聚合物剪切变形耗能</td>
+                  <td>框架、支撑</td>
+                </tr>
+                <tr>
+                  <td><strong>调谐质量阻尼器（TMD）</strong></td>
+                  <td>利用附加质量共振耗能</td>
+                  <td>高层、大跨、烟囱</td>
+                </tr>
+                <tr>
+                  <td><strong>调谐液体阻尼器（TLD）</strong></td>
+                  <td>利用液体振荡耗能</td>
+                  <td>高层、风振控制</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：单自由度地震时程分析</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>sdof_newmark.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+单自由度体系的地震时程分析（Newmark-β 法）
+并对一组周期计算反应谱
+"""
+import numpy as np
+
+
+def newmark_sdof(ag, dt, T, zeta=0.05, gamma=0.5, beta=0.25):
+    """
+    用 Newmark-β 法求解单自由度体系地震响应
+    ag    : 地面加速度时程 (m/s²)
+    dt    : 采样间隔 (s)
+    T     : 结构自振周期 (s)
+    zeta  : 阻尼比
+    gamma, beta : Newmark 参数（默认平均加速度法）
+
+    返回 (t, u, v, a_abs)
+    """
+    n = len(ag)
+    wn = 2.0 * np.pi / T
+    m = 1.0
+    c = 2.0 * zeta * wn * m
+    k = m * wn ** 2
+
+    # Newmark 等效刚度
+    k_hat = k + gamma / (beta * dt) * c + 1.0 / (beta * dt ** 2) * m
+
+    u = np.zeros(n)
+    v = np.zeros(n)
+    a = np.zeros(n)
+    # 初始条件 u_0 = v_0 = 0
+    a[0] = -ag[0]   # 初始相对加速度
+
+    # 预先计算不变系数
+    A1 = 1.0 / (beta * dt ** 2) * m + gamma / (beta * dt) * c
+    A2 = 1.0 / (beta * dt) * m + (gamma / beta - 1.0) * c
+    A3 = (0.5 / beta - 1.0) * m + dt * (gamma / (2 * beta) - 1.0) * c
+
+    for i in range(n - 1):
+        p_hat = -m * ag[i + 1] + A1 * u[i] + A2 * v[i] + A3 * a[i]
+        u_new = p_hat / k_hat
+        v_new = (gamma / (beta * dt)) * (u_new - u[i]) \
+                + (1.0 - gamma / beta) * v[i] \
+                + dt * (1.0 - gamma / (2 * beta)) * a[i]
+        a_new = (1.0 / (beta * dt ** 2)) * (u_new - u[i]) \
+                - (1.0 / (beta * dt)) * v[i] \
+                - (1.0 / (2 * beta) - 1.0) * a[i]
+
+        u[i + 1] = u_new
+        v[i + 1] = v_new
+        a[i + 1] = a_new
+
+    # 绝对加速度 = 相对加速度 + 地面加速度
+    a_abs = a + ag
+    t = np.arange(n) * dt
+    return t, u, v, a_abs
+
+
+def response_spectrum(ag, dt, periods, zeta=0.05):
+    """
+    对给定地震动计算加速度反应谱 Sa、速度反应谱 Sv、位移反应谱 Sd
+    """
+    Sa = np.zeros(len(periods))
+    Sv = np.zeros(len(periods))
+    Sd = np.zeros(len(periods))
+
+    for i, T in enumerate(periods):
+        if T < 1e-4:
+            Sa[i] = np.max(np.abs(ag))
+            Sv[i] = 0.0
+            Sd[i] = 0.0
+            continue
+        t, u, v, a_abs = newmark_sdof(ag, dt, T, zeta)
+        Sd[i] = np.max(np.abs(u))
+        Sv[i] = np.max(np.abs(v))
+        Sa[i] = np.max(np.abs(a_abs))
+
+    return Sa, Sv, Sd
+
+
+if __name__ == "__main__":
+    # 1. 合成一条简单地震动（示意）
+    fs = 100.0
+    dt = 1.0 / fs
+    t_total = 30.0
+    t = np.arange(0.0, t_total, dt)
+    # 幅值调制 + 单频载波，模拟一次脉冲型地震动
+    envelope = np.exp(-((t - 8.0) ** 2) / 8.0)
+    carrier = np.sin(2 * np.pi * 1.5 * t) + 0.5 * np.sin(2 * np.pi * 4.0 * t)
+    ag = 3.0 * envelope * carrier   # 峰值约 3 m/s²
+
+    print(f"地面峰值加速度 PGA = {np.max(np.abs(ag)):.3f} m/s²")
+
+    # 2. 单自由度体系响应
+    T, zeta = 1.0, 0.05
+    t_r, u, v, a_abs = newmark_sdof(ag, dt, T, zeta)
+    print(f"\nT = {T}s, ζ = {zeta}")
+    print(f"  最大相对位移 Sd = {np.max(np.abs(u)):.4f} m")
+    print(f"  最大相对速度 Sv = {np.max(np.abs(v)):.4f} m/s")
+    print(f"  最大绝对加速度 Sa = {np.max(np.abs(a_abs)):.4f} m/s²")
+
+    # 3. 反应谱
+    periods = np.logspace(np.log10(0.05), np.log10(5.0), 80)
+    Sa, Sv, Sd = response_spectrum(ag, dt, periods, zeta)
+
+    print(f"\n反应谱峰值 Sa_max = {Sa.max():.3f} m/s²")
+    print(f"Sa_max 对应周期 T = {periods[np.argmax(Sa)]:.3f} s")
+
+    # 4. 校核伪谱近似关系
+    print("\n伪谱关系校核：")
+    for i in [10, 30, 50]:
+        T_i = periods[i]
+        wn = 2.0 * np.pi / T_i
+        err_v = abs(Sv[i] - wn * Sd[i]) / max(Sv[i], 1e-9)
+        err_a = abs(Sa[i] - wn ** 2 * Sd[i]) / max(Sa[i], 1e-9)
+        print(f"  T = {T_i:5.3f}s:  "
+              f"|Sv - ω·Sd|/Sv = {err_v:.4f},  "
+              f"|Sa - ω²·Sd|/Sa = {err_a:.4f}")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从振动力学到结构动力学</strong>：振动力学给出运动方程、
+              自由振动、模态分析的理论框架；
+              结构动力学在此之上加入了"地震输入"与"工程简化"两大要素——
+              反应谱把连续的地震动压缩成一个工程设计参数，
+              时程分析给出结构全过程的响应，
+              Pushover 用静力推覆近似动力效应。
+              三者共同构成了现代抗震设计的理论体系。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>运动方程</strong>：$\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = -\mathbf{M}\mathbf{1}\ddot{u}_g(t)$，由达朗贝尔原理、虚功原理或拉格朗日方程建立。</li>
+              <li><strong>反应谱</strong>：$S_a(T)$、$S_v(T)$、$S_d(T)$ 反映不同周期结构在给定地震动下的最大响应。</li>
+              <li><strong>设计反应谱</strong>：规范化的规则曲线，包含 $\alpha_{\max}$、$T_g$ 与形状参数。</li>
+              <li><strong>振型分解反应谱法</strong>：各阶模态用反应谱求最大响应，再通过 SRSS 或 CQC 组合。</li>
+              <li><strong>底部剪力法</strong>：规则结构的简化方法，$\alpha_1 G_{eq}$ 与按高度分配的 $F_i$。</li>
+              <li><strong>时程分析</strong>：Newmark-β 等逐步积分法，能捕捉结构全过程响应与非线性行为。</li>
+              <li><strong>Pushover 分析</strong>：静力非线性方法，通过能力谱法确定性能点。</li>
+              <li><strong>隔震与耗能</strong>：延长周期 + 增加阻尼，是新一代抗震技术。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Chopra, <em>Dynamics of Structures: Theory and Applications to Earthquake Engineering</em> — 结构动力学权威教材</li>
+            <li>Clough &amp; Penzien, <em>Dynamics of Structures</em> — 经典之作</li>
+            <li>刘晶波、杜修力，《结构动力学》— 国内主流教材</li>
+            <li>GB 50011-2010《建筑抗震设计规范》（2016 年版）— 中国抗震设计规范</li>
+            <li>ATC-40, <em>Seismic Evaluation and Retrofit of Concrete Buildings</em> — 能力谱法源头</li>
+            <li>FEMA-440, <em>Improvement of Nonlinear Static Seismic Analysis Procedures</em> — Pushover 改进</li>
+            <li>PEER NGA 数据库 — 实测地震动记录</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

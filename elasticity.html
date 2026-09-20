@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹性力学 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="elasticity">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#stress">一、应力分析</a></li>
+      <li><a href="#strain">二、应变分析</a></li>
+      <li><a href="#constitutive">三、本构方程</a></li>
+      <li><a href="#plane">四、平面问题</a></li>
+      <li><a href="#polar">五、极坐标解法</a></li>
+      <li><a href="#space">六、空间问题</a></li>
+      <li><a href="#energy">七、能量原理</a></li>
+      <li><a href="#fem">八、到有限元</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 弹性力学
+        </div>
+        <h1>弹性力学</h1>
+        <p class="lead">
+          从应力张量到变分原理，梳理连续介质弹性理论的完整体系。
+          弹性力学是有限元方法、边界元方法与断裂力学的理论基础，
+          也是从杆件分析走向二维/三维实体分析的必由之路。
+        </p>
+        <div class="article-meta">
+          <span>应力张量</span>
+          <span>应变协调</span>
+          <span>变分原理</span>
+          <span class="blue">有限元基础</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            弹性力学研究<strong>弹性体</strong>在外力作用下的应力、应变与位移，
+            与材料力学的最大区别是：
+            材料力学通过<strong>平面截面假定</strong>研究杆件，
+            弹性力学则从<strong>微元体出发</strong>，用严格的偏微分方程描述连续体内部的力学行为。
+          </p>
+          <p>
+            弹性力学的基本方程组由三部分构成：
+          </p>
+          <ul>
+            <li><strong>平衡方程</strong>：应力分量之间满足静力平衡（3 个方程）。</li>
+            <li><strong>几何方程</strong>：应变由位移的导数表示（6 个方程）。</li>
+            <li><strong>本构方程</strong>：应力与应变之间的关系（6 个方程）。</li>
+          </ul>
+          <p>
+            未知量：3 个位移分量 + 6 个应力分量 + 6 个应变分量 = <strong>15 个</strong>，
+            方程数也是 15 个。原则上可以求解，但除了少数特殊情况外，
+            解析求解极为困难——这也是有限元方法诞生的根本原因。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>四个基本假设</strong>：连续性、完全弹性、均匀各向同性、小变形。
+              弹性力学的全部理论都建立在这四条之上。
+              超出小变形假定后需要引入几何非线性，超出完全弹性后进入塑性力学或粘弹性理论。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="stress">
+          <h2><span class="num">01</span>应力分析</h2>
+
+          <h3>应力张量</h3>
+          <p>
+            弹性体内一点的应力状态由二阶对称张量 $\boldsymbol{\sigma}$ 描述，
+            共 6 个独立分量：
+          </p>
+
+          $$ \boldsymbol{\sigma} = \begin{bmatrix}
+             \sigma_x & \tau_{xy} & \tau_{xz} \\
+             \tau_{xy} & \sigma_y & \tau_{yz} \\
+             \tau_{xz} & \tau_{yz} & \sigma_z
+             \end{bmatrix} $$
+
+          <p>
+            由<strong>切应力互等定理</strong> $\tau_{xy} = \tau_{yx}$ 等可知，
+            9 个分量中只有 6 个独立。
+          </p>
+
+          <h3>平衡微分方程</h3>
+          <p>微元体在静力平衡条件下的方程（不计体力时）：</p>
+
+          $$ \begin{aligned}
+             \frac{\partial \sigma_x}{\partial x}
+             + \frac{\partial \tau_{xy}}{\partial y}
+             + \frac{\partial \tau_{xz}}{\partial z} + f_x &= 0 \\
+             \frac{\partial \tau_{xy}}{\partial x}
+             + \frac{\partial \sigma_y}{\partial y}
+             + \frac{\partial \tau_{yz}}{\partial z} + f_y &= 0 \\
+             \frac{\partial \tau_{xz}}{\partial x}
+             + \frac{\partial \tau_{yz}}{\partial y}
+             + \frac{\partial \sigma_z}{\partial z} + f_z &= 0
+             \end{aligned} $$
+
+          <p>
+            用张量指标符号写成：
+          </p>
+
+          $$ \sigma_{ij,j} + f_i = 0 $$
+
+          <p>
+            简洁的形式背后，是对 $i = 1, 2, 3$ 的三个方程。
+          </p>
+
+          <h3>主应力与应力不变量</h3>
+          <p>
+            任意一点的应力张量有三个主应力 $\sigma_1 \ge \sigma_2 \ge \sigma_3$，
+            它们是特征方程
+          </p>
+
+          $$ \sigma^3 - I_1 \sigma^2 + I_2 \sigma - I_3 = 0 $$
+
+          <p>的三个实根。其中三个<strong>应力不变量</strong>为：</p>
+
+          $$ \begin{aligned}
+             I_1 &= \sigma_x + \sigma_y + \sigma_z \\
+             I_2 &= \sigma_x \sigma_y + \sigma_y \sigma_z + \sigma_z \sigma_x
+                  - \tau_{xy}^2 - \tau_{yz}^2 - \tau_{xz}^2 \\
+             I_3 &= \det(\boldsymbol{\sigma})
+             \end{aligned} $$
+
+          <p>
+            与坐标系无关，是表征应力状态的基本量。
+          </p>
+
+          <h3>应力偏量与球张量</h3>
+          <p>
+            应力张量可以分解为<strong>球张量</strong>（静水压力）与<strong>偏张量</strong>（形状改变）：
+          </p>
+
+          $$ \sigma_{ij} = \sigma_m \delta_{ij} + s_{ij}, \qquad
+             \sigma_m = \frac{I_1}{3} $$
+
+          <p>
+            球张量只引起体积变化，偏张量只引起形状变化。
+            这一分解是塑性力学与材料强度理论的基础。
+          </p>
+
+          <h3>应力边界条件</h3>
+          <p>在物体表面，应力与面力 $\bar{T}_i$ 满足：</p>
+
+          $$ \sigma_{ij} n_j = \bar{T}_i $$
+
+          <p>
+            其中 $\mathbf{n}$ 为边界外法线单位向量。三个分量式分别是
+            三个方向的应力投影方程。
+          </p>
+        </section>
+
+        <section id="strain">
+          <h2><span class="num">02</span>应变分析</h2>
+
+          <h3>几何方程</h3>
+          <p>
+            小变形条件下，应变与位移的关系为：
+          </p>
+
+          $$ \begin{aligned}
+             \varepsilon_x &= \frac{\partial u}{\partial x}, &
+             \gamma_{xy} &= \frac{\partial u}{\partial y} + \frac{\partial v}{\partial x} \\
+             \varepsilon_y &= \frac{\partial v}{\partial y}, &
+             \gamma_{yz} &= \frac{\partial v}{\partial z} + \frac{\partial w}{\partial y} \\
+             \varepsilon_z &= \frac{\partial w}{\partial z}, &
+             \gamma_{xz} &= \frac{\partial w}{\partial x} + \frac{\partial u}{\partial z}
+             \end{aligned} $$
+
+          <p>张量指标形式：</p>
+
+          $$ \varepsilon_{ij} = \frac{1}{2} \left( \frac{\partial u_i}{\partial x_j}
+             + \frac{\partial u_j}{\partial x_i} \right) $$
+
+          <h3>应变协调方程</h3>
+          <p>
+            应变分量之间必须满足一定的相容条件，否则无法对应一个连续位移场。
+            这是<strong>Saint-Venant 协调方程</strong>：
+          </p>
+
+          $$ \begin{aligned}
+             \frac{\partial^2 \varepsilon_x}{\partial y^2}
+             + \frac{\partial^2 \varepsilon_y}{\partial x^2}
+             &= \frac{\partial^2 \gamma_{xy}}{\partial x \partial y} \\
+             \frac{\partial^2 \varepsilon_y}{\partial z^2}
+             + \frac{\partial^2 \varepsilon_z}{\partial y^2}
+             &= \frac{\partial^2 \gamma_{yz}}{\partial y \partial z} \\
+             \frac{\partial^2 \varepsilon_z}{\partial x^2}
+             + \frac{\partial^2 \varepsilon_x}{\partial z^2}
+             &= \frac{\partial^2 \gamma_{xz}}{\partial x \partial z}
+             \end{aligned} $$
+
+          <p>外加三个类似的混合偏导方程，共 6 个。</p>
+
+          <h3>主应变与体积应变</h3>
+          <p>
+            与应力类似，应变也有主应变与应变不变量。
+            体积应变（体积膨胀率）为：
+          </p>
+
+          $$ \theta = \varepsilon_x + \varepsilon_y + \varepsilon_z
+                   = \varepsilon_{ii} $$
+
+          <p>
+            弹性体中小变形条件下，$\theta$ 等于单位体积的变化量。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>工程应变 vs 真实应变</strong>：小变形时两者接近；
+              大变形时应变定义要重新选择。工程应变 $\varepsilon = \Delta l / l_0$，
+              真实应变（对数应变）$\varepsilon = \ln(l / l_0)$。
+              弹性力学默认小变形，使用工程应变。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="constitutive">
+          <h2><span class="num">03</span>本构方程</h2>
+
+          <h3>广义胡克定律</h3>
+          <p>
+            各向同性线弹性材料的应力应变关系为：
+          </p>
+
+          $$ \begin{aligned}
+             \varepsilon_x &= \frac{1}{E} \left[ \sigma_x - \nu (\sigma_y + \sigma_z) \right], &
+             \gamma_{xy} &= \frac{\tau_{xy}}{G} \\
+             \varepsilon_y &= \frac{1}{E} \left[ \sigma_y - \nu (\sigma_z + \sigma_x) \right], &
+             \gamma_{yz} &= \frac{\tau_{yz}}{G} \\
+             \varepsilon_z &= \frac{1}{E} \left[ \sigma_z - \nu (\sigma_x + \sigma_y) \right], &
+             \gamma_{xz} &= \frac{\tau_{xz}}{G}
+             \end{aligned} $$
+
+          <p>
+            用矩阵形式表示：
+          </p>
+
+          $$ \boldsymbol{\varepsilon} = \mathbf{C} \boldsymbol{\sigma},
+             \qquad \boldsymbol{\sigma} = \mathbf{D} \boldsymbol{\varepsilon} $$
+
+          <p>
+            $\mathbf{D} = \mathbf{C}^{-1}$ 为<strong>弹性矩阵</strong>，
+            各向同性材料下由 $E$ 与 $\nu$ 完全确定。
+          </p>
+
+          <h3>弹性常数关系</h3>
+          <p>四个弹性常数 $E$、$\nu$、$G$、$K$ 中只有两个独立：</p>
+
+          $$ G = \frac{E}{2(1+\nu)}, \qquad
+             K = \frac{E}{3(1-2\nu)}, \qquad
+             \lambda = \frac{E \nu}{(1+\nu)(1-2\nu)} $$
+
+          <p>
+            其中 $\lambda$ 为拉梅常数。体积模量 $K$ 与泊松比 $\nu$ 之间：
+            当 $\nu \to 0.5$ 时 $K \to \infty$，材料接近不可压缩（如橡胶、饱和土）。
+          </p>
+
+          <h3>用应变表示应力</h3>
+          <p>反过来用应变表示应力：</p>
+
+          $$ \sigma_{ij} = 2G \varepsilon_{ij} + \lambda \theta \delta_{ij} $$
+
+          <p>
+            其中 $\theta = \varepsilon_{kk}$ 为体积应变。
+            这一形式在有限元实现中极为常见。
+          </p>
+
+          <h3>弹性矩阵（平面应力）</h3>
+          <p>平面应力条件下（$\sigma_z = 0$），弹性矩阵为：</p>
+
+          $$ \mathbf{D} = \frac{E}{1 - \nu^2} \begin{bmatrix}
+             1 & \nu & 0 \\
+             \nu & 1 & 0 \\
+             0 & 0 & \dfrac{1 - \nu}{2}
+             \end{bmatrix} $$
+
+          <p>平面应变下只需把 $E$ 换为 $E / (1 - \nu^2)$，$\nu$ 换为 $\nu / (1 - \nu)$。</p>
+        </section>
+
+        <section id="plane">
+          <h2><span class="num">04</span>平面问题</h2>
+
+          <h3>两种平面问题</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>假设</th><th>典型场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>平面应力</strong></td>
+                  <td>$\sigma_z = 0$，$\tau_{xz} = \tau_{yz} = 0$</td>
+                  <td>薄板、薄膜</td>
+                </tr>
+                <tr>
+                  <td><strong>平面应变</strong></td>
+                  <td>$\varepsilon_z = 0$，$\gamma_{xz} = \gamma_{yz} = 0$</td>
+                  <td>长坝、隧道、挡土墙</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            两种问题的数学形式完全相同，只需把弹性常数做相应替换。
+            因此平面问题的解法一旦建立，可以同时服务两个场景。
+          </p>
+
+          <h3>基本方程（平面问题）</h3>
+          <p>未知量减少为 8 个（$\sigma_x$、$\sigma_y$、$\tau_{xy}$、$u$、$v$、$\varepsilon_x$、$\varepsilon_y$、$\gamma_{xy}$）。方程为：</p>
+
+          <ul>
+            <li>平衡方程：2 个</li>
+            <li>几何方程：3 个</li>
+            <li>本构方程：3 个</li>
+          </ul>
+
+          <p>常用两种解法：</p>
+
+          <h3>位移法</h3>
+          <p>
+            以 $u$、$v$ 为基本未知量，代入几何方程与本构方程后，
+            平衡方程化为<strong>拉梅-纳维方程</strong>：
+          </p>
+
+          $$ G \nabla^2 u + (\lambda + G) \frac{\partial \theta}{\partial x} + f_x = 0 $$
+
+          $$ G \nabla^2 v + (\lambda + G) \frac{\partial \theta}{\partial y} + f_y = 0 $$
+
+          <p>
+            这是两个耦合的二阶偏微分方程。
+            当体力为零时，可化为重调和方程。
+          </p>
+
+          <h3>应力函数法</h3>
+          <p>
+            引入<strong>Airy 应力函数</strong> $\varphi(x, y)$，令：
+          </p>
+
+          $$ \sigma_x = \frac{\partial^2 \varphi}{\partial y^2}, \qquad
+             \sigma_y = \frac{\partial^2 \varphi}{\partial x^2}, \qquad
+             \tau_{xy} = -\frac{\partial^2 \varphi}{\partial x \partial y} $$
+
+          <p>
+            这样平衡方程自动满足，应变协调条件化为<strong>双调和方程</strong>：
+          </p>
+
+          $$ \nabla^4 \varphi = \frac{\partial^4 \varphi}{\partial x^4}
+             + 2 \frac{\partial^4 \varphi}{\partial x^2 \partial y^2}
+             + \frac{\partial^4 \varphi}{\partial y^4} = 0 $$
+
+          <p>
+            这是弹性力学平面问题中最常用的解法，适用于边界条件简单的矩形、
+            圆形等区域。具体求解时通常用<strong>多项式</strong>构造 $\varphi$，
+            例如：
+          </p>
+
+          <ul>
+            <li>$\varphi = a x^2$：均匀拉压。</li>
+            <li>$\varphi = b x y$：纯剪切。</li>
+            <li>$\varphi = c y^3$：纯弯曲梁。</li>
+            <li>$\varphi = d x y^3$：悬臂梁受端部集中力。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从材料力学到弹性力学</strong>：材料力学中梁的弯曲应力
+              $\sigma = My/I$，用弹性力学的应力函数法可以严格导出；
+              而弹性力学还能量化剪应力的精确分布、边界效应的衰减长度
+              （Saint-Venant 原理）等材料力学无法给出细节的问题。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="polar">
+          <h2><span class="num">05</span>极坐标解法</h2>
+
+          <h3>为什么用极坐标</h3>
+          <p>
+            对圆形、环形、扇形或含孔洞的问题（圆孔应力集中、
+            厚壁圆筒、楔形体、半平面受集中力等），
+            极坐标下的方程更自然、边界条件更简单。
+          </p>
+
+          <h3>平衡方程（极坐标）</h3>
+
+          $$ \begin{aligned}
+             \frac{\partial \sigma_r}{\partial r}
+             + \frac{1}{r} \frac{\partial \tau_{r\theta}}{\partial \theta}
+             + \frac{\sigma_r - \sigma_\theta}{r} + f_r &= 0 \\
+             \frac{\partial \tau_{r\theta}}{\partial r}
+             + \frac{1}{r} \frac{\partial \sigma_\theta}{\partial \theta}
+             + \frac{2 \tau_{r\theta}}{r} + f_\theta &= 0
+             \end{aligned} $$
+
+          <h3>几何方程（极坐标）</h3>
+
+          $$ \varepsilon_r = \frac{\partial u_r}{\partial r}, \qquad
+             \varepsilon_\theta = \frac{u_r}{r} + \frac{1}{r} \frac{\partial u_\theta}{\partial \theta}, \qquad
+             \gamma_{r\theta} = \frac{1}{r} \frac{\partial u_r}{\partial \theta}
+             + \frac{\partial u_\theta}{\partial r} - \frac{u_\theta}{r} $$
+
+          <h3>应力函数的双调和方程（极坐标）</h3>
+
+          $$ \nabla^4 \varphi = \left( \frac{\partial^2}{\partial r^2}
+             + \frac{1}{r} \frac{\partial}{\partial r}
+             + \frac{1}{r^2} \frac{\partial^2}{\partial \theta^2} \right)^2 \varphi = 0 $$
+
+          <h3>轴对称问题</h3>
+          <p>
+            当问题关于 $z$ 轴旋转对称时，$\varphi = \varphi(r)$，
+            双调和方程化为欧拉方程。其通解为：
+          </p>
+
+          $$ \varphi(r) = A \ln r + B r^2 \ln r + C r^2 + D $$
+
+          <p>由此得到应力分量：</p>
+
+          $$ \sigma_r = \frac{A}{r^2} + B (1 + 2 \ln r) + 2C $$
+
+          $$ \sigma_\theta = -\frac{A}{r^2} + B (3 + 2 \ln r) + 2C $$
+
+          <h3>经典应用：厚壁圆筒</h3>
+          <p>
+            内压 $p_i$、外压 $p_o$ 的厚壁圆筒是轴对称问题的典型。
+            用 Lamé 解：
+          </p>
+
+          $$ \sigma_r = \frac{a^2 p_i - b^2 p_o}{b^2 - a^2}
+             - \frac{(p_i - p_o) a^2 b^2}{r^2 (b^2 - a^2)} $$
+
+          $$ \sigma_\theta = \frac{a^2 p_i - b^2 p_o}{b^2 - a^2}
+             + \frac{(p_i - p_o) a^2 b^2}{r^2 (b^2 - a^2)} $$
+
+          <p>
+            其中 $a$、$b$ 分别为内外半径。内壁处切向应力最大：
+          </p>
+
+          $$ \sigma_{\theta,\max} = \frac{p_i (a^2 + b^2)}{b^2 - a^2} $$
+
+          <p>
+            这一结果用于压力容器、隧道衬砌、地下管道的设计。
+          </p>
+
+          <h3>Python 示例：厚壁圆筒应力</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>thick_cylinder.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+厚壁圆筒的 Lamé 解
+计算内压 p_i、外压 p_o 作用下沿壁厚的应力分布
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def lame_solution(r, a, b, p_i, p_o):
+    """
+    厚壁圆筒应力（平面应变/平面应力均可，弹性常数不影响应力分布）
+    r  : 半径数组
+    a  : 内半径
+    b  : 外半径
+    p_i: 内压
+    p_o: 外压
+    """
+    denom = b**2 - a**2
+    sigma_r = (a**2 * p_i - b**2 * p_o) / denom \
+              - (p_i - p_o) * a**2 * b**2 / (r**2 * denom)
+    sigma_t = (a**2 * p_i - b**2 * p_o) / denom \
+              + (p_i - p_o) * a**2 * b**2 / (r**2 * denom)
+    return sigma_r, sigma_t
+
+
+def check_equilibrium(a, b, p_i, p_o):
+    """数值积分校核径向平衡"""
+    r = np.linspace(a, b, 4000)
+    sr, st = lame_solution(r, a, b, p_i, p_o)
+    # 平衡条件：d(sigma_r)/dr + (sigma_r - sigma_t)/r = 0
+    residual = np.gradient(sr, r) + (sr - st) / r
+    return np.max(np.abs(residual))
+
+
+if __name__ == "__main__":
+    # 示例：压力容器，内压 10 MPa，外压 0
+    a, b = 0.10, 0.15        # 内半径 100 mm，外半径 150 mm
+    p_i, p_o = 10e6, 0.0
+
+    r = np.linspace(a, b, 200)
+    sigma_r, sigma_t = lame_solution(r, a, b, p_i, p_o)
+
+    print(f"内壁处：")
+    print(f"  sigma_r = {sigma_r[0] / 1e6:8.3f} MPa  (应等于 -p_i = {-p_i/1e6})")
+    print(f"  sigma_t = {sigma_t[0] / 1e6:8.3f} MPa")
+    print(f"外壁处：")
+    print(f"  sigma_r = {sigma_r[-1] / 1e6:8.3f} MPa  (应等于 -p_o = {-p_o/1e6})")
+    print(f"  sigma_t = {sigma_t[-1] / 1e6:8.3f} MPa")
+
+    max_res = check_equilibrium(a, b, p_i, p_o)
+    print(f"\n平衡方程残差最大值: {max_res:.3e}")
+
+    plt.figure(figsize=(9, 4))
+    plt.plot(r, sigma_r / 1e6, label=r"$\sigma_r$")
+    plt.plot(r, sigma_t / 1e6, label=r"$\sigma_\theta$")
+    plt.axhline(0, color="gray", linewidth=0.8, alpha=0.5)
+    plt.xlabel("半径 r / m")
+    plt.ylabel("应力 / MPa")
+    plt.title("厚壁圆筒沿壁厚的应力分布")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+        </section>
+
+        <section id="space">
+          <h2><span class="num">06</span>空间问题</h2>
+
+          <h3>三维问题的困难</h3>
+          <p>
+            空间问题是弹性力学的完整形式：
+            15 个未知量、15 个方程，边界条件为三维曲面。
+            只有少数特殊问题有解析解——例如半空间受集中力
+            （Boussinesq 问题）、两球接触（Hertz 接触）。
+          </p>
+
+          <h3>位移法（拉梅-纳维方程）</h3>
+          <p>
+            用位移 $u, v, w$ 作为未知量，将应力用位移表示并代入平衡方程：
+          </p>
+
+          $$ G \nabla^2 u + (\lambda + G) \frac{\partial \theta}{\partial x} + f_x = 0 $$
+
+          $$ G \nabla^2 v + (\lambda + G) \frac{\partial \theta}{\partial y} + f_y = 0 $$
+
+          $$ G \nabla^2 w + (\lambda + G) \frac{\partial \theta}{\partial z} + f_z = 0 $$
+
+          <p>
+            位移法适合边界条件以位移为主的问题，
+            也是有限元方法的直接基础。
+          </p>
+
+          <h3>应力法（Beltrami-Michell 方程）</h3>
+          <p>
+            用应力作为未知量，代入协调条件并利用平衡方程，
+            得到 Beltrami-Michell 方程：
+          </p>
+
+          $$ \nabla^2 \sigma_{ij} + \frac{1}{1 + \nu} \theta_{,ij} = 0
+             \quad \text{（无体力时）} $$
+
+          <p>
+            应力法的优势是应力边界条件直接满足，
+            但方程阶次高、数量多，只在少数问题中使用。
+          </p>
+
+          <h3>Boussinesq 问题</h3>
+          <p>
+            弹性半空间表面受竖向集中力 $P$ 作用时的解析解：
+          </p>
+
+          $$ \sigma_z = \frac{3 P z^3}{2 \pi (r^2 + z^2)^{5/2}} $$
+
+          <p>
+            其中 $r$ 为距力作用点的水平距离，$z$ 为深度。
+            这一解是地基沉降计算的理论基础——
+            通过积分可以求得任意分布荷载下地基的应力分布。
+          </p>
+        </section>
+
+        <section id="energy">
+          <h2><span class="num">07</span>能量原理</h2>
+
+          <h3>应变能与余应变能</h3>
+          <p>线弹性体的应变能密度为：</p>
+
+          $$ U_0 = \frac{1}{2} \sigma_{ij} \varepsilon_{ij}
+                 = \frac{1}{2} \boldsymbol{\sigma}^T \boldsymbol{\varepsilon} $$
+
+          <p>总应变能为：</p>
+
+          $$ U = \iiint_V U_0 \, dV $$
+
+          <p>
+            线弹性下<strong>应变能等于余应变能</strong>（应力-应变曲线下的三角形面积相同）。
+          </p>
+
+          <h3>虚功原理</h3>
+          <p>
+            弹性体处于平衡状态，当施加任意虚位移 $\delta \mathbf{u}$ 时，
+            外力所做的虚功等于内力所做的虚功：
+          </p>
+
+          $$ \int_V \mathbf{f} \cdot \delta \mathbf{u} \, dV
+             + \int_S \mathbf{T} \cdot \delta \mathbf{u} \, dS
+             = \int_V \boldsymbol{\sigma} : \delta \boldsymbol{\varepsilon} \, dV $$
+
+          <p>
+            这一原理是弹性力学中最普遍的工具：
+            结构力学中的位移计算、有限元中的刚度矩阵推导都建立在它之上。
+          </p>
+
+          <h3>最小势能原理</h3>
+          <p>
+            在所有满足位移边界条件的可能位移场中，
+            真实的位移场使<strong>总势能取最小值</strong>：
+          </p>
+
+          $$ \Pi = U - W_e \quad \Rightarrow \quad \delta \Pi = 0 $$
+
+          <p>
+            其中 $W_e$ 为外力功。这是位移型有限元的理论基础。
+          </p>
+
+          <h3>最小余能原理</h3>
+          <p>
+            在所有满足平衡方程与应力边界条件的可能应力场中，
+            真实的应力场使<strong>总余能取最小值</strong>：
+          </p>
+
+          $$ \Pi^c = U^c - W_e^c \quad \Rightarrow \quad \delta \Pi^c = 0 $$
+
+          <p>
+            这是应力型有限元的理论基础，也是力法/柔度法的能量形式。
+          </p>
+
+          <h3>Rayleigh-Ritz 法</h3>
+          <p>
+            用有限个试探函数近似真实位移场，通过最小势能原理确定待定系数。
+            这是有限元的直接前驱——把试探函数的定义域限制在每个单元内部，
+            就是有限元方法。
+          </p>
+
+          $$ u(x) \approx \sum_{i=1}^{n} a_i \phi_i(x)
+             \quad \Rightarrow \quad
+             \frac{\partial \Pi}{\partial a_i} = 0, \quad i = 1, \ldots, n $$
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从能量原理到有限元</strong>：Rayleigh-Ritz 法通过
+              "假设全局近似函数 → 最小化能量 → 求系数"获得近似解。
+              有限元把这一过程<strong>局部化</strong>：
+              在每个单元内用简单函数（线性/二次）近似，
+              拼装后得到整体方程 $\mathbf{K}\mathbf{u} = \mathbf{F}$。
+              这就是有限元方法的全部理论来源。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="fem">
+          <h2><span class="num">08</span>到有限元</h2>
+
+          <h3>从弹性力学到有限元</h3>
+          <p>
+            弹性力学提供了偏微分方程与边界条件，
+            但解析求解只在简单情况下可行。
+            有限元方法的思路是：
+            <strong>把连续区域离散化，用有限个简单单元近似整个区域</strong>，
+            从而把偏微分方程转化为代数方程组。
+          </p>
+
+          <h3>核心步骤</h3>
+          <ol class="steps">
+            <li><strong>区域离散</strong>：把求解域划分为有限个单元（三角形、四边形、四面体等）。</li>
+            <li><strong>单元插值</strong>：在每个单元内用节点位移的插值函数近似位移场。</li>
+            <li><strong>单元分析</strong>：由虚功原理或最小势能原理建立单元刚度矩阵。</li>
+            <li><strong>整体组装</strong>：把所有单元刚度矩阵叠加为整体刚度矩阵。</li>
+            <li><strong>施加边界条件</strong>：约束已知位移或施加已知面力。</li>
+            <li><strong>求解方程</strong>：$\mathbf{K}\mathbf{u} = \mathbf{F}$，得到节点位移。</li>
+            <li><strong>后处理</strong>：由位移求应变、应力、内力，绘图输出。</li>
+          </ol>
+
+          <h3>三角形常应变单元</h3>
+          <p>
+            最简单的平面单元是 3 节点三角形单元。
+            位移在单元内线性分布：
+          </p>
+
+          $$ u(x, y) = N_1 u_1 + N_2 u_2 + N_3 u_3 $$
+
+          $$ v(x, y) = N_1 v_1 + N_2 v_2 + N_3 v_3 $$
+
+          <p>
+            其中 $N_i$ 为形函数，由节点坐标确定。
+            应变矩阵 $\mathbf{B}$ 为常数（因此称为常应变单元），
+            单元刚度矩阵为：
+          </p>
+
+          $$ \mathbf{k}^e = \int_{\Omega_e} \mathbf{B}^T \mathbf{D} \mathbf{B} \, dV
+                         = t A_e \mathbf{B}^T \mathbf{D} \mathbf{B} $$
+
+          <p>
+            其中 $t$ 为厚度，$A_e$ 为单元面积。
+            三角形单元简单但精度低，实际工程多使用四边形或高阶单元。
+          </p>
+
+          <h3>Python 示例：常应变三角形单元</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>cst_element.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+常应变三角形单元（CST）的刚度矩阵与简单算例
+演示从弹性力学到有限元的核心思路
+"""
+import numpy as np
+
+
+def cst_stiffness(E, nu, t, coords):
+    """
+    3 节点三角形常应变单元的刚度矩阵
+    coords : 3×2 数组，节点坐标 [[x1,y1],[x2,y2],[x3,y3]]
+    E      : 弹性模量
+    nu     : 泊松比
+    t      : 厚度（平面应力）
+    返回 6×6 单元刚度矩阵
+    """
+    x1, y1 = coords[0]
+    x2, y2 = coords[1]
+    x3, y3 = coords[2]
+
+    # 面积
+    A = 0.5 * ((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1))
+    if A <= 0:
+        raise ValueError("节点顺序必须为逆时针")
+
+    # 形函数对坐标的偏导（常数）
+    b1 = y2 - y3;  c1 = x3 - x2
+    b2 = y3 - y1;  c2 = x1 - x3
+    b3 = y1 - y2;  c3 = x2 - x1
+
+    # 应变矩阵 B（3×6）
+    B = (1.0 / (2 * A)) * np.array([
+        [b1, 0,  b2, 0,  b3, 0],
+        [0,  c1, 0,  c2, 0,  c3],
+        [c1, b1, c2, b2, c3, b3],
+    ])
+
+    # 平面应力弹性矩阵 D（3×3）
+    D = (E / (1 - nu**2)) * np.array([
+        [1,  nu, 0],
+        [nu, 1,  0],
+        [0,  0,  (1 - nu) / 2],
+    ])
+
+    # 单元刚度矩阵
+    k = t * A * (B.T @ D @ B)
+    return k, B, D, A
+
+
+def demo_patch_test():
+    """简单算例：一个方形区域划分为两个三角形单元，施加均匀拉伸"""
+    # 方形：边长 1，节点 1-4，两个三角形单元
+    nodes = np.array([
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ])
+    # 单元 1: 节点 1-2-3，单元 2: 节点 1-3-4（逆时针）
+    elements = [(0, 1, 2), (0, 2, 3)]
+
+    E, nu, t = 200e9, 0.3, 0.01
+    n_dof = 2 * len(nodes)
+    K = np.zeros((n_dof, n_dof))
+
+    for elem in elements:
+        coords = nodes[list(elem)]
+        k, _, _, _ = cst_stiffness(E, nu, t, coords)
+        dofs = [2 * elem[0], 2 * elem[0] + 1,
+                2 * elem[1], 2 * elem[1] + 1,
+                2 * elem[2], 2 * elem[2] + 1]
+        for a in range(6):
+            for b in range(6):
+                K[dofs[a], dofs[b]] += k[a, b]
+
+    # 边界条件：左边（节点 1、4）固定 x 方向，左下角固定 y 方向
+    fixed = {
+        0: 0.0,          # 节点1 u
+        1: 0.0,          # 节点1 v
+        6: 0.0,          # 节点4 u
+    }
+    free = [d for d in range(n_dof) if d not in fixed]
+
+    # 荷载：右边两个节点各施加 1e6 N 的 x 向力
+    F = np.zeros(n_dof)
+    F[2] = 1e6       # 节点2 u
+    F[4] = 1e6       # 节点3 u
+
+    K_ff = K[np.ix_(free, free)]
+    F_f = F[free]
+    u = np.zeros(n_dof)
+    for d, val in fixed.items():
+        u[d] = val
+    u[free] = np.linalg.solve(K_ff, F_f)
+
+    # 校核：右侧总拉力应为 2e6 N，方形横截面积 t×1
+    # 期望平均应力 σ_x ≈ F_total / (t × 1) = 2e6 / 0.01 = 2e8 Pa
+    # 期望应变 ε_x ≈ σ_x / E = 2e8 / 2e11 = 1e-3
+    print(f"节点位移：")
+    for i, (x, y) in enumerate(nodes):
+        print(f"  节点{i+1} ({x:.0f},{y:.0f}): u = {u[2*i]:.6e}, v = {u[2*i+1]:.6e}")
+
+    u2x = u[2]
+    strain_x = u2x / 1.0
+    print(f"\n右边平均应变 ε_x = {strain_x:.6e}")
+    print(f"理论值 σ_x / E = 2e8 / 2e11 = {2e8 / 2e11:.6e}")
+
+
+if __name__ == "__main__":
+    demo_patch_test()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从杆系到连续体</strong>：矩阵位移法用梁单元分析杆系；
+              有限元用三角形/四边形/四面体单元分析连续体。
+              两者的理论框架完全一致——都是"离散化 → 单元分析 → 组装 → 求解"。
+              只是单元的形函数从线性/三次多项式变成了二维/三维插值。
+              这就是为什么学完结构力学再学有限元，会感觉思路一脉相承。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>应力分析</strong>：应力为二阶对称张量，6 个独立分量；平衡方程 3 个；主应力与应力不变量反映本质。</li>
+              <li><strong>应变分析</strong>：几何方程把应变表示为位移导数；Saint-Venant 协调方程是应变可积的必要条件。</li>
+              <li><strong>本构方程</strong>：广义胡克定律联系应力与应变，各向同性材料只需两个独立弹性常数。</li>
+              <li><strong>平面问题</strong>：平面应力与平面应变数学形式一致；Airy 应力函数化为双调和方程。</li>
+              <li><strong>极坐标解法</strong>：适合圆形、环形问题；轴对称问题有解析解；厚壁圆筒用 Lamé 解。</li>
+              <li><strong>空间问题</strong>：位移法（拉梅-纳维）适合数值实现；Boussinesq 解是地基沉降计算基础。</li>
+              <li><strong>能量原理</strong>：虚功原理、最小势能原理、最小余能原理；Rayleigh-Ritz 法是有限元前身。</li>
+              <li><strong>有限元</strong>：把区域离散化，用简单单元近似连续体，得到 $\mathbf{K}\mathbf{u} = \mathbf{F}$。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>徐芝纶，《弹性力学》— 国内经典教材，理论与例题并重</li>
+            <li>Timoshenko &amp; Goodier, <em>Theory of Elasticity</em> — 大师经典</li>
+            <li>Landau &amp; Lifshitz, <em>Theory of Elasticity</em> — 理论物理视角</li>
+            <li>Sokolnikoff, <em>Mathematical Theory of Elasticity</em> — 数学严谨</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 从弹性力学到有限元</li>
+            <li>Zienkiewicz &amp; Taylor, <em>The Finite Element Method</em> — 有限元权威著作</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

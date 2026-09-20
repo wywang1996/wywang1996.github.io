@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字信号处理 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="dsp">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner dsp-nav">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#sampling">一、采样定理</a></li>
+      <li><a href="#ztransform">二、Z 变换</a></li>
+      <li><a href="#fft">三、DFT 与 FFT</a></li>
+      <li><a href="#filter">四、数字滤波器设计</a></li>
+      <li><a href="#window">五、窗函数与频谱泄漏</a></li>
+      <li><a href="#summary">六、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 数字信号处理
+        </div>
+        <h1>数字信号处理</h1>
+        <p class="lead">
+          从采样、变换、频域分析到数字滤波器设计，梳理地震波处理中最常用的一套工具链，
+          也是理解强震记录预处理、谱分析与波形反演的必备基础。
+        </p>
+        <div class="article-tags-inline">
+          <span>DSP</span>
+          <span>FFT</span>
+          <span>滤波</span>
+          <span class="blue">采样</span>
+          <span class="blue">信号处理</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <!-- ============ 引言 ============ -->
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            地震波是连续的地面运动，被数字地震仪以固定采样率离散化后，
+            成为一串按时间排列的数值。数字信号处理的目标，是在保持信息的前提下，
+            对这些数值进行变换、滤波、频谱分析和特征提取。
+          </p>
+          <p>
+            本笔记覆盖五个核心主题：<strong>采样定理</strong>决定离散化的上限，
+            <strong>Z 变换</strong>提供统一的分析框架，
+            <strong>DFT/FFT</strong>打通时域与频域，
+            <strong>滤波器设计</strong>实现频带选择，
+            <strong>窗函数</strong>解决截断引起的泄漏。
+          </p>
+        </section>
+
+        <!-- ============ 采样定理 ============ -->
+        <section id="sampling">
+          <h2><span class="num">01</span>采样定理</h2>
+
+          <h3>连续信号的离散化</h3>
+          <p>
+            以采样间隔 $\Delta t$（采样率 $f_s = 1/\Delta t$）对连续信号 $x(t)$ 采样，
+            得到离散序列 $x[n] = x(n \Delta t)$。要让离散信号无损地恢复原信号，必须满足
+            <strong>Nyquist 采样定理</strong>：
+          </p>
+
+          $$ f_s > 2 \, f_{\max} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            其中 $f_{\max}$ 为信号中最高频率成分，$f_s / 2$ 称为 Nyquist 频率
+          </p>
+
+          <h3>混叠与抗混叠滤波</h3>
+          <p>
+            如果信号中含有高于 $f_s/2$ 的频率成分，采样后会<strong>折叠</strong>到
+            低频区域，造成<strong>混叠（aliasing）</strong>。混叠一旦发生，无法通过后期处理消除。
+            因此采样前必须使用<strong>抗混叠低通滤波器</strong>，将高于 $f_s/2$ 的成分滤除。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>工程意义</strong>：地震仪采样率通常为 100 Hz 或 200 Hz，
+              对应 Nyquist 频率为 50 Hz 或 100 Hz。若原始信号包含更高频率成分，
+              仪器内部必须先做模拟抗混叠滤波，否则高频噪声会被折叠成假信号。</p>
+            </div>
+          </div>
+
+          <h3>降采样与升采样</h3>
+          <ul>
+            <li><strong>降采样（downsampling）</strong>：降低采样率。必须先低通滤波，否则混叠。地震数据常用 <em>decimate</em> 操作把 100 Hz 降到 20 Hz。</li>
+            <li><strong>升采样（upsampling）</strong>：提高采样率，通常通过插值或零填充加低通滤波实现。</li>
+          </ul>
+        </section>
+
+        <!-- ============ Z 变换 ============ -->
+        <section id="ztransform">
+          <h2><span class="num">02</span>Z 变换</h2>
+
+          <h3>定义</h3>
+          <p>
+            Z 变换是离散信号与系统的核心分析工具，把离散序列 $x[n]$ 映射到复平面上的函数 $X(z)$：
+          </p>
+
+          $$ X(z) = \sum_{n=-\infty}^{+\infty} x[n] \, z^{-n} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            其中 $z = e^{s \Delta t}$ 为复变量，单位圆 $z = e^{j\omega}$ 对应频率响应
+          </p>
+
+          <h3>与 DFT、拉普拉斯的关系</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>变换</th><th>变量</th><th>适用范围</th><th>关系</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>拉普拉斯变换</strong></td>
+                  <td>$s = \sigma + j\omega$</td>
+                  <td>连续信号</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>Z 变换</strong></td>
+                  <td>$z = e^{s\Delta t}$</td>
+                  <td>离散信号</td>
+                  <td>$s$ 平面左半 → $z$ 平面单位圆内</td>
+                </tr>
+                <tr>
+                  <td><strong>DFT</strong></td>
+                  <td>$z = e^{j2\pi k/N}$</td>
+                  <td>有限长序列</td>
+                  <td>Z 变换在单位圆上的等间隔采样</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>传递函数</h3>
+          <p>
+            离散线性时不变系统的传递函数 $H(z)$ 是输出与输入 Z 变换之比，
+            通常写成有理函数：
+          </p>
+
+          $$ H(z) = \frac{b_0 + b_1 z^{-1} + \cdots + b_M z^{-M}}{1 + a_1 z^{-1} + \cdots + a_N z^{-N}} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            极点位置决定稳定性：所有极点须在单位圆内
+          </p>
+        </section>
+
+        <!-- ============ DFT 与 FFT ============ -->
+        <section id="fft">
+          <h2><span class="num">03</span>DFT 与 FFT</h2>
+
+          <h3>离散傅里叶变换</h3>
+          <p>
+            有限长序列 $x[n]$（$n = 0, \ldots, N-1$）的 DFT 定义：
+          </p>
+
+          $$ X[k] = \sum_{n=0}^{N-1} x[n] \, e^{-j 2\pi k n / N} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $k = 0, 1, \ldots, N-1$，对应频率 $f_k = k / (N \Delta t)$
+          </p>
+
+          <h3>快速傅里叶变换</h3>
+          <p>
+            DFT 直接计算复杂度为 $O(N^2)$。<strong>FFT</strong> 通过分治策略将复杂度降到 $O(N \log N)$。
+            当 $N$ 为 2 的整数次幂时速度最快，因此常用<strong>补零（zero-padding）</strong>把长度凑到 2 的幂次。
+          </p>
+
+          <h3>主要性质</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>性质</th><th>时域</th><th>频域</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>线性</td><td>$a x + b y$</td><td>$a X + b Y$</td></tr>
+                <tr><td>时移</td><td>$x[n - n_0]$</td><td>$X[k] \, e^{-j2\pi k n_0 / N}$</td></tr>
+                <tr><td>频移</td><td>$x[n] \, e^{j2\pi k_0 n / N}$</td><td>$X[k - k_0]$</td></tr>
+                <tr><td>卷积</td><td>$x[n] * h[n]$</td><td>$X[k] \cdot H[k]$</td></tr>
+                <tr><td>帕塞瓦尔</td><td>$\sum |x[n]|^2$</td><td>$\frac{1}{N} \sum |X[k]|^2$</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 实现</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>fft_spectrum.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+            <pre><code class="language-python">import numpy as np
+
+def fft_spectrum(x, dt, detrend=True, window='hann'):
+    """计算单边幅值谱与功率谱"""
+    x = np.asarray(x, dtype=float)
+    if detrend:
+        x = x - np.mean(x)          # 去均值
+
+    N = len(x)
+    # 补零到 2 的幂次（可选，加快 FFT）
+    Nfft = 1 &lt;&lt; (N - 1).bit_length()
+
+    # 窗函数（减少频谱泄漏）
+    if window == 'hann':
+        w = np.hanning(N)
+    elif window == 'hamming':
+        w = np.hamming(N)
+    else:
+        w = np.ones(N)
+    xw = x * w
+
+    # FFT
+    X = np.fft.rfft(xw, n=Nfft)
+    freq = np.fft.rfftfreq(Nfft, d=dt)
+
+    # 单边幅值谱（考虑窗函数能量损失）
+    amp = 2.0 * np.abs(X) / (N * np.mean(w))
+    amp[0] /= 2.0                     # 直流分量不翻倍
+
+    # 功率谱密度
+    psd = (np.abs(X) ** 2) / (Nfft * dt) / np.mean(w ** 2)
+    psd[1:] *= 2.0
+
+    return freq, amp, psd</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>频域分辨率的取舍</strong>：$\Delta f = 1/(N \Delta t)$。补零能加密频域采样点，
+              但不会真正提高分辨率——真实分辨率由记录长度 $N \Delta t$ 决定。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 数字滤波器 ============ -->
+        <section id="filter">
+          <h2><span class="num">04</span>数字滤波器设计</h2>
+
+          <h3>IIR 与 FIR 对比</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>特点</th><th>优点</th><th>缺点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>IIR</strong></td>
+                  <td>无限脉冲响应，含反馈</td>
+                  <td>阶数低、计算快、过渡带陡</td>
+                  <td>非线性相位，可能不稳定</td>
+                </tr>
+                <tr>
+                  <td><strong>FIR</strong></td>
+                  <td>有限脉冲响应，无反馈</td>
+                  <td>严格线性相位、总是稳定</td>
+                  <td>阶数高、计算量大</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>常用设计方法</h3>
+          <ul>
+            <li><strong>巴特沃斯（Butterworth）</strong>：通带最平坦，适合地震波处理。</li>
+            <li><strong>切比雪夫（Chebyshev）</strong>：过渡带更陡，但有通带或阻带波纹。</li>
+            <li><strong>椭圆（Elliptic）</strong>：过渡带最陡，通带和阻带都有波纹。</li>
+            <li><strong>窗函数法（FIR）</strong>：用理想滤波器加窗截断，简单直观。</li>
+            <li><strong>最小二乘 / Parks-McClellan（FIR）</strong>：等波纹最优设计。</li>
+          </ul>
+
+          <h3>零相位滤波</h3>
+          <p>
+            地震波处理常要求<strong>零相位</strong>，避免波形偏移。
+            方法是<strong>前向-反向两次滤波（filtfilt）</strong>：
+            先正着滤一遍，再倒序滤一遍，两次的相位失真相互抵消。
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>zero_phase_filter.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+            <pre><code class="language-python">from scipy import signal
+import numpy as np
+
+def bandpass_zero_phase(x, dt, fmin, fmax, order=4):
+    """零相位带通滤波"""
+    fs = 1.0 / dt
+    nyq = fs / 2.0
+    # 归一化频率（0~1，Nyquist 为 1）
+    low = fmin / nyq
+    high = fmax / nyq
+    # 设计 Butterworth 带通
+    b, a = signal.butter(order, [low, high], btype='band')
+    # 前向-反向滤波，得到零相位
+    y = signal.filtfilt(b, a, x)
+    return y
+
+def check_stability(b, a):
+    """检查 IIR 滤波器稳定性（极点是否在单位圆内）"""
+    poles = np.roots(a)
+    return np.all(np.abs(poles) &lt; 1.0)</code></pre>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>常见坑</strong>：<code>filtfilt</code> 会引入额外的瞬态效应，
+              建议在信号两端做<strong>镜像延拓</strong>或<strong>斜坡延拓</strong>，
+              减少边缘失真。此外，滤波器阶数不要盲目调高，否则数值误差可能引发不稳定。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 窗函数 ============ -->
+        <section id="window">
+          <h2><span class="num">05</span>窗函数与频谱泄漏</h2>
+
+          <h3>泄漏的根源</h3>
+          <p>
+            对无限长信号做 DFT，实际上是对信号<strong>加了一个矩形窗</strong>。
+            如果信号频率不是 $\Delta f$ 的整数倍，能量会从主瓣“泄漏”到旁瓣，
+            造成频谱估计失真。
+          </p>
+
+          <h3>常用窗函数</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>窗函数</th><th>主瓣宽度</th><th>旁瓣衰减</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>矩形</strong></td><td>最窄</td><td>−13 dB</td><td>瞬态信号、脉冲</td></tr>
+                <tr><td><strong>汉宁（Hann）</strong></td><td>中等</td><td>−31 dB</td><td>通用随机信号</td></tr>
+                <tr><td><strong>汉明（Hamming）</strong></td><td>中等</td><td>−41 dB</td><td>窄带信号</td></tr>
+                <tr><td><strong>布莱克曼（Blackman）</strong></td><td>较宽</td><td>−57 dB</td><td>强动态范围</td></tr>
+                <tr><td><strong>凯泽（Kaiser）</strong></td><td>可调</td><td>可调</td><td>灵活设计</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>选择原则</h3>
+          <ul>
+            <li><strong>主瓣窄</strong>：分辨相邻频率成分能力强。</li>
+            <li><strong>旁瓣低</strong>：泄漏少，弱信号不易被强信号掩盖。</li>
+            <li>两者不能兼顾——<strong>主瓣越窄，旁瓣越高</strong>。</li>
+            <li>地震波分析常用 <strong>Hann</strong> 或 <strong>Hamming</strong> 窗。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>补零并不等于加窗</strong>：补零只是在频域插值，不会减少泄漏。
+              泄漏由截断长度和窗函数共同决定，与补零无关。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 小结 ============ -->
+        <section id="summary">
+          <h2><span class="num">06</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>采样定理</strong>：$f_s > 2 f_{\max}$，采样前必须抗混叠低通。</li>
+              <li><strong>Z 变换</strong>：离散系统的统一分析工具，单位圆上对应频响。</li>
+              <li><strong>DFT/FFT</strong>：时频桥梁，频域分辨率由记录长度决定。</li>
+              <li><strong>IIR vs FIR</strong>：IIR 高效但不保证线性相位；FIR 稳定且线性相位，但阶数高。</li>
+              <li><strong>零相位滤波</strong>：地震波处理的标准做法，用 <code>filtfilt</code> 实现。</li>
+              <li><strong>窗函数</strong>：抑制泄漏，Hann/Hamming 是通用选择。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Oppenheim &amp; Schafer, <em>Discrete-Time Signal Processing</em></li>
+            <li>Proakis &amp; Manolakis, <em>Digital Signal Processing</em></li>
+            <li>SciPy 官方文档：<code>scipy.signal</code> 模块</li>
+            <li>ObsPy 文档：地震波形处理实战</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+<script>
+/* =========================================================
+   dsp.html 本页独有脚本：进度条 / TOC 高亮 / 复制按钮
+   ========================================================= */
+(function () {
+  'use strict';
+
+  /* ---- 1. 阅读进度条 ---- */
+  var progress = document.getElementById('progress');
+  function updateProgress() {
+    if (!progress) return;
+    var h = document.documentElement;
+    var scrolled = h.scrollTop || document.body.scrollTop;
+    var total = h.scrollHeight - h.clientHeight;
+    progress.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  /* ---- 2. TOC 滚动高亮 ---- */
+  var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var sections = tocLinks.map(function (a) {
+    var id = a.getAttribute('href');
+    return id && id.charAt(0) === '#' ? document.querySelector(id) : null;
+  }).filter(Boolean);
+
+  function highlightToc() {
+    if (!sections.length) return;
+    var pos = window.scrollY + 120;
+    var current = null;
+    sections.forEach(function (sec) {
+      if (sec.offsetTop <= pos) current = sec.id;
+    });
+    tocLinks.forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', highlightToc, { passive: true });
+  highlightToc();
+
+  })();
+</script>
+
+</body>
+</html>

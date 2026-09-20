@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="ground-motion">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震动参数分析 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="ground-motion">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+
+      <li>
+        <a href="index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/>
+            <path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#overview" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4"/>
+            <path d="M12 8h.01"/>
+          </svg>
+          <span>概述</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#features" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>主要功能</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#f-amplitude">幅值参数</a></li>
+          <li><a href="#f-duration">持时参数</a></li>
+          <li><a href="#f-spectrum">反应谱</a></li>
+          <li><a href="#f-fourier">傅里叶谱与功率谱</a></li>
+          <li><a href="#f-husid">Husid 能量与累积</a></li>
+          <li><a href="#f-intensity">强度指标</a></li>
+          <li><a href="#f-ratio">频带与谱比</a></li>
+          <li><a href="#f-batch">批量对比与统计</a></li>
+          <li><a href="#f-fit">参数拟合与回归</a></li>
+          <li><a href="#f-viz">可视化与导出</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#workflow" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          <span>工作流程</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#method" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 4h6v6H4z"/>
+            <path d="M14 4h6v6h-6z"/>
+            <path d="M4 14h6v6H4z"/>
+            <path d="M14 14h6v6h-6z"/>
+          </svg>
+          <span>方法与公式</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#m-amplitude">幅值参数</a></li>
+          <li><a href="#m-duration">持时定义</a></li>
+          <li><a href="#m-spectrum">反应谱计算</a></li>
+          <li><a href="#m-fourier">傅里叶谱</a></li>
+          <li><a href="#m-arias">Arias 强度</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#code" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          <span>代码示例</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#data" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
+          </svg>
+          <span>数据与依赖</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#refs" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          </svg>
+          <span>参考资料</span>
+        </a>
+      </li>
+
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="index.html">主页</a> &nbsp;/&nbsp; 项目 &nbsp;/&nbsp; 地震动参数分析
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Project · Ground Motion</div>
+      <h1>地震动参数分析</h1>
+      <p class="lead">
+        从处理后的地震动时程中系统提取工程常用参数：幅值、持时、能量、
+        反应谱与傅里叶谱，支持多记录批量对比、参数统计与经验关系拟合，
+        为地震动特性研究、选波与规范校核提供定量依据。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">开发中</span>
+        <span class="pill">Python 3.10+</span>
+        <span class="pill">NumPy · SciPy</span>
+        <span class="pill blue">兼容 ObsPy</span>
+        <span class="pill">2026</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+      <p>
+        地震动参数是连接地震学与结构抗震设计的桥梁。一条加速度时程包含了丰富的
+        幅值、频率与持时信息，只有把其中关键特征量提取出来，才能定量地描述
+        “这条地震动有多强、哪个频段能量最集中、持续时间有多长”，
+        也才能与规范设计谱、场地分类和结构响应做对比。
+      </p>
+      <p>
+        本项目提供一套完整的地震动参数计算与分析工具：从单条记录的参数提取，
+        到多记录批量统计、参数间经验关系拟合与可视化，覆盖研究分析与工程设计两种
+        使用场景。所有参数均可溯源至对应的时程与计算公式。
+      </p>
+      <div class="callout">
+        <strong>参数与处理链绑定：</strong>同一记录经过不同的滤波与基线校正，得到的 PGA、持时与谱值
+        可能相差很大。本项目默认对处理后的时程计算参数，并保留处理日志，
+        使参数结果与预处理设置一一对应，避免“参数漂移”问题。
+      </div>
+    </section>
+
+    <!-- ===== 主要功能 ===== -->
+    <section id="features">
+      <div class="section-head">
+        <span class="section-label">Features</span>
+        <h2>主要功能</h2>
+      </div>
+
+      <div class="feature-list">
+
+        <article class="feature" id="f-amplitude">
+          <div class="feature-head">
+            <span class="feature-num">01</span>
+            <h3>幅值参数</h3>
+          </div>
+          <p>
+            提取加速度、速度与位移时程的峰值与均方根等幅值参数，
+            是描述地震动强度最直接、最常用的指标。
+          </p>
+          <ul class="feature-points">
+            <li>PGA、PGV、PGD 及出现时刻</li>
+            <li>加速度、速度、位移 RMS 与有效幅值</li>
+            <li>峰值比 PGV/PGA，反映频谱与持时特征</li>
+            <li>三分量分别计算与合成值（SRSS / 最大方向）</li>
+            <li>支持按方向、按分量、按事件分组统计</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-duration">
+          <div class="feature-head">
+            <span class="feature-num">02</span>
+            <h3>持时参数</h3>
+          </div>
+          <p>
+            计算地震动的持续时间，反映能量释放的延续程度，
+            对结构的累积损伤与滞回耗能有直接影响。
+          </p>
+          <ul class="feature-points">
+            <li>括号持时（Bracketed Duration）</li>
+            <li>显著持时（Significant Duration，5%–75%、5%–95%）</li>
+            <li>有效持时（基于 Arias 强度的 5%–95%）</li>
+            <li>能量持时与相对持时</li>
+            <li>多阈值持时曲线对比</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-spectrum">
+          <div class="feature-head">
+            <span class="feature-num">03</span>
+            <h3>反应谱</h3>
+          </div>
+          <p>
+            计算单自由度体系在给定阻尼比下的加速度、速度与位移反应谱，
+            是结构抗震设计与选波的核心依据。
+          </p>
+          <ul class="feature-points">
+            <li>线弹性反应谱（Newmark-β / Nigam-Jennings 方法）</li>
+            <li>阻尼比 0.5%–20% 可配置，默认 5%</li>
+            <li>同时输出 Sa、Sv、Sd 三条谱</li>
+            <li>伪谱与真实谱、谱速度放大系数 PSV/PGA</li>
+            <li>多记录谱叠加、均值谱与均值±标准差谱</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-fourier">
+          <div class="feature-head">
+            <span class="feature-num">04</span>
+            <h3>傅里叶谱与功率谱</h3>
+          </div>
+          <p>
+            给出频域描述，用于识别地震动的主频、频带宽度与场地放大特征，
+            也是人工合成地震动的输入。
+          </p>
+          <ul class="feature-points">
+            <li>FFT 幅度谱、相位谱与功率谱密度</li>
+            <li>窗函数选择（矩形、Hanning、Hamming）</li>
+            <li>平滑（Konno-Ohmachi 或滑动平均）</li>
+            <li>反应谱与傅里叶谱对比视图</li>
+            <li>频带能量占比统计（低/中/高频）</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-husid">
+          <div class="feature-head">
+            <span class="feature-num">05</span>
+            <h3>Husid 能量与累积曲线</h3>
+          </div>
+          <p>
+            计算累积平方加速度与归一化能量曲线，是持时定义与能量指标的基础，
+            也能直观看出能量在时间上的分布。
+          </p>
+          <ul class="feature-points">
+            <li>Husid 曲线（归一化累积平方加速度）</li>
+            <li>累积 Arias 强度曲线</li>
+            <li>5%、95% 能量点自动定位</li>
+            <li>能量释放速率与瞬时能量</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-intensity">
+          <div class="feature-head">
+            <span class="feature-num">06</span>
+            <h3>强度指标</h3>
+          </div>
+          <p>
+            计算多种反映破坏能力的强度指标，把幅值与持时统一到一个量中，
+            用于地震动强度分级与结构损伤评估。
+          </p>
+          <ul class="feature-points">
+            <li>Arias 强度 Ia 及其单位换算</li>
+            <li>特征强度 Ic（基于累积损伤）</li>
+            <li>有效峰值加速度 EPA、有效峰值速度 EPV</li>
+            <li>Housner 谱强度 SI</li>
+            <li>累积绝对速度 CAV 与 CAV5</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-ratio">
+          <div class="feature-head">
+            <span class="feature-num">07</span>
+            <h3>频带与谱比</h3>
+          </div>
+          <p>
+            通过不同频段的能量与幅值比，判断地震动的频率成分特征，
+            为场地效应与近断层特性分析提供依据。
+          </p>
+          <ul class="feature-points">
+            <li>低频 / 高频能量比（如 0.5–2 Hz 对 5–10 Hz）</li>
+            <li>加速度反应谱与速度反应谱之比</li>
+            <li>水平与竖向谱比（H/V）</li>
+            <li>不同场地、不同事件间谱比对比</li>
+            <li>主频与平均周期 Tm、Tp 提取</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-batch">
+          <div class="feature-head">
+            <span class="feature-num">08</span>
+            <h3>批量对比与统计</h3>
+          </div>
+          <p>
+            面向成百上千条记录，批量计算参数并做分组统计，
+            快速得到不同震级、距离、场地条件下的参数分布。
+          </p>
+          <ul class="feature-points">
+            <li>按事件、台站、场地类别、距离区间自动分组</li>
+            <li>输出各组的均值、中位数、标准差与分位数</li>
+            <li>参数散点图与箱线图</li>
+            <li>异常记录自动标记与排除</li>
+            <li>结果导出为 CSV / Excel / JSON</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-fit">
+          <div class="feature-head">
+            <span class="feature-num">09</span>
+            <h3>参数拟合与回归</h3>
+          </div>
+          <p>
+            在参数之间或参数与震级、距离、场地之间拟合经验关系，
+            用于预测与校核，也是 GMPE 建模的前置工作。
+          </p>
+          <ul class="feature-points">
+            <li>线性、幂律、对数与多参数回归</li>
+            <li>最小二乘与稳健回归（RANSAC）</li>
+            <li>残差分析与决定系数 R²、RMSE 报告</li>
+            <li>参数间相关系数矩阵</li>
+            <li>拟合曲线叠加于散点图之上</li>
+          </ul>
+        </article>
+
+        <article class="feature" id="f-viz">
+          <div class="feature-head">
+            <span class="feature-num">10</span>
+            <h3>可视化与导出</h3>
+          </div>
+          <p>
+            内置交互式图表与报告生成，便于结果复核、参数敏感性检查与论文制图。
+          </p>
+          <ul class="feature-points">
+            <li>时程、Husid 曲线、反应谱、傅里叶谱四联图</li>
+            <li>多记录叠加与曲线高亮对比</li>
+            <li>参数分布直方图、散点图与相关性热图</li>
+            <li>一键生成参数汇总表（CSV / LaTeX / Markdown）</li>
+            <li>导出高分辨率 PNG / PDF 与交互式 HTML 报告</li>
+          </ul>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== 工作流程 ===== -->
+    <section id="workflow">
+      <div class="section-head">
+        <span class="section-label">Workflow</span>
+        <h2>工作流程</h2>
+      </div>
+      <ol class="steps">
+        <li><b>读取处理后的时程</b>：从预处理结果读取加速度、速度、位移时程及元数据。</li>
+        <li><b>幅值参数计算</b>：提取 PGA、PGV、PGD、RMS 与峰值比。</li>
+        <li><b>能量与持时</b>：计算 Husid 曲线、Arias 强度，据此确定各定义下的持时。</li>
+        <li><b>反应谱计算</b>：对指定阻尼比与周期集合求解单自由度响应，输出 Sa、Sv、Sd。</li>
+        <li><b>频域分析</b>：计算傅里叶幅度谱与功率谱，做平滑与频带能量统计。</li>
+        <li><b>强度指标</b>：计算 Ic、EPA、CAV、Housner 谱强度等复合指标。</li>
+        <li><b>批量统计</b>：对多记录分组统计，输出参数分布与分位数。</li>
+        <li><b>拟合与对比</b>：在参数间做回归，识别主要影响因子。</li>
+        <li><b>出图与导出</b>：生成四联图、汇总表与报告，导出结果文件。</li>
+      </ol>
+    </section>
+
+    <!-- ===== 方法 ===== -->
+    <section id="method">
+      <div class="section-head">
+        <span class="section-label">Method</span>
+        <h2>方法与公式</h2>
+      </div>
+
+      <h3 class="sub" id="m-amplitude">幅值参数</h3>
+      <p>
+        峰值参数取绝对值最大，RMS 反映整条记录的平均能量水平。
+        峰值时刻对持时与基线校正具有参考意义。
+      </p>
+
+      $$ \mathrm{PGA} = \max_t |a(t)|, \qquad t_{\mathrm{PGA}} = \arg\max_t |a(t)| $$
+
+      $$ a_{\mathrm{RMS}} = \sqrt{\frac{1}{T} \int_0^T a^2(t) \, dt} $$
+
+      <p style="font-size:13px; color:var(--text-dim); margin-top:-6px;">
+        PGV/PGA 反映频谱特征：比值大 → 长周期成分相对丰富。
+      </p>
+
+      <h3 class="sub" id="m-duration">持时定义</h3>
+      <p>
+        括号持时基于幅值阈值（如 0.05g），显著持时与有效持时基于能量累积曲线。
+        实际分析中必须注明采用了哪种定义，否则不同来源的持时不可直接比较。
+      </p>
+
+      <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+        Husid 曲线：
+      </p>
+      $$ H(t) = \frac{\int_0^t a^2(\tau) \, d\tau}{\int_0^T a^2(\tau) \, d\tau} $$
+
+      <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+        显著持时 / 有效持时（5%–95%）：
+      </p>
+      $$ D_{5\text{–}95} = t(H = 0.95) - t(H = 0.05) $$
+
+      <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+        括号持时：
+      </p>
+      $$ D_{\mathrm{br}} = t_{\mathrm{last}}(|a| > a_0) - t_{\mathrm{first}}(|a| > a_0) $$
+
+      <h3 class="sub" id="m-spectrum">反应谱计算</h3>
+      <p>
+        对每个周期 $T$，求解单自由度体系在给定阻尼比 $\zeta$ 下的最大响应。
+        工程上广泛使用 Newmark-$\beta$ 或 Nigam-Jennings 逐步积分法，
+        后者无需逐步积分、效率更高。
+      </p>
+
+      $$ \ddot{x} + 2\zeta\omega\dot{x} + \omega^2 x = -a_g(t), \qquad \omega = \frac{2\pi}{T} $$
+
+      $$ S_d(T,\zeta) = \max_t |x(t)|, \quad S_v(T,\zeta) = \max_t |\dot{x}(t)|, \quad S_a(T,\zeta) = \omega^2 S_d $$
+
+      <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+        伪谱关系（小阻尼近似）：
+      </p>
+      $$ \mathrm{PSv} = \omega \, S_d, \qquad \mathrm{PSa} = \omega^2 \, S_d $$
+
+      <h3 class="sub" id="m-fourier">傅里叶谱</h3>
+      <p>
+        对时程做离散傅里叶变换得到频域幅度，通常需要加窗以抑制泄漏，
+        并可做 Konno-Ohmachi 平滑得到平滑谱。
+      </p>
+
+      $$ A(f_k) = \Delta t \left| \sum_{n=0}^{N-1} a_n \, w_n \, e^{-j 2\pi k n / N} \right| $$
+
+      <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+        单边幅度谱校正因子：
+      </p>
+      $$ A_{\mathrm{one\text{-}sided}} = \frac{2 \, A(f_k)}{N \, \overline{w}}, \qquad f_k = \frac{k}{N \Delta t} $$
+
+      <h3 class="sub" id="m-arias">Arias 强度</h3>
+      <p>
+        Arias 强度把加速度平方在时间上积分，是同时包含幅值与持时信息的能量型指标，
+        在持时定义与结构损伤评估中被广泛使用。
+      </p>
+
+      $$ I_A = \frac{\pi}{2g} \int_0^T a^2(t) \, dt $$
+
+      <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+        离散形式、累积绝对速度与 Housner 谱强度：
+      </p>
+      $$ I_A = \frac{\pi}{2g} \sum_i a_i^2 \, \Delta t, \quad
+         \mathrm{CAV} = \int_0^T |a(t)| \, dt, \quad
+         \mathrm{SI} = \int_{0.1}^{2.5} \mathrm{PSv}(T, 5\%) \, dT $$
+    </section>
+
+    <!-- ===== 代码示例 ===== -->
+    <section id="code">
+      <div class="section-head">
+        <span class="section-label">Code</span>
+        <h2>代码示例</h2>
+      </div>
+      <p>
+        下面是一段最小可运行的地震动参数计算示例：幅值、Husid 曲线、显著持时、
+        Arias 强度与线弹性反应谱。可直接替换为自己的加速度时程数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang">
+            <span>ground_motion_params.py</span>
+            <span class="lang">Python</span>
+          </div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code class="language-python">"""
+地震动参数分析最小示例
+幅值 / Husid / 显著持时 / Arias 强度 / 反应谱
+"""
+import numpy as np
+
+
+def amplitude_params(a, dt):
+    """幅值参数"""
+    return {
+        "PGA": np.max(np.abs(a)),
+        "t_PGA": np.argmax(np.abs(a)) * dt,
+        "RMS": np.sqrt(np.mean(a ** 2)),
+    }
+
+
+def husid_curve(a, dt):
+    """Husid 曲线（归一化累积平方加速度）"""
+    ca = np.cumsum(a ** 2) * dt
+    total = ca[-1]
+    return ca / total if total > 0 else ca
+
+
+def significant_duration(H, dt, lo=0.05, hi=0.95):
+    """基于 Husid 曲线的显著持时"""
+    t_lo = np.argmax(H >= lo) * dt
+    t_hi = np.argmax(H >= hi) * dt
+    return t_hi - t_lo
+
+
+def arias_intensity(a, dt, g=980.0):
+    """Arias 强度（cm/s），输入加速度单位 cm/s²"""
+    return (np.pi / (2.0 * g)) * np.sum(a ** 2) * dt
+
+
+def response_spectrum(a, dt, periods, zeta=0.05):
+    """
+    线弹性加速度反应谱（简化差分，仅作演示）
+    periods : 周期数组（秒）
+    """
+    Sa = np.zeros(len(periods))
+    for i, T in enumerate(periods):
+        w = 2.0 * np.pi / T
+        u = 0.0
+        ud = 0.0
+        max_acc = 0.0
+        for k in range(1, len(a)):
+            u_dd = -a[k] - 2.0 * zeta * w * ud - w ** 2 * u
+            ud += u_dd * dt
+            u += ud * dt
+            abs_acc = abs(u_dd + a[k])
+            if abs_acc > max_acc:
+                max_acc = abs_acc
+        Sa[i] = max_acc
+    return Sa
+
+
+if __name__ == "__main__":
+    fs = 100.0
+    dt = 1.0 / fs
+    t = np.arange(0, 40.0, dt)
+    # 合成示意加速度（cm/s²）
+    a = 120 * np.sin(2 * np.pi * 2.5 * t) * np.exp(-((t - 6) ** 2) / 12)
+
+    amp = amplitude_params(a, dt)
+    H = husid_curve(a, dt)
+    D595 = significant_duration(H, dt, 0.05, 0.95)
+    IA = arias_intensity(a, dt)
+
+    periods = np.logspace(np.log10(0.01), np.log10(6.0), 60)
+    Sa = response_spectrum(a, dt, periods, zeta=0.05)
+
+    print(f"PGA = {amp['PGA']:.2f} cm/s²  (t = {amp['t_PGA']:.2f} s)")
+    print(f"RMS = {amp['RMS']:.2f} cm/s²")
+    print(f"显著持时 D5-95 = {D595:.2f} s")
+    print(f"Arias 强度 Ia = {IA:.3f} cm/s")
+    print(f"反应谱峰值 Sa_max = {Sa.max():.2f} cm/s²")</code></pre>
+      </div>
+
+      <div class="callout">
+        这段代码只做演示：反应谱部分用了简化差分，<strong>没有</strong>采用完整的
+        Nigam-Jennings 精确递推，也没有包含基线校正、滤波与三分量处理。
+        用于实际工程时应使用成熟的反应谱实现（如 OpenSeismoMatlab、pyrotd 或
+        ObsPy 的响应计算模块），并对结果做数值校核。
+      </div>
+    </section>
+
+    <!-- ===== 数据与依赖 ===== -->
+    <section id="data">
+      <div class="section-head">
+        <span class="section-label">Data &amp; Stack</span>
+        <h2>数据与依赖</h2>
+      </div>
+      <div class="split">
+        <div>
+          <div class="split-title">输入数据</div>
+          <div class="chips">
+            <span class="chip">强震动预处理结果</span>
+            <span class="chip">PEER NGA 数据库</span>
+            <span class="chip">COSMOS 记录</span>
+            <span class="chip blue">中国强震动台网</span>
+            <span class="chip blue">NIED K-NET / KiK-net</span>
+            <span class="chip">ESM 工程强震库</span>
+            <span class="chip">台站与事件元数据</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">技术栈</div>
+          <div class="chips">
+            <span class="chip">Python 3.10+</span>
+            <span class="chip">NumPy</span>
+            <span class="chip">SciPy</span>
+            <span class="chip">pandas</span>
+            <span class="chip">Matplotlib</span>
+            <span class="chip">Seaborn</span>
+            <span class="chip blue">ObsPy</span>
+            <span class="chip blue">pyrotd</span>
+            <span class="chip blue">scikit-learn</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 参考资料 ===== -->
+    <section id="refs">
+      <div class="section-head">
+        <span class="section-label">References</span>
+        <h2>参考资料</h2>
+      </div>
+      <ol class="refs">
+        <li>Arias, A. (1970). A measure of earthquake intensity. In <i>Seismic Design for Nuclear Power Plants</i>, MIT Press.</li>
+        <li>Husid, R. L. (1969). Analisis de terremotos: analisis general. <i>Revista del IDIEM</i>, 8(1), 21–42.</li>
+        <li>Trifunac, M. D., &amp; Brady, A. G. (1975). A study on the duration of strong earthquake ground motion. <i>BSSA</i>, 65(3), 581–626.</li>
+        <li>Nigam, N. C., &amp; Jennings, P. C. (1969). Calculation of response spectra from strong-motion earthquake records. <i>BSSA</i>, 59(2), 909–922.</li>
+        <li>Housner, G. W. (1952). Spectrum intensities of strong-motion earthquakes. <i>Proceedings of the Symposium on Earthquake and Blast Effects on Structures</i>.</li>
+        <li>Konno, K., &amp; Ohmachi, T. (1998). Ground-motion characteristics estimated from spectral ratio between horizontal and vertical components of microtremor. <i>BSSA</i>, 88(1), 228–241.</li>
+        <li>GB 50011-2010《建筑抗震设计规范》（2016 年版）. 中国建筑工业出版社.</li>
+      </ol>
+    </section>
+
+    <footer>
+      © 2026 wayione · Built with ❤️ and Python
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

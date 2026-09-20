@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概率论与数理统计 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="probability-statistics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#axioms">一、概率公理与条件概率</a></li>
+      <li><a href="#random-var">二、随机变量与分布</a></li>
+      <li><a href="#multivariate">三、多维随机变量</a></li>
+      <li><a href="#limit">四、大数定律与中心极限定理</a></li>
+      <li><a href="#estimate">五、参数估计</a></li>
+      <li><a href="#test">六、假设检验</a></li>
+      <li><a href="#regression">七、回归与相关</a></li>
+      <li><a href="#monte-carlo">八、蒙特卡洛方法</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 概率论与数理统计
+        </div>
+        <h1>概率论与数理统计</h1>
+        <p class="lead">
+          从概率公理到参数估计与假设检验，梳理随机世界的数学语言。
+          概率地震危险性分析（PSHA）、结构可靠度、地震动衰减关系回归——
+          这些工程方法的底层都是概率论与数理统计。
+        </p>
+        <div class="article-meta">
+          <span>随机变量</span>
+          <span>参数估计</span>
+          <span>假设检验</span>
+          <span class="blue">PSHA 基础</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            概率论研究<strong>随机现象</strong>的规律，数理统计研究<strong>如何从数据反推规律</strong>。
+            两者互为表里：概率论从模型出发预测数据，数理统计从数据出发推断模型。
+          </p>
+          <p>
+            在结构工程与地震工程中，概率与统计不是"选修课"，而是<strong>核心方法论</strong>：
+          </p>
+          <ul>
+            <li><strong>PSHA</strong>：把地震发生的随机性、震级的随机性、地震动的随机性层层积分，得到场地的超越概率曲线。</li>
+            <li><strong>可靠度</strong>：把荷载与抗力的随机性转化为失效概率，是结构设计规范从"定值法"走向"概率法"的基础。</li>
+            <li><strong>地震动衰减关系</strong>：用回归分析从大量强震记录中提取 PGA、PGV 与震级、距离、场地的关系。</li>
+            <li><strong>蒙特卡洛模拟</strong>：在复杂系统中传播不确定性，是 PSHA 中数值积分与敏感性分析的通用工具。</li>
+            <li><strong>地震危险性区划</strong>：全国尺度的地震危险性图，本质上是概率模型的空间可视化。</li>
+          </ul>
+          <p>
+            这份笔记按"公理 $\to$ 随机变量 $\to$ 多维 $\to$ 极限定理 $\to$ 估计 $\to$ 检验 $\to$ 回归 $\to$ 模拟"的顺序梳理，
+            每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="axioms">
+          <h2><span class="num">01</span>概率公理与条件概率</h2>
+
+          <h3>样本空间与事件</h3>
+          <p>
+            随机试验的所有可能结果构成<strong>样本空间</strong> $\Omega$，
+            样本空间的子集称为<strong>事件</strong>。事件 $A$ 的概率 $P(A)$ 满足三条公理（柯尔莫哥洛夫公理）：
+          </p>
+
+          $$ \begin{aligned}
+             &\text{(1) 非负性：} \; P(A) \ge 0, \; \forall A \subseteq \Omega \\
+             &\text{(2) 规范性：} \; P(\Omega) = 1 \\
+             &\text{(3) 可列可加性：} \; A_i \cap A_j = \varnothing \Rightarrow
+                P\!\left(\bigcup_i A_i\right) = \sum_i P(A_i)
+             \end{aligned} $$
+
+          <p>
+            由这三条公理可以推出所有概率计算规则，例如：
+          </p>
+
+          $$ P(A^c) = 1 - P(A), \qquad
+             P(A \cup B) = P(A) + P(B) - P(A \cap B) $$
+
+          <h3>条件概率与乘法公式</h3>
+          <p>
+            在事件 $B$ 发生的条件下，事件 $A$ 的条件概率定义为：
+          </p>
+
+          $$ P(A \mid B) = \frac{P(A \cap B)}{P(B)}, \qquad P(B) > 0 $$
+
+          <p>
+            乘法公式：
+          </p>
+
+          $$ P(A \cap B) = P(A \mid B) P(B) = P(B \mid A) P(A) $$
+
+          <h3>全概率公式与贝叶斯公式</h3>
+          <p>
+            若 $\{B_1, B_2, \ldots\}$ 是样本空间的一个<strong>完备事件组</strong>
+            （两两互斥，并集为 $\Omega$），则：
+          </p>
+
+          $$ P(A) = \sum_i P(A \mid B_i) P(B_i) $$
+
+          <p>
+            这是<strong>全概率公式</strong>。把它代入条件概率定义，得到<strong>贝叶斯公式</strong>：
+          </p>
+
+          $$ P(B_i \mid A) = \frac{P(A \mid B_i) P(B_i)}{\sum_j P(A \mid B_j) P(B_j)} $$
+
+          <p>
+            其中 $P(B_i)$ 称为<strong>先验概率</strong>，$P(B_i \mid A)$ 称为<strong>后验概率</strong>。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：贝叶斯公式是<strong>地震危险性更新</strong>的理论基础。
+              在 PSHA 中，先验分布来自地震活动性模型，
+              观测到新的地震记录后，用贝叶斯公式更新震源参数与地震动预测方程的系数。
+              现代地震危险性分析中的"逻辑树"方法，
+              本质上就是一系列贝叶斯权重更新。</p>
+            </div>
+          </div>
+
+          <h3>事件的独立性</h3>
+          <p>
+            若 $P(A \cap B) = P(A) P(B)$，则称 $A$ 与 $B$ 独立。
+            独立性在实际建模中是最常用的简化假设，但也是最容易被误用的——<strong>互斥不等于独立</strong>。
+          </p>
+        </section>
+
+        <section id="random-var">
+          <h2><span class="num">02</span>随机变量与分布</h2>
+
+          <h3>离散型随机变量</h3>
+          <p>
+            取值有限或可列的随机变量，用<strong>概率质量函数</strong>（PMF）描述：
+          </p>
+
+          $$ p_k = P(X = x_k), \qquad \sum_k p_k = 1 $$
+
+          <p>常用离散分布：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>分布</th><th>PMF</th><th>期望</th><th>方差</th><th>典型场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>伯努利 $B(1, p)$</td>
+                  <td>$p^x (1-p)^{1-x}$</td>
+                  <td>$p$</td>
+                  <td>$p(1-p)$</td>
+                  <td>单次试验成功/失败</td>
+                </tr>
+                <tr>
+                  <td>二项 $B(n, p)$</td>
+                  <td>$\binom{n}{k} p^k (1-p)^{n-k}$</td>
+                  <td>$np$</td>
+                  <td>$np(1-p)$</td>
+                  <td>$n$ 次独立试验成功次数</td>
+                </tr>
+                <tr>
+                  <td>泊松 $P(\lambda)$</td>
+                  <td>$\dfrac{\lambda^k}{k!} e^{-\lambda}$</td>
+                  <td>$\lambda$</td>
+                  <td>$\lambda$</td>
+                  <td>单位时间事件发生次数</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>泊松分布</strong>在地震学中尤其重要：地震在时间轴上的发生近似服从泊松过程，
+            单位时间内发生 $k$ 次地震的概率为 $\lambda^k e^{-\lambda} / k!$，
+            其中 $\lambda$ 为年发生率。这是 PSHA 中地震活动性模型的基本假设。
+          </p>
+
+          <h3>连续型随机变量</h3>
+          <p>
+            用<strong>概率密度函数</strong>（PDF）$f(x)$ 描述，满足：
+          </p>
+
+          $$ P(a \le X \le b) = \int_a^b f(x) \, dx, \qquad
+             \int_{-\infty}^{+\infty} f(x) \, dx = 1 $$
+
+          <p>常用连续分布：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>分布</th><th>PDF</th><th>期望</th><th>方差</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>均匀 $U(a, b)$</td>
+                  <td>$\dfrac{1}{b-a}$</td>
+                  <td>$\dfrac{a+b}{2}$</td>
+                  <td>$\dfrac{(b-a)^2}{12}$</td>
+                </tr>
+                <tr>
+                  <td>正态 $N(\mu, \sigma^2)$</td>
+                  <td>$\dfrac{1}{\sqrt{2\pi}\sigma} \exp\!\left(-\dfrac{(x-\mu)^2}{2\sigma^2}\right)$</td>
+                  <td>$\mu$</td>
+                  <td>$\sigma^2$</td>
+                </tr>
+                <tr>
+                  <td>指数 $\mathrm{Exp}(\lambda)$</td>
+                  <td>$\lambda e^{-\lambda x}$，$x > 0$</td>
+                  <td>$1/\lambda$</td>
+                  <td>$1/\lambda^2$</td>
+                </tr>
+                <tr>
+                  <td>对数正态 $\mathrm{LN}(\mu, \sigma^2)$</td>
+                  <td>$\dfrac{1}{x\sqrt{2\pi}\sigma}\exp\!\left(-\dfrac{(\ln x - \mu)^2}{2\sigma^2}\right)$</td>
+                  <td>$e^{\mu + \sigma^2/2}$</td>
+                  <td>$(e^{\sigma^2}-1)e^{2\mu+\sigma^2}$</td>
+                </tr>
+                <tr>
+                  <td>威布尔 $\mathrm{W}(k, \lambda)$</td>
+                  <td>$\dfrac{k}{\lambda}\left(\dfrac{x}{\lambda}\right)^{k-1} e^{-(x/\lambda)^k}$</td>
+                  <td>$\lambda \Gamma(1+1/k)$</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>对数正态分布</strong>与<strong>威布尔分布</strong>在工程中极为常见。
+            前者用于描述地震动参数（PGA、PGV）的分布，因为它们的非负性；
+            后者用于描述材料强度、疲劳寿命。
+          </p>
+
+          <h3>分布函数与分位数</h3>
+          <p>
+            累积分布函数（CDF）定义为：
+          </p>
+
+          $$ F(x) = P(X \le x) = \int_{-\infty}^{x} f(t) \, dt $$
+
+          <p>
+            对给定的 $p \in (0, 1)$，使 $F(x_p) = p$ 的 $x_p$ 称为 $p$ 分位数。
+            工程上特别关注 $p = 0.95$、$0.99$ 的分位数，
+            例如"50 年超越概率 10%"对应的地震动强度，就是 0.90 分位数。
+          </p>
+
+          <h3>随机变量函数的分布</h3>
+          <p>
+            若 $Y = g(X)$，且 $g$ 单调可导，则 $Y$ 的密度函数为：
+          </p>
+
+          $$ f_Y(y) = f_X(g^{-1}(y)) \cdot \left| \frac{d}{dy} g^{-1}(y) \right| $$
+
+          <p>
+            这是变换法的基本公式。例如对数正态 $Y = e^X$ 其中 $X \sim N(\mu, \sigma^2)$，
+            可直接由正态分布密度代入上式得出。
+          </p>
+        </section>
+
+        <section id="multivariate">
+          <h2><span class="num">03</span>多维随机变量</h2>
+
+          <h3>联合分布与边缘分布</h3>
+          <p>
+            二维随机变量 $(X, Y)$ 的联合 PDF 记为 $f_{XY}(x, y)$，
+            边缘分布由积分得到：
+          </p>
+
+          $$ f_X(x) = \int_{-\infty}^{+\infty} f_{XY}(x, y) \, dy, \qquad
+             f_Y(y) = \int_{-\infty}^{+\infty} f_{XY}(x, y) \, dx $$
+
+          <p>
+            若 $f_{XY}(x, y) = f_X(x) f_Y(y)$，则 $X$ 与 $Y$ 独立。
+          </p>
+
+          <h3>协方差与相关系数</h3>
+          <p>
+            协方差衡量两个随机变量的线性相关程度：
+          </p>
+
+          $$ \mathrm{Cov}(X, Y) = E[(X - \mu_X)(Y - \mu_Y)]
+             = E[XY] - \mu_X \mu_Y $$
+
+          <p>
+            相关系数（Pearson）归一化到 $[-1, 1]$：
+          </p>
+
+          $$ \rho_{XY} = \frac{\mathrm{Cov}(X, Y)}{\sigma_X \sigma_Y} $$
+
+          <p>
+            对多维随机向量 $\mathbf{X} = (X_1, \ldots, X_n)^{\mathsf{T}}$，
+            协方差矩阵 $\boldsymbol{\Sigma}$ 定义为：
+          </p>
+
+          $$ \boldsymbol{\Sigma}_{ij} = \mathrm{Cov}(X_i, X_j), \qquad
+             \boldsymbol{\Sigma} = E[(\mathbf{X} - \boldsymbol{\mu})(\mathbf{X} - \boldsymbol{\mu})^{\mathsf{T}}] $$
+
+          <p>
+            $\boldsymbol{\Sigma}$ 是对称正定矩阵（或半正定），
+            这就是为什么线性代数中的特征值分解、Cholesky 分解在概率统计中频繁出现。
+          </p>
+
+          <h3>多维正态分布</h3>
+          <p>
+            多维正态分布 $N(\boldsymbol{\mu}, \boldsymbol{\Sigma})$ 的密度为：
+          </p>
+
+          $$ f(\mathbf{x}) = \frac{1}{(2\pi)^{n/2} |\boldsymbol{\Sigma}|^{1/2}}
+             \exp\!\left(-\frac{1}{2} (\mathbf{x} - \boldsymbol{\mu})^{\mathsf{T}}
+             \boldsymbol{\Sigma}^{-1} (\mathbf{x} - \boldsymbol{\mu})\right) $$
+
+          <p>
+            它有几个非常好的性质：
+          </p>
+          <ul>
+            <li>边缘分布仍是正态</li>
+            <li>线性组合仍是正态</li>
+            <li>不相关 $\Leftrightarrow$ 独立</li>
+            <li>条件分布仍是正态</li>
+          </ul>
+
+          <p>
+            这些性质使得多维正态在工程中应用极广：
+            结构可靠度分析中的响应面法、地震动模拟中的谱表示法、
+            贝叶斯反演中的后验近似，都假设或近似为正态分布。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程落点</strong>：PSHA 中的地震动预测方程（GMPE），
+              残差通常建模为对数正态分布，且不同周期、不同台站之间的残差存在相关性。
+              这个相关矩阵 $\boldsymbol{\Sigma}$ 就是上述协方差矩阵的直接应用——
+              计算一致危险性反应谱（UHS）时必须考虑它。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="limit">
+          <h2><span class="num">04</span>大数定律与中心极限定理</h2>
+
+          <h3>大数定律</h3>
+          <p>
+            设 $X_1, X_2, \ldots$ 是独立同分布的随机变量，均值为 $\mu$。
+            样本均值 $\bar{X}_n = \frac{1}{n}\sum_{i=1}^{n} X_i$ 满足：
+          </p>
+
+          <p>
+            <strong>弱大数定律</strong>（依概率收敛）：
+          </p>
+
+          $$ \bar{X}_n \xrightarrow{P} \mu, \qquad n \to \infty $$
+
+          <p>
+            <strong>强大数定律</strong>（几乎必然收敛）：
+          </p>
+
+          $$ \bar{X}_n \xrightarrow{a.s.} \mu, \qquad n \to \infty $$
+
+          <p>
+            直观理解：样本量足够大时，样本均值趋近于总体均值。
+            这就是<strong>蒙特卡洛模拟收敛性</strong>的理论依据。
+          </p>
+
+          <h3>中心极限定理（CLT）</h3>
+          <p>
+            设 $X_1, X_2, \ldots$ 独立同分布，均值为 $\mu$，方差为 $\sigma^2$，则：
+          </p>
+
+          $$ \frac{\bar{X}_n - \mu}{\sigma / \sqrt{n}}
+             \xrightarrow{d} N(0, 1), \qquad n \to \infty $$
+
+          <p>
+            无论原始分布是什么形状，样本均值的标准化都收敛到标准正态。
+            这是统计推断中大量使用正态分布的根本原因。
+          </p>
+
+          <h3>工程意义</h3>
+          <ul>
+            <li><strong>蒙特卡洛误差</strong>：CLT 给出样本均值的误差量级为 $O(1/\sqrt{n})$，
+              即误差减半需要 4 倍样本量。</li>
+            <li><strong>地震动不确定性</strong>：GMPE 的残差假设为对数正态，
+              依据就是多个随机因素叠加的极限效果接近正态（对数域）。</li>
+            <li><strong>可靠度指标</strong>：结构可靠度中的 $\beta$ 指标，
+              定义为失效边界到原点的距离，其理论基础是 CLT 与多维正态。</li>
+          </ul>
+
+          <h3>Python 示例：CLT 的直观验证</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>clt.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def clt_demo(dist_func, n_samples, n_trials, bins=40):
+    """
+    对给定分布 dist_func，抽取 n_samples 个样本求均值，
+    重复 n_trials 次，观察均值的分布是否趋近正态。
+    """
+    means = np.array([
+        np.mean(dist_func(n_samples)) for _ in range(n_trials)
+    ])
+    return means
+
+
+if __name__ == "__main__":
+    rng = np.random.default_rng(42)
+
+    # 原始分布：指数分布（明显非正态，偏度大）
+    exponential = lambda n: rng.exponential(scale=2.0, size=n)
+
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+    for ax, n in zip(axes, [1, 5, 50]):
+        means = clt_demo(exponential, n_samples=n, n_trials=10000)
+        ax.hist(means, bins=40, density=True, alpha=0.75, color="#db2777")
+        ax.set_title(f"样本量 n = {n}\n样本均值的分布")
+        ax.set_xlabel("样本均值")
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # 定量检查：n = 50 时样本均值的均值与标准差
+    means_50 = clt_demo(exponential, n_samples=50, n_trials=10000)
+    print(f"理论均值 = 2.0，样本均值 = {means_50.mean():.4f}")
+    print(f"理论标准差 = {2.0/np.sqrt(50):.4f}，"
+          f"样本标准差 = {means_50.std():.4f}")</code></pre>
+          </div>
+
+          <p>
+            运行后会看到：$n = 1$ 时分布与原指数分布一样偏斜；
+            $n = 5$ 时开始对称；$n = 50$ 时几乎完美贴合正态曲线。
+          </p>
+        </section>
+
+        <section id="estimate">
+          <h2><span class="num">05</span>参数估计</h2>
+
+          <h3>点估计</h3>
+          <p>
+            用样本构造统计量 $\hat{\theta} = \hat{\theta}(X_1, \ldots, X_n)$ 作为未知参数 $\theta$ 的估计。
+            三种常用方法：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>思想</th><th>适用</th><th>优点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>矩估计</td>
+                  <td>令样本矩等于总体矩</td>
+                  <td>一般情形</td>
+                  <td>简单直观</td>
+                </tr>
+                <tr>
+                  <td>最大似然（MLE）</td>
+                  <td>最大化样本的似然函数</td>
+                  <td>有明确分布时</td>
+                  <td>渐近有效、一致</td>
+                </tr>
+                <tr>
+                  <td>贝叶斯估计</td>
+                  <td>结合先验与似然，得到后验</td>
+                  <td>有小样本先验时</td>
+                  <td>可给出完整后验分布</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>最大似然估计</h3>
+          <p>
+            设样本 $X_1, \ldots, X_n$ 独立同分布，密度为 $f(x; \theta)$，
+            似然函数为：
+          </p>
+
+          $$ L(\theta) = \prod_{i=1}^{n} f(X_i; \theta) $$
+
+          <p>
+            通常取对数并令导数为零求极值：
+          </p>
+
+          $$ \frac{d}{d\theta} \ln L(\theta) = 0 $$
+
+          <p>
+            MLE 具有<strong>一致性</strong>、<strong>渐近正态性</strong>、<strong>渐近有效性</strong>，
+            是工程中最常用的点估计方法。
+          </p>
+
+          <h3>估计量的评价标准</h3>
+          <p>
+            评价一个估计量 $\hat{\theta}$ 的三个核心指标：
+          </p>
+          <ul>
+            <li><strong>无偏性</strong>：$E[\hat{\theta}] = \theta$，即估计量的期望等于真值。</li>
+            <li><strong>有效性</strong>：在无偏估计中，方差越小越好。</li>
+            <li><strong>一致性</strong>：$n \to \infty$ 时，$\hat{\theta} \to \theta$（依概率收敛）。</li>
+          </ul>
+
+          <p>
+            样本方差 $S^2 = \frac{1}{n-1}\sum (X_i - \bar{X})^2$ 是无偏的，
+            而 $\frac{1}{n}\sum (X_i - \bar{X})^2$ 是有偏的。
+            这就是"分母为 $n-1$"的由来。
+          </p>
+
+          <h3>区间估计</h3>
+          <p>
+            点估计只给出一个数，区间估计给出一个<strong>置信区间</strong>，
+            表达估计的不确定性。对正态总体 $N(\mu, \sigma^2)$，$\mu$ 的置信水平 $1-\alpha$ 置信区间为：
+          </p>
+
+          $$ \bar{X} \pm t_{\alpha/2}(n-1) \cdot \frac{S}{\sqrt{n}} $$
+
+          <p>
+            其中 $t_{\alpha/2}(n-1)$ 是 $t$ 分布的临界值。当 $n$ 很大时，$t$ 分布趋近于正态，
+            可用 $z_{\alpha/2}$ 近似。
+          </p>
+
+          <h3>Python 示例：最大似然估计</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>mle.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize
+from scipy.stats import norm, expon
+
+
+def mle_fit(data, dist_name="norm"):
+    """
+    用数值优化求最大似然估计。
+    - norm: 参数为 (mu, sigma)
+    - expon: 参数为 (scale)
+    """
+    if dist_name == "norm":
+        def neg_log_lik(params):
+            mu, sigma = params
+            if sigma <= 0:
+                return 1e10
+            return -np.sum(norm.logpdf(data, loc=mu, scale=sigma))
+
+        x0 = [np.mean(data), np.std(data)]
+        res = minimize(neg_log_lik, x0, method="Nelder-Mead")
+        return {"mu": res.x[0], "sigma": res.x[1]}
+
+    elif dist_name == "expon":
+        def neg_log_lik(params):
+            scale = params[0]
+            if scale <= 0:
+                return 1e10
+            return -np.sum(expon.logpdf(data, scale=scale))
+
+        res = minimize(neg_log_lik, [np.mean(data)], method="Nelder-Mead")
+        return {"scale": res.x[0]}
+
+
+if __name__ == "__main__":
+    rng = np.random.default_rng(2026)
+
+    # ---- 例 1：正态分布 ----
+    data_norm = rng.normal(loc=3.0, scale=1.5, size=500)
+    est_norm = mle_fit(data_norm, "norm")
+    print("【正态分布】真值 mu=3.0, sigma=1.5")
+    print(f"  MLE: mu = {est_norm['mu']:.4f}, sigma = {est_norm['sigma']:.4f}")
+
+    # ---- 例 2：指数分布 ----
+    data_expon = rng.exponential(scale=2.5, size=500)
+    est_expon = mle_fit(data_expon, "expon")
+    print("\n【指数分布】真值 scale=2.5")
+    print(f"  MLE: scale = {est_expon['scale']:.4f}")
+
+    # ---- 计算 95% 置信区间（正态均值） ----
+    from scipy.stats import t
+    n = len(data_norm)
+    mean_hat = np.mean(data_norm)
+    std_hat = np.std(data_norm, ddof=1)   # 无偏样本标准差
+    t_crit = t.ppf(0.975, df=n - 1)
+    margin = t_crit * std_hat / np.sqrt(n)
+    print(f"\n【95% 置信区间】mu ∈ [{mean_hat - margin:.4f}, "
+          f"{mean_hat + margin:.4f}]")</code></pre>
+          </div>
+        </section>
+
+        <section id="test">
+          <h2><span class="num">06</span>假设检验</h2>
+
+          <h3>基本框架</h3>
+          <p>
+            假设检验是对总体参数的某个<strong>假设</strong>做出判断。
+            核心步骤：
+          </p>
+          <ul>
+            <li><strong>建立原假设</strong> $H_0$ 与<strong>备择假设</strong> $H_1$</li>
+            <li>选择<strong>检验统计量</strong>，在 $H_0$ 下服从已知分布</li>
+            <li>给定显著性水平 $\alpha$，确定<strong>拒绝域</strong></li>
+            <li>由样本计算统计量，判断是否落入拒绝域</li>
+          </ul>
+
+          <h3>两类错误</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>—</th><th>$H_0$ 为真</th><th>$H_0$ 为假</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>拒绝 $H_0$</td>
+                  <td><strong>第一类错误</strong>（弃真，概率 $\alpha$）</td>
+                  <td>正确决策（功效 $1-\beta$）</td>
+                </tr>
+                <tr>
+                  <td>接受 $H_0$</td>
+                  <td>正确决策</td>
+                  <td><strong>第二类错误</strong>（取伪，概率 $\beta$）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            实际中我们控制第一类错误的概率 $\alpha$（通常取 0.05 或 0.01），
+            希望检验功效 $1-\beta$ 尽可能大。
+          </p>
+
+          <h3>常用检验</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>检验</th><th>用途</th><th>统计量</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$Z$ 检验</td>
+                  <td>已知方差，检验均值</td>
+                  <td>$Z = \dfrac{\bar{X} - \mu_0}{\sigma/\sqrt{n}}$</td>
+                </tr>
+                <tr>
+                  <td>$t$ 检验</td>
+                  <td>未知方差，检验均值</td>
+                  <td>$t = \dfrac{\bar{X} - \mu_0}{S/\sqrt{n}}$</td>
+                </tr>
+                <tr>
+                  <td>$\chi^2$ 检验</td>
+                  <td>检验方差、拟合优度</td>
+                  <td>$\chi^2 = \dfrac{(n-1)S^2}{\sigma_0^2}$</td>
+                </tr>
+                <tr>
+                  <td>$F$ 检验</td>
+                  <td>比较两个方差</td>
+                  <td>$F = \dfrac{S_1^2}{S_2^2}$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>p 值</h3>
+          <p>
+            $p$ 值是在 $H_0$ 为真的条件下，观察到样本统计量或更极端值的概率。
+            若 $p < \alpha$，则在显著性水平 $\alpha$ 下拒绝 $H_0$。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>常见误区</strong>：$p$ 值不是 "$H_0$ 为真的概率"，也不是"效应大小"。
+              大样本下，微小的、工程上无意义的差异也可能被检验为"显著"。
+              在工程中，必须结合<strong>效应量</strong>（effect size）与<strong>工程意义</strong>一起判断。</p>
+            </div>
+          </div>
+
+          <h3>拟合优度检验</h3>
+          <p>
+            检验样本是否来自某个指定的分布。$\chi^2$ 拟合优度检验的思路：
+          </p>
+
+          $$ \chi^2 = \sum_{i=1}^{k} \frac{(O_i - E_i)^2}{E_i} $$
+
+          <p>
+            其中 $O_i$ 是第 $i$ 个区间的观测频数，$E_i$ 是理论频数。
+            在大样本下，$\chi^2$ 近似服从自由度为 $k - 1 - r$ 的 $\chi^2$ 分布，
+            $r$ 是由样本估计的参数个数。
+          </p>
+
+          <p>
+            工程上常用于检验：地震年发生次数是否符合泊松分布、
+            地震动残差是否符合对数正态分布、材料强度是否符合正态分布。
+          </p>
+        </section>
+
+        <section id="regression">
+          <h2><span class="num">07</span>回归与相关</h2>
+
+          <h3>一元线性回归</h3>
+          <p>
+            给定样本 $(x_i, y_i)$，拟合直线 $y = \beta_0 + \beta_1 x$。
+            最小二乘估计的目标是最小化残差平方和：
+          </p>
+
+          $$ Q(\beta_0, \beta_1) = \sum_{i=1}^{n} (y_i - \beta_0 - \beta_1 x_i)^2 $$
+
+          <p>
+            令偏导为零，得到正规方程：
+          </p>
+
+          $$ \hat{\beta}_1 = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2}, \qquad
+             \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x} $$
+
+          <h3>多元线性回归</h3>
+          <p>
+            写成矩阵形式 $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$，
+            最小二乘解为：
+          </p>
+
+          $$ \hat{\boldsymbol{\beta}} = (\mathbf{X}^{\mathsf{T}}\mathbf{X})^{-1} \mathbf{X}^{\mathsf{T}} \mathbf{y} $$
+
+          <p>
+            这里需要求矩阵逆，条件数决定了数值稳定性。
+            工程上通常用 QR 分解或 SVD 求解，避免直接求逆。
+          </p>
+
+          <h3>决定系数</h3>
+          <p>
+            $R^2$ 衡量拟合优度：
+          </p>
+
+          $$ R^2 = 1 - \frac{\mathrm{SS}_{\mathrm{res}}}{\mathrm{SS}_{\mathrm{tot}}}
+             = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2} $$
+
+          <p>
+            $R^2 \in [0, 1]$，越接近 1 拟合越好。但要注意：
+            <strong>$R^2$ 高不代表模型正确</strong>，可能存在过拟合或遗漏变量。
+          </p>
+
+          <h3>工程场景：地震动衰减关系</h3>
+          <p>
+            地震动预测方程（GMPE）的经典形式：
+          </p>
+
+          $$ \ln \mathrm{PGA} = c_1 + c_2 M + c_3 \ln(R + c_4) + c_5 R + \varepsilon $$
+
+          <p>
+            其中 $M$ 为震级，$R$ 为距离，$\varepsilon \sim N(0, \sigma^2)$ 为残差。
+            系数 $c_i$ 通过大量强震记录做多元线性回归得到。
+          </p>
+
+          <p>
+            这类模型的三个要点：
+          </p>
+          <ul>
+            <li><strong>对数变换</strong>：PGA 非负且右偏，取对数后近似正态，便于回归。</li>
+            <li><strong>距离项</strong>：既有几何衰减 $\ln(R + c_4)$，也有非弹性衰减 $c_5 R$。</li>
+            <li><strong>残差建模</strong>：$\varepsilon$ 的方差 $\sigma^2$ 称为"标准差"或"sigma"，
+              是 PSHA 中不确定性的核心来源之一。</li>
+          </ul>
+
+          <h3>Python 示例：地震动衰减关系回归</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>gmpe_regression.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+# ---- 模拟一批"观测记录" ----
+rng = np.random.default_rng(7)
+n = 200
+
+M = rng.uniform(4.0, 7.5, n)          # 震级
+R = rng.uniform(10.0, 200.0, n)       # 震中距 km
+
+# 真实模型：ln(PGA) = 1.5 + 0.8M - 1.2 ln(R + 10) + eps
+true_c = [1.5, 0.8, -1.2]
+ln_PGA = (true_c[0]
+          + true_c[1] * M
+          + true_c[2] * np.log(R + 10)
+          + rng.normal(0, 0.4, n))
+
+# ---- 构建设计矩阵 ----
+#  列：常数项, M, ln(R + 10)
+X = np.column_stack([np.ones(n), M, np.log(R + 10)])
+
+# ---- 最小二乘解（用 SVD，数值更稳定） ----
+beta_hat, residuals, rank, sv = np.linalg.lstsq(X, ln_PGA, rcond=None)
+
+print("真值:  c = [1.5, 0.8, -1.2]")
+print(f"估计:  c = [{beta_hat[0]:.4f}, "
+      f"{beta_hat[1]:.4f}, {beta_hat[2]:.4f}]")
+
+# ---- 残差标准差 ----
+y_hat = X @ beta_hat
+sigma_hat = np.sqrt(np.sum((ln_PGA - y_hat) ** 2) / (n - 3))
+print(f"\n残差标准差 sigma = {sigma_hat:.4f}")
+
+# ---- 决定系数 ----
+SS_res = np.sum((ln_PGA - y_hat) ** 2)
+SS_tot = np.sum((ln_PGA - np.mean(ln_PGA)) ** 2)
+R2 = 1 - SS_res / SS_tot
+print(f"R^2 = {R2:.4f}")</code></pre>
+          </div>
+
+          <p>
+            这里用 SVD 而不是正规方程直接求逆，是工程实践中的标准做法。
+            当 $n = 10^5$、变量数 $p = 10$ 时，正规方程的条件数会被平方放大，
+            而 SVD 稳定得多。
+          </p>
+        </section>
+
+        <section id="monte-carlo">
+          <h2><span class="num">08</span>蒙特卡洛方法</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            蒙特卡洛方法是用<strong>随机抽样</strong>来近似确定性问题解的方法。
+            最经典的例子是用随机点估计圆周率 $\pi$：
+          </p>
+          <ul>
+            <li>在 $[0, 1] \times [0, 1]$ 上均匀撒 $n$ 个点</li>
+            <li>统计落在单位圆（半径 1，圆心原点）内的点数 $m$</li>
+            <li>$\pi \approx 4m/n$</li>
+          </ul>
+
+          <p>
+            由大数定律保证收敛，由中心极限定理保证误差量级为 $O(1/\sqrt{n})$。
+          </p>
+
+          <h3>随机数生成</h3>
+          <p>
+            均匀分布的随机数是基础。其他分布的抽样方法：
+          </p>
+          <ul>
+            <li><strong>逆变换法</strong>：若 $U \sim U(0, 1)$，则 $X = F^{-1}(U)$ 服从分布 $F$。</li>
+            <li><strong>Box–Muller 变换</strong>：从均匀分布生成正态分布。</li>
+            <li><strong>拒绝采样</strong>：当目标分布难以直接抽样时使用。</li>
+            <li><strong>Metropolis–Hastings</strong>：马尔可夫链蒙特卡洛（MCMC），用于高维复杂分布。</li>
+          </ul>
+
+          <h3>方差缩减</h3>
+          <p>
+            为提高精度，常用几种方差缩减技术：
+          </p>
+          <ul>
+            <li><strong>对偶变量</strong>：用 $U$ 和 $1-U$ 同时抽样，降低方差。</li>
+            <li><strong>重要性采样</strong>：重点抽取对结果贡献大的区域，
+              在可靠度分析中极为常用。</li>
+            <li><strong>分层采样</strong>：把样本空间分层，每层内部分别抽样。</li>
+            <li><strong>控制变量</strong>：利用已知期望的辅助变量减小方差。</li>
+          </ul>
+
+          <h3>工程场景：PSHA 中的蒙特卡洛</h3>
+          <p>
+            概率地震危险性分析的经典方法（Cornell–McGuire）用数值积分，
+            而蒙特卡洛方法从所有随机源直接抽样，模拟过程如下：
+          </p>
+          <ol>
+            <li>从地震活动性模型抽样地震年发生率与震级分布</li>
+            <li>从震源几何模型抽样震中距分布</li>
+            <li>从 GMPE 的残差分布抽样，得到该次地震的 PGA</li>
+            <li>重复大量次数，统计 $N$ 年内 PGA 的最大值分布</li>
+            <li>由此得到任意 PGA 水平的年超越概率</li>
+          </ol>
+
+          <p>
+            蒙特卡洛方法的优势：可以处理任意复杂的模型，
+            包括断层几何、多震源耦合、空间相关性、地震动时程的直接生成。
+          </p>
+
+          <h3>Python 示例：蒙特卡洛估算超越概率</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>mc_psha.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+def simulate_one_year(rng,
+                      lambda_rate=0.1,
+                      M_range=(4.5, 8.0),
+                      R_range=(10.0, 150.0),
+                      gmpe=(1.5, 0.8, -1.2, 0.4)):
+    """
+    模拟一年内的最大 PGA（对数域）。
+
+    参数
+    ----
+    lambda_rate : 年发生率（泊松过程）
+    M_range     : 震级范围
+    R_range     : 震中距范围
+    gmpe        : (c0, c1, c2, sigma)，其中 ln(PGA) = c0 + c1*M + c2*ln(R+10) + eps
+
+    返回
+    ----
+    ln_PGA_max  : 该年最大 ln(PGA)；若该年无地震则返回 -inf
+    """
+    c0, c1, c2, sigma = gmpe
+
+    # 1. 该年地震次数（泊松）
+    n_event = rng.poisson(lambda_rate)
+    if n_event == 0:
+        return -np.inf
+
+    # 2. 每次地震的震级与距离
+    M = rng.uniform(*M_range, size=n_event)
+    R = rng.uniform(*R_range, size=n_event)
+
+    # 3. 计算 ln(PGA)
+    ln_PGA = (c0 + c1 * M + c2 * np.log(R + 10)
+              + rng.normal(0, sigma, n_event))
+
+    return ln_PGA.max()
+
+
+def psha_monte_carlo(n_years=10000, seed=2026):
+    rng = np.random.default_rng(seed)
+
+    # 模拟 n_years 年的最大 ln(PGA)
+    ln_PGA_yearly = np.array([
+        simulate_one_year(rng) for _ in range(n_years)
+    ])
+
+    # 把 -inf 替换为一个非常小的值（代表无地震）
+    ln_PGA_yearly = np.where(np.isinf(ln_PGA_yearly), -10.0, ln_PGA_yearly)
+
+    # 转化为 PGA 的超越概率曲线
+    thresholds = np.logspace(-3, 1.5, 30)   # PGA 从 0.001 到 ~30 (单位与原始一致)
+    ln_thresholds = np.log(thresholds)
+
+    exceedance = np.array([
+        np.mean(ln_PGA_yearly > lt) for lt in ln_thresholds
+    ])
+
+    return thresholds, exceedance
+
+
+if __name__ == "__main__":
+    thresholds, exceedance = psha_monte_carlo()
+
+    print("PGA 年超越概率曲线（部分）：")
+    print(f"{'PGA':>12}{'年超越概率':>15}")
+    for i in range(0, len(thresholds), 5):
+        print(f"{thresholds[i]:>12.4f}{exceedance[i]:>15.5e}")
+
+    # 检查 50 年超越概率 10% 对应的 PGA
+    # P_annual = 1 - (1 - 0.10)^(1/50) ≈ 0.0021
+    target = 0.0021
+    idx = np.argmin(np.abs(exceedance - target))
+    print(f"\n50 年超越概率 10% 对应 PGA ≈ {thresholds[idx]:.4f}")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>与经典 PSHA 的关系</strong>：经典 PSHA 用积分（
+              Cornell–McGuire 方法）算出超越概率曲线，
+              蒙特卡洛用抽样逼近同一个结果。
+              两者在大样本下应该收敛到同一条曲线。
+              现代 <code>OpenQuake</code> 等平台同时支持两种算法，
+              蒙特卡洛在复杂模型（如多断层、多 GMPE）下更灵活。</p>
+            </div>
+          </div>
+
+          <h3>收敛性与误差</h3>
+          <p>
+            蒙特卡洛的误差为 $O(1/\sqrt{n})$，与维度无关——这是它相对于
+            数值积分（维度灾难）的最大优势。但收敛速度慢：
+          </p>
+          <ul>
+            <li>要达到 $10^{-3}$ 精度，需要约 $10^6$ 样本</li>
+            <li>要达到 $10^{-4}$ 精度，需要约 $10^8$ 样本</li>
+            <li>可靠度分析中的小失效概率（$10^{-6}$）需要重要性采样等技巧</li>
+          </ul>
+          <p>
+            好在蒙特卡洛天然并行，配合现代 GPU 与云计算，
+            百万级样本的模拟可在几秒内完成。
+          </p>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>概率公理</strong>：三条公理推出全部规则；贝叶斯公式是更新先验知识的核心工具。</li>
+              <li><strong>随机变量</strong>：离散用 PMF，连续用 PDF；对数正态与威布尔在工程中最常见。</li>
+              <li><strong>多维随机变量</strong>：协方差矩阵对称正定，与线性代数无缝衔接。</li>
+              <li><strong>极限定理</strong>：大数定律保证蒙特卡洛收敛，中心极限定理保证正态近似。</li>
+              <li><strong>参数估计</strong>：MLE 是工程中的首选；置信区间表达估计的不确定性。</li>
+              <li><strong>假设检验</strong>：控制第一类错误 $\alpha$，同时关注效应量与工程意义。</li>
+              <li><strong>回归</strong>：GMPE 是多元线性回归的经典应用，SVD 求解更稳定。</li>
+              <li><strong>蒙特卡洛</strong>：误差 $O(1/\sqrt{n})$ 与维度无关，是复杂模型的首选工具。</li>
+            </ul>
+          </div>
+
+          <h3>工程落点速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>概率统计概念</th><th>结构/地震工程中的对应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>泊松分布</td>
+                  <td>地震年发生次数的概率模型</td>
+                </tr>
+                <tr>
+                  <td>对数正态分布</td>
+                  <td>PGA、PGV、PGD 的概率分布</td>
+                </tr>
+                <tr>
+                  <td>威布尔分布</td>
+                  <td>材料强度、疲劳寿命</td>
+                </tr>
+                <tr>
+                  <td>贝叶斯公式</td>
+                  <td>地震危险性更新、参数反演</td>
+                </tr>
+                <tr>
+                  <td>协方差矩阵</td>
+                  <td>多周期地震动的相关性、一致危险性谱</td>
+                </tr>
+                <tr>
+                  <td>大数定律 / CLT</td>
+                  <td>蒙特卡洛 PSHA 的收敛性保证</td>
+                </tr>
+                <tr>
+                  <td>最大似然估计</td>
+                  <td>GMPE 系数拟合、地震活动性参数估计</td>
+                </tr>
+                <tr>
+                  <td>假设检验</td>
+                  <td>模型选择、场地分类的统计判据</td>
+                </tr>
+                <tr>
+                  <td>多元回归</td>
+                  <td>地震动预测方程（GMPE）</td>
+                </tr>
+                <tr>
+                  <td>蒙特卡洛</td>
+                  <td>PSHA、可靠度、地震动模拟</td>
+                </tr>
+                <tr>
+                  <td>重要性采样</td>
+                  <td>小失效概率的可靠度分析</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Casella &amp; Berger, <em>Statistical Inference</em> — 统计推断的标准教材</li>
+            <li>Ross, <em>A First Course in Probability</em> — 概率论入门经典</li>
+            <li>Ang &amp; Tang, <em>Probability Concepts in Engineering</em> — 工程概率的经典教材</li>
+            <li>Benjamin &amp; Cornell, <em>Probability, Statistics, and Decision for Civil Engineers</em> — 土木工程概率方法</li>
+            <li>McGuire, <em>Seismic Hazard and Risk Analysis</em> — PSHA 的权威参考</li>
+            <li>Cornell, "Engineering seismic risk analysis" (1968) — PSHA 的开山之作</li>
+            <li>Robert &amp; Casella, <em>Monte Carlo Statistical Methods</em> — 蒙特卡洛方法</li>
+            <li>Baker, <em>Seismic Hazard and Risk Analysis</em> — 现代 PSHA 教材</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

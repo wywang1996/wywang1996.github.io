@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="waveform">
+<head>
+<meta charset="UTF-8">
+
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>波形格式转换器 · wayione</title>
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span><span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <header class="page-head">
+    <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
+    <h1>波形格式转换器</h1>
+    <p>上传地震波形文件，在 SAC、MiniSEED、ASCII/CSV 之间互相转换。解析与转换全部在浏览器本地完成，文件不会上传到任何服务器。</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel-label">
+      <span>上传波形文件</span>
+      <span class="hint">单文件 · 本地处理</span>
+    </div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".sac,.mseed,.seed,.ms,.csv,.txt,.dat,.asc">
+      <span class="drop-ico">📂</span>
+      <div class="drop-title">点击选择文件，或拖拽到此处</div>
+      <div class="drop-sub">
+        支持 <strong>.sac</strong> / <strong>.mseed</strong> / <strong>.csv</strong> / <strong>.txt</strong> 等格式
+      </div>
+    </div>
+    <div id="errorBox" class="alert error" hidden></div>
+    <div id="okBox" class="alert ok" hidden></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-label">
+      <span>示例文件</span>
+      <span class="hint">点击「加载」直接用工具打开，「下载」保存到本地</span>
+    </div>
+    <div class="demo-grid">
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">ASCII</span>
+          <span class="demo-name">两列文本</span>
+        </div>
+        <div class="demo-desc">时间 (s) + 幅值，空格分隔。100 Hz · 20 s 合成地震波形。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="ascii" data-action="load">加载</button>
+          <button type="button" data-demo="ascii" data-action="download">下载</button>
+        </div>
+      </div>
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">CSV</span>
+          <span class="demo-name">逗号分隔</span>
+        </div>
+        <div class="demo-desc">带 <code>time,amplitude</code> 表头。方便 Excel / Pandas 读取。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="csv" data-action="load">加载</button>
+          <button type="button" data-demo="csv" data-action="download">下载</button>
+        </div>
+      </div>
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">SAC</span>
+          <span class="demo-name">二进制格式</span>
+        </div>
+        <div class="demo-desc">632 字节大端头段 + float32 数据。ObsPy / SAC 可直接读取。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="sac" data-action="load">加载</button>
+          <button type="button" data-demo="sac" data-action="download">下载</button>
+        </div>
+      </div>
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">MiniSEED</span>
+          <span class="demo-name">二进制格式</span>
+        </div>
+        <div class="demo-desc">标准 48 字节头段 + blockette 1000，编码为 IEEE float32。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="mseed" data-action="load">加载</button>
+          <button type="button" data-demo="mseed" data-action="download">下载</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="infoPanel" hidden>
+    <div class="panel-label">
+      <span>文件信息</span>
+      <span class="hint">解析结果预览</span>
+    </div>
+
+    <div class="file-info">
+      <span class="ftag" id="fTag">—</span>
+      <span class="fname" id="fName">—</span>
+      <span class="fsize" id="fSize">—</span>
+      <button class="btn-clear" id="btnClear">清除</button>
+    </div>
+
+    <div class="trace-grid">
+      <div class="trace-item">
+        <div class="k">台站 · 台网</div>
+        <div class="v" id="tStation">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">通道 · 位置</div>
+        <div class="v" id="tChannel">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">采样率</div>
+        <div class="v" id="tRate">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">采样点数</div>
+        <div class="v" id="tNpts">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">时间跨度</div>
+        <div class="v small" id="tDuration">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">起始时间</div>
+        <div class="v small" id="tStart">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">幅值范围</div>
+        <div class="v small" id="tRange">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">来源格式</div>
+        <div class="v" id="tFormat">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">字节序</div>
+        <div class="v small" id="tEndian">—</div>
+      </div>
+    </div>
+
+    <div class="wave-wrap">
+      <canvas id="waveCanvas" width="1000" height="260"></canvas>
+      <div class="wave-caption" id="waveCaption">Waveform preview</div>
+    </div>
+  </section>
+
+  <section class="panel" id="outPanel" hidden>
+    <div class="panel-label">
+      <span>选择输出格式</span>
+      <span class="hint">点击卡片切换</span>
+    </div>
+
+    <div class="format-grid" id="formatGrid">
+      <div class="format-item active" data-format="ASCII">
+        <div class="fk">ASCII</div>
+        <div class="fv">两列文本</div>
+        <div class="fd">时间(s) + 幅值，空格分隔，通用性最好</div>
+      </div>
+      <div class="format-item" data-format="CSV">
+        <div class="fk">CSV</div>
+        <div class="fv">逗号分隔</div>
+        <div class="fd">time,amplitude 表头，方便 Excel / Python 读取</div>
+      </div>
+      <div class="format-item" data-format="SAC">
+        <div class="fk">SAC</div>
+        <div class="fv">二进制格式</div>
+        <div class="fd">标准 632 字节头段 + float32 数据，ObsPy / SAC 可读</div>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="btn-primary" id="btnDownload">
+        <span>💾</span>
+        <span>选择位置并保存</span>
+      </button>
+      <div class="save-hint" id="saveHint">
+        <strong>Chrome / Edge</strong> 会弹出「另存为」对话框，可自由选择保存目录和文件名。<br>
+        其他浏览器将直接下载到默认下载目录。
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-label">支持范围与说明</div>
+    <div class="note">
+      <strong style="color:var(--text);">输入格式支持：</strong>
+      <ul>
+        <li><code>ASCII / CSV</code>：两列（时间 + 幅值）、三列或单列纯幅值文本，自动识别。索引列（0,1,2...）不会被误认为时间列。</li>
+        <li><code>SAC</code>：标准 632 字节头段，自动检测大端 / 小端字节序，解析 delta、npts、台站 / 通道 / 台网名及起始时间。</li>
+        <li><code>MiniSEED</code>：支持未压缩编码（16 / 24 / 32 位整数、IEEE 浮点 / 双精度），自动检测记录长度和数据字节序。</li>
+      </ul>
+      <strong style="color:var(--text);">MiniSEED 限制：</strong>
+      Steim-1 / Steim-2 / Steim-3 压缩格式暂不支持。如遇到，请先用 ObsPy 转换：
+      <br>
+      <code>obspy> st = read("file.mseed"); st.write("out.sac", format="SAC")</code>
+      <br><br>
+      所有解析与转换均在浏览器本地完成，文件不会离开你的设备。
+    </div>
+  </section>
+
+  <footer>
+    © 2026 wayione · 波形格式转换器
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  function $(id) { return document.getElementById(id); }
+
+  /* ============================================================
+     工具函数
+     ============================================================ */
+
+  var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
+              '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+
+  function sup(n) {
+    return String(n).split('').map(function (c) { return SUP[c] || c; }).join('');
+  }
+
+  function fmtSize(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function fmtNum(n, d) {
+    d = (d === undefined) ? 3 : d;
+    if (!isFinite(n)) return '—';
+    if (Math.abs(n) >= 1e5 || (Math.abs(n) < 1e-3 && n !== 0)) {
+      return n.toExponential(d);
+    }
+    return n.toFixed(d);
+  }
+
+  function fmtDuration(sec) {
+    if (!isFinite(sec)) return '—';
+    if (sec < 60) return sec.toFixed(2) + ' 秒';
+    if (sec < 3600) return (sec / 60).toFixed(2) + ' 分';
+    return (sec / 3600).toFixed(2) + ' 小时';
+  }
+
+  function readStr(dv, offset, length) {
+    var s = '';
+    for (var i = 0; i < length; i++) {
+      var c = dv.getUint8(offset + i);
+      if (c === 0) break;
+      s += String.fromCharCode(c);
+    }
+    return s.replace(/[\x00\s]+$/g, '').replace(/^\s+/, '');
+  }
+
+  function writeStr(dv, offset, length, str) {
+    str = str || '';
+    for (var i = 0; i < length; i++) {
+      dv.setUint8(offset + i, i < str.length ? str.charCodeAt(i) : 32);
+    }
+  }
+
+  function baseName(name) {
+    return name.replace(/\.[^.]+$/, '');
+  }
+
+  /* 十六进制 dump */
+  function hexDump(dv, start, len) {
+    var out = [];
+    for (var i = 0; i < len; i++) {
+      var b = dv.getUint8(start + i);
+      out.push((b < 16 ? '0' : '') + b.toString(16));
+      if ((i + 1) % 16 === 0) out.push('\n');
+      else out.push(' ');
+    }
+    return out.join('');
+  }
+
+  /* ============================================================
+     文件保存
+     ============================================================ */
+
+  function downloadBlob(blob, fileName) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  function pickerTypesFor(fileName) {
+    var m = fileName.match(/\.[^.]+$/);
+    var ext = m ? m[0].toLowerCase() : '';
+    var mimeMap = {
+      '.txt': 'text/plain',
+      '.csv': 'text/csv',
+      '.sac': 'application/octet-stream',
+      '.mseed': 'application/octet-stream'
+    };
+    var descMap = {
+      '.txt': '文本文件',
+      '.csv': 'CSV 文件',
+      '.sac': 'SAC 波形文件',
+      '.mseed': 'MiniSEED 波形文件'
+    };
+    var mime = mimeMap[ext] || 'application/octet-stream';
+    var desc = descMap[ext] || '数据文件';
+    var accept = {};
+    accept[mime] = [ext || '.dat'];
+    return [{ description: desc, accept: accept }];
+  }
+
+  function saveBlob(blob, suggestedName) {
+    var canUsePicker = (typeof window.showSaveFilePicker === 'function');
+    if (!canUsePicker) {
+      downloadBlob(blob, suggestedName);
+      return Promise.resolve({ fallback: true, name: suggestedName });
+    }
+
+    var opts = {
+      suggestedName: suggestedName,
+      types: pickerTypesFor(suggestedName)
+    };
+
+    return window.showSaveFilePicker(opts).then(function (handle) {
+      return handle.createWritable().then(function (writable) {
+        return writable.write(blob).then(function () {
+          return writable.close();
+        });
+      }).then(function () {
+        return { saved: true, name: handle.name };
+      });
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') {
+        return { aborted: true };
+      }
+      console.warn('showSaveFilePicker 失败，回退到默认下载：', err);
+      try {
+        downloadBlob(blob, suggestedName);
+        return { fallback: true, name: suggestedName };
+      } catch (e2) {
+        return { error: err };
+      }
+    });
+  }
+
+  /* ============================================================
+     格式检测
+     ============================================================ */
+
+  function detectFormat(fileName, buffer) {
+    var ext = (fileName.split('.').pop() || '').toLowerCase();
+    if (ext === 'sac') return 'SAC';
+    if (ext === 'mseed' || ext === 'seed' || ext === 'ms') return 'MiniSEED';
+    if (ext === 'csv') return 'CSV';
+    if (ext === 'txt' || ext === 'dat' || ext === 'asc') return 'ASCII';
+
+    if (!buffer || buffer.byteLength < 48) return 'ASCII';
+
+    var dv = new DataView(buffer);
+
+    if (buffer.byteLength >= 632) {
+      var nptsBE = dv.getInt32(280, false);
+      var nptsLE = dv.getInt32(280, true);
+      var okBE = nptsBE > 0 && nptsBE < 1e8 && 632 + nptsBE * 4 <= buffer.byteLength;
+      var okLE = nptsLE > 0 && nptsLE < 1e8 && 632 + nptsLE * 4 <= buffer.byteLength;
+      if (okBE || okLE) {
+        var kstnm = readStr(dv, 440, 8);
+        if (/^[\x20-\x7E]*$/.test(kstnm)) return 'SAC';
+      }
+    }
+
+    var seq = readStr(dv, 0, 6);
+    var dq = dv.getUint8(6);
+    if (/^[A-Z0-9 \x00]*$/.test(seq) && (dq === 68 || dq === 82 || dq === 81 || dq === 77 || dq === 32)) {
+      var st = readStr(dv, 8, 2);
+      var ch = readStr(dv, 12, 3);
+      if (/^[A-Z0-9 ]{1,2}$/.test(st) && /^[A-Z0-9 ]{1,3}$/.test(ch)) {
+        return 'MiniSEED';
+      }
+    }
+
+    try {
+      var text = new TextDecoder('utf-8', { fatal: true }).decode(
+        new Uint8Array(buffer, 0, Math.min(512, buffer.byteLength)));
+      if (/^[\x09\x0A\x0D\x20-\x7E\u00A0-\uFFFF]*$/.test(text)) return 'ASCII';
+    } catch (e) { /* not text */ }
+
+    return 'SAC';
+  }
+
+  /* ============================================================
+     解析器：ASCII / CSV
+     ============================================================ */
+
+  function detectTimeColumn(rows) {
+    var n = rows.length;
+    var col0 = new Array(n);
+    for (var i = 0; i < n; i++) col0[i] = rows[i][0];
+
+    var nCheck = Math.min(n, 20);
+    if (nCheck < 3) return { hasTime: false };
+
+    var d0 = col0[1] - col0[0];
+    if (!(d0 > 0)) return { hasTime: false };
+
+    var tolerance = Math.max(Math.abs(d0) * 0.02, 1e-12);
+    for (var j = 2; j < nCheck; j++) {
+      var dj = col0[j] - col0[j - 1];
+      if (!(dj > 0)) return { hasTime: false };
+      if (Math.abs(dj - d0) > tolerance) return { hasTime: false };
+    }
+
+    var isIndex = Math.abs(d0 - 1) < 1e-9 &&
+                  (Math.abs(col0[0]) < 1e-9 || Math.abs(col0[0] - 1) < 1e-9);
+    if (isIndex) return { hasTime: false };
+
+    var isTimestamp = col0[0] > 1e8;
+
+    return {
+      hasTime: true,
+      sampleRate: 1 / d0,
+      startTime: isTimestamp ? new Date(col0[0] * 1000) : null,
+      isTimestamp: isTimestamp
+    };
+  }
+
+  function parseASCII(text) {
+    var lines = text.split(/\r?\n/);
+    var rows = [];
+
+    for (var i = 0; i < lines.length; i++) {
+      var t = lines[i].trim();
+      if (!t) continue;
+      if (t.charAt(0) === '#' || t.indexOf('//') === 0 || t.charAt(0) === '%') continue;
+
+      var parts = t.split(/[\s,;\t]+/).filter(Boolean);
+      var nums = [];
+      var ok = true;
+      for (var j = 0; j < parts.length; j++) {
+        var v = parseFloat(parts[j]);
+        if (!isFinite(v)) { ok = false; break; }
+        nums.push(v);
+      }
+      if (!ok || nums.length === 0) continue;
+      rows.push(nums);
+    }
+
+    if (rows.length === 0) {
+      throw new Error('未在文件中找到有效数据行。\n' +
+                      '请确认文件为两列（时间 幅值）、三列或单列纯幅值文本。');
+    }
+
+    var counts = {};
+    var maxCount = 0, bestNcol = rows[0].length;
+    for (var k = 0; k < rows.length; k++) {
+      var n = rows[k].length;
+      counts[n] = (counts[n] || 0) + 1;
+      if (counts[n] > maxCount) { maxCount = counts[n]; bestNcol = n; }
+    }
+    rows = rows.filter(function (r) { return r.length === bestNcol; });
+
+    if (rows.length === 0) {
+      throw new Error('数据行长度不一致，无法解析。');
+    }
+
+    var ncol = bestNcol;
+    var data, sampleRate = null, startTime = null;
+
+    if (ncol >= 2) {
+      var timeInfo = detectTimeColumn(rows);
+      if (timeInfo.hasTime) {
+        sampleRate = timeInfo.sampleRate;
+        startTime = timeInfo.startTime;
+        data = rows.map(function (r) { return r[1]; });
+      } else {
+        data = rows.map(function (r) { return r[ncol - 1]; });
+      }
+    } else {
+      data = rows.map(function (r) { return r[0]; });
+    }
+
+    return {
+      station: '', network: '', channel: '', location: '',
+      sampleRate: sampleRate,
+      startTime: startTime,
+      data: new Float64Array(data),
+      sourceFormat: 'ASCII',
+      endian: '—'
+    };
+  }
+
+  /* ============================================================
+     解析器：SAC
+     ============================================================ */
+
+  function parseSAC(buffer) {
+    if (buffer.byteLength < 632) {
+      throw new Error('SAC 文件头段不完整（需至少 632 字节，实际 ' + buffer.byteLength + ' 字节）。');
+    }
+
+    var dv = new DataView(buffer);
+    var nptsBE = dv.getInt32(280, false);
+    var nptsLE = dv.getInt32(280, true);
+
+    var okBE = nptsBE > 0 && nptsBE < 1e8 && 632 + nptsBE * 4 <= buffer.byteLength;
+    var okLE = nptsLE > 0 && nptsLE < 1e8 && 632 + nptsLE * 4 <= buffer.byteLength;
+
+    var littleEndian;
+    if (okBE && !okLE) littleEndian = false;
+    else if (okLE && !okBE) littleEndian = true;
+    else if (okBE && okLE) {
+      var nvhdrBE = dv.getInt32(284, false);
+      var nvhdrLE = dv.getInt32(284, true);
+      if (nvhdrBE === 6 && nvhdrLE !== 6) littleEndian = false;
+      else if (nvhdrLE === 6 && nvhdrBE !== 6) littleEndian = true;
+      else littleEndian = false;
+    } else {
+      throw new Error('无法确定 SAC 字节序：\n' +
+                      '大端 npts = ' + nptsBE + '，小端 npts = ' + nptsLE + '\n' +
+                      '文件大小 ' + buffer.byteLength + ' 字节。');
+    }
+
+    var le = littleEndian;
+    var npts = le ? nptsLE : nptsBE;
+
+    if (npts <= 0 || npts > 1e8) {
+      throw new Error('SAC 采样点数异常（npts = ' + npts + '）。');
+    }
+
+    var dataStart = 632;
+    var available = Math.floor((buffer.byteLength - dataStart) / 4);
+
+    if (npts > available) {
+      throw new Error('SAC 数据段不完整：\n' +
+                      '头段声明 ' + npts + ' 个采样点，\n' +
+                      '但文件仅能容纳 ' + available + ' 个。');
+    }
+
+    var delta = dv.getFloat32(0, le);
+    var b = dv.getFloat32(20, le);
+
+    var data = new Float64Array(npts);
+    for (var i = 0; i < npts; i++) {
+      data[i] = dv.getFloat32(dataStart + i * 4, le);
+    }
+
+    var kstnm  = readStr(dv, 440, 8);
+    var kevnm  = readStr(dv, 448, 16);
+    var khole  = readStr(dv, 464, 8);
+    var kcmpnm = readStr(dv, 600, 8);
+    var knetwk = readStr(dv, 608, 8);
+
+    var startTime = null;
+    try {
+      var nzyear = dv.getInt32(360, le);
+      var nzjday = dv.getInt32(364, le);
+      var nzhour = dv.getInt32(368, le);
+      var nzmin  = dv.getInt32(372, le);
+      var nzsec  = dv.getInt32(376, le);
+      var nzmsec = dv.getInt32(380, le);
+
+      if (nzyear >= 1900 && nzyear <= 2200 &&
+          nzjday >= 1 && nzjday <= 366 &&
+          nzhour >= 0 && nzhour < 24 &&
+          nzmin >= 0 && nzmin < 60 &&
+          nzsec >= 0 && nzsec <= 60) {
+        var d = new Date(Date.UTC(nzyear, 0, 1, nzhour, nzmin, nzsec, nzmsec));
+        d.setUTCDate(nzjday);
+        if (!isNaN(d.getTime())) startTime = d;
+      }
+    } catch (e) { /* 忽略 */ }
+
+    return {
+      station: kstnm,
+      network: knetwk,
+      channel: kcmpnm,
+      location: khole,
+      eventName: kevnm,
+      sampleRate: delta > 0 ? 1 / delta : null,
+      startTime: startTime,
+      b: b,
+      data: data,
+      sourceFormat: 'SAC',
+      endian: littleEndian ? '小端 (LE)' : '大端 (BE)'
+    };
+  }
+
+  /* ============================================================
+     解析器：MiniSEED
+
+     使用定位 blockette 1000 的多种策略，兼容更多实际文件。
+     ============================================================ */
+
+  /* 尝试读取一个 blockette 1000（给定其起始位置） */
+  function tryReadBlockette1000(dv, pos, bufferLen) {
+    if (pos + 8 > bufferLen) return null;
+
+    /* 块头类型：先试大端，再试小端 */
+    var bTypeBE = dv.getUint16(pos, false);
+    var bTypeLE = dv.getUint16(pos, true);
+    var bType = -1;
+    if (bTypeBE === 1000) bType = 1000;
+    else if (bTypeLE === 1000) bType = 1000;
+    else return null;
+
+    var encoding = dv.getUint8(pos + 4);
+    var wordOrder = dv.getUint8(pos + 5);
+    var recLenIdx = dv.getUint8(pos + 6);
+
+    /* 合理性检查 */
+    if (encoding < 0 || encoding > 5) return null;
+    if (wordOrder !== 0 && wordOrder !== 1) return null;
+
+    var recordLength = null;
+    if (recLenIdx >= 4 && recLenIdx <= 20) {
+      recordLength = Math.pow(2, recLenIdx);
+    }
+
+    return {
+      encoding: encoding,
+      littleEndian: wordOrder === 1,
+      recordLength: recordLength,
+      pos: pos
+    };
+  }
+
+  /* 定位 blockette 1000：多策略 */
+  function locateBlockette1000(dv, offset, bufferLen, firstBlockette) {
+    var i, pos, result;
+
+    /* 策略 1：按 firstBlockette 遍历 blockette 链 */
+    if (firstBlockette >= 48 && firstBlockette + 8 <= bufferLen) {
+      pos = offset + firstBlockette;
+      var iter = 0;
+      while (iter < 32 && pos + 8 <= bufferLen) {
+        iter++;
+        result = tryReadBlockette1000(dv, pos, bufferLen);
+        if (result) return result;
+
+        /* 下一块偏移：先试大端 */
+        var bNext = dv.getUint16(pos + 2, false);
+        if (bNext === 0) break;
+        var nextAbs = offset + bNext;
+        if (nextAbs <= pos || nextAbs >= bufferLen) break;
+        pos = nextAbs;
+      }
+    }
+
+    /* 策略 2：从 48 字节开始扫描前 256 字节 */
+    var scanEnd = Math.min(offset + 256, bufferLen - 8);
+    for (pos = offset + 48; pos <= scanEnd; pos += 2) {
+      result = tryReadBlockette1000(dv, pos, bufferLen);
+      if (result) return result;
+    }
+
+    /* 策略 3：从 56 开始扫描（跳过一个块头） */
+    scanEnd = Math.min(offset + 256, bufferLen - 8);
+    for (pos = offset + 56; pos <= scanEnd; pos += 2) {
+      result = tryReadBlockette1000(dv, pos, bufferLen);
+      if (result) return result;
+    }
+
+    return null;
+  }
+
+  /* 根据文件大小推断记录长度 */
+  function inferRecordLength(fileSize) {
+    if (fileSize >= 4096 && fileSize % 4096 === 0) return 4096;
+    if (fileSize >= 512 && fileSize % 512 === 0) return 512;
+    if (fileSize >= 256 && fileSize % 256 === 0) return 256;
+    return fileSize;
+  }
+
+  function parseMiniSEED(buffer) {
+    var dv = new DataView(buffer);
+    var traces = [];
+    var offset = 0;
+    var iterations = 0;
+    var totalRecords = 0;
+    var firstHeaderHex = hexDump(dv, 0, Math.min(64, buffer.byteLength));
+
+    while (offset + 48 <= buffer.byteLength && iterations < 100000) {
+      iterations++;
+
+      /* 全零数据：跳过 */
+      if (dv.getUint8(offset) === 0 && dv.getUint8(offset + 1) === 0 &&
+          dv.getUint8(offset + 2) === 0 && dv.getUint8(offset + 3) === 0) {
+        offset += 4;
+        continue;
+      }
+
+      var station  = readStr(dv, offset + 8, 2);
+      var location = readStr(dv, offset + 10, 2);
+      var channel  = readStr(dv, offset + 12, 3);
+      var network  = readStr(dv, offset + 15, 2);
+
+      var yearRaw = dv.getUint16(offset + 17, false);
+      var day     = dv.getUint16(offset + 19, false);
+      var hour    = dv.getUint8(offset + 21);
+      var minute  = dv.getUint8(offset + 22);
+      var second  = dv.getUint8(offset + 23);
+      var usec    = dv.getUint16(offset + 25, false);
+
+      var numSamples     = dv.getUint16(offset + 27, false);
+      var rateFactor     = dv.getInt16(offset + 29, false);
+      var rateMult       = dv.getInt16(offset + 31, false);
+      var numBlockettes  = dv.getUint8(offset + 36);
+      var dataOffset     = dv.getUint16(offset + 41, false);
+      var firstBlockette = dv.getUint16(offset + 43, false);
+
+      /* 定位 blockette 1000 */
+      var blk1000 = locateBlockette1000(dv, offset, buffer.byteLength, firstBlockette);
+
+      if (!blk1000) {
+        throw new Error('MiniSEED 记录缺少 blockette 1000，无法确定数据编码格式。\n\n' +
+                        '诊断信息：\n' +
+                        '  记录序号：' + (totalRecords + 1) + '\n' +
+                        '  记录偏移：' + offset + ' 字节\n' +
+                        '  固定头段读取结果：\n' +
+                        '    台站 = "' + station + '"，通道 = "' + channel + '"，台网 = "' + network + '"\n' +
+                        '    采样点数 = ' + numSamples + '\n' +
+                        '    采样率因子 = ' + rateFactor + '，倍数 = ' + rateMult + '\n' +
+                        '    blockette 数量 = ' + numBlockettes + '\n' +
+                        '    firstBlockette 偏移 = ' + firstBlockette + '\n' +
+                        '    数据偏移 = ' + dataOffset + '\n\n' +
+                        '文件前 64 字节（十六进制）：\n' + firstHeaderHex + '\n\n' +
+                        '可能原因：\n' +
+                        '  1. 文件不是标准 MiniSEED（例如是 SEED 格式或已损坏）\n' +
+                        '  2. 文件使用 Steim 压缩但块结构异常\n' +
+                        '  3. 文件被截断，头段不完整\n\n' +
+                        '请用 ObsPy 检查文件：\n' +
+                        '    from obspy import read\n' +
+                        '    st = read("file.mseed")\n' +
+                        '    print(st)');
+      }
+
+      /* 确定记录长度 */
+      var recordLength = blk1000.recordLength;
+      if (!recordLength) {
+        recordLength = inferRecordLength(buffer.byteLength);
+      }
+      if (offset + recordLength > buffer.byteLength) {
+        recordLength = buffer.byteLength - offset;
+      }
+
+      var dataStart = offset + 48 + dataOffset;
+      if (dataStart > buffer.byteLength) {
+        throw new Error('MiniSEED 记录数据区超出文件范围。\n' +
+                        '记录 ' + (totalRecords + 1) + '，数据起点 ' + dataStart +
+                        '，文件长度 ' + buffer.byteLength + '。');
+      }
+
+      var encoding = blk1000.encoding;
+      var le = blk1000.littleEndian;
+
+      /* Steim 压缩：明确提示 */
+      if (encoding === 10 || encoding === 11 || encoding === 13) {
+        var steimName = encoding === 10 ? 'Steim-1' : (encoding === 11 ? 'Steim-2' : 'Steim-3');
+        throw new Error('此 MiniSEED 文件使用 ' + steimName + ' 压缩编码，本工具暂不支持。\n\n' +
+                        '请先用 ObsPy 转换为 SAC 或 ASCII 后再上传：\n' +
+                        '    from obspy import read\n' +
+                        '    st = read("input.mseed")\n' +
+                        '    st.write("output.sac", format="SAC")');
+      }
+
+      var samples = null;
+      var i;
+
+      if (encoding === 1) {
+        samples = new Float64Array(numSamples);
+        for (i = 0; i < numSamples; i++) {
+          if (dataStart + i * 2 + 2 > buffer.byteLength) { samples = samples.subarray(0, i); break; }
+          samples[i] = dv.getInt16(dataStart + i * 2, le);
+        }
+      } else if (encoding === 2) {
+        samples = new Float64Array(numSamples);
+        for (i = 0; i < numSamples; i++) {
+          var p = dataStart + i * 3;
+          if (p + 3 > buffer.byteLength) { samples = samples.subarray(0, i); break; }
+          var b0 = dv.getUint8(p);
+          var b1 = dv.getUint8(p + 1);
+          var b2 = dv.getUint8(p + 2);
+          var v;
+          if (le) v = b0 | (b1 << 8) | (b2 << 16);
+          else    v = (b0 << 16) | (b1 << 8) | b2;
+          if (v & 0x800000) v -= 0x1000000;
+          samples[i] = v;
+        }
+      } else if (encoding === 3) {
+        samples = new Float64Array(numSamples);
+        for (i = 0; i < numSamples; i++) {
+          if (dataStart + i * 4 + 4 > buffer.byteLength) { samples = samples.subarray(0, i); break; }
+          samples[i] = dv.getInt32(dataStart + i * 4, le);
+        }
+      } else if (encoding === 4) {
+        samples = new Float64Array(numSamples);
+        for (i = 0; i < numSamples; i++) {
+          if (dataStart + i * 4 + 4 > buffer.byteLength) { samples = samples.subarray(0, i); break; }
+          samples[i] = dv.getFloat32(dataStart + i * 4, le);
+        }
+      } else if (encoding === 5) {
+        samples = new Float64Array(numSamples);
+        for (i = 0; i < numSamples; i++) {
+          if (dataStart + i * 8 + 8 > buffer.byteLength) { samples = samples.subarray(0, i); break; }
+          samples[i] = dv.getFloat64(dataStart + i * 8, le);
+        }
+      } else if (encoding === 0) {
+        var str = '';
+        var maxBytes = Math.min(numSamples * 2, buffer.byteLength - dataStart);
+        for (i = 0; i < maxBytes; i++) {
+          str += String.fromCharCode(dv.getUint8(dataStart + i));
+        }
+        var nums = str.split(/[\s,]+/).filter(Boolean).map(parseFloat).filter(isFinite);
+        samples = new Float64Array(nums);
+      } else {
+        throw new Error('不支持的 MiniSEED 数据编码编号：' + encoding +
+                        '\n（0=ASCII, 1=int16, 2=int24, 3=int32, 4=float32, 5=float64, 10/11/13=Steim）');
+      }
+
+      /* 起始时间 */
+      var startTime = null;
+      var fullYear;
+      if (yearRaw >= 1900 && yearRaw <= 2200) fullYear = yearRaw;
+      else if (yearRaw >= 0 && yearRaw <= 99) {
+        fullYear = yearRaw < 70 ? 2000 + yearRaw : 1900 + yearRaw;
+      } else {
+        fullYear = 2000;
+      }
+
+      if (day >= 1 && day <= 366 && hour < 24 && minute < 60 && second <= 60) {
+        var d = new Date(Date.UTC(fullYear, 0, 1, hour, minute, second, Math.round(usec / 10)));
+        d.setUTCDate(day);
+        if (!isNaN(d.getTime())) startTime = d;
+      }
+
+      /* 采样率 */
+      var sampleRate = null;
+      if (rateFactor !== 0 && rateMult !== 0) {
+        sampleRate = rateFactor * rateMult;
+        if (sampleRate < 0) sampleRate = -1 / sampleRate;
+      } else if (rateFactor !== 0) {
+        sampleRate = rateFactor > 0 ? rateFactor : -1 / rateFactor;
+      } else if (rateMult !== 0) {
+        sampleRate = rateMult > 0 ? rateMult : -1 / rateMult;
+      }
+
+      traces.push({
+        station: station,
+        network: network,
+        channel: channel,
+        location: location,
+        sampleRate: sampleRate,
+        startTime: startTime,
+        data: samples,
+        sourceFormat: 'MiniSEED',
+        endian: le ? '小端 (LE)' : '大端 (BE)'
+      });
+
+      totalRecords++;
+
+      if (recordLength <= 0) break;
+      offset += recordLength;
+    }
+
+    if (traces.length === 0) {
+      throw new Error('未从 MiniSEED 文件中解析出任何记录。\n' +
+                      '请确认文件为 MiniSEED 格式（.mseed / .seed / .ms）。');
+    }
+
+    if (traces.length > 1) {
+      var first = traces[0];
+      var allSame = true;
+      for (var j = 1; j < traces.length; j++) {
+        if (traces[j].channel !== first.channel ||
+            traces[j].station !== first.station ||
+            traces[j].network !== first.network) {
+          allSame = false;
+          break;
+        }
+      }
+      if (allSame) {
+        var total = 0;
+        for (var m = 0; m < traces.length; m++) total += traces[m].data.length;
+        var merged = new Float64Array(total);
+        var pos = 0;
+        for (var n = 0; n < traces.length; n++) {
+          merged.set(traces[n].data, pos);
+          pos += traces[n].data.length;
+        }
+        first.data = merged;
+        first.mergedCount = traces.length;
+      } else {
+        first.multipleTraces = traces.length;
+      }
+    }
+
+    return traces[0];
+  }
+
+  /* ============================================================
+     导出器
+     ============================================================ */
+
+  function exportASCII(trace) {
+    var dt = trace.sampleRate > 0 ? 1 / trace.sampleRate : 1;
+    var parts = [];
+    parts.push('# 波形数据导出 · wayione 波形格式转换器');
+    if (trace.station) parts.push('# 台站: ' + trace.station);
+    if (trace.network) parts.push('# 台网: ' + trace.network);
+    if (trace.channel) parts.push('# 通道: ' + trace.channel);
+    if (trace.location) parts.push('# 位置: ' + trace.location);
+    if (trace.sampleRate) parts.push('# 采样率: ' + trace.sampleRate + ' Hz');
+    if (trace.startTime) parts.push('# 起始时间: ' + trace.startTime.toISOString());
+    parts.push('# 点数: ' + trace.data.length);
+    parts.push('# 时间(s)            幅值');
+    for (var i = 0; i < trace.data.length; i++) {
+      parts.push((i * dt).toFixed(6) + '  ' + trace.data[i].toExponential(6));
+    }
+    return parts.join('\n') + '\n';
+  }
+
+  function exportCSV(trace) {
+    var dt = trace.sampleRate > 0 ? 1 / trace.sampleRate : 1;
+    var parts = ['time,amplitude'];
+    for (var i = 0; i < trace.data.length; i++) {
+      parts.push((i * dt).toFixed(6) + ',' + trace.data[i].toExponential(6));
+    }
+    return parts.join('\n') + '\n';
+  }
+
+  function exportSAC(trace) {
+    var npts = trace.data.length;
+    var buffer = new ArrayBuffer(632 + npts * 4);
+    var dv = new DataView(buffer);
+
+    var delta = trace.sampleRate > 0 ? 1 / trace.sampleRate : 1;
+
+    var min = Infinity, max = -Infinity, sum = 0;
+    for (var i = 0; i < npts; i++) {
+      var v = trace.data[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+      sum += v;
+    }
+    if (!isFinite(min)) min = 0;
+    if (!isFinite(max)) max = 0;
+
+    dv.setFloat32(0, delta, false);
+    dv.setFloat32(4, min, false);
+    dv.setFloat32(8, max, false);
+    dv.setFloat32(12, 1, false);
+    dv.setFloat32(16, delta, false);
+    dv.setFloat32(20, 0, false);
+    dv.setFloat32(24, (npts - 1) * delta, false);
+    dv.setFloat32(228, sum / npts, false);
+
+    dv.setInt32(280, npts, false);
+    dv.setInt32(284, 6, false);
+    dv.setInt32(312, 1, false);
+    dv.setInt32(316, 5, false);
+
+    if (trace.startTime) {
+      var d = trace.startTime;
+      var y = d.getUTCFullYear();
+      var startOfYear = Date.UTC(y, 0, 1);
+      var jday = Math.floor((d.getTime() - startOfYear) / 86400000) + 1;
+      dv.setInt32(360, y, false);
+      dv.setInt32(364, jday, false);
+      dv.setInt32(368, d.getUTCHours(), false);
+      dv.setInt32(372, d.getUTCMinutes(), false);
+      dv.setInt32(376, d.getUTCSeconds(), false);
+      dv.setInt32(380, d.getUTCMilliseconds(), false);
+    }
+
+    writeStr(dv, 440, 8, trace.station || '');
+    writeStr(dv, 464, 8, trace.location || '');
+    writeStr(dv, 600, 8, trace.channel || '');
+    writeStr(dv, 608, 8, trace.network || '');
+
+    for (var k = 0; k < npts; k++) {
+      dv.setFloat32(632 + k * 4, trace.data[k], false);
+    }
+
+    return buffer;
+  }
+
+  /* ============================================================
+     示例数据生成
+     ============================================================ */
+
+  function makeDemoData() {
+    var fs = 100;
+    var duration = 20;
+    var n = fs * duration;
+    var data = new Float64Array(n);
+    var seed = 12345;
+
+    function rnd() {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    }
+
+    for (var i = 0; i < n; i++) {
+      var t = i / fs;
+      var v = 0;
+
+      var tp = t - 3.0;
+      if (tp > 0) v += 0.08 * Math.exp(-tp / 0.6) * Math.sin(2 * Math.PI * 8 * tp);
+      var ts = t - 6.0;
+      if (ts > 0) v += 0.5 * Math.exp(-ts / 3.0) * Math.sin(2 * Math.PI * 2.5 * ts);
+      var tl = t - 10.0;
+      if (tl > 0) v += 0.25 * Math.exp(-tl / 4.0) * Math.sin(2 * Math.PI * 0.8 * tl);
+      if (t > 5) v += 0.03 * (rnd() * 2 - 1) * Math.exp(-(t - 5) / 8);
+      v += 0.005 * (rnd() * 2 - 1);
+
+      data[i] = v;
+    }
+
+    return {
+      data: data,
+      fs: fs,
+      duration: duration,
+      startTime: new Date(Date.UTC(2024, 0, 1, 0, 0, 0)),
+      station: 'DEMO',
+      network: 'XX',
+      channel: 'BHZ',
+      location: ''
+    };
+  }
+
+  function buildASCIIDemo() {
+    var d = makeDemoData();
+    var lines = [];
+    lines.push('# 示例波形 · wayione 波形格式转换器');
+    lines.push('# 台站: ' + d.station + '  通道: ' + d.channel + '  台网: ' + d.network);
+    lines.push('# 采样率: ' + d.fs + ' Hz');
+    lines.push('# 起始时间: ' + d.startTime.toISOString());
+    lines.push('# 点数: ' + d.data.length);
+    lines.push('# 时间(s)            幅值');
+    for (var i = 0; i < d.data.length; i++) {
+      lines.push((i / d.fs).toFixed(6) + '  ' + d.data[i].toExponential(6));
+    }
+    return new Blob([lines.join('\n') + '\n'], { type: 'text/plain;charset=utf-8' });
+  }
+
+  function buildCSVDemo() {
+    var d = makeDemoData();
+    var lines = ['time,amplitude'];
+    for (var i = 0; i < d.data.length; i++) {
+      lines.push((i / d.fs).toFixed(6) + ',' + d.data[i].toExponential(6));
+    }
+    return new Blob([lines.join('\n') + '\n'], { type: 'text/csv;charset=utf-8' });
+  }
+
+  function buildSACDemo() {
+    var d = makeDemoData();
+    var npts = d.data.length;
+    var buffer = new ArrayBuffer(632 + npts * 4);
+    var dv = new DataView(buffer);
+    var delta = 1 / d.fs;
+
+    var min = Infinity, max = -Infinity, sum = 0;
+    for (var i = 0; i < npts; i++) {
+      var v = d.data[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+      sum += v;
+    }
+
+    dv.setFloat32(0, delta, false);
+    dv.setFloat32(4, min, false);
+    dv.setFloat32(8, max, false);
+    dv.setFloat32(12, 1, false);
+    dv.setFloat32(16, delta, false);
+    dv.setFloat32(20, 0, false);
+    dv.setFloat32(24, (npts - 1) * delta, false);
+    dv.setFloat32(228, sum / npts, false);
+
+    dv.setInt32(280, npts, false);
+    dv.setInt32(284, 6, false);
+    dv.setInt32(312, 1, false);
+    dv.setInt32(316, 5, false);
+
+    var dt = d.startTime;
+    var y = dt.getUTCFullYear();
+    var jday = Math.floor((dt.getTime() - Date.UTC(y, 0, 1)) / 86400000) + 1;
+    dv.setInt32(360, y, false);
+    dv.setInt32(364, jday, false);
+    dv.setInt32(368, dt.getUTCHours(), false);
+    dv.setInt32(372, dt.getUTCMinutes(), false);
+    dv.setInt32(376, dt.getUTCSeconds(), false);
+    dv.setInt32(380, dt.getUTCMilliseconds(), false);
+
+    writeStr(dv, 440, 8, d.station);
+    writeStr(dv, 464, 8, d.location || '');
+    writeStr(dv, 600, 8, d.channel);
+    writeStr(dv, 608, 8, d.network);
+
+    for (var k = 0; k < npts; k++) {
+      dv.setFloat32(632 + k * 4, d.data[k], false);
+    }
+
+    return new Blob([buffer], { type: 'application/octet-stream' });
+  }
+
+  function buildMiniSEEDDemo() {
+    var d = makeDemoData();
+    var RECORD_SIZE = 4096;
+    var FIXED_HEADER = 48;
+    var BLOCKETTE_1000_SIZE = 8;
+    var DATA_OFFSET = BLOCKETTE_1000_SIZE;
+    var DATA_START = FIXED_HEADER + DATA_OFFSET;
+    var MAX_SAMPLES = Math.floor((RECORD_SIZE - DATA_START) / 4);
+
+    var records = [];
+    var sampleIdx = 0;
+    var seq = 1;
+
+    while (sampleIdx < d.data.length) {
+      var n = Math.min(MAX_SAMPLES, d.data.length - sampleIdx);
+      var buf = new ArrayBuffer(RECORD_SIZE);
+      var dv = new DataView(buf);
+
+      writeStr(dv, 0, 6, String(seq).padStart(6, '0'));
+      dv.setUint8(6, 68);
+      dv.setUint8(7, 32);
+
+      writeStr(dv, 8, 2, d.station);
+      writeStr(dv, 10, 2, d.location || '  ');
+      writeStr(dv, 12, 3, d.channel);
+      writeStr(dv, 15, 2, d.network);
+
+      var startSec = sampleIdx / d.fs;
+      var startDate = new Date(d.startTime.getTime() + startSec * 1000);
+      var y = startDate.getUTCFullYear();
+      var jday = Math.floor((startDate.getTime() - Date.UTC(y, 0, 1)) / 86400000) + 1;
+      dv.setUint16(17, y, false);
+      dv.setUint16(19, jday, false);
+      dv.setUint8(21, startDate.getUTCHours());
+      dv.setUint8(22, startDate.getUTCMinutes());
+      dv.setUint8(23, startDate.getUTCSeconds());
+      dv.setUint8(24, 0);
+      dv.setUint16(25, Math.round(startDate.getUTCMilliseconds() * 10), false);
+
+      dv.setUint16(27, n, false);
+      dv.setInt16(29, d.fs, false);
+      dv.setInt16(31, 1, false);
+
+      dv.setUint8(33, 0);
+      dv.setUint8(34, 0);
+      dv.setUint8(35, 0);
+      dv.setUint8(36, 1);
+
+      dv.setInt32(37, 0, false);
+
+      dv.setUint16(41, DATA_OFFSET, false);
+      dv.setUint16(43, FIXED_HEADER, false);
+
+      dv.setUint16(FIXED_HEADER, 1000, false);
+      dv.setUint16(FIXED_HEADER + 2, 0, false);
+      dv.setUint8(FIXED_HEADER + 4, 4);
+      dv.setUint8(FIXED_HEADER + 5, 0);
+      dv.setUint8(FIXED_HEADER + 6, 12);
+      dv.setUint8(FIXED_HEADER + 7, 0);
+
+      for (var i = 0; i < n; i++) {
+        dv.setFloat32(DATA_START + i * 4, d.data[sampleIdx + i], false);
+      }
+
+      records.push(buf);
+      sampleIdx += n;
+      seq++;
+    }
+
+    var total = 0;
+    for (var r = 0; r < records.length; r++) total += records[r].byteLength;
+    var merged = new Uint8Array(total);
+    var p = 0;
+    for (var s = 0; s < records.length; s++) {
+      merged.set(new Uint8Array(records[s]), p);
+      p += records[s].byteLength;
+    }
+
+    return new Blob([merged], { type: 'application/octet-stream' });
+  }
+
+  /* ============================================================
+     科研风格波形绘制
+     ============================================================ */
+
+  function niceTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function formatTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 1e4 || a < 1e-2) {
+      var e = Math.floor(Math.log10(a));
+      var m = v / Math.pow(10, e);
+      var ms = m.toFixed(1);
+      if (ms.indexOf('.0') === ms.length - 2) ms = ms.slice(0, -2);
+      return ms + '×10' + sup(e);
+    }
+    if (a >= 100) return v.toFixed(0);
+    var s;
+    if (a >= 1) s = v.toFixed(2);
+    else if (a >= 0.01) s = v.toFixed(3);
+    else s = v.toFixed(4);
+    if (s.indexOf('.') >= 0) s = s.replace(/\.?0+$/, '');
+    return s;
+  }
+
+  function drawWaveform(canvas, data, xMax, xLabel) {
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var cssW = rect.width || 800;
+    var cssH = rect.height || 260;
+
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var W = cssW, H = cssH;
+    var margin = { top: 16, right: 20, bottom: 46, left: 72 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var min = Infinity, max = -Infinity;
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    if (!isFinite(min)) { min = -1; max = 1; }
+    var absMax = Math.max(Math.abs(min), Math.abs(max)) || 1;
+    var yMax = absMax * 1.08;
+    var yMin = -yMax;
+
+    var yTicks = niceTicks(yMin, yMax, 5);
+    var xTicks = niceTicks(0, xMax, 6);
+
+    ctx.save();
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var yv = yTicks[yi];
+      var py = margin.top + plotH - (yv - yMin) / (yMax - yMin) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, py);
+      ctx.lineTo(margin.left + plotW, py);
+      ctx.stroke();
+    }
+
+    for (var xi = 0; xi < xTicks.length; xi++) {
+      var xv = xTicks[xi];
+      var px = margin.left + (xv / xMax) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(px, margin.top);
+      ctx.lineTo(px, margin.top + plotH);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 0.9;
+    ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+
+    var n = data.length;
+    var pxCount = Math.max(1, Math.floor(plotW));
+    var step = n / pxCount;
+
+    for (var x = 0; x < pxCount; x++) {
+      var i0 = Math.floor(x * step);
+      var i1 = Math.min(n, Math.floor((x + 1) * step) + 1);
+      var lo = Infinity, hi = -Infinity;
+      for (var j = i0; j < i1; j++) {
+        var vv = data[j];
+        if (vv < lo) lo = vv;
+        if (vv > hi) hi = vv;
+      }
+      if (lo === Infinity) continue;
+      var y1 = margin.top + plotH - (hi - yMin) / (yMax - yMin) * plotH;
+      var y2 = margin.top + plotH - (lo - yMin) / (yMax - yMin) * plotH;
+      ctx.moveTo(margin.left + x + 0.5, y1);
+      ctx.lineTo(margin.left + x + 0.5, y2);
+    }
+    ctx.stroke();
+
+    var tickLen = 5;
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 0.8;
+
+    ctx.font = '11px "Times New Roman", "Songti SC", "SimSun", serif';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (var yj = 0; yj < yTicks.length; yj++) {
+      var ty = yTicks[yj];
+      var yy = margin.top + plotH - (ty - yMin) / (yMax - yMin) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yy);
+      ctx.lineTo(margin.left + tickLen, yy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(margin.left + plotW, yy);
+      ctx.lineTo(margin.left + plotW - tickLen, yy);
+      ctx.stroke();
+      ctx.fillText(formatTick(ty), margin.left - 8, yy);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xj = 0; xj < xTicks.length; xj++) {
+      var tx = xTicks[xj];
+      var xx = margin.left + (tx / xMax) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(xx, margin.top + plotH);
+      ctx.lineTo(xx, margin.top + plotH - tickLen);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xx, margin.top);
+      ctx.lineTo(xx, margin.top + tickLen);
+      ctx.stroke();
+      ctx.fillText(formatTick(tx), xx, margin.top + plotH + 8);
+    }
+
+    ctx.font = 'italic 12px "Times New Roman", "Songti SC", "SimSun", serif';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(xLabel, margin.left + plotW / 2, H - 18);
+
+    ctx.save();
+    ctx.translate(20, margin.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Amplitude', 0, 0);
+    ctx.restore();
+  }
+
+  /* ============================================================
+     状态与 UI
+     ============================================================ */
+
+  var state = {
+    trace: null,
+    fileName: '',
+    fileSize: 0,
+    outputFormat: 'ASCII'
+  };
+
+  function showError(msg) {
+    var box = $('errorBox');
+    box.textContent = msg;
+    box.hidden = false;
+    $('okBox').hidden = true;
+  }
+
+  function showOk(msg) {
+    var box = $('okBox');
+    box.textContent = msg;
+    box.hidden = false;
+    $('errorBox').hidden = true;
+  }
+
+  function hideAlerts() {
+    $('errorBox').hidden = true;
+    $('okBox').hidden = true;
+  }
+
+  function formatDateTime(d) {
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) +
+           ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' +
+           pad(d.getUTCSeconds()) + ' UTC';
+  }
+
+  function displayTrace(trace, fileName, fileSize) {
+    state.trace = trace;
+    state.fileName = fileName;
+    state.fileSize = fileSize;
+
+    hideAlerts();
+
+    $('fTag').textContent = trace.sourceFormat;
+    $('fName').textContent = fileName;
+    $('fSize').textContent = fmtSize(fileSize);
+
+    var station = trace.station || '—';
+    var network = trace.network || '';
+    $('tStation').textContent = network ? (station + ' · ' + network) : station;
+
+    var ch = trace.channel || '—';
+    var loc = trace.location || '';
+    $('tChannel').textContent = loc ? (ch + ' · ' + loc) : ch;
+
+    $('tRate').textContent = trace.sampleRate
+      ? fmtNum(trace.sampleRate, 4) + ' Hz'
+      : '未知';
+
+    $('tNpts').textContent = trace.data.length.toLocaleString();
+
+    var dt = trace.sampleRate > 0 ? 1 / trace.sampleRate : 0;
+    var duration = dt * (trace.data.length - 1);
+    $('tDuration').textContent = trace.sampleRate ? fmtDuration(duration) : '—';
+
+    $('tStart').textContent = trace.startTime
+      ? formatDateTime(trace.startTime)
+      : '未记录';
+
+    var min = Infinity, max = -Infinity;
+    for (var i = 0; i < trace.data.length; i++) {
+      var v = trace.data[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    $('tRange').textContent = fmtNum(min, 3) + ' ~ ' + fmtNum(max, 3);
+    $('tFormat').textContent = trace.sourceFormat;
+    $('tEndian').textContent = trace.endian || '—';
+
+    $('infoPanel').hidden = false;
+    $('outPanel').hidden = false;
+
+    var xMax, xLabel;
+    if (trace.sampleRate > 0) {
+      xMax = (trace.data.length - 1) / trace.sampleRate;
+      xLabel = 'Time (s)';
+    } else {
+      xMax = trace.data.length - 1;
+      xLabel = 'Sample';
+    }
+
+    requestAnimationFrame(function () {
+      drawWaveform($('waveCanvas'), trace.data, xMax, xLabel);
+    });
+
+    var captionParts = [];
+    if (trace.station) captionParts.push(trace.station);
+    if (trace.channel) captionParts.push(trace.channel);
+    if (trace.startTime) captionParts.push(formatDateTime(trace.startTime));
+    $('waveCaption').textContent = captionParts.length ? captionParts.join(' · ') : 'Waveform preview';
+
+    var msgs = [];
+    if (trace.mergedCount) {
+      msgs.push('已解析并合并 ' + trace.mergedCount + ' 条记录。');
+    }
+    if (trace.multipleTraces) {
+      msgs.push('文件中含 ' + trace.multipleTraces + ' 条不同通道的记录，已显示第一条。');
+    }
+    if (trace.sourceFormat === 'ASCII' && !trace.sampleRate) {
+      msgs.push('未能从数据中识别时间列，采样率未知。x 轴以样本序号显示。');
+    }
+    if (msgs.length) showOk(msgs.join('\n'));
+  }
+
+  function clearAll() {
+    state.trace = null;
+    state.fileName = '';
+    state.fileSize = 0;
+    $('infoPanel').hidden = true;
+    $('outPanel').hidden = true;
+    $('fileInput').value = '';
+    hideAlerts();
+  }
+
+  /* ============================================================
+     文件读取与解析
+     ============================================================ */
+
+  function parseBuffer(buffer, format) {
+    if (format === 'SAC') return parseSAC(buffer);
+    if (format === 'MiniSEED') return parseMiniSEED(buffer);
+    var text = new TextDecoder('utf-8').decode(new Uint8Array(buffer));
+    return parseASCII(text);
+  }
+
+  function readFile(file) {
+    hideAlerts();
+
+    if (file.size === 0) {
+      showError('文件为空。');
+      return;
+    }
+    if (file.size > 60 * 1024 * 1024) {
+      showError('文件超过 60 MB，浏览器端处理可能非常缓慢。建议先裁剪数据。');
+      return;
+    }
+
+    var reader = new FileReader();
+
+    reader.onload = function (e) {
+      var buffer = e.target.result;
+      try {
+        var fmt = detectFormat(file.name, buffer);
+        var trace = parseBuffer(buffer, fmt);
+        displayTrace(trace, file.name, file.size);
+      } catch (err) {
+        clearAll();
+        $('errorBox').textContent = err && err.message ? err.message : String(err);
+        $('errorBox').hidden = false;
+        $('okBox').hidden = true;
+      }
+    };
+
+    reader.onerror = function () {
+      clearAll();
+      showError('读取文件失败，请重试。');
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  /* ============================================================
+     示例加载
+     ============================================================ */
+
+  function loadDemo(kind) {
+    hideAlerts();
+    var blob, fileName, format;
+
+    try {
+      if (kind === 'ascii') {
+        blob = buildASCIIDemo(); fileName = 'demo_ascii.txt'; format = 'ASCII';
+      } else if (kind === 'csv') {
+        blob = buildCSVDemo(); fileName = 'demo_csv.csv'; format = 'ASCII';
+      } else if (kind === 'sac') {
+        blob = buildSACDemo(); fileName = 'demo_sac.sac'; format = 'SAC';
+      } else if (kind === 'mseed') {
+        blob = buildMiniSEEDDemo(); fileName = 'demo_mseed.mseed'; format = 'MiniSEED';
+      } else return;
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          var trace = parseBuffer(e.target.result, format);
+          displayTrace(trace, fileName, blob.size);
+        } catch (err) {
+          clearAll();
+          showError('示例加载失败：\n' + (err && err.message ? err.message : String(err)));
+        }
+      };
+      reader.onerror = function () {
+        clearAll();
+        showError('示例读取失败。');
+      };
+      reader.readAsArrayBuffer(blob);
+    } catch (err) {
+      clearAll();
+      showError('生成示例出错：' + (err && err.message ? err.message : String(err)));
+    }
+  }
+
+  function downloadDemo(kind) {
+    var blob, fileName;
+    if (kind === 'ascii') { blob = buildASCIIDemo(); fileName = 'demo_ascii.txt'; }
+    else if (kind === 'csv') { blob = buildCSVDemo(); fileName = 'demo_csv.csv'; }
+    else if (kind === 'sac') { blob = buildSACDemo(); fileName = 'demo_sac.sac'; }
+    else if (kind === 'mseed') { blob = buildMiniSEEDDemo(); fileName = 'demo_mseed.mseed'; }
+    else return;
+
+    saveBlob(blob, fileName).then(function (result) {
+      if (result.aborted) showOk('已取消保存。');
+      else if (result.fallback) showOk('当前浏览器不支持选择保存位置，已下载到默认目录：' + result.name);
+      else if (result.saved) showOk('已保存示例文件：' + result.name);
+      else if (result.error) showError('保存失败：' + (result.error.message || result.error));
+    });
+  }
+
+  /* ============================================================
+     转换并保存
+     ============================================================ */
+
+  function doDownload() {
+    if (!state.trace) {
+      showError('请先上传波形文件。');
+      return;
+    }
+
+    var trace = state.trace;
+    var base = baseName(state.fileName) || 'waveform';
+    var fmt = state.outputFormat;
+
+    var blob, fileName;
+    try {
+      if (fmt === 'ASCII') {
+        blob = new Blob([exportASCII(trace)], { type: 'text/plain;charset=utf-8' });
+        fileName = base + '_converted.txt';
+      } else if (fmt === 'CSV') {
+        blob = new Blob([exportCSV(trace)], { type: 'text/csv;charset=utf-8' });
+        fileName = base + '_converted.csv';
+      } else if (fmt === 'SAC') {
+        blob = new Blob([exportSAC(trace)], { type: 'application/octet-stream' });
+        fileName = base + '_converted.sac';
+      } else return;
+    } catch (err) {
+      showError('导出失败：' + (err && err.message ? err.message : String(err)));
+      return;
+    }
+
+    saveBlob(blob, fileName).then(function (result) {
+      if (result.aborted) showOk('已取消保存。');
+      else if (result.fallback) showOk('当前浏览器不支持选择保存位置，已下载到默认目录：' + result.name);
+      else if (result.saved) showOk('已保存为 ' + result.name + '（' + fmt + ' 格式）');
+      else if (result.error) showError('保存失败：' + (result.error.message || result.error));
+    });
+  }
+
+  /* ============================================================
+     事件绑定
+     ============================================================ */
+
+  var dropZone = $('dropZone');
+  var fileInput = $('fileInput');
+
+  fileInput.addEventListener('change', function (e) {
+    var files = e.target.files;
+    if (files && files.length > 0) readFile(files[0]);
+  });
+
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    dropZone.addEventListener(ev, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add('drag');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(function (ev) {
+    dropZone.addEventListener(ev, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('drag');
+    });
+  });
+
+  dropZone.addEventListener('drop', function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length > 0) {
+      if (files.length > 1) {
+        showError('请一次只拖入一个文件。当前拖入 ' + files.length + ' 个。');
+        return;
+      }
+      readFile(files[0]);
+    }
+  });
+
+  $('btnClear').addEventListener('click', clearAll);
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-demo]');
+    if (!btn) return;
+    var kind = btn.getAttribute('data-demo');
+    var action = btn.getAttribute('data-action');
+    if (action === 'load') loadDemo(kind);
+    else if (action === 'download') downloadDemo(kind);
+  });
+
+  $('formatGrid').addEventListener('click', function (e) {
+    var item = e.target.closest('.format-item');
+    if (!item) return;
+    Array.prototype.forEach.call($('formatGrid').children, function (el) {
+      el.classList.remove('active');
+    });
+    item.classList.add('active');
+    state.outputFormat = item.getAttribute('data-format');
+  });
+
+  $('btnDownload').addEventListener('click', doDownload);
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (!state.trace) return;
+      var trace = state.trace;
+      var xMax, xLabel;
+      if (trace.sampleRate > 0) {
+        xMax = (trace.data.length - 1) / trace.sampleRate;
+        xLabel = 'Time (s)';
+      } else {
+        xMax = trace.data.length - 1;
+        xLabel = 'Sample';
+      }
+      drawWaveform($('waveCanvas'), trace.data, xMax, xLabel);
+    }, 180);
+  });
+
+})();
+</script>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

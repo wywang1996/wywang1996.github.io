@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据库与数据工程 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="database-data-engineering">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#model">一、数据模型</a></li>
+      <li><a href="#sql">二、SQL 与查询</a></li>
+      <li><a href="#index">三、索引与优化</a></li>
+      <li><a href="#transaction">四、事务与并发</a></li>
+      <li><a href="#timeseries">五、时序数据库</a></li>
+      <li><a href="#warehouse">六、数据仓库与大数据</a></li>
+      <li><a href="#pipeline">七、数据管道与工程实践</a></li>
+      <li><a href="#application">八、地震学应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 数据库与数据工程
+        </div>
+        <h1>数据库与数据工程</h1>
+        <p class="lead">
+          从关系模型到时序数据库，覆盖 SQL、索引、事务、
+          数据仓库与数据管道。数据库与数据工程是地震目录管理、
+          波形归档与大规模数据处理的基础设施，
+          也是"数据驱动"研究的前提。
+        </p>
+        <div class="article-meta">
+          <span>SQL</span>
+          <span>索引</span>
+          <span>时序数据库</span>
+          <span class="blue">数据管道</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            数据库研究<strong>数据的持久化存储、高效检索与一致性维护</strong>；
+            数据工程研究<strong>数据从产生到使用的完整流程</strong>——
+            采集、清洗、存储、加工、分发、消费。
+          </p>
+
+          <p>
+            在地震学与地震工程中，数据量正在快速增长：
+          </p>
+          <ul>
+            <li>全球地震台网每天产生的连续波形达数 TB。</li>
+            <li>地震目录（USGS、ISC、中国地震台网）已积累数百万条事件记录。</li>
+            <li>强震记录库（PEER NGA、ESM、K-NET）有数十万条记录。</li>
+            <li>地震预警系统需要毫秒级的数据流处理。</li>
+            <li>机器学习训练数据集（STEAD、INSTANCE）达 100 GB 级。</li>
+          </ul>
+
+          <p>
+            这些数据的管理需要专门的技术：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>数据类型</th><th>典型规模</th><th>存储方案</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地震事件目录</td>
+                  <td>10⁵~10⁷ 条</td>
+                  <td>关系数据库（PostgreSQL）</td>
+                </tr>
+                <tr>
+                  <td>台站元数据</td>
+                  <td>10³~10⁵ 个</td>
+                  <td>关系数据库</td>
+                </tr>
+                <tr>
+                  <td>连续波形</td>
+                  <td>10¹²~10¹⁵ 采样点</td>
+                  <td>时序数据库 / 文件存储</td>
+                </tr>
+                <tr>
+                  <td>强震记录</td>
+                  <td>10⁵~10⁶ 条</td>
+                  <td>文件 + 元数据数据库</td>
+                </tr>
+                <tr>
+                  <td>机器学习数据集</td>
+                  <td>10¹¹~10¹² 字节</td>
+                  <td>对象存储 + 数据湖</td>
+                </tr>
+                <tr>
+                  <td>实时数据流</td>
+                  <td>MB/s ~ GB/s</td>
+                  <td>消息队列 + 时序数据库</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            这份笔记按"模型 $\to$ SQL $\to$ 索引 $\to$ 事务 $\to$ 时序 $\to$ 仓库 $\to$ 管道 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="model">
+          <h2><span class="num">01</span>数据模型</h2>
+
+          <h3>数据库的分类</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>数据模型</th><th>代表</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>关系型（RDBMS）</td>
+                  <td>表 + 行 + 列</td>
+                  <td>PostgreSQL、MySQL、SQLite</td>
+                  <td>结构化数据、强一致性</td>
+                </tr>
+                <tr>
+                  <td>文档型</td>
+                  <td>JSON 文档</td>
+                  <td>MongoDB、CouchDB</td>
+                  <td>半结构化数据</td>
+                </tr>
+                <tr>
+                  <td>键值型</td>
+                  <td>key-value</td>
+                  <td>Redis、DynamoDB</td>
+                  <td>缓存、快速查找</td>
+                </tr>
+                <tr>
+                  <td>列式存储</td>
+                  <td>列族</td>
+                  <td>Cassandra、HBase</td>
+                  <td>大规模写入、分析</td>
+                </tr>
+                <tr>
+                  <td>时序数据库（TSDB）</td>
+                  <td>时间索引的测量值</td>
+                  <td>InfluxDB、TimescaleDB</td>
+                  <td>传感器、监控、波形</td>
+                </tr>
+                <tr>
+                  <td>图数据库</td>
+                  <td>节点 + 边</td>
+                  <td>Neo4j、JanusGraph</td>
+                  <td>关系网络分析</td>
+                </tr>
+                <tr>
+                  <td>空间数据库</td>
+                  <td>几何对象 + 空间索引</td>
+                  <td>PostGIS</td>
+                  <td>地震、GIS</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>关系模型</h3>
+          <p>
+            关系模型的核心概念：
+          </p>
+          <ul>
+            <li><strong>表（Relation）</strong>：二维结构，行是记录，列是属性。</li>
+            <li><strong>主键（Primary Key）</strong>：唯一标识一行。</li>
+            <li><strong>外键（Foreign Key）</strong>：引用另一张表的主键。</li>
+            <li><strong>约束（Constraint）</strong>：NOT NULL、UNIQUE、CHECK。</li>
+            <li><strong>范式（Normal Form）</strong>：减少冗余、避免更新异常。</li>
+          </ul>
+
+          <h3>地震目录数据库设计示例</h3>
+          <pre><code class="language-sql">-- 事件表
+CREATE TABLE events (
+    event_id    VARCHAR(20) PRIMARY KEY,
+    origin_time TIMESTAMPTZ NOT NULL,
+    latitude    DOUBLE PRECISION NOT NULL,
+    longitude   DOUBLE PRECISION NOT NULL,
+    depth_km    DOUBLE PRECISION,
+    magnitude   DOUBLE PRECISION,
+    mag_type    VARCHAR(10),
+    region      VARCHAR(100),
+    catalog     VARCHAR(20)
+);
+
+-- 台站表
+CREATE TABLE stations (
+    station_id  VARCHAR(20) PRIMARY KEY,
+    network     VARCHAR(10),
+    latitude    DOUBLE PRECISION NOT NULL,
+    longitude   DOUBLE PRECISION NOT NULL,
+    elevation_m DOUBLE PRECISION,
+    vs30        DOUBLE PRECISION,
+    site_class  VARCHAR(5),
+    start_date  DATE,
+    end_date    DATE
+);
+
+-- 波形记录表（元数据，波形本身存在文件或对象存储）
+CREATE TABLE waveforms (
+    waveform_id BIGSERIAL PRIMARY KEY,
+    event_id    VARCHAR(20) REFERENCES events(event_id),
+    station_id  VARCHAR(20) REFERENCES stations(station_id),
+    channel     VARCHAR(10),
+    start_time  TIMESTAMPTZ NOT NULL,
+    sample_rate DOUBLE PRECISION,
+    npts        INTEGER,
+    file_path   TEXT,
+    quality     VARCHAR(5)
+);
+
+-- 索引
+CREATE INDEX idx_events_time ON events(origin_time);
+CREATE INDEX idx_events_mag  ON events(magnitude);
+CREATE INDEX idx_events_loc  ON events(latitude, longitude);
+CREATE INDEX idx_waveforms_event ON waveforms(event_id);</code></pre>
+
+          <h3>范式与反范式</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>范式</th><th>要求</th><th>解决的问题</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1NF</td>
+                  <td>每列不可再分</td>
+                  <td>消除重复组</td>
+                </tr>
+                <tr>
+                  <td>2NF</td>
+                  <td>非主属性完全依赖主键</td>
+                  <td>消除部分依赖</td>
+                </tr>
+                <tr>
+                  <td>3NF</td>
+                  <td>非主属性不传递依赖主键</td>
+                  <td>消除传递依赖</td>
+                </tr>
+                <tr>
+                  <td>BCNF</td>
+                  <td>每个决定因子都是候选键</td>
+                  <td>更强的 3NF</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            工程中，范式化与反范式化需要权衡：
+          </p>
+          <ul>
+            <li><strong>范式化</strong>：减少冗余、保证一致性；但查询需要大量 JOIN。</li>
+            <li><strong>反范式化</strong>：冗余存储、查询更快；但更新复杂、易不一致。</li>
+            <li><strong>常见折中</strong>：OLTP 用范式化，OLAP 用星型/雪花模型。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>地震数据的特点</strong>：
+              ① <strong>时空属性强</strong>——时间、经纬度是核心维度，
+              需要时空索引；
+              ② <strong>多层次结构</strong>——事件、台站、波形、参数等多表关联；
+              ③ <strong>数据量大</strong>——波形数据不适合放在关系表，
+              用文件系统或对象存储；
+              ④ <strong>元数据与数据分离</strong>——元数据放数据库，
+              原始数据放文件或对象存储，用路径关联。
+              这是地震数据中心的标准架构。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="sql">
+          <h2><span class="num">02</span>SQL 与查询</h2>
+
+          <h3>基础查询</h3>
+          <pre><code class="language-sql">-- 查询所有震级大于 5.0 的事件
+SELECT event_id, origin_time, magnitude, latitude, longitude
+FROM events
+WHERE magnitude > 5.0
+ORDER BY origin_time DESC
+LIMIT 100;
+
+-- 聚合
+SELECT
+    DATE_TRUNC('month', origin_time) AS month,
+    COUNT(*) AS n_events,
+    AVG(magnitude) AS avg_mag,
+    MAX(magnitude) AS max_mag
+FROM events
+WHERE origin_time >= '2000-01-01'
+GROUP BY month
+ORDER BY month;
+
+-- 分组 + HAVING
+SELECT region, COUNT(*) AS n
+FROM events
+GROUP BY region
+HAVING COUNT(*) > 100
+ORDER BY n DESC;</code></pre>
+
+          <h3>JOIN</h3>
+          <pre><code class="language-sql">-- INNER JOIN：只保留两表都匹配的行
+SELECT e.event_id, e.magnitude, w.station_id, w.quality
+FROM events e
+INNER JOIN waveforms w ON e.event_id = w.event_id
+WHERE e.magnitude > 5.0;
+
+-- LEFT JOIN：保留左表所有行
+SELECT e.event_id, e.magnitude, COUNT(w.waveform_id) AS n_records
+FROM events e
+LEFT JOIN waveforms w ON e.event_id = w.event_id
+GROUP BY e.event_id, e.magnitude;
+
+-- 多表 JOIN
+SELECT e.event_id, e.magnitude, s.station_id, s.vs30
+FROM events e
+JOIN waveforms w ON e.event_id = w.event_id
+JOIN stations s ON w.station_id = s.station_id
+WHERE e.magnitude > 6.0;</code></pre>
+
+          <h3>子查询与 CTE</h3>
+          <pre><code class="language-sql">-- 子查询
+SELECT * FROM events
+WHERE magnitude > (
+    SELECT AVG(magnitude) FROM events
+);
+
+-- CTE（WITH）：更易读的复杂查询
+WITH mag_stats AS (
+    SELECT DATE_TRUNC('year', origin_time) AS year,
+           AVG(magnitude) AS avg_mag
+    FROM events
+    GROUP BY year
+)
+SELECT * FROM mag_stats
+WHERE avg_mag > 5.0
+ORDER BY year;
+
+-- 窗口函数
+SELECT
+    event_id,
+    origin_time,
+    magnitude,
+    ROW_NUMBER() OVER (ORDER BY magnitude DESC) AS rank,
+    AVG(magnitude) OVER (
+        ORDER BY origin_time
+        ROWS BETWEEN 99 PRECEDING AND CURRENT ROW
+    ) AS rolling_avg
+FROM events;</code></pre>
+
+          <h3>空间查询（PostGIS）</h3>
+          <pre><code class="language-sql">-- 启用 PostGIS 扩展
+CREATE EXTENSION postgis;
+
+-- 添加几何列
+ALTER TABLE events ADD COLUMN geom GEOMETRY(POINT, 4326);
+UPDATE events SET geom = ST_SetSRID(
+    ST_MakePoint(longitude, latitude), 4326
+);
+
+-- 空间索引
+CREATE INDEX idx_events_geom ON events USING GIST(geom);
+
+-- 查询某个矩形范围内的地震
+SELECT event_id, magnitude
+FROM events
+WHERE geom && ST_MakeEnvelope(100, 30, 102, 32, 4326);
+
+-- 查询距离某点 100 km 内的地震
+SELECT event_id, magnitude,
+       ST_Distance(geom::geography,
+                   ST_MakePoint(101, 31)::geography) / 1000 AS dist_km
+FROM events
+WHERE ST_DWithin(
+    geom::geography,
+    ST_MakePoint(101, 31)::geography,
+    100000
+)
+ORDER BY dist_km
+LIMIT 50;</code></pre>
+
+          <h3>Python 连接数据库</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>db_query.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 Python 连接 PostgreSQL 查询地震目录。
+安装：pip install psycopg2-binary pandas sqlalchemy
+"""
+try:
+    import pandas as pd
+    from sqlalchemy import create_engine, text
+    HAS_LIBS = True
+except ImportError:
+    HAS_LIBS = False
+
+
+if HAS_LIBS:
+    def query_events(engine, min_mag=5.0, limit=100):
+        """查询震级大于阈值的最近事件"""
+        sql = text("""
+            SELECT event_id, origin_time, magnitude,
+                   latitude, longitude, depth_km
+            FROM events
+            WHERE magnitude >= :min_mag
+            ORDER BY origin_time DESC
+            LIMIT :limit
+        """)
+        with engine.connect() as conn:
+            df = pd.read_sql(
+                sql, conn, params={"min_mag": min_mag, "limit": limit}
+            )
+        return df
+
+    def load_catalog(engine, start_date, end_date):
+        """按时间范围加载目录"""
+        sql = text("""
+            SELECT * FROM events
+            WHERE origin_time BETWEEN :start AND :end
+            ORDER BY origin_time
+        """)
+        with engine.connect() as conn:
+            return pd.read_sql(
+                sql, conn,
+                params={"start": start_date, "end": end_date},
+            )
+
+    if __name__ == "__main__":
+        # 连接字符串：postgresql://user:password@host:port/database
+        DB_URL = "postgresql://user:password@localhost:5432/seismic"
+        engine = create_engine(DB_URL)
+
+        df = query_events(engine, min_mag=5.5, limit=20)
+        print(df.head())
+        print(f"\n共 {len(df)} 条记录")
+    else:
+        print("未安装依赖，无法运行示例。")
+else:
+    print("用 Python 连接数据库的典型代码：")
+    print()
+    print("  from sqlalchemy import create_engine, text")
+    print("  import pandas as pd")
+    print()
+    print("  engine = create_engine('postgresql://user:pwd@host/db')")
+    print("  with engine.connect() as conn:")
+    print("      df = pd.read_sql('SELECT * FROM events LIMIT 10', conn)")
+    print()
+    print("关键库：psycopg2（PostgreSQL）、pymysql（MySQL）、")
+    print("        sqlite3（内置）、sqlalchemy（ORM 与抽象层）")</code></pre>
+          </div>
+        </section>
+
+        <section id="index">
+          <h2><span class="num">03</span>索引与优化</h2>
+
+          <h3>索引原理</h3>
+          <p>
+            索引是加速查询的数据结构。最常见的是 <strong>B+ 树</strong>：
+            所有数据在叶节点，内部节点只存键值用于导航。
+          </p>
+
+          <p>为什么 B+ 树适合数据库：</p>
+          <ul>
+            <li>高度低（通常 3~4 层），节点大小与磁盘块对齐。</li>
+            <li>叶节点有序连接，支持范围查询。</li>
+            <li>插入删除代价低，自动平衡。</li>
+          </ul>
+
+          <h3>索引类型</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>结构</th><th>适用</th><th>典型场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>B 树</td>
+                  <td>平衡树</td>
+                  <td>等值、范围</td>
+                  <td>主键、外键、时间</td>
+                </tr>
+                <tr>
+                  <td>哈希</td>
+                  <td>哈希表</td>
+                  <td>等值</td>
+                  <td>精确查找</td>
+                </tr>
+                <tr>
+                  <td>GIST</td>
+                  <td>通用搜索树</td>
+                  <td>几何、多维</td>
+                  <td>PostGIS 空间查询</td>
+                </tr>
+                <tr>
+                  <td>GIN</td>
+                  <td>倒排索引</td>
+                  <td>数组、全文、JSON</td>
+                  <td>标签、文本搜索</td>
+                </tr>
+                <tr>
+                  <td>BRIN</td>
+                  <td>块范围索引</td>
+                  <td>有序大表</td>
+                  <td>时序数据</td>
+                </tr>
+                <tr>
+                  <td>复合索引</td>
+                  <td>多列 B 树</td>
+                  <td>多条件查询</td>
+                  <td>时间 + 震级</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>索引设计原则</h3>
+          <ul>
+            <li><strong>为 WHERE、JOIN、ORDER BY 建索引</strong>：这些是查询的热点。</li>
+            <li><strong>复合索引的最左前缀原则</strong>：<code>(a, b)</code> 可加速 <code>a</code>、<code>(a, b)</code>，但不加速单独 <code>b</code>。</li>
+            <li><strong>选择性高的列优先</strong>：区分度大的列更适合放前面。</li>
+            <li><strong>避免过度索引</strong>：每个索引占用存储、拖慢写入。</li>
+            <li><strong>覆盖索引</strong>：索引包含查询所需全部列，避免回表。</li>
+            <li><strong>部分索引</strong>：只对满足条件的行建索引（如 <code>WHERE magnitude &gt; 4</code>）。</li>
+          </ul>
+
+          <pre><code class="language-sql">-- 复合索引：时间 + 震级
+CREATE INDEX idx_events_time_mag ON events(origin_time, magnitude);
+
+-- 部分索引：只对大地震建索引
+CREATE INDEX idx_large_events
+ON events(origin_time)
+WHERE magnitude > 6.0;
+
+-- 表达式索引：按月份查询
+CREATE INDEX idx_events_month
+ON events(DATE_TRUNC('month', origin_time));
+
+-- 覆盖索引
+CREATE INDEX idx_events_covering
+ON events(magnitude) INCLUDE (event_id, origin_time);
+
+-- 查看执行计划
+EXPLAIN ANALYZE
+SELECT * FROM events WHERE magnitude > 6.0;</code></pre>
+
+          <h3>查询优化技巧</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>原因</th><th>优化</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>全表扫描</td>
+                  <td>无索引或条件无法用索引</td>
+                  <td>建索引、重写条件</td>
+                </tr>
+                <tr>
+                  <td>索引失效</td>
+                  <td>列上有函数或类型转换</td>
+                  <td>改为函数索引或改写</td>
+                </tr>
+                <tr>
+                  <td>大量 JOIN</td>
+                  <td>范式化过度</td>
+                  <td>适当反范式、物化视图</td>
+                </tr>
+                <tr>
+                  <td>SELECT *</td>
+                  <td>读取不需要的列</td>
+                  <td>只选必要列</td>
+                </tr>
+                <tr>
+                  <td>OFFSET 分页</td>
+                  <td>扫描前面所有行</td>
+                  <td>用 keyset 分页</td>
+                </tr>
+                <tr>
+                  <td>ORDER BY 慢</td>
+                  <td>无排序索引</td>
+                  <td>建对应复合索引</td>
+                </tr>
+                <tr>
+                  <td>子查询重复计算</td>
+                  <td>优化器不缓存</td>
+                  <td>用 CTE 或临时表</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>分区表</h3>
+          <p>
+            对大表按某列分区，可以显著提升查询和维护效率：
+          </p>
+
+          <pre><code class="language-sql">-- 按年份分区（PostgreSQL 声明式分区）
+CREATE TABLE events (
+    event_id    VARCHAR(20),
+    origin_time TIMESTAMPTZ NOT NULL,
+    magnitude   DOUBLE PRECISION,
+    ...
+) PARTITION BY RANGE (origin_time);
+
+CREATE TABLE events_2023 PARTITION OF events
+FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
+
+CREATE TABLE events_2024 PARTITION OF events
+FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
+-- 查询时优化器自动裁剪分区
+SELECT * FROM events
+WHERE origin_time >= '2024-01-01'
+  AND origin_time <  '2024-07-01';
+-- 只扫描 events_2024 分区</code></pre>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>时空索引的挑战</strong>：
+              地震数据查询通常是<strong>时空混合</strong>：
+              "查询某个矩形范围内、某时间段内的地震"。
+              单列索引（时间或空间）只能加速一半条件。
+              常见方案：
+              ① <strong>复合索引</strong> <code>(origin_time, geom)</code>
+              或 <code>(geom, origin_time)</code>，根据查询模式选择；
+              ② <strong>时空索引</strong>：PostGIS 支持 <code>ST_Index</code>，
+              或使用时序数据库的空间扩展；
+              ③ <strong>分区 + 空间索引</strong>：先按时间分区，
+              再在每个分区内建空间索引。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="transaction">
+          <h2><span class="num">04</span>事务与并发</h2>
+
+          <h3>ACID 特性</h3>
+          <p>
+            事务是一组要么全部成功、要么全部失败的操作。
+            它满足四个特性：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>特性</th><th>含义</th><th>保证</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>原子性（Atomicity）</td>
+                  <td>事务内的操作要么全做，要么全不做</td>
+                  <td>日志 + 回滚</td>
+                </tr>
+                <tr>
+                  <td>一致性（Consistency）</td>
+                  <td>事务前后数据满足约束</td>
+                  <td>约束检查</td>
+                </tr>
+                <tr>
+                  <td>隔离性（Isolation）</td>
+                  <td>并发事务互不干扰</td>
+                  <td>锁 / MVCC</td>
+                </tr>
+                <tr>
+                  <td>持久性（Durability）</td>
+                  <td>提交后数据永久保存</td>
+                  <td>WAL 日志 + fsync</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>事务示例</h3>
+          <pre><code class="language-sql">BEGIN;
+
+-- 插入事件
+INSERT INTO events (event_id, origin_time, magnitude, latitude, longitude)
+VALUES ('ev2024001', '2024-06-01 12:00:00+00', 6.5, 30.5, 101.2);
+
+-- 插入关联的波形记录
+INSERT INTO waveforms (event_id, station_id, channel, start_time, npts)
+VALUES
+    ('ev2024001', 'ST01', 'BHZ', '2024-06-01 12:00:05+00', 6000),
+    ('ev2024001', 'ST02', 'BHZ', '2024-06-01 12:00:08+00', 6000);
+
+-- 若任一步失败，全部回滚
+COMMIT;
+-- 或 ROLLBACK;</code></pre>
+
+          <h3>隔离级别</h3>
+          <p>
+            SQL 标准定义四个隔离级别，级别越高越安全但并发度越低：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>级别</th><th>脏读</th><th>不可重复读</th><th>幻读</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>READ UNCOMMITTED</td>
+                  <td>可能</td>
+                  <td>可能</td>
+                  <td>可能</td>
+                  <td>几乎不用</td>
+                </tr>
+                <tr>
+                  <td>READ COMMITTED</td>
+                  <td>否</td>
+                  <td>可能</td>
+                  <td>可能</td>
+                  <td>PostgreSQL 默认</td>
+                </tr>
+                <tr>
+                  <td>REPEATABLE READ</td>
+                  <td>否</td>
+                  <td>否</td>
+                  <td>可能</td>
+                  <td>MySQL InnoDB 默认</td>
+                </tr>
+                <tr>
+                  <td>SERIALIZABLE</td>
+                  <td>否</td>
+                  <td>否</td>
+                  <td>否</td>
+                  <td>金融、强一致场景</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>MVCC：多版本并发控制</h3>
+          <p>
+            现代数据库（PostgreSQL、Oracle、MySQL InnoDB）用 MVCC 替代锁：
+          </p>
+          <ul>
+            <li>每行数据保留多个版本。</li>
+            <li>读操作读取快照版本，不阻塞写。</li>
+            <li>写操作创建新版本，不阻塞读。</li>
+            <li>旧版本在无事务引用后清理（vacuum）。</li>
+          </ul>
+
+          <p>
+            MVCC 的代价：存储开销（多版本）与清理开销（vacuum）。
+            PostgreSQL 需要定期 VACUUM 或自动清理。
+          </p>
+
+          <h3>分布式事务</h3>
+          <p>
+            当数据分布在多个节点时，需要分布式事务：
+          </p>
+          <ul>
+            <li><strong>两阶段提交（2PC）</strong>：prepare + commit，经典但阻塞。</li>
+            <li><strong>三阶段提交（3PC）</strong>：加预提交，减少阻塞。</li>
+            <li><strong>Paxos / Raft</strong>：共识协议，用于分布式数据库。</li>
+            <li><strong>Saga 模式</strong>：长事务拆分为多个本地事务 + 补偿。</li>
+          </ul>
+
+          <p>
+            工程实践中的常见选择：
+          </p>
+          <ul>
+            <li><strong>强一致</strong>：单机 PostgreSQL、MySQL。</li>
+            <li><strong>分布式强一致</strong>：CockroachDB、TiDB、Spanner。</li>
+            <li><strong>最终一致</strong>：Cassandra、DynamoDB + 应用层补偿。</li>
+          </ul>
+        </section>
+
+        <section id="timeseries">
+          <h2><span class="num">05</span>时序数据库</h2>
+
+          <h3>时序数据的特点</h3>
+          <p>
+            时序数据（time series）是按时间顺序排列的测量值：
+          </p>
+          <ul>
+            <li><strong>写多读少</strong>：传感器持续产生数据，写入量远大于读取。</li>
+            <li><strong>时间有序</strong>：数据按时间递增，最新数据最重要。</li>
+            <li><strong>单调增长</strong>：数据量随时间线性增长。</li>
+            <li><strong>时间范围查询</strong>：典型查询是某个时间段内的数据。</li>
+            <li><strong>聚合统计</strong>：均值、最大、最小、百分位等。</li>
+          </ul>
+
+          <p>
+            地震波形正是典型的时序数据：
+            连续采样的时间序列，采样率 100~500 Hz，
+            每台站每天产生数百万个采样点。
+          </p>
+
+          <h3>时序数据库对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>数据库</th><th>特点</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>InfluxDB</td>
+                  <td>专用 TSDB，类 SQL 查询</td>
+                  <td>监控、传感器</td>
+                </tr>
+                <tr>
+                  <td>TimescaleDB</td>
+                  <td>PostgreSQL 扩展</td>
+                  <td>与关系数据混合</td>
+                </tr>
+                <tr>
+                  <td>Prometheus</td>
+                  <td>监控专用</td>
+                  <td>系统指标</td>
+                </tr>
+                <tr>
+                  <td>OpenTSDB</td>
+                  <td>基于 HBase</td>
+                  <td>大规模指标</td>
+                </tr>
+                <tr>
+                  <td>QuestDB</td>
+                  <td>高性能列式</td>
+                  <td>金融、IoT</td>
+                </tr>
+                <tr>
+                  <td>Cassandra</td>
+                  <td>分布式宽列</td>
+                  <td>超大规模</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>TimescaleDB 示例</h3>
+          <p>
+            TimescaleDB 是 PostgreSQL 的扩展，
+            保留了 SQL 的灵活性，同时优化时序性能：
+          </p>
+
+          <pre><code class="language-sql">-- 启用扩展
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+-- 创建普通表
+CREATE TABLE waveform_samples (
+    time        TIMESTAMPTZ NOT NULL,
+    station_id  VARCHAR(20) NOT NULL,
+    channel     VARCHAR(10) NOT NULL,
+    value       REAL
+);
+
+-- 转换为 hypertable（自动分区）
+SELECT create_hypertable('waveform_samples', 'time');
+
+-- 插入数据
+INSERT INTO waveform_samples VALUES
+    ('2024-06-01 12:00:00+00', 'ST01', 'BHZ', 0.012),
+    ('2024-06-01 12:00:00.01+00', 'ST01', 'BHZ', -0.005),
+    ...;
+
+-- 时间范围聚合
+SELECT
+    time_bucket('1 second', time) AS bucket,
+    station_id,
+    AVG(value) AS avg_val,
+    MAX(ABS(value)) AS max_abs
+FROM waveform_samples
+WHERE time >= '2024-06-01 12:00:00+00'
+  AND time <  '2024-06-01 12:01:00+00'
+GROUP BY bucket, station_id
+ORDER BY bucket;
+
+-- 连续聚合（物化视图）
+CREATE MATERIALIZED VIEW waveform_hourly
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('1 hour', time) AS hour,
+    station_id,
+    AVG(value) AS avg_val
+FROM waveform_samples
+GROUP BY hour, station_id;</code></pre>
+
+          <h3>地震波形存储方案</h3>
+          <p>
+            实际地震数据中心通常采用<strong>混合存储</strong>：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>数据类型</th><th>存储方案</th><th>理由</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>原始波形</td>
+                  <td>MiniSEED 文件 + 对象存储</td>
+                  <td>数据量大，格式标准</td>
+                </tr>
+                <tr>
+                  <td>波形索引</td>
+                  <td>关系数据库</td>
+                  <td>元数据查询</td>
+                </tr>
+                <tr>
+                  <td>实时流</td>
+                  <td>消息队列 + 时序库</td>
+                  <td>低延迟、高吞吐</td>
+                </tr>
+                <tr>
+                  <td>处理后波形</td>
+                  <td>时序数据库</td>
+                  <td>快速范围查询</td>
+                </tr>
+                <tr>
+                  <td>地震目录</td>
+                  <td>关系数据库 + 空间索引</td>
+                  <td>时空查询</td>
+                </tr>
+                <tr>
+                  <td>机器学习数据集</td>
+                  <td>Parquet / HDF5</td>
+                  <td>高效读取、压缩</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么不用纯关系数据库存波形</strong>：
+              ① 关系数据库的行存储对时序范围查询效率低；
+              ② 每行有开销，存储效率不如二进制文件；
+              ③ 关系数据库的写吞吐量不如专用 TSDB。
+              但关系数据库在<strong>元数据</strong>（事件、台站、波形索引）上无可替代。
+              所以地震数据中心的标准架构是
+              <strong>关系库（元数据）+ 文件/对象存储（波形）+
+              时序库（处理后的指标）</strong>。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="warehouse">
+          <h2><span class="num">06</span>数据仓库与大数据</h2>
+
+          <h3>OLTP vs OLAP</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>OLTP</th><th>OLAP</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>用途</td>
+                  <td>事务处理</td>
+                  <td>分析查询</td>
+                </tr>
+                <tr>
+                  <td>数据规模</td>
+                  <td>GB 级</td>
+                  <td>TB~PB 级</td>
+                </tr>
+                <tr>
+                  <td>操作</td>
+                  <td>增删改查单行</td>
+                  <td>大批量聚合</td>
+                </tr>
+                <tr>
+                  <td>响应时间</td>
+                  <td>毫秒</td>
+                  <td>秒~分钟</td>
+                </tr>
+                <tr>
+                  <td>并发</td>
+                  <td>高</td>
+                  <td>低</td>
+                </tr>
+                <tr>
+                  <td>存储</td>
+                  <td>行式</td>
+                  <td>列式</td>
+                </tr>
+                <tr>
+                  <td>代表</td>
+                  <td>PostgreSQL、MySQL</td>
+                  <td>ClickHouse、DuckDB、Snowflake</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>数据仓库模型</h3>
+
+          <h4>星型模型（Star Schema）</h4>
+          <p>
+            中心是<strong>事实表</strong>（事件、测量），
+            周围是<strong>维度表</strong>（时间、台站、位置）：
+          </p>
+
+          <pre><code>       DimTime
+          │
+DimStation ─ Fact ─ DimLocation
+          │
+       DimMagnitude</code></pre>
+
+          <p>
+            优点：JOIN 简单，查询快。
+            缺点：维度表可能冗余。
+          </p>
+
+          <h4>雪花模型（Snowflake Schema）</h4>
+          <p>
+            维度表进一步范式化，形成多层结构：
+          </p>
+
+          <pre><code>DimTime ─ DimYear ─ DimDecade
+   │
+Fact ─ DimStation ─ DimNetwork ─ DimCountry
+   │
+DimLocation ─ DimRegion</code></pre>
+
+          <p>
+            优点：减少冗余。
+            缺点：JOIN 复杂，查询慢。
+          </p>
+
+          <h3>列式存储</h3>
+          <p>
+            列式存储按列存储数据，对分析查询极高效：
+          </p>
+          <ul>
+            <li><strong>只读所需列</strong>：跳过无关列，减少 I/O。</li>
+            <li><strong>压缩比高</strong>：同列类型相同，压缩率高。</li>
+            <li><strong>向量化计算</strong>：批量处理，利用 SIMD。</li>
+          </ul>
+
+          <p>
+            代表系统：ClickHouse、DuckDB、Parquet（文件格式）。
+          </p>
+
+          <h3>ClickHouse 示例</h3>
+          <pre><code class="language-sql">-- 创建表
+CREATE TABLE events (
+    event_id    String,
+    origin_time DateTime,
+    magnitude   Float64,
+    latitude    Float64,
+    longitude   Float64,
+    depth_km    Float64
+) ENGINE = MergeTree()
+ORDER BY (origin_time, magnitude);
+
+-- 批量插入
+INSERT INTO events VALUES
+    ('ev001', '2024-01-01 12:00:00', 6.5, 30.5, 101.2, 15.0),
+    ...;
+
+-- 聚合查询（极快）
+SELECT
+    toYear(origin_time) AS year,
+    count(*) AS n,
+    avg(magnitude) AS avg_mag,
+    quantile(0.95)(magnitude) AS p95
+FROM events
+WHERE origin_time >= '2000-01-01'
+GROUP BY year
+ORDER BY year;</code></pre>
+
+          <h3>DuckDB：嵌入式分析数据库</h3>
+          <p>
+            DuckDB 是"分析领域的 SQLite"，
+            无需服务器，直接查询 CSV / Parquet：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>duckdb_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 DuckDB 直接查询 CSV / Parquet 文件。
+安装：pip install duckdb
+"""
+try:
+    import duckdb
+    HAS_DUCKDB = True
+except ImportError:
+    HAS_DUCKDB = False
+
+
+if HAS_DUCKDB:
+    # 直接查询 CSV（无需导入）
+    result = duckdb.query("""
+        SELECT
+            DATE_TRUNC('year', origin_time) AS year,
+            COUNT(*) AS n_events,
+            AVG(magnitude) AS avg_mag,
+            MAX(magnitude) AS max_mag
+        FROM 'catalog.csv'
+        WHERE magnitude > 4.0
+        GROUP BY year
+        ORDER BY year
+    """).df()
+
+    print(result)
+
+    # 查询多个 Parquet 文件（支持通配符）
+    result2 = duckdb.query("""
+        SELECT COUNT(*) AS n
+        FROM 'waveforms_*.parquet'
+        WHERE station_id = 'ST01'
+    """).df()
+
+    print(result2)
+else:
+    print("DuckDB 的典型用法：")
+    print()
+    print("  import duckdb")
+    print("  result = duckdb.query('''")
+    print("      SELECT year, COUNT(*)")
+    print("      FROM \\'catalog.parquet\\'")
+    print("      GROUP BY year")
+    print("  ''').df()")
+    print()
+    print("特点：无需导入数据，直接查询文件，")
+    print("      支持 CSV、Parquet、JSON、Arrow 等格式。")</code></pre>
+          </div>
+
+          <h3>数据湖与湖仓一体</h3>
+          <p>
+            数据湖（Data Lake）用对象存储（S3、OSS）存海量原始数据，
+            配合 Parquet、ORC 等列式格式：
+          </p>
+          <ul>
+            <li><strong>存算分离</strong>：存储便宜，计算弹性的云服务。</li>
+            <li><strong>schema-on-read</strong>：读取时解释 schema，写入灵活。</li>
+            <li><strong>支持多引擎</strong>：Spark、Presto、DuckDB 都能读。</li>
+          </ul>
+
+          <p>
+            湖仓一体（Lakehouse）在数据湖之上加了表格式（Delta Lake、Iceberg），
+            提供事务、版本、schema 演进能力。
+            这是当前大数据架构的主流方向。
+          </p>
+        </section>
+
+        <section id="pipeline">
+          <h2><span class="num">07</span>数据管道与工程实践</h2>
+
+          <h3>数据管道</h3>
+          <p>
+            数据管道是数据从源到消费的自动化流程：
+          </p>
+
+          <pre><code>数据源 → 采集 → 清洗 → 转换 → 存储 → 服务 → 消费</code></pre>
+
+          <p>
+            在地震学中：
+          </p>
+          <ul>
+            <li><strong>采集</strong>：从台站实时接收数据流。</li>
+            <li><strong>清洗</strong>：去噪、去尖峰、质量检查。</li>
+            <li><strong>转换</strong>：格式转换、重采样、去趋势。</li>
+            <li><strong>存储</strong>：写入 MiniSEED 文件 + 元数据数据库。</li>
+            <li><strong>服务</strong>：提供 API 供数据查询。</li>
+            <li><strong>消费</strong>：用户下载、机器学习训练。</li>
+          </ul>
+
+          <h3>批处理 vs 流处理</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>批处理</th><th>流处理</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>延迟</td>
+                  <td>分钟~小时</td>
+                  <td>毫秒~秒</td>
+                </tr>
+                <tr>
+                  <td>数据范围</td>
+                  <td>有界（一批）</td>
+                  <td>无界（持续）</td>
+                </tr>
+                <tr>
+                  <td>典型工具</td>
+                  <td>Spark、DuckDB</td>
+                  <td>Kafka Streams、Flink</td>
+                </tr>
+                <tr>
+                  <td>地震应用</td>
+                  <td>目录更新、建模</td>
+                  <td>预警、实时质控</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>ETL vs ELT</h3>
+          <ul>
+            <li><strong>ETL</strong>：Extract-Transform-Load，先转换后加载。
+              适合传统数仓，转换在中间层。</li>
+            <li><strong>ELT</strong>：Extract-Load-Transform，先加载后转换。
+              适合数据湖，利用目标系统的计算能力。</li>
+          </ul>
+
+          <h3>消息队列</h3>
+          <p>
+            消息队列在数据管道中解耦生产者和消费者：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>系统</th><th>特点</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Kafka</td>
+                  <td>高吞吐、持久化、分布式</td>
+                  <td>大规模数据流</td>
+                </tr>
+                <tr>
+                  <td>RabbitMQ</td>
+                  <td>AMQP、灵活路由</td>
+                  <td>任务队列</td>
+                </tr>
+                <tr>
+                  <td>Redis Streams</td>
+                  <td>内存、快速</td>
+                  <td>轻量级流处理</td>
+                </tr>
+                <tr>
+                  <td>NATS</td>
+                  <td>极轻量、低延迟</td>
+                  <td>微服务通信</td>
+                </tr>
+                <tr>
+                  <td>Pulsar</td>
+                  <td>多租户、分区</td>
+                  <td>大规模消息</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>地震数据管道的典型架构</h3>
+
+          <pre><code>台站 → SeedLink → 消息队列（Kafka）
+                      │
+                      ├→ 实时检测（触发、拾取）
+                      │    │
+                      │    └→ 预警系统
+                      │
+                      └→ 归档服务
+                           │
+                           ├→ MiniSEED 文件 → 对象存储
+                           └→ 元数据 → PostgreSQL</code></pre>
+
+          <h3>数据质量与治理</h3>
+          <p>
+            数据工程不仅是技术，还是<strong>流程与规范</strong>：
+          </p>
+          <ul>
+            <li><strong>数据契约</strong>：上下游约定 schema 与语义。</li>
+            <li><strong>数据校验</strong>：范围、类型、缺失值、一致性。</li>
+            <li><strong>元数据管理</strong>：数据血缘、版本、来源。</li>
+            <li><strong>数据目录</strong>：可搜索的数据资产清单。</li>
+            <li><strong>访问控制</strong>：权限、审计、脱敏。</li>
+            <li><strong>可观测性</strong>：监控数据质量、管道延迟。</li>
+          </ul>
+
+          <h3>Python ETL 示例</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>etl_pipeline.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+一个简单的地震目录 ETL 管道：
+  Extract: 从 CSV 读原始目录
+  Transform: 清洗、规范化、计算派生字段
+  Load: 写入 SQLite（可替换为 PostgreSQL）
+"""
+import sqlite3
+import logging
+from pathlib import Path
+
+import pandas as pd
+import numpy as np
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def extract(csv_path: Path) -> pd.DataFrame:
+    """从 CSV 读取原始目录"""
+    logger.info(f"读取 {csv_path}")
+    df = pd.read_csv(csv_path)
+    logger.info(f"  加载 {len(df)} 行")
+    return df
+
+
+def transform(df: pd.DataFrame) -> pd.DataFrame:
+    """清洗与派生字段"""
+    logger.info("转换数据")
+
+    # 1. 缺失值处理
+    n_before = len(df)
+    df = df.dropna(subset=["magnitude", "latitude", "longitude"])
+    logger.info(f"  删除缺失关键字段: {n_before - len(df)} 行")
+
+    # 2. 类型转换
+    df["origin_time"] = pd.to_datetime(df["origin_time"])
+    df["magnitude"] = df["magnitude"].astype(float)
+
+    # 3. 范围校验
+    mask = (
+        df["magnitude"].between(-2, 10) &
+        df["latitude"].between(-90, 90) &
+        df["longitude"].between(-180, 180)
+    )
+    df = df[mask]
+    logger.info(f"  范围校验后: {len(df)} 行")
+
+    # 4. 派生字段
+    # 地震能量（Gutenberg-Richter）：log10(E) = 1.5M + 4.8
+    df["log10_energy"] = 1.5 * df["magnitude"] + 4.8
+
+    # 5. 归一化字段名
+    df.columns = [c.lower().strip() for c in df.columns]
+
+    return df
+
+
+def load(df: pd.DataFrame, db_path: Path, table: str = "events"):
+    """写入 SQLite 数据库"""
+    logger.info(f"写入 {db_path}")
+
+    with sqlite3.connect(db_path) as conn:
+        df.to_sql(table, conn, if_exists="replace", index=False)
+
+    logger.info(f"  写入 {len(df)} 行到表 {table}")
+
+
+def run_pipeline(csv_path: Path, db_path: Path):
+    """运行完整 ETL"""
+    df_raw = extract(csv_path)
+    df_clean = transform(df_raw)
+    load(df_clean, db_path)
+
+
+if __name__ == "__main__":
+    # 生成模拟数据
+    rng = np.random.default_rng(42)
+    n = 1000
+    df = pd.DataFrame({
+        "event_id": [f"ev{i:05d}" for i in range(n)],
+        "origin_time": pd.date_range("2020-01-01", periods=n, freq="6h"),
+        "magnitude": rng.uniform(2.0, 7.5, n),
+        "latitude": rng.uniform(28, 34, n),
+        "longitude": rng.uniform(98, 104, n),
+        "depth_km": rng.exponential(10, n),
+    })
+
+    # 故意加入缺失值与异常值
+    df.loc[10:15, "magnitude"] = np.nan
+    df.loc[20, "latitude"] = 200   # 非法值
+
+    csv_path = Path("catalog_raw.csv")
+    df.to_csv(csv_path, index=False)
+
+    db_path = Path("catalog.db")
+    run_pipeline(csv_path, db_path)
+
+    # 验证
+    with sqlite3.connect(db_path) as conn:
+        result = pd.read_sql("SELECT COUNT(*) AS n FROM events", conn)
+        print(f"\n数据库中事件数: {result['n'][0]}")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>数据工程的核心</strong>：
+              不是选最酷的技术栈，而是保证
+              ① <strong>数据正确</strong>（不丢、不错、不重复）；
+              ② <strong>流程可靠</strong>（幂等、可重跑、可恢复）；
+              ③ <strong>可观测</strong>（知道数据在哪、状态如何）；
+              ④ <strong>可演进</strong>（schema 变化可控）。
+              在地震学中，一个 50 年前的目录数据、一条 10 年前的强震记录，
+              都必须能查到、能重现、能追溯。
+              这是"数据工程"与"临时脚本"的根本区别。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>地震学应用</h2>
+
+          <h3>地震数据中心典型架构</h3>
+
+          <pre><code>┌──────────────────────────────────────────┐
+│           实时数据流层                    │
+│  台站 → SeedLink → Kafka → 实时处理      │
+└──────────────────┬───────────────────────┘
+                   │
+┌──────────────────▼───────────────────────┐
+│           存储层                          │
+│  ┌──────────────┐  ┌──────────────────┐ │
+│  │ 对象存储      │  │ 时序数据库       │ │
+│  │ (波形文件)    │  │ (处理后指标)     │ │
+│  └──────────────┘  └──────────────────┘ │
+│  ┌──────────────┐  ┌──────────────────┐ │
+│  │ 关系数据库    │  │ 数据湖           │ │
+│  │ (元数据)      │  │ (Parquet)        │ │
+│  └──────────────┘  └──────────────────┘ │
+└──────────────────┬───────────────────────┘
+                   │
+┌──────────────────▼───────────────────────┐
+│           服务层                          │
+│  REST API / GraphQL / FDSN Web Services  │
+└──────────────────┬───────────────────────┘
+                   │
+┌──────────────────▼───────────────────────┐
+│           应用层                          │
+│  预警 / 研究 / 机器学习 / 公众查询        │
+└──────────────────────────────────────────┘</code></pre>
+
+          <h3>主要地震数据中心</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>中心</th><th>数据规模</th><th>技术栈</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>IRIS (现 EarthScope)</td>
+                  <td>PB 级波形</td>
+                  <td>SeedLink + 文件 + PostgreSQL</td>
+                </tr>
+                <tr>
+                  <td>USGS NEIC</td>
+                  <td>百万级事件</td>
+                  <td>PostgreSQL + 内部工具</td>
+                </tr>
+                <tr>
+                  <td>ISC</td>
+                  <td>全球目录</td>
+                  <td>关系数据库 + Web 服务</td>
+                </tr>
+                <tr>
+                  <td>中国地震台网</td>
+                  <td>全国台站</td>
+                  <td>分布式存储 + 关系库</td>
+                </tr>
+                <tr>
+                  <td>PEER NGA</td>
+                  <td>数万条强震</td>
+                  <td>关系库 + 文件</td>
+                </tr>
+                <tr>
+                  <td>K-NET / KiK-net</td>
+                  <td>数十万条</td>
+                  <td>NIED 自研平台</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>FDSN Web Services</h3>
+          <p>
+            国际地震学联合会（FDSN）定义了标准数据访问接口：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>服务</th><th>功能</th><th>典型 URL</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>dataselect</td>
+                  <td>下载波形数据</td>
+                  <td>/fdsnws/dataselect/1/query</td>
+                </tr>
+                <tr>
+                  <td>station</td>
+                  <td>查询台站元数据</td>
+                  <td>/fdsnws/station/1/query</td>
+                </tr>
+                <tr>
+                  <td>event</td>
+                  <td>查询事件目录</td>
+                  <td>/fdsnws/event/1/query</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <pre><code class="language-python"># 用 ObsPy 访问 FDSN 服务
+from obspy import UTCDateTime
+from obspy.clients.fdsn import Client
+
+client = Client("IRIS")
+
+# 查询事件
+catalog = client.get_events(
+    starttime=UTCDateTime("2024-01-01"),
+    endtime=UTCDateTime("2024-01-31"),
+    minmagnitude=6.0,
+)
+print(f"找到 {len(catalog)} 个事件")
+
+# 查询台站
+inventory = client.get_stations(
+    network="IU", station="ANMO",
+    channel="BH?", level="response",
+)
+
+# 下载波形
+st = client.get_waveforms(
+    network="IU", station="ANMO",
+    location="00", channel="BHZ",
+    starttime=UTCDateTime("2024-01-01T00:00:00"),
+    endtime=UTCDateTime("2024-01-01T00:10:00"),
+)
+print(st)</code></pre>
+
+          <h3>数据格式标准</h3>
+          <p>
+            地震数据有多种标准格式，各司其职：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>格式</th><th>用途</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MiniSEED</td>
+                  <td>波形交换</td>
+                  <td>二进制、分块、多通道</td>
+                </tr>
+                <tr>
+                  <td>SAC</td>
+                  <td>波形分析</td>
+                  <td>头段 + 数据，分析常用</td>
+                </tr>
+                <tr>
+                  <td>StationXML</td>
+                  <td>台站元数据</td>
+                  <td>XML，含响应函数</td>
+                </tr>
+                <tr>
+                  <td>QuakeML</td>
+                  <td>事件目录</td>
+                  <td>XML，含震源参数</td>
+                </tr>
+                <tr>
+                  <td>JSON-LD</td>
+                  <td>Web 服务</td>
+                  <td>结构化、可扩展</td>
+                </tr>
+                <tr>
+                  <td>Parquet</td>
+                  <td>分析数据集</td>
+                  <td>列式、压缩、ML 友好</td>
+                </tr>
+                <tr>
+                  <td>HDF5</td>
+                  <td>科学数据</td>
+                  <td>层次化、多维数组</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>典型应用场景</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>关键技术</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地震目录查询</td>
+                  <td>PostgreSQL + PostGIS</td>
+                  <td>时空范围查询</td>
+                </tr>
+                <tr>
+                  <td>波形下载</td>
+                  <td>FDSN Web Services</td>
+                  <td>按时间、台站、通道</td>
+                </tr>
+                <tr>
+                  <td>实时质控</td>
+                  <td>Kafka + 流处理</td>
+                  <td>毫秒级检测</td>
+                </tr>
+                <tr>
+                  <td>批量参数计算</td>
+                  <td>DuckDB + Parquet</td>
+                  <td>百万条记录的分析</td>
+                </tr>
+                <tr>
+                  <td>机器学习训练</td>
+                  <td>Parquet + HDF5</td>
+                  <td>高效读取、随机采样</td>
+                </tr>
+                <tr>
+                  <td>目录去重</td>
+                  <td>哈希 + 排序</td>
+                  <td>识别重复事件</td>
+                </tr>
+                <tr>
+                  <td>地震丛集识别</td>
+                  <td>图数据库 + 聚类</td>
+                  <td>事件关联分析</td>
+                </tr>
+                <tr>
+                  <td>历史数据归档</td>
+                  <td>对象存储 + 元数据</td>
+                  <td>长期保存、可检索</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>典型查询模式</h3>
+          <pre><code class="language-sql">-- 查询某区域某时间段的强震记录
+SELECT e.event_id, e.magnitude, e.origin_time,
+       s.station_id, s.vs30, w.file_path
+FROM events e
+JOIN waveforms w ON e.event_id = w.event_id
+JOIN stations s ON w.station_id = s.station_id
+WHERE e.origin_time BETWEEN '2020-01-01' AND '2024-12-31'
+  AND e.magnitude >= 5.0
+  AND ST_DWithin(
+        e.geom::geography,
+        ST_MakePoint(101, 31)::geography,
+        200000  -- 200 km
+      )
+  AND s.vs30 BETWEEN 200 AND 800;
+
+-- 按站点统计记录数
+SELECT s.station_id, COUNT(*) AS n_records,
+       AVG(e.magnitude) AS avg_mag,
+       MAX(e.magnitude) AS max_mag
+FROM events e
+JOIN waveforms w ON e.event_id = w.event_id
+JOIN stations s ON w.station_id = s.station_id
+GROUP BY s.station_id
+HAVING COUNT(*) > 100
+ORDER BY n_records DESC;
+
+-- 时间序列分析：每月事件数
+SELECT
+    DATE_TRUNC('month', origin_time) AS month,
+    COUNT(*) AS n_events,
+    AVG(magnitude) AS avg_mag,
+    SUM(CASE WHEN magnitude >= 5 THEN 1 ELSE 0 END) AS n_m5
+FROM events
+WHERE origin_time >= '2000-01-01'
+GROUP BY month
+ORDER BY month;</code></pre>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>数据库与数据工程与你的项目</strong>：
+              如果你的项目涉及"地震目录管理"或"波形归档"，
+              这份笔记提供了完整的技术选型参考：
+              ① 元数据用 <strong>PostgreSQL + PostGIS</strong>；
+              ② 波形用 <strong>文件 + 对象存储</strong>；
+              ③ 实时处理用 <strong>Kafka</strong>；
+              ④ 分析数据集用 <strong>Parquet + DuckDB</strong>；
+              ⑤ 与用户交互用 <strong>FDSN Web Services</strong>。
+              这些是地震数据中心的行业标准。
+              即使项目规模小，用 SQLite + Parquet + Pandas
+              也足以支撑数万条目录记录的高效查询。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>数据模型</strong>：关系模型是基础；地震数据用"元数据 + 波形"分离架构。</li>
+              <li><strong>SQL</strong>：JOIN、聚合、窗口函数、CTE；PostGIS 提供空间查询。</li>
+              <li><strong>索引</strong>：B+ 树、GIST、GIN、BRIN；时空混合查询需要复合或分区索引。</li>
+              <li><strong>事务</strong>：ACID；隔离级别；MVCC 是现代数据库的核心机制。</li>
+              <li><strong>时序数据库</strong>：适合传感器、波形；TimescaleDB 保留 SQL 能力。</li>
+              <li><strong>数据仓库</strong>：列式存储（ClickHouse、DuckDB）；星型模型适合分析。</li>
+              <li><strong>数据管道</strong>：批处理 + 流处理；消息队列解耦；数据质量与治理至关重要。</li>
+              <li><strong>地震学应用</strong>：数据中心架构、FDSN Web Services、数据格式标准。</li>
+            </ul>
+          </div>
+
+          <h3>技术选型速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>需求</th><th>推荐技术</th><th>理由</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>小规模目录（&lt; 10⁵）</td>
+                  <td>SQLite / DuckDB</td>
+                  <td>零配置、单文件</td>
+                </tr>
+                <tr>
+                  <td>中等规模（10⁵~10⁷）</td>
+                  <td>PostgreSQL + PostGIS</td>
+                  <td>成熟、空间查询</td>
+                </tr>
+                <tr>
+                  <td>大规模目录（&gt; 10⁷）</td>
+                  <td>PostgreSQL + 分区 / ClickHouse</td>
+                  <td>水平扩展</td>
+                </tr>
+                <tr>
+                  <td>波形存储</td>
+                  <td>文件 + 对象存储</td>
+                  <td>格式标准、成本低</td>
+                </tr>
+                <tr>
+                  <td>实时流处理</td>
+                  <td>Kafka + Flink</td>
+                  <td>低延迟、高吞吐</td>
+                </tr>
+                <tr>
+                  <td>时序指标</td>
+                  <td>TimescaleDB / InfluxDB</td>
+                  <td>时间索引优化</td>
+                </tr>
+                <tr>
+                  <td>分析数据集</td>
+                  <td>Parquet + DuckDB</td>
+                  <td>列式、高效</td>
+                </tr>
+                <tr>
+                  <td>机器学习数据集</td>
+                  <td>HDF5 / Parquet</td>
+                  <td>高效随机读取</td>
+                </tr>
+                <tr>
+                  <td>全文搜索</td>
+                  <td>Elasticsearch</td>
+                  <td>倒排索引</td>
+                </tr>
+                <tr>
+                  <td>图关系</td>
+                  <td>Neo4j</td>
+                  <td>图算法优化</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>数据结构</strong>（计算机）：B 树、哈希、图是数据库索引的基础。</li>
+            <li><strong>算法设计与分析</strong>（计算机）：查询优化是搜索问题，索引选择是组合优化。</li>
+            <li><strong>科学计算与 Python</strong>（计算机）：Pandas、SQLAlchemy、DuckDB 是数据工程工具。</li>
+            <li><strong>科学计算与 MATLAB</strong>（计算机）：MATLAB 也有 Database Toolbox。</li>
+            <li><strong>机器学习基础</strong>（计算机）：训练数据的存储与采样需要数据工程支撑。</li>
+            <li><strong>数字信号处理</strong>（计算机）：波形数据的存储与流处理。</li>
+            <li><strong>线性代数</strong>（数学）：稀疏矩阵存储（CSR）与列式存储（Parquet）原理相通。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：数据采样、统计聚合的数学基础。</li>
+            <li><strong>强震动观测</strong>（地震学）：数据格式、元数据标准、质量控制的存储需求。</li>
+            <li><strong>工程地震学</strong>（地震学）：GMPE 拟合需要大量记录的批量查询。</li>
+            <li><strong>地震地质</strong>（地震学）：断层活动性数据的时空管理。</li>
+            <li><strong>地震预警</strong>（地震学）：实时数据流与低延迟查询。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Kleppmann, <em>Designing Data-Intensive Applications</em> — 数据系统设计权威</li>
+            <li>Garcia-Molina, Ullman &amp; Widom, <em>Database Systems: The Complete Book</em> — 数据库经典教材</li>
+            <li>Silberschatz, Korth &amp; Sudarshan, <em>Database System Concepts</em> — 数据库系统概念</li>
+            <li>Date, <em>An Introduction to Database Systems</em> — 关系数据库基础</li>
+            <li>Winand &amp; Kopp, <em>SQL Performance Explained</em> — SQL 性能优化</li>
+            <li>Reis &amp; Housley, <em>Fundamentals of Data Engineering</em> — 数据工程入门</li>
+            <li>Kleppmann, <em>Making Sense of Stream Processing</em> — 流处理</li>
+            <li>Kreibich, <em>Using SQLite</em> — 嵌入式数据库</li>
+            <li>Obe &amp; Hsu, <em>PostgreSQL: Up and Running</em> — PostgreSQL 实战</li>
+            <li>PostGIS 官方文档 — 空间数据库扩展</li>
+            <li>TimescaleDB 官方文档 — 时序数据库扩展</li>
+            <li>FDSN Web Services 标准文档 — 地震数据访问接口</li>
+            <li>EarthScope/IRIS 数据管理文档 — 地震数据中心参考</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

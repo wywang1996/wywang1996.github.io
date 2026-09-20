@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>板壳理论 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="plate-shell">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#classification">一、板的基本假设与分类</a></li>
+      <li><a href="#kirchhoff">二、薄板弯曲理论</a></li>
+      <li><a href="#boundary">三、边界条件与求解</a></li>
+      <li><a href="#mindlin">四、中厚板理论</a></li>
+      <li><a href="#vibration">五、板的振动</a></li>
+      <li><a href="#shell">六、壳的基本理论</a></li>
+      <li><a href="#cylinder">七、圆柱壳</a></li>
+      <li><a href="#buckling">八、板的稳定与屈曲</a></li>
+      <li><a href="#fem">九、有限元中的板壳单元</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 板壳理论
+        </div>
+        <h1>板壳理论</h1>
+        <p class="lead">
+          从 Kirchhoff 薄板到 Mindlin 中厚板，从板的弯曲到壳的薄膜与弯曲耦合，
+          系统梳理二维结构（楼板、剪力墙、储罐、穹顶）的分析理论。
+          板壳理论是有限元板壳单元的直接源头。
+        </p>
+        <div class="article-meta">
+          <span>薄板弯曲</span>
+          <span>中厚板</span>
+          <span>板壳单元</span>
+          <span class="blue">二维结构</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            板壳理论处理的是<strong>一个方向尺寸远小于另外两个方向</strong>的结构。
+            板是平面形态（楼板、底板、层合板），壳是曲面形态（穹顶、储罐、飞机蒙皮、压力容器）。
+            它们的共同特征是：厚度方向的应力可以忽略，力学行为降为二维问题。
+          </p>
+          <p>
+            在土木与结构工程中，板壳无处不在：
+          </p>
+          <ul>
+            <li><strong>楼板</strong>：直接承受楼面荷载，传递到梁柱。</li>
+            <li><strong>剪力墙</strong>：抗震中的主要抗侧力构件。</li>
+            <li><strong>储液罐与管道</strong>：内压作用下的圆柱壳。</li>
+            <li><strong>穹顶与大跨屋盖</strong>：球壳、柱壳、双曲壳。</li>
+            <li><strong>桥面板、船体、飞机蒙皮</strong>：典型的板壳结构。</li>
+          </ul>
+          <p>
+            板壳理论的意义在于：把三维弹性力学问题通过<strong>降维</strong>
+            化为二维问题，大幅简化计算；同时保留了板壳的主要力学行为
+            （弯曲、薄膜、屈曲、振动）。
+            当进一步数值化时，就得到有限元中广泛使用的板单元和壳单元。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>板 vs 壳</strong>：板的中面是平面，主要靠弯曲抵抗横向荷载；
+              壳的中面是曲面，可以同时靠薄膜力和弯曲抵抗荷载。
+              <strong>壳的效率远高于板</strong>——这就是为什么蛋壳虽薄却能承受很大压力的原因。
+              工程上"以壳代板"常能大幅节省材料。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="classification">
+          <h2><span class="num">01</span>板的基本假设与分类</h2>
+
+          <h3>几何特征</h3>
+          <p>
+            板的中面是一个平面，板的厚度 $h$ 远小于平面尺寸。
+            常用的厚度比判据：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>板类型</th><th>厚度比 h / L</th><th>理论</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>薄膜板</strong></td>
+                  <td>$h/L < 1/100$</td>
+                  <td>膜理论（只有面内应力）</td>
+                </tr>
+                <tr>
+                  <td><strong>薄板</strong></td>
+                  <td>$1/100 < h/L < 1/5$</td>
+                  <td>Kirchhoff 理论</td>
+                </tr>
+                <tr>
+                  <td><strong>中厚板</strong></td>
+                  <td>$1/20 < h/L < 1/5$</td>
+                  <td>Mindlin-Reissner 理论</td>
+                </tr>
+                <tr>
+                  <td><strong>厚板</strong></td>
+                  <td>$h/L > 1/5$</td>
+                  <td>三维弹性理论</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            板的行为还分为<strong>小挠度</strong>（$w \ll h$）与<strong>大挠度</strong>
+            （$w$ 与 $h$ 同量级），后者需要考虑几何非线性。
+            本笔记主要讨论小挠度理论。
+          </p>
+
+          <h3>基本假设（Kirchhoff-Love）</h3>
+          <p>薄板理论建立在以下假设之上：</p>
+          <ol class="steps">
+            <li><strong>直法线假设</strong>：变形前垂直于中面的直线，变形后仍为直线且垂直中面。</li>
+            <li><strong>厚度不变</strong>：板厚方向的正应变 $\varepsilon_z \approx 0$。</li>
+            <li><strong>中面无面内位移</strong>：中面内各点只有挠度 $w$，无面内位移。</li>
+            <li><strong>法向应力忽略</strong>：$\sigma_z \approx 0$。</li>
+          </ol>
+
+          <p>
+            第 1 条是 Kirchhoff 假设的核心——
+            它等价于<strong>忽略横向剪切变形</strong>。
+            对薄板这个近似非常精确；对中厚板则需要 Mindlin 修正。
+          </p>
+
+          <h3>内力定义</h3>
+          <p>板的内力以"单位宽度上的力"定义：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>内力</th><th>符号</th><th>量纲</th><th>意义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>弯矩</strong></td><td>$M_x, M_y$</td><td>N·m/m</td><td>由正应力积分</td></tr>
+                <tr><td><strong>扭矩</strong></td><td>$M_{xy}$</td><td>N·m/m</td><td>由剪应力积分</td></tr>
+                <tr><td><strong>剪力</strong></td><td>$Q_x, Q_y$</td><td>N/m</td><td>由横剪应力积分</td></tr>
+                <tr><td><strong>薄膜力</strong></td><td>$N_x, N_y, N_{xy}$</td><td>N/m</td><td>沿板厚均匀分布的面内力</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>板与梁的类比</h3>
+          <p>
+            板可以看成二维的梁：
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>梁</th><th>板</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>挠度 $w(x)$</td><td>挠度 $w(x, y)$</td></tr>
+                <tr><td>转角 $\theta = dw/dx$</td><td>两个转角 $\partial w/\partial x$、$\partial w/\partial y$</td></tr>
+                <tr><td>弯矩 $M = -EI w''$</td><td>弯矩 $M_x = -D (\partial^2 w/\partial x^2 + \nu \partial^2 w/\partial y^2)$</td></tr>
+                <tr><td>方程 $EI w'''' = q$</td><td>方程 $D \nabla^4 w = q$</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            其中 $D = \dfrac{E h^3}{12 (1 - \nu^2)}$ 为板的<strong>抗弯刚度</strong>，
+            对应梁的 $EI$。
+          </p>
+        </section>
+
+        <section id="kirchhoff">
+          <h2><span class="num">02</span>薄板弯曲理论</h2>
+
+          <h3>位移场</h3>
+          <p>由 Kirchhoff 假设，板内任意一点的位移可以表示为：</p>
+
+          $$ u(x, y, z) = -z \frac{\partial w}{\partial x}, \qquad
+             v(x, y, z) = -z \frac{\partial w}{\partial y}, \qquad
+             w(x, y, z) = w(x, y) $$
+
+          <p>
+            即：板内位移由中面挠度 $w$ 完全确定——
+            这是板理论"降维"的关键。
+          </p>
+
+          <h3>应变与曲率</h3>
+          <p>由几何方程可以求出应变：</p>
+
+          $$ \varepsilon_x = -z \frac{\partial^2 w}{\partial x^2}, \qquad
+             \varepsilon_y = -z \frac{\partial^2 w}{\partial y^2}, \qquad
+             \gamma_{xy} = -2z \frac{\partial^2 w}{\partial x \partial y} $$
+
+          <p>定义<strong>曲率</strong>与<strong>扭率</strong>：</p>
+
+          $$ \kappa_x = -\frac{\partial^2 w}{\partial x^2}, \qquad
+             \kappa_y = -\frac{\partial^2 w}{\partial y^2}, \qquad
+             \kappa_{xy} = -\frac{\partial^2 w}{\partial x \partial y} $$
+
+          <p>则应变可以写成：</p>
+
+          $$ \boldsymbol{\varepsilon} = z \boldsymbol{\kappa} $$
+
+          <h3>应力分布</h3>
+          <p>由广义胡克定律：</p>
+
+          $$ \sigma_x = \frac{E}{1 - \nu^2} (\varepsilon_x + \nu \varepsilon_y)
+             = -\frac{E z}{1 - \nu^2} \left( \frac{\partial^2 w}{\partial x^2}
+             + \nu \frac{\partial^2 w}{\partial y^2} \right) $$
+
+          <p>可见应力沿厚度<strong>线性分布</strong>，中面处为零（中性面）。</p>
+
+          <h3>内力与曲率的关系</h3>
+          <p>对厚度积分可以得到弯矩与曲率的关系：</p>
+
+          $$ M_x = -D \left( \frac{\partial^2 w}{\partial x^2}
+             + \nu \frac{\partial^2 w}{\partial y^2} \right) $$
+
+          $$ M_y = -D \left( \frac{\partial^2 w}{\partial y^2}
+             + \nu \frac{\partial^2 w}{\partial x^2} \right) $$
+
+          $$ M_{xy} = -D (1 - \nu) \frac{\partial^2 w}{\partial x \partial y} $$
+
+          <p>剪力与弯矩的关系：</p>
+
+          $$ Q_x = \frac{\partial M_x}{\partial x} + \frac{\partial M_{xy}}{\partial y}, \qquad
+             Q_y = \frac{\partial M_{xy}}{\partial x} + \frac{\partial M_y}{\partial y} $$
+
+          <h3>平衡方程与挠度方程</h3>
+          <p>板的平衡方程（由横向力 $q$ 引起）：</p>
+
+          $$ \frac{\partial Q_x}{\partial x} + \frac{\partial Q_y}{\partial y} + q = 0 $$
+
+          <p>代入内力-曲率关系，得到<strong>薄板弯曲微分方程</strong>：</p>
+
+          $$ \frac{\partial^4 w}{\partial x^4}
+             + 2 \frac{\partial^4 w}{\partial x^2 \partial y^2}
+             + \frac{\partial^4 w}{\partial y^4} = \frac{q}{D} $$
+
+          <p>即：</p>
+
+          $$ \nabla^4 w = \frac{q}{D} $$
+
+          <p>
+            这是<strong>双调和方程</strong>——与弹性力学平面问题的应力函数方程
+            完全同构。这是一个重要线索：
+            平面问题用 Airy 应力函数、板问题用挠度函数，
+            数学本质是一样的。
+          </p>
+
+          <h3>边界上的等效剪力</h3>
+          <p>
+            Kirchhoff 理论中，扭矩在边界上可以用<strong>等效剪力</strong>替代：
+          </p>
+
+          $$ V_x = Q_x + \frac{\partial M_{xy}}{\partial y} $$
+
+          <p>
+            这保证了边界条件只有两个（挠度 + 法向转角），
+            而不是三个（挠度 + 两个转角），
+            与薄板理论的四阶方程相匹配。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Kirchhoff 假设的代价</strong>：直法线假设意味着<strong>横向剪切刚度无穷大</strong>，
+              因此 $Q_x$、$Q_y$ 不能由本构关系直接求出，
+              只能由弯矩的导数得到。这在板的自由边界处会引起矛盾
+              （Kirchhoff 佯谬）——真正的剪力在边界会集中成反力。
+              中厚板理论（Mindlin）通过引入独立的转角变量解决了这一问题。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="boundary">
+          <h2><span class="num">03</span>边界条件与求解</h2>
+
+          <h3>常见边界条件</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>边界类型</th><th>条件</th><th>物理意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>简支</strong></td>
+                  <td>$w = 0$，$M_n = 0$</td>
+                  <td>挠度为零、弯矩为零</td>
+                </tr>
+                <tr>
+                  <td><strong>固支</strong></td>
+                  <td>$w = 0$，$\dfrac{\partial w}{\partial n} = 0$</td>
+                  <td>挠度为零、转角为零</td>
+                </tr>
+                <tr>
+                  <td><strong>自由</strong></td>
+                  <td>$M_n = 0$，$V_n = 0$</td>
+                  <td>弯矩与等效剪力为零</td>
+                </tr>
+                <tr>
+                  <td><strong>弹性支承</strong></td>
+                  <td>$V_n = k w$</td>
+                  <td>反力与挠度成正比</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>经典解析解：Navier 解</h3>
+          <p>
+            对<strong>四边简支</strong>矩形板（$a \times b$），受分布荷载 $q(x, y)$，
+            可以用双重三角级数（Navier 方法）求解：
+          </p>
+
+          $$ w(x, y) = \sum_{m=1}^{\infty} \sum_{n=1}^{\infty}
+             A_{mn} \sin \frac{m \pi x}{a} \sin \frac{n \pi y}{b} $$
+
+          <p>把荷载也展开成三角级数：</p>
+
+          $$ q(x, y) = \sum_{m=1}^{\infty} \sum_{n=1}^{\infty}
+             q_{mn} \sin \frac{m \pi x}{a} \sin \frac{n \pi y}{b} $$
+
+          <p>代入挠度方程，可以得到：</p>
+
+          $$ A_{mn} = \frac{q_{mn}}{D \pi^4
+             \left( \dfrac{m^2}{a^2} + \dfrac{n^2}{b^2} \right)^2} $$
+
+          <p>
+            对均布荷载 $q_0$，展开系数为：
+          </p>
+
+          $$ q_{mn} = \begin{cases}
+             \dfrac{16 q_0}{\pi^2 m n}, & m, n \text{ 均为奇数} \\[6pt]
+             0, & \text{否则}
+             \end{cases} $$
+
+          <h3>经典解析解：Lévy 解</h3>
+          <p>
+            对<strong>两对边简支、另两对边任意</strong>的矩形板，
+            可以用单重三角级数（Lévy 方法）求解。形式更复杂，
+            但适用范围更广。
+          </p>
+
+          <h3>最大挠度公式</h3>
+          <p>
+            对四边简支、均布荷载 $q_0$ 的矩形板（边长 $a \ge b$），
+            最大挠度出现在板中心：
+          </p>
+
+          $$ w_{\max} = \alpha \frac{q_0 b^4}{D} $$
+
+          <p>
+            其中系数 $\alpha$ 依赖于 $a/b$：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>a / b</th><th>1.0</th><th>1.2</th><th>1.5</th><th>2.0</th><th>3.0</th><th>∞</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>α</td><td>0.00406</td><td>0.00564</td><td>0.00772</td><td>0.01013</td><td>0.01223</td><td>0.01302</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            当 $a/b \ge 3$ 时，$\alpha$ 趋于极限值 0.01302，
+            对应无限长板的平面应变弯曲——相当于一根单位宽度梁的挠度。
+          </p>
+
+          <h3>Python 示例：四边简支板 Navier 解</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>plate_navier.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+四边简支矩形板在均布荷载下的 Navier 解
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def plate_navier(a, b, q0, D, n_terms=39):
+    """
+    四边简支矩形板，均布荷载 q0 的 Navier 解
+    a, b  : 板边长（x, y 方向）
+    q0    : 均布荷载
+    D     : 抗弯刚度
+    n_terms : 级数项数（取奇数）
+    返回 x, y 网格与挠度 w
+    """
+    # 网格
+    nx, ny = 60, 60
+    x = np.linspace(0, a, nx)
+    y = np.linspace(0, b, ny)
+    X, Y = np.meshgrid(x, y)
+    w = np.zeros_like(X)
+
+    # Navier 解：求和 m, n 都为奇数的项
+    for m in range(1, n_terms + 1, 2):
+        for n in range(1, n_terms + 1, 2):
+            q_mn = 16.0 * q0 / (np.pi**2 * m * n)
+            denom = D * np.pi**4 * ((m/a)**2 + (n/b)**2)**2
+            A_mn = q_mn / denom
+            w += A_mn * np.sin(m * np.pi * X / a) * np.sin(n * np.pi * Y / b)
+
+    return X, Y, w
+
+
+if __name__ == "__main__":
+    # 示例：混凝土楼板 4 m × 6 m × 0.12 m
+    E = 30e9      # 30 GPa
+    nu = 0.2
+    h = 0.12
+    a, b = 4.0, 6.0
+    q0 = 8e3      # 8 kN/m²
+
+    D = E * h**3 / (12 * (1 - nu**2))
+    print(f"抗弯刚度 D = {D:.3e} N·m")
+
+    X, Y, w = plate_navier(a, b, q0, D, n_terms=39)
+
+    w_max = np.max(np.abs(w))
+    print(f"最大挠度 w_max = {w_max*1000:.3f} mm")
+    print(f"相对挠度 w_max / b = 1 / {b / w_max:.0f}")
+
+    # 理论系数校核（a/b = 1.5）
+    alpha_theory = 0.00772
+    w_theory = alpha_theory * q0 * min(a, b)**4 / D
+    print(f"理论公式 w_max = {w_theory*1000:.3f} mm")
+
+    plt.figure(figsize=(8, 6))
+    cs = plt.contourf(X, Y, -w * 1000, 20, cmap="RdPu")
+    plt.colorbar(cs, label="挠度 w (mm)")
+    plt.xlabel("x / m")
+    plt.ylabel("y / m")
+    plt.title(f"四边简支板挠度分布（{a} m × {b} m）")
+    plt.axis("equal")
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+        </section>
+
+        <section id="mindlin">
+          <h2><span class="num">04</span>中厚板理论</h2>
+
+          <h3>为什么需要中厚板理论</h3>
+          <p>
+            Kirchhoff 薄板理论忽略横向剪切变形，
+            对薄板（$h/L < 1/20$）精度很好。
+            但对中厚板或厚板，剪切变形的影响不可忽略：
+          </p>
+          <ul>
+            <li>厚板的自振频率显著低于 Kirchhoff 理论预测。</li>
+            <li>集中荷载附近的局部变形需要剪切效应才能描述。</li>
+            <li>层合板（各层材料不同）的横向剪切刚度较低，必须考虑剪切。</li>
+          </ul>
+
+          <h3>Mindlin-Reissner 假设</h3>
+          <p>
+            Mindlin 理论放松了直法线假设：
+          </p>
+          <ol class="steps">
+            <li>变形前垂直中面的直线，变形后仍为直线，但<strong>不再垂直中面</strong>。</li>
+            <li>板内各点有独立于挠度的转角 $\theta_x$、$\theta_y$。</li>
+            <li>厚向应力 $\sigma_z = 0$。</li>
+          </ol>
+
+          <p>位移场为：</p>
+
+          $$ u = z \theta_x(x, y), \qquad
+             v = z \theta_y(x, y), \qquad
+             w = w(x, y) $$
+
+          <h3>应变与曲率</h3>
+          <p>应变分为<strong>弯曲部分</strong>与<strong>剪切部分</strong>：</p>
+
+          $$ \boldsymbol{\kappa} = \begin{bmatrix}
+             \dfrac{\partial \theta_x}{\partial x} \\[6pt]
+             \dfrac{\partial \theta_y}{\partial y} \\[6pt]
+             \dfrac{\partial \theta_x}{\partial y} + \dfrac{\partial \theta_y}{\partial x}
+             \end{bmatrix}, \qquad
+             \boldsymbol{\gamma} = \begin{bmatrix}
+             \dfrac{\partial w}{\partial x} + \theta_x \\[6pt]
+             \dfrac{\partial w}{\partial y} + \theta_y
+             \end{bmatrix} $$
+
+          <p>
+            注意 $\boldsymbol{\gamma}$ 就是横向剪切应变——Kirchhoff 理论中为零，
+            Mindlin 理论中不为零。
+          </p>
+
+          <h3>本构关系</h3>
+          <p>弯矩与曲率、剪力与剪切应变的关系为：</p>
+
+          $$ \mathbf{M} = \mathbf{D}_b \boldsymbol{\kappa}, \qquad
+             \mathbf{Q} = \mathbf{D}_s \boldsymbol{\gamma} $$
+
+          <p>其中：</p>
+
+          $$ \mathbf{D}_b = \frac{E h^3}{12 (1 - \nu^2)} \begin{bmatrix}
+             1 & \nu & 0 \\ \nu & 1 & 0 \\ 0 & 0 & \dfrac{1 - \nu}{2}
+             \end{bmatrix} $$
+
+          $$ \mathbf{D}_s = \kappa_s G h \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} $$
+
+          <p>
+            其中 $\kappa_s = 5/6$ 为<strong>剪切修正系数</strong>，
+            用来补偿横向剪应力在厚度方向非均匀分布带来的误差
+            （Mindlin 假设下剪应力均匀分布，实际是抛物线分布）。
+          </p>
+
+          <h3>平衡方程</h3>
+
+          $$ \frac{\partial M_x}{\partial x} + \frac{\partial M_{xy}}{\partial y} - Q_x = 0 $$
+
+          $$ \frac{\partial M_{xy}}{\partial x} + \frac{\partial M_y}{\partial y} - Q_y = 0 $$
+
+          $$ \frac{\partial Q_x}{\partial x} + \frac{\partial Q_y}{\partial y} + q = 0 $$
+
+          <p>
+            共三个方程，未知量也是三个：$w$、$\theta_x$、$\theta_y$——
+            方程数与未知量数一致。
+          </p>
+
+          <h3>Kirchhoff 与 Mindlin 的对比</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>对比项</th><th>Kirchhoff</th><th>Mindlin</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>未知量</td>
+                  <td>$w$（1 个）</td>
+                  <td>$w, \theta_x, \theta_y$（3 个）</td>
+                </tr>
+                <tr>
+                  <td>方程阶数</td>
+                  <td>4 阶</td>
+                  <td>2 阶（联立）</td>
+                </tr>
+                <tr>
+                  <td>剪切变形</td>
+                  <td>忽略</td>
+                  <td>考虑</td>
+                </tr>
+                <tr>
+                  <td>边界条件</td>
+                  <td>$w$ 与 $\partial w / \partial n$</td>
+                  <td>$w$ 与 $\theta_n$</td>
+                </tr>
+                <tr>
+                  <td>适用厚度</td>
+                  <td>$h/L < 1/20$</td>
+                  <td>$h/L < 1/5$</td>
+                </tr>
+                <tr>
+                  <td>有限元实现</td>
+                  <td>需要 $C^1$ 连续单元</td>
+                  <td>只需 $C^0$ 连续单元</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>剪切锁死</strong>：Mindlin 板单元在<strong>薄板极限</strong>
+              （$h \to 0$）时会出现<strong>剪切锁死</strong>（shear locking）——
+              即单元刚度过大、位移趋近于零。
+              解决方案包括：选择减缩积分、使用 MITC 单元、采用非协调单元。
+              这是有限元板壳单元实现中最核心的技术问题之一。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="vibration">
+          <h2><span class="num">05</span>板的振动</h2>
+
+          <h3>薄板自由振动方程</h3>
+          <p>
+            引入惯性力，薄板的自由振动方程为：
+          </p>
+
+          $$ D \nabla^4 w + \rho h \frac{\partial^2 w}{\partial t^2} = 0 $$
+
+          <p>分离变量 $w = W(x, y) e^{i \omega t}$ 得：</p>
+
+          $$ D \nabla^4 W - \rho h \omega^2 W = 0 $$
+
+          <h3>四边简支矩形板</h3>
+          <p>
+            对四边简支板，振型函数可以写成双重三角级数：
+          </p>
+
+          $$ W_{mn}(x, y) = \sin \frac{m \pi x}{a} \sin \frac{n \pi y}{b} $$
+
+          <p>代入振动方程得到自振圆频率：</p>
+
+          $$ \omega_{mn} = \pi^2 \left( \frac{m^2}{a^2} + \frac{n^2}{b^2} \right)
+             \sqrt{\frac{D}{\rho h}} $$
+
+          <p>
+            当 $a = b$（正方形板）时，最低频率对应 $(m, n) = (1, 1)$：
+          </p>
+
+          $$ \omega_{11} = \frac{2 \pi^2}{a^2} \sqrt{\frac{D}{\rho h}} $$
+
+          <p>
+            更高阶的振型为 $(1, 2)$、$(2, 1)$、$(2, 2)$ 等，
+            其中 $(1, 2)$ 与 $(2, 1)$ 频率相同，是一对<strong>重频模态</strong>。
+          </p>
+
+          <h3>板的频率密度</h3>
+          <p>
+            对大型薄板结构（如楼板、桥面板），
+            自振频率随阶数快速增长：
+          </p>
+
+          $$ \omega_{mn} \propto (m^2 + n^2) $$
+
+          <p>
+            这意味着高频模态密集。在地震作用下，
+            板的响应主要被前几阶模态控制，
+            但也需要注意高频局部振动的可能性。
+          </p>
+
+          <h3>面内振动</h3>
+          <p>
+            除了横向弯曲振动，板还有<strong>面内振动</strong>
+            （对应于平面应力问题）：
+          </p>
+
+          $$ \rho h \frac{\partial^2 u}{\partial t^2}
+             = \frac{\partial N_x}{\partial x} + \frac{\partial N_{xy}}{\partial y} $$
+
+          $$ \rho h \frac{\partial^2 v}{\partial t^2}
+             = \frac{\partial N_{xy}}{\partial x} + \frac{\partial N_y}{\partial y} $$
+
+          <p>
+            面内振动对应结构的"层间振动"——
+            在剪力墙与楼板的相互作用中非常重要。
+          </p>
+
+          <h3>板的动力响应</h3>
+          <p>
+            在动荷载 $q(x, y, t)$ 作用下，用模态叠加法：
+          </p>
+
+          $$ w(x, y, t) = \sum_{m} \sum_{n} W_{mn}(x, y) q_{mn}(t) $$
+
+          <p>每个模态的广义坐标满足：</p>
+
+          $$ \ddot{q}_{mn} + \omega_{mn}^2 q_{mn} = \frac{Q_{mn}(t)}{M_{mn}} $$
+
+          <p>
+            其中 $Q_{mn}$、$M_{mn}$ 为广义力与广义质量。
+            这与多自由度结构完全一致。
+          </p>
+        </section>
+
+        <section id="shell">
+          <h2><span class="num">06</span>壳的基本理论</h2>
+
+          <h3>壳与板的根本区别</h3>
+          <p>
+            壳的中面是曲面，这个"曲率"带来了两个重大变化：
+          </p>
+          <ul>
+            <li><strong>薄膜力与弯曲耦合</strong>：壳中的面内位移与法向位移不再独立，
+              薄膜变形与弯曲变形相互影响。</li>
+            <li><strong>承载力效率更高</strong>：通过薄膜力抵抗荷载，
+              可以用极薄的壳承受很大的压力。</li>
+          </ul>
+
+          <h3>壳的分类</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>几何特征</th><th>典型结构</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>圆柱壳</strong></td>
+                  <td>单向曲率</td>
+                  <td>储罐、管道、拱形屋盖</td>
+                </tr>
+                <tr>
+                  <td><strong>球壳</strong></td>
+                  <td>双向等曲率</td>
+                  <td>穹顶、储气罐</td>
+                </tr>
+                <tr>
+                  <td><strong>双曲壳</strong></td>
+                  <td>双向反曲率</td>
+                  <td>冷却塔、双曲屋盖</td>
+                </tr>
+                <tr>
+                  <td><strong>锥壳</strong></td>
+                  <td>锥面</td>
+                  <td>料斗、锥形屋面</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>壳的基本假设</h3>
+          <p>与 Kirchhoff 板类似，壳理论也基于：</p>
+          <ol class="steps">
+            <li>直法线假设：变形前垂直于中面的直线，变形后仍为直线且垂直中面。</li>
+            <li>厚度不变：法向应变可忽略。</li>
+            <li>法向应力忽略。</li>
+            <li>小变形：几何关系线性。</li>
+          </ol>
+
+          <h3>壳的基本方程</h3>
+          <p>
+            壳理论完整形式非常复杂，涉及 8 个内力/力矩与 6 个平衡方程。
+            简化形式包括：
+          </p>
+          <ul>
+            <li><strong>薄膜理论</strong>：假设弯矩为零，只有薄膜力 $N_x, N_y, N_{xy}$。
+              适用于壳内弯矩很小的区域。</li>
+            <li><strong>弯曲理论</strong>：考虑所有内力，包括弯矩与剪力。</li>
+            <li><strong>扁壳理论</strong>：适用于曲率半径远大于平面尺寸的浅壳。</li>
+          </ul>
+
+          <h3>薄膜理论</h3>
+          <p>
+            对旋转对称壳（球壳、锥壳、圆柱壳）受轴对称荷载，
+            薄膜方程特别简单。以球壳为例（半径 $R$、内压 $p$）：
+          </p>
+
+          $$ N_\theta = N_\phi = \frac{p R}{2} $$
+
+          <p>
+            由此可以得到著名的<strong>球壳应力公式</strong>：
+          </p>
+
+          $$ \sigma = \frac{p R}{2 h} $$
+
+          <p>
+            这一公式在设计球形储罐、压力容器时非常重要。
+            注意：<strong>应力与半径成正比、与厚度成反比</strong>——
+            这就是为什么压力容器必须做得"薄而大"或"厚而小"，
+            而大直径的容器需要很厚壁才能承受高压。
+          </p>
+
+          <h3>圆柱壳薄膜解</h3>
+          <p>
+            对圆柱壳（半径 $R$）受内压 $p$，薄膜解为：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            环向应力（hoop stress）：
+          </p>
+          $$ \sigma_\theta = \frac{p R}{h} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            轴向应力（axial stress）：
+          </p>
+          $$ \sigma_x = \frac{p R}{2 h} $$
+
+          <p>
+            环向应力是轴向应力的两倍——这是圆柱壳的一个基本特征。
+            因此管道、储罐破裂时，通常沿纵向（母线方向）开裂。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>薄膜理论的局限</strong>：薄膜解在壳的边缘附近不成立——
+              边界约束会引起弯矩和剪力，形成<strong>边界效应区</strong>。
+              这一区域的宽度约为 $\sqrt{R h}$，
+              需要弯曲理论才能精确描述。
+              对圆柱壳，边界效应区会形成"鼓"或"缩"的变形。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="cylinder">
+          <h2><span class="num">07</span>圆柱壳</h2>
+
+          <h3>圆柱壳的弯曲理论</h3>
+          <p>
+            圆柱壳的弯曲方程可以写成（轴向坐标 $x$、环向坐标 $\theta$）：
+          </p>
+
+          $$ \frac{\partial^2 u}{\partial x^2}
+             + \frac{1 - \nu}{2 R^2} \frac{\partial^2 u}{\partial \theta^2}
+             + \frac{1 + \nu}{2 R} \frac{\partial^2 v}{\partial x \partial \theta}
+             + \frac{\nu}{R} \frac{\partial w}{\partial x} = 0 $$
+
+          <p>
+            一般形式非常复杂，工程中常用简化：
+          </p>
+          <ul>
+            <li><strong>轴对称问题</strong>：$\partial / \partial \theta = 0$，方程大幅简化。</li>
+            <li><strong>长壳问题</strong>：边界效应只影响两端附近。</li>
+            <li><strong>短壳问题</strong>：边界效应贯穿全长，需要用一般解。</li>
+          </ul>
+
+          <h3>轴对称圆柱壳</h3>
+          <p>
+            轴对称条件下，位移只有 $u(x)$ 与 $w(x)$。
+            弯曲方程化为：
+          </p>
+
+          $$ D \frac{d^4 w}{dx^4} + \frac{E h}{R^2} w = p(x) $$
+
+          <p>
+            这是一个常系数四阶常微分方程，
+            与弹性地基梁方程同构：
+          </p>
+
+          $$ E I \frac{d^4 w}{dx^4} + k w = q(x) $$
+
+          <p>
+            对应关系：$EI \leftrightarrow D$、$k \leftrightarrow E h / R^2$。
+            因此，<strong>圆柱壳可以看成弹性地基上的梁</strong>——
+            这是壳理论中一个非常漂亮的类比。
+          </p>
+
+          <h3>特征长度与衰减</h3>
+          <p>
+            定义<strong>衰减长度</strong>：
+          </p>
+
+          $$ \lambda = \left( \frac{E h}{4 D R^2} \right)^{1/4}
+                     = \left( \frac{3 (1 - \nu^2)}{R^2 h^2} \right)^{1/4} $$
+
+          <p>
+            边界效应的影响以 $e^{-\lambda x}$ 的形式衰减，
+            特征长度 $\ell = 1 / \lambda$ 约为：
+          </p>
+
+          $$ \ell \approx \sqrt{R h} $$
+
+          <p>
+            这就是著名的 <strong>$\sqrt{Rh}$ 定律</strong>：
+            边界效应的影响范围与半径和厚度的几何平均值成正比。
+          </p>
+
+          <p>
+            举例：$R = 5$ m、$h = 0.02$ m 的圆柱壳：
+            $\ell = \sqrt{5 \times 0.02} = 0.32$ m，
+            边界效应只影响两端 0.3 m 范围内。
+          </p>
+
+          <h3>圆柱壳的屈曲</h3>
+          <p>
+            受轴压或外压的圆柱壳会发生屈曲。经典屈曲应力为：
+          </p>
+
+          $$ \sigma_{cr} = \frac{E h}{R \sqrt{3 (1 - \nu^2)}} \approx 0.605 \frac{E h}{R} $$
+
+          <p>
+            但实验值远低于此——因为实际壳存在初始几何缺陷。
+            工程中用折减系数 $\alpha$ 修正：
+          </p>
+
+          $$ \sigma_{cr,\text{real}} = \alpha \sigma_{cr,\text{classical}},
+             \qquad \alpha \approx 0.1 \text{–} 0.5 $$
+
+          <p>
+            这是壳结构设计中最著名的"经典理论与实验不符"现象，
+            也是 Koiter 在 1945 年博士论文中研究的问题。
+          </p>
+
+          <h3>Python 示例：圆柱壳轴对称弯曲</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>cylindrical_shell.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+圆柱壳轴对称弯曲（弹性地基梁类比）
+展示边界效应的衰减规律
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def cylindrical_shell_edge(R, h, E, nu, w0, L, n=1000):
+    """
+    半无限长圆柱壳端部受位移 w0 的边界效应
+    求解：D d^4w/dx^4 + (Eh/R^2) w = 0
+    解析解：w(x) = w0 * exp(-λx) * (cos(λx) + sin(λx))
+    其中 λ = (Eh / (4 D R^2))^{1/4}
+    """
+    D = E * h**3 / (12 * (1 - nu**2))
+    lam = (E * h / (4 * D * R**2)) ** 0.25
+
+    x = np.linspace(0, L, n)
+    w = w0 * np.exp(-lam * x) * (np.cos(lam * x) + np.sin(lam * x))
+
+    # 弯矩 M = -D w''
+    dw_dx = np.gradient(w, x)
+    d2w_dx2 = np.gradient(dw_dx, x)
+    M = -D * d2w_dx2
+
+    return x, w, M, lam
+
+
+if __name__ == "__main__":
+    # 示例：钢管 R=1m, h=10mm, E=200GPa
+    R = 1.0
+    h = 0.010
+    E = 200e9
+    nu = 0.3
+
+    D = E * h**3 / (12 * (1 - nu**2))
+    print(f"抗弯刚度 D = {D:.3f} N·m")
+    print(f"特征长度 √(Rh) = {np.sqrt(R*h)*1000:.1f} mm")
+
+    # 端部强制位移
+    w0 = 1e-3     # 1 mm
+    L = 5 * np.sqrt(R * h)   # 观察 5 倍特征长度
+
+    x, w, M, lam = cylindrical_shell_edge(R, h, E, nu, w0, L)
+
+    print(f"衰减因子 λ = {lam:.3f} 1/m")
+    print(f"特征长度 1/λ = {1/lam*1000:.1f} mm")
+
+    # 边界效应衰减到 1% 所需的距离
+    x_1pct = 4.6 / lam
+    print(f"衰减至 1% 的距离: {x_1pct*1000:.1f} mm")
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+
+    axes[0].plot(x * 1000, w * 1000, color="#db2777", linewidth=2)
+    axes[0].axhline(0, color="gray", linewidth=0.5, alpha=0.5)
+    axes[0].set_xlabel("轴向距离 x / mm")
+    axes[0].set_ylabel("径向位移 w / mm")
+    axes[0].set_title("圆柱壳边界效应：径向位移衰减")
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(x * 1000, M, color="#2563eb", linewidth=2)
+    axes[1].axhline(0, color="gray", linewidth=0.5, alpha=0.5)
+    axes[1].set_xlabel("轴向距离 x / mm")
+    axes[1].set_ylabel("轴向弯矩 M / (N·m/m)")
+    axes[1].set_title("边界效应引起的轴向弯矩")
+    axes[1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>边界效应的工程意义</strong>：容器、管道、储罐的接管、
+              法兰、支座附近都会出现明显的边界效应。
+              设计时必须加厚这些部位或设置加强圈，
+              否则局部弯曲应力可能超过薄膜应力许多倍，
+              导致疲劳裂纹或屈曲。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="buckling">
+          <h2><span class="num">08</span>板的稳定与屈曲</h2>
+
+          <h3>面内受压板的屈曲</h3>
+          <p>
+            板在面内压力作用下会发生屈曲。以四边简支矩形板受单向均匀压力 $N_x$ 为例，
+            屈曲条件导出的临界荷载为：
+          </p>
+
+          $$ N_{x,cr} = k \frac{\pi^2 D}{b^2} $$
+
+          <p>
+            其中 $k$ 为屈曲系数，依赖边界条件与荷载形式：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>边界条件</th><th>屈曲系数 k</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>四边简支（$a/b \ge 1$）</td><td>$k = 4$</td></tr>
+                <tr><td>四边固支</td><td>$k \approx 7$</td></tr>
+                <tr><td>三边简支、一边自由</td><td>$k = 0.425 + (b/a)^2$</td></tr>
+                <tr><td>两加载边简支、另两边自由</td><td>$k \approx 0.425$</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>对应的临界屈曲应力为：</p>
+
+          $$ \sigma_{cr} = k \frac{\pi^2 E}{12 (1 - \nu^2)} \left( \frac{h}{b} \right)^2 $$
+
+          <h3>板的屈曲与柱的屈曲</h3>
+          <p>
+            对比欧拉柱的临界应力：
+          </p>
+
+          $$ \sigma_{cr}^{\text{column}} = \frac{\pi^2 E}{\lambda^2},
+             \qquad \lambda = \frac{l}{i} $$
+
+          <p>
+            可以看到，板的屈曲应力与 $(h/b)^2$ 成正比，
+            而柱的屈曲应力与 $(i/l)^2$ 成正比。两者形式相似，
+            但板的临界应力通常<strong>远高于</strong>同样厚度的柱。
+          </p>
+
+          <p>
+            这就是为什么薄板在面内荷载下比同等厚度的杆件更稳定——
+            面内支撑效应提供了额外约束。
+          </p>
+
+          <h3>板的后屈曲</h3>
+          <p>
+            板屈曲后并不会立即破坏，而是进入<strong>后屈曲</strong>阶段。
+            由于横向位移受限（面内支撑），板可以继续承载，
+            只是刚度大幅降低。
+          </p>
+
+          <p>板的后屈曲强度可以用 von Kármán 大挠度方程描述：</p>
+
+          $$ D \nabla^4 w = h \left( \frac{\partial^2 F}{\partial y^2} \frac{\partial^2 w}{\partial x^2}
+             - 2 \frac{\partial^2 F}{\partial x \partial y} \frac{\partial^2 w}{\partial x \partial y}
+             + \frac{\partial^2 F}{\partial x^2} \frac{\partial^2 w}{\partial y^2} \right) + q $$
+
+          <p>
+            其中 $F$ 为 Airy 应力函数。
+            这组非线性耦合方程是板大挠度理论的核心，
+            也是板壳结构极限承载力分析的基础。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>板屈曲 vs 壳屈曲</strong>：板的屈曲后有明显的后屈曲承载力，
+              破坏前有预警；而壳的屈曲往往<strong>突然失稳</strong>，
+              后屈曲路径可能下降（不稳定），破坏没有明显征兆。
+              这就是为什么壳结构的设计需要特别谨慎。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="fem">
+          <h2><span class="num">09</span>有限元中的板壳单元</h2>
+
+          <h3>从理论到数值</h3>
+          <p>
+            板壳理论的解析解只在极少数简单情况下可行。
+            工程中广泛使用的有限元方法，把板壳问题离散化为代数方程组。
+            板壳单元是有限元软件中的核心单元之一。
+          </p>
+
+          <h3>板单元的两种路线</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>路线</th><th>理论基础</th><th>未知量</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Kirchhoff 板单元</strong></td>
+                  <td>Kirchhoff 薄板理论</td>
+                  <td>$w, \partial w/\partial x, \partial w/\partial y$</td>
+                  <td>需要 $C^1$ 连续，实现复杂</td>
+                </tr>
+                <tr>
+                  <td><strong>Mindlin 板单元</strong></td>
+                  <td>Mindlin 中厚板理论</td>
+                  <td>$w, \theta_x, \theta_y$</td>
+                  <td>只需 $C^0$ 连续，但需防剪切锁死</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            现代有限元软件（ABAQUS、ANSYS、OpenSees）主流使用 Mindlin 路线，
+            因为它只需要 $C^0$ 连续的形函数，
+            可以复用平面单元的插值技术。
+          </p>
+
+          <h3>剪切锁死及其解决</h3>
+          <p>
+            当板变薄时（$h \to 0$），剪切应变 $\gamma \to 0$，
+            Mindlin 单元会趋于过刚——这就是<strong>剪切锁死</strong>。
+            解决方案：
+          </p>
+          <ul>
+            <li><strong>减缩积分</strong>：使用比完全积分少的积分点，避免过度约束。</li>
+            <li><strong>MITC 单元</strong>（Mixed Interpolation of Tensorial Components）：
+              对剪切应变采用独立插值，是工业级软件的标准方法。</li>
+            <li><strong>非协调单元</strong>：放松单元内部的连续性要求。</li>
+            <li><strong>EAS 方法</strong>（Enhanced Assumed Strain）：增加内部自由度。</li>
+          </ul>
+
+          <h3>壳单元的构造</h3>
+          <p>
+            壳单元可以看成<strong>板单元 + 薄膜单元</strong>的组合：
+          </p>
+
+          $$ \mathbf{K}^e = \mathbf{K}_{\text{bending}}^e + \mathbf{K}_{\text{membrane}}^e
+             + \mathbf{K}_{\text{shear}}^e $$
+
+          <p>
+            每个节点通常有 6 个自由度：
+            3 个平动位移 + 3 个转动。
+            但板壳理论中"厚度方向"的转角通常需要特殊处理
+            （如引入虚拟刚度或退化壳理论）。
+          </p>
+
+          <h3>几何非线性壳单元</h3>
+          <p>
+            对薄壳的稳定性分析与大变形分析，
+            需要使用<strong>几何非线性</strong>壳单元：
+          </p>
+          <ul>
+            <li><strong>Total Lagrangian (TL)</strong>：以初始构型为参考。</li>
+            <li><strong>Updated Lagrangian (UL)</strong>：以上一步构型为参考。</li>
+            <li><strong>Corotational</strong>：分离刚体运动与变形。</li>
+          </ul>
+
+          <p>
+            这些方法广泛用于薄壳屈曲、后屈曲、
+            压力容器极限承载力分析。
+          </p>
+
+          <h3>Python 示例：简单 Mindlin 板单元</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>mindlin_plate.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+4 节点矩形 Mindlin 板单元的弯曲刚度矩阵
+演示从板理论到有限元单元的实现
+"""
+import numpy as np
+
+
+def mindlin_plate_bending_stiffness(a, b, h, E, nu, kappa_s=5.0/6.0):
+    """
+    4 节点矩形 Mindlin 板单元弯曲刚度矩阵
+    节点自由度：[w, theta_x, theta_y] 每个节点 3 个
+    总自由度 12
+    a, b : 单元边长
+    h    : 板厚
+    E, nu: 弹性常数
+    kappa_s : 剪切修正系数
+
+    这里使用简化的 2×2 高斯积分
+    返回 12×12 刚度矩阵
+    """
+    D = E * h**3 / (12 * (1 - nu**2))
+    G = E / (2 * (1 + nu))
+
+    # 材料矩阵
+    Db = D * np.array([
+        [1, nu, 0],
+        [nu, 1, 0],
+        [0, 0, (1 - nu) / 2],
+    ])
+
+    Ds = kappa_s * G * h * np.eye(2)
+
+    # 高斯积分点
+    gp = [-1.0 / np.sqrt(3), 1.0 / np.sqrt(3)]
+    weights = [1.0, 1.0]
+
+    K = np.zeros((12, 12))
+
+    for i, xi in enumerate(gp):
+        for j, eta in enumerate(gp):
+            w_ij = weights[i] * weights[j]
+            # Jacobian = a*b/4
+            J = a * b / 4.0
+
+            # 形函数与导数（双线性）
+            N = 0.25 * np.array([
+                (1 - xi) * (1 - eta),
+                (1 + xi) * (1 - eta),
+                (1 + xi) * (1 + eta),
+                (1 - xi) * (1 + eta),
+            ])
+            dN_dxi = 0.25 * np.array([
+                -(1 - eta),  (1 - eta), (1 + eta), -(1 + eta)
+            ])
+            dN_deta = 0.25 * np.array([
+                -(1 - xi), -(1 + xi), (1 + xi), (1 - xi)
+            ])
+
+            # 雅可比逆（矩形单元，简单）
+            invJ = np.array([[2.0 / a, 0.0], [0.0, 2.0 / b]])
+            dN = invJ @ np.vstack([dN_dxi, dN_deta])  # 2×4
+
+            # 曲率-位移矩阵 Bb（3×12）
+            Bb = np.zeros((3, 12))
+            for k in range(4):
+                # 自由度索引：w=3k, theta_x=3k+1, theta_y=3k+2
+                Bb[0, 3*k + 1] = dN[0, k]           # dtheta_x/dx
+                Bb[1, 3*k + 2] = dN[1, k]           # dtheta_y/dy
+                Bb[2, 3*k + 1] = dN[1, k]           # dtheta_x/dy
+                Bb[2, 3*k + 2] = dN[0, k]           # dtheta_y/dx
+
+            # 剪切-位移矩阵 Bs（2×12）
+            Bs = np.zeros((2, 12))
+            for k in range(4):
+                Bs[0, 3*k]     = dN[0, k]           # dw/dx
+                Bs[0, 3*k + 1] = N[k]               # theta_x
+                Bs[1, 3*k]     = dN[1, k]           # dw/dy
+                Bs[1, 3*k + 2] = N[k]               # theta_y
+
+            K += w_ij * J * (Bb.T @ Db @ Bb + Bs.T @ Ds @ Bs)
+
+    return K
+
+
+if __name__ == "__main__":
+    # 单元几何与材料
+    a, b = 1.0, 1.0
+    h = 0.05
+    E, nu = 200e9, 0.3
+
+    K = mindlin_plate_bending_stiffness(a, b, h, E, nu)
+
+    print(f"单元刚度矩阵规模: {K.shape}")
+    print(f"矩阵是否对称: {np.allclose(K, K.T)}")
+
+    # 检查零能模式（刚体运动）
+    # 平面内刚体运动不应产生力：u_x 平移
+    # 这里不考虑面内自由度，只检查刚体转动
+    # 刚体绕 x 轴转动: theta_x = const, w = 0
+    rigid_x = np.zeros(12)
+    for k in range(4):
+        rigid_x[3*k + 1] = 1.0     # theta_x = 1
+    fx = K @ rigid_x
+    print(f"刚体绕 x 轴转动引起的力范数: {np.linalg.norm(fx):.3e}")
+
+    # 特征值分析（应只有 3 个零特征值对应 3 个刚体模态）
+    eigvals = np.linalg.eigvalsh(K)
+    print(f"\n最小 6 个特征值：")
+    for i, ev in enumerate(eigvals[:6]):
+        print(f"  λ_{i+1} = {ev:.6e}")
+
+    # 薄板极限检查：h 减小，K 应主要来自弯曲（与 h^3 成正比）
+    print("\n弯曲刚度随厚度的变化：")
+    for h_test in [0.10, 0.05, 0.02, 0.01]:
+        K_test = mindlin_plate_bending_stiffness(a, b, h_test, E, nu)
+        # 取一个代表性的弯曲分量
+        k_bend = K_test[4, 4]   # theta_x@node2 的对应项
+        print(f"  h = {h_test:.3f} m:  K[4,4] = {k_bend:.4e} N·m")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从理论到软件</strong>：板壳理论给出了偏微分方程，
+              有限元把它离散为代数方程组。
+              但真正的工业软件（ABAQUS、ANSYS）里板壳单元的实现，
+              远比这个示例复杂——它们包含剪切锁死处理、
+              几何非线性、材料非线性、接触、多层壳等众多功能。
+              理解板壳理论，是理解这些软件"黑盒"的前提。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>板壳理论</strong>：把三维问题降为二维，用一个或三个变量描述整块板壳的变形。</li>
+              <li><strong>Kirchhoff 薄板</strong>：直法线假设，$\nabla^4 w = q / D$；适用 $h/L < 1/20$。</li>
+              <li><strong>抗弯刚度</strong>：$D = E h^3 / [12 (1 - \nu^2)]$，是板理论的核心参数。</li>
+              <li><strong>边界条件</strong>：简支、固支、自由、弹性支承，对应不同解析解（Navier、Lévy）。</li>
+              <li><strong>Mindlin 中厚板</strong>：放弃直法线假设，引入独立转角；需剪切修正系数 $\kappa_s = 5/6$。</li>
+              <li><strong>板的振动</strong>：四边简支板自振频率 $\omega_{mn} = \pi^2 (m^2/a^2 + n^2/b^2) \sqrt{D / \rho h}$。</li>
+              <li><strong>壳的薄膜理论</strong>：球壳 $\sigma = pR / (2h)$；圆柱壳环向应力 $pR/h$ 是轴向的两倍。</li>
+              <li><strong>边界效应</strong>：圆柱壳的特征长度约 $\sqrt{Rh}$，影响范围有限但必须考虑。</li>
+              <li><strong>板的屈曲</strong>：$\sigma_{cr} = k \pi^2 E (h/b)^2 / [12 (1 - \nu^2)]$；屈曲后有后屈曲承载力。</li>
+              <li><strong>有限元板壳单元</strong>：主流用 Mindlin 路线，但必须处理剪切锁死；MITC 单元是工业标准。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Timoshenko &amp; Woinowsky-Krieger, <em>Theory of Plates and Shells</em> — 板壳理论经典</li>
+            <li>Ugural, <em>Stresses in Plates and Shells</em> — 工程实用教材</li>
+            <li>Leissa, <em>Vibration of Plates</em> — 板的振动权威著作</li>
+            <li>Flügge, <em>Stresses in Shells</em> — 壳理论经典</li>
+            <li>Reddy, <em>Theory and Analysis of Elastic Plates and Shells</em> — 现代教材</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 有限元中的板壳单元</li>
+            <li>Hughes, <em>The Finite Element Method</em> — 板壳单元理论</li>
+            <li>王勖成，《有限单元法》— 国内权威教材</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

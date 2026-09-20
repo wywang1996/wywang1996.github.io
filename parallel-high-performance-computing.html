@@ -1,0 +1,2551 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>并行与高性能计算 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body data-nav="parallel-high-performance-computing">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#basis">一、并行计算基础</a></li>
+      <li><a href="#hardware">二、并行硬件架构</a></li>
+      <li><a href="#openmp">三、共享内存与 OpenMP</a></li>
+      <li><a href="#mpi">四、消息传递与 MPI</a></li>
+      <li><a href="#gpu">五、GPU 与 CUDA</a></li>
+      <li><a href="#python">六、Python 并行</a></li>
+      <li><a href="#algorithm">七、并行算法设计</a></li>
+      <li><a href="#performance">八、性能优化与调试</a></li>
+      <li><a href="#application">九、工程应用</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 并行与高性能计算
+        </div>
+        <h1>并行与高性能计算</h1>
+        <p class="lead">
+          从多核 CPU 到 GPU 集群，覆盖 OpenMP、MPI、CUDA 与 Python 并行。
+          并行计算是大规模科学计算的加速关键——
+          有限元求解、地震波传播模拟、PSHA 蒙特卡洛、
+          机器学习训练，都依赖并行技术把"不可行"变为"可行"。
+        </p>
+        <div class="article-meta">
+          <span>OpenMP</span>
+          <span>MPI</span>
+          <span>GPU</span>
+          <span class="blue">科学计算</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            并行计算研究<strong>同时使用多个计算资源求解问题</strong>。
+            高性能计算（HPC）是把并行计算、算法优化、
+            硬件选型等结合起来，追求极致性能的工程实践。
+          </p>
+
+          <p>
+            为什么需要并行？因为<strong>单核性能已接近物理极限</strong>：
+          </p>
+          <ul>
+            <li>时钟频率自 2005 年起停留在 3~5 GHz，摩尔定律放缓。</li>
+            <li>内存带宽、功耗、散热都限制了单核性能。</li>
+            <li>硬件厂商转向多核、众核、异构计算。</li>
+          </ul>
+
+          <p>
+            工程计算中，并行是"分水岭"：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>串行</th><th>并行</th><th>加速</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>有限元求解（10⁷ 自由度）</td>
+                  <td>数小时</td>
+                  <td>数分钟（64 核）</td>
+                  <td>50~100 倍</td>
+                </tr>
+                <tr>
+                  <td>地震波场模拟（区域尺度）</td>
+                  <td>数天</td>
+                  <td>数小时（GPU）</td>
+                  <td>100~500 倍</td>
+                </tr>
+                <tr>
+                  <td>PSHA 蒙特卡洛（10⁸ 样本）</td>
+                  <td>数周</td>
+                  <td>数小时（集群）</td>
+                  <td>100~1000 倍</td>
+                </tr>
+                <tr>
+                  <td>CNN 训练（STEAD 数据集）</td>
+                  <td>数周</td>
+                  <td>数小时（GPU）</td>
+                  <td>50~200 倍</td>
+                </tr>
+                <tr>
+                  <td>反应谱批量计算（10⁵ 条记录）</td>
+                  <td>数天</td>
+                  <td>数分钟（多核）</td>
+                  <td>50~100 倍</td>
+                </tr>
+                <tr>
+                  <td>波形互相关（台阵数据）</td>
+                  <td>数天</td>
+                  <td>数小时（GPU）</td>
+                  <td>100 倍</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            对地震工程师来说，并行计算的三大价值：
+          </p>
+          <ul>
+            <li><strong>突破规模上限</strong>：把"算不动"的问题变成"算得动"。</li>
+            <li><strong>缩短迭代周期</strong>：从"过夜跑"变成"边写边看结果"。</li>
+            <li><strong>支持实时应用</strong>：地震预警需要毫秒级响应。</li>
+          </ul>
+
+          <p>
+            这份笔记按"基础 $\to$ 硬件 $\to$ OpenMP $\to$ MPI $\to$ GPU $\to$ Python $\to$ 算法 $\to$ 优化 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="basis">
+          <h2><span class="num">01</span>并行计算基础</h2>
+
+          <h3>并行的层次</h3>
+          <p>
+            并行可以在多个层次实现：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>层次</th><th>粒度</th><th>典型技术</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>指令级</td>
+                  <td>单条指令</td>
+                  <td>流水线、SIMD</td>
+                  <td>编译器自动优化</td>
+                </tr>
+                <tr>
+                  <td>数据级</td>
+                  <td>向量元素</td>
+                  <td>AVX、SSE、GPU</td>
+                  <td>数组运算</td>
+                </tr>
+                <tr>
+                  <td>线程级</td>
+                  <td>函数/循环</td>
+                  <td>OpenMP、pthreads</td>
+                  <td>多核 CPU</td>
+                </tr>
+                <tr>
+                  <td>进程级</td>
+                  <td>任务/域分解</td>
+                  <td>MPI</td>
+                  <td>分布式集群</td>
+                </tr>
+                <tr>
+                  <td>任务级</td>
+                  <td>独立任务</td>
+                  <td>Dask、Snakemake</td>
+                  <td>数据管道</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Flynn 分类</h3>
+          <p>
+            按指令流与数据流的组合，计算架构分为四类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类别</th><th>全称</th><th>说明</th><th>代表</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SISD</td>
+                  <td>单指令单数据</td>
+                  <td>传统串行</td>
+                  <td>单核 CPU</td>
+                </tr>
+                <tr>
+                  <td>SIMD</td>
+                  <td>单指令多数据</td>
+                  <td>一条指令处理多个数据</td>
+                  <td>SSE、AVX、GPU</td>
+                </tr>
+                <tr>
+                  <td>MISD</td>
+                  <td>多指令单数据</td>
+                  <td>实际中很少</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>MIMD</td>
+                  <td>多指令多数据</td>
+                  <td>每个核心独立执行</td>
+                  <td>多核 CPU、集群</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Amdahl 定律</h3>
+          <p>
+            设程序中可并行部分占比例 $p$，串行部分占 $1-p$，
+            使用 $N$ 个处理器时的理论加速比为：
+          </p>
+
+          $$ S(N) = \frac{1}{(1 - p) + p / N} $$
+
+          <p>
+            当 $N \to \infty$ 时，$S \to 1/(1-p)$。
+            <strong>串行部分是并行的天花板</strong>。
+          </p>
+
+          <p>举例：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>可并行比例 $p$</th><th>N = 4</th><th>N = 16</th><th>N = 64</th><th>N → ∞</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>0.90</td>
+                  <td>3.08</td>
+                  <td>6.40</td>
+                  <td>8.77</td>
+                  <td>10.0</td>
+                </tr>
+                <tr>
+                  <td>0.95</td>
+                  <td>3.48</td>
+                  <td>9.14</td>
+                  <td>15.4</td>
+                  <td>20.0</td>
+                </tr>
+                <tr>
+                  <td>0.99</td>
+                  <td>3.88</td>
+                  <td>13.9</td>
+                  <td>39.3</td>
+                  <td>100</td>
+                </tr>
+                <tr>
+                  <td>0.999</td>
+                  <td>3.99</td>
+                  <td>15.8</td>
+                  <td>61.5</td>
+                  <td>1000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            要获得 100 倍以上的加速，可并行比例必须超过 99%。
+            这就是为什么<strong>优化串行部分比增加核心更重要</strong>。
+          </p>
+
+          <h3>Gustafson 定律</h3>
+          <p>
+            Amdahl 定律假设问题规模固定。
+            但实际中，更多资源往往用于解决<strong>更大问题</strong>。
+            Gustafson 定律描述这种弱扩展（weak scaling）：
+          </p>
+
+          $$ S(N) = N - \alpha (N - 1) $$
+
+          <p>
+            其中 $\alpha$ 是串行部分的比例。
+            当问题规模随核心数增加时，加速比可以接近 $N$。
+          </p>
+
+          <h3>性能度量</h3>
+          <ul>
+            <li><strong>强扩展（strong scaling）</strong>：问题规模固定，增加核心数。受 Amdahl 定律限制。</li>
+            <li><strong>弱扩展（weak scaling）</strong>：问题规模随核心数增加。接近线性加速。</li>
+            <li><strong>并行效率</strong>：$E = S(N) / N$，理想情况为 1。</li>
+            <li><strong>加速比</strong>：$S(N) = T_1 / T_N$。</li>
+          </ul>
+
+          <p>
+            实际中，加速比通常在 $N/2$ 到 $N \times 0.9$ 之间。
+            如果加速比低于 $N/2$，说明存在明显瓶颈。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Amdahl 定律的启示</strong>：
+              假设一个程序 95% 可并行、5% 串行，
+              即使使用 1000 个核心，最大加速比也只有 20 倍。
+              要真正获得大规模加速，必须：
+              ① 减小串行部分（算法重构）；
+              ② 让问题规模随资源增长（弱扩展）；
+              ③ 消除通信、同步、I/O 等隐藏串行开销。
+              这就是 HPC 工程师日常工作的核心。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="hardware">
+          <h2><span class="num">02</span>并行硬件架构</h2>
+
+          <h3>共享内存架构（UMA / NUMA）</h3>
+          <p>
+            多个处理器共享同一物理内存：
+          </p>
+          <ul>
+            <li><strong>UMA（Uniform Memory Access）</strong>：所有核心访问内存延迟相同。</li>
+            <li><strong>NUMA（Non-Uniform Memory Access）</strong>：内存分块，就近访问快。</li>
+          </ul>
+
+          <p>
+            NUMA 是现代多路服务器的标准架构。
+            编程时需注意内存亲和性（memory affinity），
+            尽量让线程访问本地内存。
+          </p>
+
+          <h3>分布式内存架构</h3>
+          <p>
+            每个节点有独立内存，通过高速网络连接：
+          </p>
+          <ul>
+            <li><strong>集群</strong>：以太网、InfiniBand、Omni-Path。</li>
+            <li><strong>MPP</strong>：大规模并行处理，专用架构。</li>
+            <li><strong>云 HPC</strong>：AWS、Azure、阿里云的高性能实例。</li>
+          </ul>
+
+          <p>节点间通信带宽对比：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>互连</th><th>带宽</th><th>延迟</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>以太网 10GbE</td>
+                  <td>1.25 GB/s</td>
+                  <td>~50 μs</td>
+                  <td>通用集群</td>
+                </tr>
+                <tr>
+                  <td>以太网 100GbE</td>
+                  <td>12.5 GB/s</td>
+                  <td>~10 μs</td>
+                  <td>高性能集群</td>
+                </tr>
+                <tr>
+                  <td>InfiniBand HDR</td>
+                  <td>25 GB/s</td>
+                  <td>~1 μs</td>
+                  <td>HPC 集群</td>
+                </tr>
+                <tr>
+                  <td>InfiniBand NDR</td>
+                  <td>50 GB/s</td>
+                  <td>~0.6 μs</td>
+                  <td>顶级超算</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>GPU 架构</h3>
+          <p>
+            GPU 有数千个简单核心，适合数据并行：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>对比</th><th>CPU</th><th>GPU</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>核心数</td>
+                  <td>8~128</td>
+                  <td>1000~20000</td>
+                </tr>
+                <tr>
+                  <td>单核性能</td>
+                  <td>高</td>
+                  <td>低</td>
+                </tr>
+                <tr>
+                  <td>频率</td>
+                  <td>3~5 GHz</td>
+                  <td>1~2 GHz</td>
+                </tr>
+                <tr>
+                  <td>内存带宽</td>
+                  <td>50~500 GB/s</td>
+                  <td>1000~3000 GB/s</td>
+                </tr>
+                <tr>
+                  <td>适用</td>
+                  <td>逻辑复杂、串行</td>
+                  <td>数据并行、浮点密集</td>
+                </tr>
+                <tr>
+                  <td>编程</td>
+                  <td>简单</td>
+                  <td>复杂（CUDA / OpenACC）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            GPU 的优势来自<strong>吞吐量</strong>而非延迟。
+            单个操作延迟高，但同时执行数千个操作。
+          </p>
+
+          <h3>异构计算</h3>
+          <p>
+            现代超算通常是 CPU + GPU 的异构系统：
+          </p>
+          <ul>
+            <li><strong>CPU</strong>：控制流、复杂逻辑、I/O。</li>
+            <li><strong>GPU</strong>：数据并行、密集计算。</li>
+            <li><strong>互连</strong>：PCIe、NVLink（GPU 间高速通信）。</li>
+          </ul>
+
+          <p>
+            Summit、Fugaku、Frontier 等顶级超算都是异构架构。
+            前端处理、任务调度、结果分析在 CPU，
+            计算密集型核心在 GPU。
+          </p>
+
+          <h3>典型硬件配置</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>级别</th><th>配置</th><th>典型算力</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>笔记本</td>
+                  <td>4~8 核 CPU</td>
+                  <td>~50 GFLOPS</td>
+                  <td>开发、小规模</td>
+                </tr>
+                <tr>
+                  <td>工作站</td>
+                  <td>16~64 核 + 1 GPU</td>
+                  <td>~10 TFLOPS</td>
+                  <td>中等规模</td>
+                </tr>
+                <tr>
+                  <td>单节点服务器</td>
+                  <td>64~128 核 + 4 GPU</td>
+                  <td>~100 TFLOPS</td>
+                  <td>大规模</td>
+                </tr>
+                <tr>
+                  <td>集群（100 节点）</td>
+                  <td>100 × 128 核 + 400 GPU</td>
+                  <td>~10 PFLOPS</td>
+                  <td>区域尺度模拟</td>
+                </tr>
+                <tr>
+                  <td>超算</td>
+                  <td>数千节点 + 数万 GPU</td>
+                  <td>~100 PFLOPS~1 EFLOPS</td>
+                  <td>前沿研究</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>如何选择并行硬件</strong>：
+              ① <strong>问题规模小</strong>：笔记本或工作站即可；
+              ② <strong>中等规模、易并行</strong>：多核 CPU + OpenMP；
+              ③ <strong>大规模、域分解</strong>：集群 + MPI；
+              ④ <strong>数据并行密集</strong>：GPU + CUDA；
+              ⑤ <strong>混合</strong>：MPI（节点间）+ OpenMP（节点内）+ GPU（加速核）。
+              地震学中，区域波场模拟、机器学习训练适合 GPU；
+              有限元求解、PSHA 蒙特卡洛适合 CPU 集群。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="openmp">
+          <h2><span class="num">03</span>共享内存与 OpenMP</h2>
+
+          <h3>OpenMP 简介</h3>
+          <p>
+            OpenMP 是基于<strong>指令（pragma）</strong>的共享内存并行编程模型，
+            支持 C、C++、Fortran。
+            只需在循环前加一行 <code>#pragma omp parallel for</code>，
+            编译器自动并行化。
+          </p>
+
+          <h3>Hello World</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>hello_openmp.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;omp.h&gt;
+
+int main() {
+    #pragma omp parallel
+    {
+        int tid = omp_get_thread_num();
+        int nthreads = omp_get_num_threads();
+        printf("Hello from thread %d of %d\n", tid, nthreads);
+    }
+    return 0;
+}</code></pre>
+          </div>
+
+          <p>编译与运行：</p>
+
+          <pre><code class="language-bash">gcc -fopenmp hello_openmp.c -o hello
+OMP_NUM_THREADS=4 ./hello
+
+# 输出示例：
+# Hello from thread 0 of 4
+# Hello from thread 1 of 4
+# Hello from thread 2 of 4
+# Hello from thread 3 of 4</code></pre>
+
+          <h3>并行 for 循环</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>parallel_for.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;omp.h&gt;
+
+int main() {
+    const int n = 100000000;
+    double *a = malloc(n * sizeof(double));
+    double *b = malloc(n * sizeof(double));
+    double *c = malloc(n * sizeof(double));
+
+    // 初始化
+    for (int i = 0; i &lt; n; i++) {
+        a[i] = 1.0;
+        b[i] = 2.0;
+    }
+
+    // 并行向量加法
+    double t0 = omp_get_wtime();
+
+    #pragma omp parallel for
+    for (int i = 0; i &lt; n; i++) {
+        c[i] = a[i] + b[i];
+    }
+
+    double t1 = omp_get_wtime();
+    printf("Elapsed: %.4f s\n", t1 - t0);
+
+    free(a); free(b); free(c);
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>常见子句</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>子句</th><th>作用</th><th>示例</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>num_threads</td>
+                  <td>指定线程数</td>
+                  <td><code>num_threads(8)</code></td>
+                </tr>
+                <tr>
+                  <td>schedule</td>
+                  <td>任务调度</td>
+                  <td><code>schedule(static, 100)</code></td>
+                </tr>
+                <tr>
+                  <td>private</td>
+                  <td>每个线程独立副本</td>
+                  <td><code>private(i, tmp)</code></td>
+                </tr>
+                <tr>
+                  <td>shared</td>
+                  <td>共享变量</td>
+                  <td><code>shared(a, b)</code></td>
+                </tr>
+                <tr>
+                  <td>reduction</td>
+                  <td>归约</td>
+                  <td><code>reduction(+:sum)</code></td>
+                </tr>
+                <tr>
+                  <td>collapse</td>
+                  <td>合并嵌套循环</td>
+                  <td><code>collapse(2)</code></td>
+                </tr>
+                <tr>
+                  <td>nowait</td>
+                  <td>取消隐式同步</td>
+                  <td><code>nowait</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>归约示例</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>reduction.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;omp.h&gt;
+
+int main() {
+    const int n = 100000000;
+    double sum = 0.0;
+
+    // 计算 1/i² 的和
+    #pragma omp parallel for reduction(+:sum)
+    for (int i = 1; i &lt;= n; i++) {
+        sum += 1.0 / ((double)i * i);
+    }
+
+    // 理论值 π²/6 ≈ 1.644934
+    printf("Sum = %.10f\n", sum);
+    printf("Theory (π²/6) = %.10f\n", 1.6449340668482264);
+    return 0;
+}</code></pre>
+          </div>
+
+          <p>
+            <code>reduction(+:sum)</code> 让每个线程有独立副本，
+            最后自动求和。避免竞争条件。
+          </p>
+
+          <h3>调度策略</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>策略</th><th>说明</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>static</td>
+                  <td>预先平均分配</td>
+                  <td>每轮工作量相同</td>
+                </tr>
+                <tr>
+                  <td>dynamic</td>
+                  <td>谁空闲谁拿下一块</td>
+                  <td>工作量不均</td>
+                </tr>
+                <tr>
+                  <td>guided</td>
+                  <td>动态、块大小递减</td>
+                  <td>中等不均</td>
+                </tr>
+                <tr>
+                  <td>auto</td>
+                  <td>编译器决定</td>
+                  <td>通用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>数据竞争与临界区</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>critical.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;omp.h&gt;
+
+int main() {
+    double sum = 0.0;
+    const int n = 10000000;
+
+    // 错误：数据竞争
+    // #pragma omp parallel for
+    // for (int i = 0; i &lt; n; i++) sum += 1.0;  // 结果不确定
+
+    // 正确方式 1：reduction
+    #pragma omp parallel for reduction(+:sum)
+    for (int i = 0; i &lt; n; i++) sum += 1.0;
+
+    // 正确方式 2：atomic
+    double sum2 = 0.0;
+    #pragma omp parallel for
+    for (int i = 0; i &lt; n; i++) {
+        #pragma omp atomic
+        sum2 += 1.0;
+    }
+
+    // 正确方式 3：critical（较慢）
+    double sum3 = 0.0;
+    #pragma omp parallel for
+    for (int i = 0; i &lt; n; i++) {
+        #pragma omp critical
+        { sum3 += 1.0; }
+    }
+
+    printf("reduction: %.0f\n", sum);
+    printf("atomic:    %.0f\n", sum2);
+    printf("critical:  %.0f\n", sum3);
+    return 0;
+}</code></pre>
+          </div>
+
+          <p>
+            推荐顺序：reduction &gt; atomic &gt; critical。
+            critical 会串行化临界区，性能最差。
+          </p>
+        </section>
+
+        <section id="mpi">
+          <h2><span class="num">04</span>消息传递与 MPI</h2>
+
+          <h3>MPI 简介</h3>
+          <p>
+            MPI（Message Passing Interface）是分布式内存并行的标准。
+            多个进程各自有独立内存，通过消息传递协作。
+          </p>
+
+          <p>MPI 的核心概念：</p>
+          <ul>
+            <li><strong>Communicator</strong>：进程组 + 通信上下文。</li>
+            <li><strong>Rank</strong>：进程在组内的编号（0 到 N-1）。</li>
+            <li><strong>Point-to-point</strong>：两个进程通信。</li>
+            <li><strong>Collective</strong>：所有进程参与的通信。</li>
+          </ul>
+
+          <h3>Hello World</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>hello_mpi.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;mpi.h&gt;
+
+int main(int argc, char **argv) {
+    MPI_Init(&amp;argc, &amp;argv);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;size);
+
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname));
+
+    printf("Rank %d of %d on %s\n", rank, size, hostname);
+
+    MPI_Finalize();
+    return 0;
+}</code></pre>
+          </div>
+
+          <p>编译与运行：</p>
+
+          <pre><code class="language-bash">mpicc hello_mpi.c -o hello
+mpirun -np 4 ./hello
+
+# 输出示例：
+# Rank 0 of 4 on node1
+# Rank 1 of 4 on node1
+# Rank 2 of 4 on node2
+# Rank 3 of 4 on node2</code></pre>
+
+          <h3>点对点通信</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>pingpong.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;mpi.h&gt;
+
+int main(int argc, char **argv) {
+    MPI_Init(&amp;argc, &amp;argv);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+
+    const int N = 1000000;
+    double *buf = malloc(N * sizeof(double));
+
+    if (rank == 0) {
+        // 发送
+        for (int i = 0; i &lt; N; i++) buf[i] = 1.0;
+        MPI_Send(buf, N, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+
+        // 接收回复
+        MPI_Recv(buf, N, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("Rank 0 received reply, buf[0] = %.1f\n", buf[0]);
+    } else if (rank == 1) {
+        MPI_Recv(buf, N, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("Rank 1 received data, buf[0] = %.1f\n", buf[0]);
+
+        // 处理并回复
+        for (int i = 0; i &lt; N; i++) buf[i] *= 2.0;
+        MPI_Send(buf, N, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+    }
+
+    free(buf);
+    MPI_Finalize();
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>集合通信</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>操作</th><th>功能</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MPI_Bcast</td>
+                  <td>一到所有广播</td>
+                  <td>分发参数</td>
+                </tr>
+                <tr>
+                  <td>MPI_Scatter</td>
+                  <td>一到多分散</td>
+                  <td>分发数据</td>
+                </tr>
+                <tr>
+                  <td>MPI_Gather</td>
+                  <td>多到一收集</td>
+                  <td>收集结果</td>
+                </tr>
+                <tr>
+                  <td>MPI_Allgather</td>
+                  <td>多到多收集</td>
+                  <td>交换数据</td>
+                </tr>
+                <tr>
+                  <td>MPI_Reduce</td>
+                  <td>归约（求和等）</td>
+                  <td>汇总结果</td>
+                </tr>
+                <tr>
+                  <td>MPI_Allreduce</td>
+                  <td>归约并广播</td>
+                  <td>同步全局值</td>
+                </tr>
+                <tr>
+                  <td>MPI_Alltoall</td>
+                  <td>全交换</td>
+                  <td>FFT、转置</td>
+                </tr>
+                <tr>
+                  <td>MPI_Barrier</td>
+                  <td>同步</td>
+                  <td>进程对齐</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>并行求和示例</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>parallel_sum.c</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;mpi.h&gt;
+
+int main(int argc, char **argv) {
+    MPI_Init(&amp;argc, &amp;argv);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;size);
+
+    const long N = 1000000000L;
+
+    // 计算本进程负责的范围
+    long chunk = N / size;
+    long start = rank * chunk;
+    long end = (rank == size - 1) ? N : start + chunk;
+
+    double local_sum = 0.0;
+    for (long i = start + 1; i &lt;= end; i++) {
+        local_sum += 1.0 / ((double)i * i);
+    }
+
+    // 归约到 rank 0
+    double global_sum = 0.0;
+    MPI_Reduce(&amp;local_sum, &amp;global_sum, 1, MPI_DOUBLE,
+               MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        printf("Sum = %.10f\n", global_sum);
+        printf("Theory (π²/6) = %.10f\n", 1.6449340668482264);
+    }
+
+    MPI_Finalize();
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>并行效率分析</h3>
+          <p>
+            并行计算的总时间由三部分组成：
+          </p>
+
+          $$ T_{\text{total}} = T_{\text{compute}} + T_{\text{comm}} + T_{\text{sync}} $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$T_{\text{compute}}$：计算时间，随进程数下降。</li>
+            <li>$T_{\text{comm}}$：通信时间，随进程数上升。</li>
+            <li>$T_{\text{sync}}$：同步开销，随进程数上升。</li>
+          </ul>
+
+          <p>
+            当进程数很大时，通信与同步成为瓶颈。
+            这就是弱扩展曲线在大规模时偏离线性的原因。
+          </p>
+
+          <h3>MPI 使用建议</h3>
+          <ul>
+            <li><strong>尽量减少通信次数</strong>：批量发送比多次小消息高效。</li>
+            <li><strong>使用非阻塞通信</strong>：<code>MPI_Isend</code>、<code>MPI_Irecv</code>，通信与计算重叠。</li>
+            <li><strong>使用集合通信</strong>：比点对点更快（内部优化）。</li>
+            <li><strong>避免同步开销</strong>：减少 <code>MPI_Barrier</code> 调用。</li>
+            <li><strong>负载均衡</strong>：让各进程工作量相近。</li>
+            <li><strong>通信与计算重叠</strong>：用非阻塞通信隐藏通信延迟。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>MPI 与 OpenMP 的混合编程</strong>：
+              现代 HPC 的标准模式是 <strong>MPI + OpenMP</strong>：
+              ① MPI 负责节点间通信（粗粒度）；
+              ② OpenMP 负责节点内多线程（细粒度）；
+              ③ GPU 负责计算密集型核心（如矩阵运算）。
+              这种"三层并行"能充分利用各级并行资源，
+              是地震波传播模拟、有限元求解的常用架构。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="gpu">
+          <h2><span class="num">05</span>GPU 与 CUDA</h2>
+
+          <h3>CUDA 编程模型</h3>
+          <p>
+            CUDA 是 NVIDIA 的 GPU 编程平台。
+            核心概念：
+          </p>
+          <ul>
+            <li><strong>Thread</strong>：最小执行单元。</li>
+            <li><strong>Warp</strong>：32 个线程一组，同时执行同一条指令。</li>
+            <li><strong>Block</strong>：线程块，可共享共享内存。</li>
+            <li><strong>Grid</strong>：线程块集合，对应一次核函数调用。</li>
+          </ul>
+
+          <h3>Hello GPU</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>hello_gpu.cu</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+__global__ void hello_kernel() {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    printf("Hello from thread %d\n", tid);
+}
+
+int main() {
+    // 启动 4 个 block，每个 8 个线程
+    hello_kernel&lt;&lt;&lt;4, 8&gt;&gt;&gt;();
+    cudaDeviceSynchronize();
+    return 0;
+}</code></pre>
+          </div>
+
+          <p>编译与运行：</p>
+
+          <pre><code class="language-bash">nvcc hello_gpu.cu -o hello_gpu
+./hello_gpu</code></pre>
+
+          <h3>向量加法</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>vector_add.cu</span>
+                <span class="lang">C</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;cuda_runtime.h&gt;
+
+__global__ void vec_add(const float *a, const float *b,
+                        float *c, int n) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i &lt; n) {
+        c[i] = a[i] + b[i];
+    }
+}
+
+int main() {
+    const int n = 10000000;
+    size_t bytes = n * sizeof(float);
+
+    // 分配主机内存
+    float *h_a = (float*)malloc(bytes);
+    float *h_b = (float*)malloc(bytes);
+    float *h_c = (float*)malloc(bytes);
+
+    for (int i = 0; i &lt; n; i++) {
+        h_a[i] = 1.0f;
+        h_b[i] = 2.0f;
+    }
+
+    // 分配设备内存
+    float *d_a, *d_b, *d_c;
+    cudaMalloc(&amp;d_a, bytes);
+    cudaMalloc(&amp;d_b, bytes);
+    cudaMalloc(&amp;d_c, bytes);
+
+    // 拷贝到设备
+    cudaMemcpy(d_a, h_a, bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_b, bytes, cudaMemcpyHostToDevice);
+
+    // 启动核函数
+    int threads = 256;
+    int blocks = (n + threads - 1) / threads;
+    vec_add&lt;&lt;&lt;blocks, threads&gt;&gt;&gt;(d_a, d_b, d_c, n);
+
+    // 拷贝回主机
+    cudaMemcpy(h_c, d_c, bytes, cudaMemcpyDeviceToHost);
+
+    // 验证
+    printf("c[0] = %.1f, c[n-1] = %.1f\n", h_c[0], h_c[n-1]);
+
+    // 释放
+    cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+    free(h_a); free(h_b); free(h_c);
+    return 0;
+}</code></pre>
+          </div>
+
+          <h3>GPU 编程要点</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>要点</th><th>说明</th><th>影响</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>内存层次</td>
+                  <td>全局、共享、寄存器</td>
+                  <td>访问延迟差异巨大</td>
+                </tr>
+                <tr>
+                  <td>合并访问</td>
+                  <td>相邻线程访问相邻内存</td>
+                  <td>带宽充分利用</td>
+                </tr>
+                <tr>
+                  <td>共享内存</td>
+                  <td>块内共享，手动管理</td>
+                  <td>减少全局内存访问</td>
+                </tr>
+                <tr>
+                  <td>线程束分歧</td>
+                  <td>warp 内线程走不同分支</td>
+                  <td>性能急剧下降</td>
+                </tr>
+                <tr>
+                  <td>occupancy</td>
+                  <td>活跃 warp 比例</td>
+                  <td>隐藏延迟</td>
+                </tr>
+                <tr>
+                  <td>异步拷贝</td>
+                  <td>cudaMemcpyAsync</td>
+                  <td>与计算重叠</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python GPU：CuPy</h3>
+          <p>
+            CuPy 是 NumPy 的 GPU 版本，API 完全兼容：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>cupy_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 CuPy 把 NumPy 代码迁移到 GPU。
+安装：pip install cupy-cuda12x（对应 CUDA 版本）
+"""
+try:
+    import cupy as cp
+    import numpy as np
+    HAS_CUPY = True
+except ImportError:
+    HAS_CUPY = False
+
+
+if HAS_CUPY:
+    import time
+
+    n = 100_000_000
+
+    # CPU 版本
+    a_cpu = np.random.rand(n).astype(np.float32)
+    b_cpu = np.random.rand(n).astype(np.float32)
+
+    t0 = time.perf_counter()
+    c_cpu = a_cpu + b_cpu
+    t_cpu = time.perf_counter() - t0
+    print(f"NumPy (CPU): {t_cpu:.4f} s")
+
+    # GPU 版本
+    a_gpu = cp.asarray(a_cpu)
+    b_gpu = cp.asarray(b_cpu)
+
+    # 预热
+    _ = a_gpu + b_gpu
+    cp.cuda.Stream.null.synchronize()
+
+    t0 = time.perf_counter()
+    c_gpu = a_gpu + b_gpu
+    cp.cuda.Stream.null.synchronize()
+    t_gpu = time.perf_counter() - t0
+    print(f"CuPy (GPU):  {t_gpu:.4f} s")
+    print(f"加速比: {t_cpu / t_gpu:.1f} 倍")
+
+    # 验证
+    c_gpu_cpu = cp.asnumpy(c_gpu)
+    assert np.allclose(c_cpu, c_gpu_cpu)
+    print("✓ 结果一致")
+else:
+    print("未安装 CuPy，仅展示代码结构。")
+    print()
+    print("CuPy 的用法：")
+    print("  import cupy as cp")
+    print("  a_gpu = cp.asarray(a_cpu)   # 从 CPU 到 GPU")
+    print("  c_gpu = a_gpu + b_gpu        # GPU 上运算")
+    print("  c_cpu = cp.asnumpy(c_gpu)    # 从 GPU 回 CPU")
+    print()
+    print("CuPy 与 NumPy API 几乎完全兼容，")
+    print("只需把 np 换成 cp 即可迁移。")</code></pre>
+          </div>
+
+          <h3>GPU 的适用与不适用</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>适合 GPU</th><th>原因</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>矩阵乘法</td>
+                  <td>非常适合</td>
+                  <td>数据并行、密集计算</td>
+                </tr>
+                <tr>
+                  <td>卷积</td>
+                  <td>非常适合</td>
+                  <td>规则结构、可并行</td>
+                </tr>
+                <tr>
+                  <td>FFT</td>
+                  <td>适合</td>
+                  <td>分治 + 并行</td>
+                </tr>
+                <tr>
+                  <td>蒙特卡洛</td>
+                  <td>非常适合</td>
+                  <td>独立样本、无依赖</td>
+                </tr>
+                <tr>
+                  <td>稀疏线性求解</td>
+                  <td>部分适合</td>
+                  <td>不规则访问，需优化</td>
+                </tr>
+                <tr>
+                  <td>图算法</td>
+                  <td>较难</td>
+                  <td>不规则、随机访问</td>
+                </tr>
+                <tr>
+                  <td>动态规划</td>
+                  <td>较难</td>
+                  <td>有依赖、串行</td>
+                </tr>
+                <tr>
+                  <td>小规模问题</td>
+                  <td>不适合</td>
+                  <td>传输开销大于计算</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            GPU 的"起飞"门槛：数据量足够大、计算足够密集、
+            数据传输开销可接受。否则 CPU 反而更快。
+          </p>
+        </section>
+
+        <section id="python">
+          <h2><span class="num">06</span>Python 并行</h2>
+
+          <h3>GIL 与并行策略</h3>
+          <p>
+            Python 的全局解释器锁（GIL）限制了多线程的并行能力：
+          </p>
+          <ul>
+            <li><strong>CPU 密集型</strong>：GIL 导致多线程无法并行，需要多进程。</li>
+            <li><strong>I/O 密集型</strong>：GIL 在 I/O 时释放，多线程有效。</li>
+            <li><strong>NumPy 运算</strong>：底层 C 代码释放 GIL，多线程可加速。</li>
+          </ul>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>推荐方案</th><th>理由</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CPU 密集、无共享状态</td>
+                  <td>multiprocessing</td>
+                  <td>绕过 GIL</td>
+                </tr>
+                <tr>
+                  <td>I/O 密集</td>
+                  <td>threading / asyncio</td>
+                  <td>I/O 时释放 GIL</td>
+                </tr>
+                <tr>
+                  <td>NumPy 数组运算</td>
+                  <td>向量化 + 多线程 BLAS</td>
+                  <td>底层并行</td>
+                </tr>
+                <tr>
+                  <td>大规模数据管道</td>
+                  <td>Dask / Ray</td>
+                  <td>分布式任务调度</td>
+                </tr>
+                <tr>
+                  <td>GPU 计算</td>
+                  <td>CuPy / PyTorch</td>
+                  <td>GPU 并行</td>
+                </tr>
+                <tr>
+                  <td>循环密集</td>
+                  <td>Numba / Cython</td>
+                  <td>JIT 编译</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>multiprocessing</h3>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>multiprocessing_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 multiprocessing 并行计算反应谱。
+"""
+import time
+import numpy as np
+from multiprocessing import Pool
+
+
+def compute_sa(args):
+    """计算单个周期的 Sa（CPU 密集）"""
+    T, acc, dt, zeta = args
+    # 简化的单自由度响应计算
+    omega = 2 * np.pi / T
+    n = len(acc)
+    u = np.zeros(n)
+    v = np.zeros(n)
+    a = np.zeros(n)
+    a[0] = -acc[0] - 2 * zeta * omega * v[0] - omega**2 * u[0]
+    beta, gamma = 0.25, 0.5
+    c = 2 * zeta * omega
+    k = omega**2
+    K_eff = k + gamma / (beta * dt) * c + 1.0 / (beta * dt**2)
+    for i in range(n - 1):
+        P_eff = (-acc[i + 1]
+                 + 1.0 / (beta * dt**2) * u[i]
+                 + 1.0 / (beta * dt) * v[i]
+                 + (1.0 / (2 * beta) - 1) * a[i]
+                 + c * (gamma / (beta * dt) * u[i]
+                        + (gamma / beta - 1) * v[i]
+                        + dt * (gamma / (2 * beta) - 1) * a[i]))
+        u[i + 1] = P_eff / K_eff
+        v[i + 1] = (gamma / (beta * dt) * (u[i + 1] - u[i])
+                    - (gamma / beta - 1) * v[i]
+                    - dt * (gamma / (2 * beta) - 1) * a[i])
+        a[i + 1] = (1.0 / (beta * dt**2) * (u[i + 1] - u[i])
+                    - 1.0 / (beta * dt) * v[i]
+                    - (1.0 / (2 * beta) - 1) * a[i])
+    return T, np.max(np.abs(a + acc))
+
+
+if __name__ == "__main__":
+    # 生成地震动
+    rng = np.random.default_rng(42)
+    dt = 0.01
+    t = np.arange(0, 60, dt)
+    acc = np.zeros_like(t)
+    for f, amp in [(0.5, 0.5), (1.5, 1.0), (3.0, 0.8), (5.0, 0.3)]:
+        acc += amp * np.sin(2 * np.pi * f * t + rng.uniform(0, 6.28))
+    acc *= np.exp(-((t - 15) ** 2) / (2 * 8**2))
+
+    periods = np.logspace(np.log10(0.05), np.log10(5.0), 100)
+    zeta = 0.05
+
+    # ---- 串行 ----
+    t0 = time.perf_counter()
+    Sa_serial = [compute_sa((T, acc, dt, zeta))[1] for T in periods]
+    t_serial = time.perf_counter() - t0
+
+    # ---- 并行 ----
+    args = [(T, acc, dt, zeta) for T in periods]
+
+    t0 = time.perf_counter()
+    with Pool() as pool:
+        results = pool.map(compute_sa, args)
+    Sa_parallel = [r[1] for r in results]
+    t_parallel = time.perf_counter() - t0
+
+    print(f"串行: {t_serial:.3f} s")
+    print(f"并行: {t_parallel:.3f} s")
+    print(f"加速比: {t_serial / t_parallel:.2f} 倍")
+    print(f"CPU 核心数: {__import__('os').cpu_count()}")
+
+    # 验证
+    assert np.allclose(Sa_serial, Sa_parallel)
+    print("✓ 结果一致")</code></pre>
+          </div>
+
+          <h3>Numba 并行</h3>
+          <p>
+            Numba 的 <code>@njit(parallel=True)</code> 自动并行化循环：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>numba_parallel.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 Numba 的 parallel=True 自动并行化。
+安装：pip install numba
+"""
+import time
+import numpy as np
+
+try:
+    from numba import njit, prange
+    HAS_NUMBA = True
+except ImportError:
+    HAS_NUMBA = False
+
+
+if HAS_NUMBA:
+    @njit(parallel=True)
+    def parallel_sum(arr):
+        """自动并行化的求和"""
+        n = len(arr)
+        result = np.zeros(n, dtype=np.float64)
+        for i in prange(n):
+            result[i] = arr[i] * arr[i]
+        return result.sum()
+
+    @njit
+    def serial_sum(arr):
+        """串行求和"""
+        s = 0.0
+        for i in range(len(arr)):
+            s += arr[i] * arr[i]
+        return s
+
+    @njit(parallel=True)
+    def parallel_sa_batch(acc, dt, periods, zeta):
+        """批量计算反应谱（并行）"""
+        n_periods = len(periods)
+        Sa = np.zeros(n_periods)
+        for ip in prange(n_periods):
+            T = periods[ip]
+            omega = 2 * np.pi / T
+            beta, gamma = 0.25, 0.5
+            c = 2 * zeta * omega
+            k = omega**2
+            K_eff = k + gamma / (beta * dt) * c + 1.0 / (beta * dt**2)
+
+            u = 0.0
+            v = 0.0
+            a = -acc[0] - 2 * zeta * omega * v - omega**2 * u
+            a_max = 0.0
+
+            for i in range(len(acc) - 1):
+                P_eff = (-acc[i + 1]
+                         + 1.0 / (beta * dt**2) * u
+                         + 1.0 / (beta * dt) * v
+                         + (1.0 / (2 * beta) - 1) * a
+                         + c * (gamma / (beta * dt) * u
+                                + (gamma / beta - 1) * v
+                                + dt * (gamma / (2 * beta) - 1) * a))
+                u_new = P_eff / K_eff
+                v = (gamma / (beta * dt) * (u_new - u)
+                     - (gamma / beta - 1) * v
+                     - dt * (gamma / (2 * beta) - 1) * a)
+                a = (1.0 / (beta * dt**2) * (u_new - u)
+                     - 1.0 / (beta * dt) * v
+                     - (1.0 / (2 * beta) - 1) * a)
+                u = u_new
+                a_abs = abs(a + acc[i + 1])
+                if a_abs > a_max:
+                    a_max = a_abs
+            Sa[ip] = a_max
+        return Sa
+
+    if __name__ == "__main__":
+        # 生成地震动
+        rng = np.random.default_rng(42)
+        dt = 0.01
+        t = np.arange(0, 60, dt)
+        acc = np.zeros_like(t)
+        for f, amp in [(0.5, 0.5), (1.5, 1.0), (3.0, 0.8)]:
+            acc += amp * np.sin(2 * np.pi * f * t + rng.uniform(0, 6.28))
+        acc *= np.exp(-((t - 15) ** 2) / (2 * 8**2))
+
+        periods = np.logspace(np.log10(0.05), np.log10(5.0), 200)
+
+        # 预热
+        _ = parallel_sa_batch(acc[:1000], dt, periods[:5], 0.05)
+
+        t0 = time.perf_counter()
+        Sa = parallel_sa_batch(acc, dt, periods, 0.05)
+        elapsed = time.perf_counter() - t0
+
+        print(f"计算 {len(periods)} 个周期的反应谱")
+        print(f"耗时: {elapsed:.3f} s")
+        print(f"PGA = {Sa[0]:.4f}")
+else:
+    print("未安装 Numba，仅展示代码结构。")
+    print()
+    print("Numba 并行化：")
+    print("  from numba import njit, prange")
+    print()
+    print("  @njit(parallel=True)")
+    print("  def parallel_func(arr):")
+    print("      for i in prange(len(arr)):")
+    print("          arr[i] = arr[i] * arr[i]")</code></pre>
+          </div>
+
+          <h3>Dask：分布式 Python</h3>
+          <p>
+            Dask 提供并行数组、DataFrame、延迟计算和任务调度：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>dask_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 Dask 处理超过内存的数据集。
+安装：pip install dask[complete]
+"""
+try:
+    import dask.array as da
+    import dask.dataframe as dd
+    HAS_DASK = True
+except ImportError:
+    HAS_DASK = False
+
+
+if HAS_DASK:
+    import numpy as np
+
+    # ---- Dask Array：分块并行 ----
+    # 创建一个 100000 × 100000 的虚拟数组（不需要内存）
+    x = da.random.random((100000, 100000), chunks=(10000, 10000))
+
+    # 计算每列的均值（惰性，不立即执行）
+    col_means = x.mean(axis=0)
+
+    # 触发计算
+    result = col_means.compute()
+    print(f"列均值形状: {result.shape}")
+
+    # ---- Dask DataFrame ----
+    # 读取多个 CSV（惰性）
+    df = dd.read_csv("catalog_*.csv")
+    print(f"分区数: {df.npartitions}")
+
+    # 聚合
+    summary = df.groupby("station")["magnitude"].mean().compute()
+    print(summary)
+
+    # ---- Dask Delayed：自定义任务图 ----
+    from dask import delayed
+
+    @delayed
+    def process_chunk(chunk_id):
+        """模拟耗时计算"""
+        return chunk_id ** 2
+
+    results = [process_chunk(i) for i in range(100)]
+    total = delayed(sum)(results)
+    print(f"结果: {total.compute()}")
+else:
+    print("Dask 的用法：")
+    print()
+    print("  import dask.array as da")
+    print("  x = da.random.random((1e5, 1e5), chunks=(1e4, 1e4))")
+    print("  result = x.mean(axis=0).compute()")
+    print()
+    print("特点：")
+    print("  - 惰性计算，先构建任务图")
+    print("  - 分块处理，可超过内存")
+    print("  - 支持本地多核和分布式集群")</code></pre>
+          </div>
+
+          <h3>并行方案对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方案</th><th>粒度</th><th>开销</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>multiprocessing</td>
+                  <td>函数级</td>
+                  <td>高（进程）</td>
+                  <td>CPU 密集</td>
+                </tr>
+                <tr>
+                  <td>threading</td>
+                  <td>线程级</td>
+                  <td>低</td>
+                  <td>I/O 密集</td>
+                </tr>
+                <tr>
+                  <td>Numba parallel</td>
+                  <td>循环级</td>
+                  <td>极低</td>
+                  <td>数值循环</td>
+                </tr>
+                <tr>
+                  <td>CuPy</td>
+                  <td>数组级</td>
+                  <td>中</td>
+                  <td>数据并行</td>
+                </tr>
+                <tr>
+                  <td>Dask</td>
+                  <td>任务级</td>
+                  <td>中</td>
+                  <td>大数据、分布式</td>
+                </tr>
+                <tr>
+                  <td>Ray</td>
+                  <td>任务级</td>
+                  <td>中</td>
+                  <td>分布式 ML</td>
+                </tr>
+                <tr>
+                  <td>Joblib</td>
+                  <td>函数级</td>
+                  <td>低</td>
+                  <td>scikit-learn 并行</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="algorithm">
+          <h2><span class="num">07</span>并行算法设计</h2>
+
+          <h3>分解策略</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>策略</th><th>说明</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>数据分解</td>
+                  <td>把数据分给各进程</td>
+                  <td>数组运算、PDE 求解</td>
+                </tr>
+                <tr>
+                  <td>任务分解</td>
+                  <td>把任务分给各进程</td>
+                  <td>独立任务、蒙特卡洛</td>
+                </tr>
+                <tr>
+                  <td>流水线</td>
+                  <td>按阶段分给不同进程</td>
+                  <td>信号处理链</td>
+                </tr>
+                <tr>
+                  <td>递归分解</td>
+                  <td>分治策略</td>
+                  <td>排序、FFT</td>
+                </tr>
+                <tr>
+                  <td>域分解</td>
+                  <td>空间区域划分</td>
+                  <td>有限元、波场模拟</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>域分解示例</h3>
+          <p>
+            把计算域分成 $P$ 个子域，每个进程负责一个：
+          </p>
+
+          <pre><code>┌────┬────┬────┬────┐
+│ P0 │ P1 │ P2 │ P3 │
+│    │    │    │    │
+├────┼────┼────┼────┤
+│ P4 │ P5 │ P6 │ P7 │
+│    │    │    │    │
+└────┴────┴────┴────┘</code></pre>
+
+          <p>
+            相邻子域之间需要<strong>交换边界数据</strong>（halo exchange）。
+            这是有限差分、有限元并行的核心。
+          </p>
+
+          <h3>负载均衡</h3>
+          <p>
+            并行效率取决于各进程的工作量是否相近：
+          </p>
+          <ul>
+            <li><strong>静态划分</strong>：预先平均分配，适用于规则问题。</li>
+            <li><strong>动态划分</strong>：运行时分配，适用于不规则问题。</li>
+            <li><strong>空间填充曲线</strong>：Hilbert、Morton 曲线，
+              把多维空间映射到一维，实现负载均衡。</li>
+            <li><strong>图划分</strong>：METIS、ParMETIS，用于非结构网格。</li>
+          </ul>
+
+          <h3>减少通信</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>策略</th><th>说明</th><th>效果</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>增大粒度</td>
+                  <td>每次通信传更多数据</td>
+                  <td>减少通信次数</td>
+                </tr>
+                <tr>
+                  <td>重叠通信与计算</td>
+                  <td>非阻塞通信 + 计算</td>
+                  <td>隐藏通信延迟</td>
+                </tr>
+                <tr>
+                  <td>减少同步</td>
+                  <td>少用 barrier</td>
+                  <td>减少等待</td>
+                </tr>
+                <tr>
+                  <td>局部化</td>
+                  <td>让计算尽可能本地</td>
+                  <td>减少远端访问</td>
+                </tr>
+                <tr>
+                  <td>拓扑优化</td>
+                  <td>进程映射到物理拓扑</td>
+                  <td>减少跳数</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>并行复杂度分析</h3>
+          <p>
+            并行算法的总时间：
+          </p>
+
+          $$ T_p = \frac{W}{P} + T_{\text{comm}} + T_{\text{sync}} $$
+
+          <p>
+            其中 $W$ 是总工作量，$P$ 是进程数。
+            通信时间通常随 $P$ 增加：
+          </p>
+
+          $$ T_{\text{comm}} = \alpha + \beta m $$
+
+          <p>
+            其中 $\alpha$ 是延迟，$\beta$ 是单位数据传输时间，$m$ 是消息大小。
+            当 $P$ 很大时，$W/P$ 变小，而 $T_{\text{comm}}$ 不变或增大，
+            导致<strong>并行效率下降</strong>。
+          </p>
+
+          <p>
+            这就是为什么弱扩展（问题规模随 $P$ 增大）比强扩展
+            （问题规模固定）更容易获得高效。
+          </p>
+
+          <h3>Python 示例：域分解</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>domain_decomp.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+一维域分解示例：并行求解热传导方程。
+"""
+import numpy as np
+from mpi4py import MPI
+
+
+def heat_1d_domain_decomp(n_global=1000, n_steps=1000, alpha=0.01):
+    """一维热传导方程的域分解并行求解"""
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    # 每个进程负责的局部大小
+    n_local = n_global // size
+    dx = 1.0 / (n_global - 1)
+    dt = 0.4 * dx**2 / alpha
+
+    # 局部数组（含两侧 halo）
+    u = np.zeros(n_local + 2)
+    u_new = np.zeros(n_local + 2)
+
+    # 初始条件：中间高温
+    x_start = rank * n_local * dx
+    x_local = x_start + np.arange(1, n_local + 1) * dx
+    u[1:-1] = np.exp(-((x_local - 0.5)**2) / (2 * 0.1**2))
+
+    # 相邻进程
+    left = rank - 1 if rank > 0 else MPI.PROC_NULL
+    right = rank + 1 if rank < size - 1 else MPI.PROC_NULL
+
+    # 时间推进
+    for step in range(n_steps):
+        # 交换 halo
+        send_left = u[1].copy()
+        send_right = u[-2].copy()
+
+        recv_left = np.zeros(1)
+        recv_right = np.zeros(1)
+
+        comm.Sendrecv(send_right, dest=right, recvbuf=recv_left, source=left)
+        comm.Sendrecv(send_left, dest=left, recvbuf=recv_right, source=right)
+
+        u[0] = recv_left[0]
+        u[-1] = recv_right[0]
+
+        # 更新内部点
+        u_new[1:-1] = u[1:-1] + alpha * dt / dx**2 * (
+            u[2:] - 2 * u[1:-1] + u[:-2]
+        )
+
+        # 边界条件（左右两端固定为 0）
+        if rank == 0:
+            u_new[1] = 0.0
+        if rank == size - 1:
+            u_new[-2] = 0.0
+
+        u, u_new = u_new, u
+
+    # 收集到 rank 0
+    local_result = u[1:-1]
+    all_results = comm.gather(local_result, root=0)
+
+    if rank == 0:
+        full = np.concatenate(all_results)
+        print(f"总长度: {len(full)}")
+        print(f"最大值: {full.max():.4f}")
+        print(f"峰值位置: {np.argmax(full) * dx:.4f}")
+    return None
+
+
+if __name__ == "__main__":
+    heat_1d_domain_decomp(n_global=1000, n_steps=500)</code></pre>
+          </div>
+
+          <p>运行方式：</p>
+
+          <pre><code class="language-bash">mpirun -np 4 python domain_decomp.py</code></pre>
+        </section>
+
+        <section id="performance">
+          <h2><span class="num">08</span>性能优化与调试</h2>
+
+          <h3>性能分析工具</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>工具</th><th>用途</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>perf</td>
+                  <td>CPU 性能计数器</td>
+                  <td>Linux</td>
+                </tr>
+                <tr>
+                  <td>gprof</td>
+                  <td>函数级性能分析</td>
+                  <td>C/C++/Fortran</td>
+                </tr>
+                <tr>
+                  <td>TAU</td>
+                  <td>并行性能分析</td>
+                  <td>MPI/OpenMP</td>
+                </tr>
+                <tr>
+                  <td>Vampir</td>
+                  <td>MPI 追踪可视化</td>
+                  <td>MPI</td>
+                </tr>
+                <tr>
+                  <td>Nsight</td>
+                  <td>CUDA 性能分析</td>
+                  <td>GPU</td>
+                </tr>
+                <tr>
+                  <td>cProfile</td>
+                  <td>Python 函数级</td>
+                  <td>Python</td>
+                </tr>
+                <tr>
+                  <td>py-spy</td>
+                  <td>Python 采样剖析</td>
+                  <td>Python</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>性能瓶颈诊断</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>症状</th><th>可能原因</th><th>诊断</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>加速比低</td>
+                  <td>串行部分大</td>
+                  <td>Amdahl 分析</td>
+                </tr>
+                <tr>
+                  <td>加速比随核心数下降</td>
+                  <td>通信开销</td>
+                  <td>Vampir 追踪</td>
+                </tr>
+                <tr>
+                  <td>负载不均</td>
+                  <td>任务划分不当</td>
+                  <td>各进程时间对比</td>
+                </tr>
+                <tr>
+                  <td>GPU 利用率低</td>
+                  <td>数据传输瓶颈</td>
+                  <td>Nsight 分析</td>
+                </tr>
+                <tr>
+                  <td>内存带宽瓶颈</td>
+                  <td>数据访问模式差</td>
+                  <td>缓存命中率</td>
+                </tr>
+                <tr>
+                  <td>NUMA 效应</td>
+                  <td>远端内存访问</td>
+                  <td>numastat</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>性能优化清单</h3>
+          <ol class="steps">
+            <li>先测量，再优化——用 profiler 找瓶颈。</li>
+            <li>优化热点——20% 的代码占 80% 的时间。</li>
+            <li>减少串行部分——Amdahl 定律的启示。</li>
+            <li>优化内存访问——连续访问、缓存友好。</li>
+            <li>减少通信——合并消息、非阻塞、重叠。</li>
+            <li>负载均衡——静态或动态划分。</li>
+            <li>使用优化的库——BLAS、MKL、cuBLAS。</li>
+            <li>编译优化——<code>-O3 -march=native</code>。</li>
+            <li>向量化——SIMD、AVX-512。</li>
+            <li>使用 GPU——数据并行密集计算。</li>
+          </ol>
+
+          <h3>常见陷阱</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>陷阱</th><th>说明</th><th>对策</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>假共享（false sharing）</td>
+                  <td>不同线程修改同一缓存行的不同变量</td>
+                  <td>变量对齐、padding</td>
+                </tr>
+                <tr>
+                  <td>数据竞争</td>
+                  <td>未同步的并发访问</td>
+                  <td>reduction、atomic、mutex</td>
+                </tr>
+                <tr>
+                  <td>死锁</td>
+                  <td>循环等待</td>
+                  <td>固定顺序、超时</td>
+                </tr>
+                <tr>
+                  <td>负载不均</td>
+                  <td>某进程成为瓶颈</td>
+                  <td>动态调度</td>
+                </tr>
+                <tr>
+                  <td>过度同步</td>
+                  <td>同步开销大于并行收益</td>
+                  <td>减少临界区</td>
+                </tr>
+                <tr>
+                  <td>内存不足</td>
+                  <td>每个进程都需大内存</td>
+                  <td>分布式存储、外存算法</td>
+                </tr>
+                <tr>
+                  <td>超线程误导</td>
+                  <td>核心数 ≠ 物理核数</td>
+                  <td>查看实际物理核心</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>编译优化选项</h3>
+
+          <pre><code class="language-bash"># GCC 优化选项
+gcc -O3 -march=native -fopenmp -o program program.c
+
+# -O3：最高优化级别
+# -march=native：针对本机 CPU 优化（AVX-512 等）
+# -fopenmp：启用 OpenMP
+# -funroll-loops：循环展开
+# -flto：链接时优化
+
+# Intel 编译器（性能更好）
+icc -O3 -xHost -qopenmp -o program program.c
+
+# MPI 编译
+mpicc -O3 -march=native -o program program.c
+
+# CUDA 编译
+nvcc -O3 -arch=sm_80 -o program program.cu</code></pre>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>并行优化的常见误区</strong>：
+              ① 一上来就并行——先优化串行算法，
+              一个 $O(n^2)$ 的算法并行后仍是 $O(n^2)$；
+              ② 盲目增加核心——Amdahl 定律会惩罚你，
+              超过一定核心数后加速比不再提升；
+              ③ 忽略内存带宽——很多 HPC 问题受内存带宽限制，
+              而非计算能力；
+              ④ 忽视 I/O——读写数据可能占 80% 的时间；
+              ⑤ 并行调试困难——先在小规模验证正确性，
+              再扩展到大规模。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">09</span>工程应用</h2>
+
+          <h3>地震学中的并行场景</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>并行方式</th><th>典型加速</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>有限元刚度矩阵组装</td>
+                  <td>OpenMP（元素级）</td>
+                  <td>10~50 倍</td>
+                </tr>
+                <tr>
+                  <td>稀疏线性求解</td>
+                  <td>MPI + 域分解</td>
+                  <td>50~500 倍</td>
+                </tr>
+                <tr>
+                  <td>地震波场模拟</td>
+                  <td>MPI + OpenMP + GPU</td>
+                  <td>100~1000 倍</td>
+                </tr>
+                <tr>
+                  <td>PSHA 蒙特卡洛</td>
+                  <td>多进程 / MPI</td>
+                  <td>50~200 倍</td>
+                </tr>
+                <tr>
+                  <td>反应谱批量计算</td>
+                  <td>多进程 / GPU</td>
+                  <td>50~100 倍</td>
+                </tr>
+                <tr>
+                  <td>波形互相关</td>
+                  <td>GPU（CuPy）</td>
+                  <td>100 倍</td>
+                </tr>
+                <tr>
+                  <td>CNN 训练</td>
+                  <td>GPU（PyTorch）</td>
+                  <td>50~200 倍</td>
+                </tr>
+                <tr>
+                  <td>地震目录聚类</td>
+                  <td>多进程 + DBSCAN</td>
+                  <td>10~50 倍</td>
+                </tr>
+                <tr>
+                  <td>波形去噪</td>
+                  <td>GPU</td>
+                  <td>50~100 倍</td>
+                </tr>
+                <tr>
+                  <td>实时预警</td>
+                  <td>GPU + 低延迟流水线</td>
+                  <td>毫秒级响应</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>并行有限元</h3>
+          <p>
+            有限元求解的三个步骤及并行化：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>步骤</th><th>并行方式</th><th>瓶颈</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>单元刚度矩阵计算</td>
+                  <td>按单元并行（OpenMP）</td>
+                  <td>计算密集、易并行</td>
+                </tr>
+                <tr>
+                  <td>全局矩阵组装</td>
+                  <td>原子操作或图着色</td>
+                  <td>写入冲突</td>
+                </tr>
+                <tr>
+                  <td>线性方程组求解</td>
+                  <td>域分解 + MPI</td>
+                  <td>通信开销</td>
+                </tr>
+                <tr>
+                  <td>后处理</td>
+                  <td>按节点/单元并行</td>
+                  <td>I/O</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            现代有限元软件（ABAQUS、ANSYS）都支持多层并行：
+            MPI（节点间）+ OpenMP（节点内）+ GPU（求解器加速）。
+          </p>
+
+          <h3>并行地震波模拟</h3>
+          <p>
+            地震波传播的并行模拟：
+          </p>
+          <ul>
+            <li><strong>空间域分解</strong>：把三维计算域分成多个子域。</li>
+            <li><strong>halo 交换</strong>：每个时间步交换边界上的波场值。</li>
+            <li><strong>GPU 加速</strong>：子域内用 GPU 做差分计算。</li>
+            <li><strong>I/O 优化</strong>：用 HDF5 并行 I/O 写快照。</li>
+          </ul>
+
+          <p>
+            代表软件：
+          </p>
+          <ul>
+            <li><strong>SPECFEM3D</strong>：谱元法，支持 MPI + OpenMP + CUDA。</li>
+            <li><strong>SW4</strong>：有限差分，支持 MPI + OpenMP。</li>
+            <li><strong>SeisSol</strong>：ADER-DG 方法，GPU 加速。</li>
+            <li><strong>OpenSWPC</strong>：日本地震波传播模拟。</li>
+          </ul>
+
+          <h3>PSHA 蒙特卡洛并行</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>psha_parallel.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 multiprocessing 并行化 PSHA 蒙特卡洛。
+"""
+import numpy as np
+from multiprocessing import Pool
+import time
+
+
+def simulate_year(args):
+    """模拟一年的最大 PGA"""
+    seed, lambda_rate = args
+    rng = np.random.default_rng(seed)
+
+    n_event = rng.poisson(lambda_rate)
+    if n_event == 0:
+        return -10.0
+
+    M = rng.uniform(4.5, 8.0, n_event)
+    R = rng.uniform(10.0, 200.0, n_event)
+
+    # GMPE
+    ln_pga = (1.5 + 0.8 * M - 1.2 * np.log(R + 10)
+              - 0.002 * R + rng.normal(0, 0.4, n_event))
+
+    return float(ln_pga.max())
+
+
+def psha_mc_serial(n_years, seed=42):
+    """串行蒙特卡洛"""
+    rng = np.random.default_rng(seed)
+    results = []
+    for i in range(n_years):
+        s = int(rng.integers(0, 2**31))
+        results.append(simulate_year((s, 0.1)))
+    return np.array(results)
+
+
+def psha_mc_parallel(n_years, n_workers=None, seed=42):
+    """并行蒙特卡洛"""
+    rng = np.random.default_rng(seed)
+    tasks = [(int(rng.integers(0, 2**31)), 0.1) for _ in range(n_years)]
+
+    with Pool(n_workers) as pool:
+        results = pool.map(simulate_year, tasks)
+    return np.array(results)
+
+
+if __name__ == "__main__":
+    n_years = 200_000
+
+    # 串行
+    t0 = time.perf_counter()
+    r_serial = psha_mc_serial(n_years)
+    t_serial = time.perf_counter() - t0
+
+    # 并行
+    t0 = time.perf_counter()
+    r_parallel = psha_mc_parallel(n_years)
+    t_parallel = time.perf_counter() - t0
+
+    print(f"串行: {t_serial:.2f} s")
+    print(f"并行: {t_parallel:.2f} s")
+    print(f"加速比: {t_serial / t_parallel:.2f} 倍")
+
+    # 统计
+    for r, name in [(r_serial, "串行"), (r_parallel, "并行")]:
+        n_no_event = np.sum(r < -5)
+        print(f"\n{name}:")
+        print(f"  无地震年份比例: {n_no_event / len(r):.4f}")
+        print(f"  年均超越概率 (PGA > 0.1): {np.mean(r > np.log(0.1)):.6f}")</code></pre>
+          </div>
+
+          <h3>地震预警的低延迟并行</h3>
+          <p>
+            地震预警对延迟要求极高，并行策略不同于传统 HPC：
+          </p>
+          <ul>
+            <li><strong>流水线并行</strong>：数据接收、预处理、检测、定位、发布分阶段并行。</li>
+            <li><strong>数据并行</strong>：多台站同时处理，GPU 加速推理。</li>
+            <li><strong>低延迟通信</strong>：共享内存、RDMA、零拷贝。</li>
+            <li><strong>实时调度</strong>：优先级队列，确保关键任务及时处理。</li>
+            <li><strong>容错设计</strong>：单点故障不影响整体。</li>
+          </ul>
+
+          <p>
+            这类系统的瓶颈通常不是计算能力，而是<strong>端到端延迟</strong>——
+            包括采集、传输、处理、发布的全链路。
+          </p>
+
+          <h3>并行计算与其它笔记的联系</h3>
+          <ul>
+            <li><strong>算法设计与分析</strong>（计算机）：并行算法是算法设计的扩展，
+              Amdahl 定律是复杂度分析的一部分。</li>
+            <li><strong>数据结构</strong>（计算机）：并行数据结构（并发哈希、无锁队列）。</li>
+            <li><strong>科学计算与 Python</strong>（计算机）：NumPy、SciPy 的底层并行，
+              Numba、CuPy 是并行工具。</li>
+            <li><strong>科学计算与 MATLAB</strong>（计算机）：MATLAB 的 <code>parfor</code>、
+              <code>gpuArray</code> 是并行工具。</li>
+            <li><strong>机器学习基础</strong>（计算机）：SGD 并行、分布式训练。</li>
+            <li><strong>数据库与数据工程</strong>（计算机）：分布式数据库、并行查询。</li>
+            <li><strong>数值分析</strong>（数学）：并行数值算法（并行 CG、并行 FFT）。</li>
+            <li><strong>线性代数</strong>（数学）：并行矩阵运算、并行特征值。</li>
+            <li><strong>偏微分方程</strong>（数学）：域分解是 PDE 并行的基础。</li>
+            <li><strong>强震动观测</strong>（地震学）：批量数据处理的并行。</li>
+            <li><strong>工程地震学</strong>（地震学）：PSHA 蒙特卡洛并行。</li>
+            <li><strong>地震预警</strong>（地震学）：实时并行处理。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Mattson, Sanders &amp; Massingill, <em>Patterns for Parallel Programming</em> — 并行编程模式</li>
+            <li>Gramma, Gupta, Karypis &amp; Kumar, <em>Introduction to Parallel Computing</em> — 并行计算入门</li>
+            <li>Pacheco, <em>An Introduction to Parallel Programming</em> — MPI / OpenMP 教材</li>
+            <li>Chapman, Jost &amp; van der Pas, <em>Using OpenMP</em> — OpenMP 权威参考</li>
+            <li>Gropp, Lusk &amp; Skjellum, <em>Using MPI</em> — MPI 权威参考</li>
+            <li>Kirk &amp; Hwu, <em>Programming Massively Parallel Processors</em> — CUDA 教材</li>
+            <li>Sanders &amp; Kandrot, <em>CUDA by Example</em> — CUDA 入门</li>
+            <li>Gorelick &amp; Ozsvald, <em>High Performance Python</em> — Python 性能优化</li>
+            <li>VanderPlas, <em>Python Data Science Handbook</em> — NumPy 向量化</li>
+            <li>Ihaka &amp; Gentleman, <em>R: A Language for Data Analysis</em> — 向量化思想</li>
+            <li>Hager &amp; Wellein, <em>Introduction to High Performance Computing for Scientists and Engineers</em> — HPC 实践</li>
+            <li>Karniadakis &amp; Kirby, <em>Parallel Scientific Computing in C++ and MPI</em> — 科学计算并行</li>
+            <li>GEMM 与 BLAS 标准文档 — 数值库并行</li>
+          </ul>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>并行基础</strong>：Flynn 分类；Amdahl 定律揭示串行部分是上限；Gustafson 定律描述弱扩展。</li>
+              <li><strong>硬件架构</strong>：共享内存（UMA/NUMA）、分布式内存（集群）、GPU、异构计算。</li>
+              <li><strong>OpenMP</strong>：共享内存并行；pragma 指令；reduction、schedule、critical 是关键子句。</li>
+              <li><strong>MPI</strong>：分布式内存标准；点对点与集合通信；通信开销是主要瓶颈。</li>
+              <li><strong>GPU / CUDA</strong>：数千核心、高带宽；适合数据并行；CuPy 是无缝迁移工具。</li>
+              <li><strong>Python 并行</strong>：multiprocessing（CPU）、Numba（JIT）、CuPy（GPU）、Dask（分布式）。</li>
+              <li><strong>并行算法设计</strong>：数据分解、域分解、负载均衡、减少通信。</li>
+              <li><strong>性能优化</strong>：先测量；优化热点；减少串行；缓存友好；GPU 加速。</li>
+              <li><strong>工程应用</strong>：有限元、地震波模拟、PSHA、机器学习训练、地震预警。</li>
+            </ul>
+          </div>
+
+          <h3>并行技术速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>推荐方案</th><th>关键点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>多核 CPU 循环</td>
+                  <td>OpenMP</td>
+                  <td>pragma + reduction</td>
+                </tr>
+                <tr>
+                  <td>多机分布式</td>
+                  <td>MPI</td>
+                  <td>域分解 + 集合通信</td>
+                </tr>
+                <tr>
+                  <td>数据并行密集</td>
+                  <td>CUDA / CuPy</td>
+                  <td>合并访问、共享内存</td>
+                </tr>
+                <tr>
+                  <td>Python CPU 密集</td>
+                  <td>multiprocessing</td>
+                  <td>绕过 GIL</td>
+                </tr>
+                <tr>
+                  <td>Python 数值循环</td>
+                  <td>Numba @njit(parallel=True)</td>
+                  <td>prange 自动并行</td>
+                </tr>
+                <tr>
+                  <td>Python 大数据</td>
+                  <td>Dask / Ray</td>
+                  <td>惰性 + 分布式</td>
+                </tr>
+                <tr>
+                  <td>多层并行</td>
+                  <td>MPI + OpenMP + GPU</td>
+                  <td>节点间 + 节点内 + 核心</td>
+                </tr>
+                <tr>
+                  <td>性能分析</td>
+                  <td>perf / VTune / Nsight</td>
+                  <td>先测量再优化</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>加速比参考</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>并行层次</th><th>典型加速</th><th>限制因素</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SIMD（AVX-512）</td>
+                  <td>4~16 倍</td>
+                  <td>数据布局</td>
+                </tr>
+                <tr>
+                  <td>多核（16 核）</td>
+                  <td>10~14 倍</td>
+                  <td>Amdahl 定律</td>
+                </tr>
+                <tr>
+                  <td>GPU（单卡）</td>
+                  <td>20~100 倍</td>
+                  <td>内存传输、占用率</td>
+                </tr>
+                <tr>
+                  <td>集群（100 节点）</td>
+                  <td>50~80 倍</td>
+                  <td>通信、I/O</td>
+                </tr>
+                <tr>
+                  <td>超算（1000 节点）</td>
+                  <td>100~500 倍</td>
+                  <td>通信、负载均衡</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>算法设计与分析</strong>（计算机）：并行复杂度、Amdahl 定律。</li>
+            <li><strong>数据结构</strong>（计算机）：并发数据结构、分区、图划分。</li>
+            <li><strong>科学计算与 Python</strong>（计算机）：Numba、CuPy、Dask。</li>
+            <li><strong>科学计算与 MATLAB</strong>（计算机）：parfor、gpuArray、Parallel Computing Toolbox。</li>
+            <li><strong>机器学习基础</strong>（计算机）：分布式训练、GPU 加速。</li>
+            <li><strong>数据库与数据工程</strong>（计算机）：分布式查询、并行 ETL。</li>
+            <li><strong>数值分析</strong>（数学）：并行数值算法。</li>
+            <li><strong>线性代数</strong>（数学）：并行矩阵、并行特征值。</li>
+            <li><strong>偏微分方程</strong>（数学）：域分解、并行波场模拟。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：并行蒙特卡洛。</li>
+            <li><strong>工程地震学</strong>（地震学）：PSHA 并行加速。</li>
+            <li><strong>地震预警</strong>（地震学）：实时低延迟并行。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>并行与高性能计算与你的项目</strong>：
+              你主页上的三个项目都可以从并行中受益：
+              ① <strong>强震动数据处理</strong>：用 multiprocessing 并行处理多条记录，
+              Numba 加速滤波与积分；
+              ② <strong>地震动参数分析</strong>：用 Numba 并行批量计算反应谱，
+              GPU 加速波形互相关；
+              ③ <strong>地震危险性分析</strong>：用 MPI 或 multiprocessing
+              并行蒙特卡洛，用 Dask 处理大数据集。
+              并行优化可以让"分钟级"变成"秒级"，
+              从"批处理"变成"交互式"。</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <a href="index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>
