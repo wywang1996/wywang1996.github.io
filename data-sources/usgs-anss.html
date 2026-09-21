@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USGS ANSS 目录 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">USGS ANSS 目录</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>USGS ANSS 目录</h1>
+      <p class="lead">
+        ANSS 综合地震目录（ComCat）由美国地质调查局（USGS）地震灾害计划维护，
+        是美国及全球地震事件的权威目录。它整合了 ANSS 各贡献台网及其他来源的
+        地震记录，包含震源参数、震级、震相拾取、矩张量解、宏观地震信息、构造摘要
+        等多种产品，通过网页检索和 FDSN 标准 Web 服务对外发布。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震目录</span>
+        <span class="pill">全球</span>
+        <span class="pill blue">FDSN 标准</span>
+        <span class="pill">实时更新</span>
+        <span class="pill">公共领域</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>ANSS 综合地震目录（ComCat）</strong>是美国地质调查局（USGS）
+        地震灾害计划维护的<strong>美国及全球地震事件权威目录</strong>。
+        它整合了 ANSS 各贡献台网及其他来源（如百年目录、全球矩心矩张量目录等）
+        的地震记录，动态接收各来源发布或更新的产品。
+      </p>
+
+      <p>
+        ComCat 自 2013 年 1 月 1 日起成为 ANSS 的正式记录目录，
+        取代了旧的 ANSS 目录。其数据覆盖范围广泛，
+        从 1856 年的历史地震到当前实时事件，
+        包含阿拉斯加、加州、夏威夷、波多黎各等多个区域台网的记录。
+        USGS 国家地震信息中心（NEIC）负责监测全球 Mw 4.5 级以上地震。
+      </p>
+
+      <h3 class="sub">数据产品类型</h3>
+      <ul class="plain">
+        <li><strong>震源参数：</strong>发震时刻、震中位置、震源深度、震级（多种标度）、震相拾取、振幅。</li>
+        <li><strong>矩张量解：</strong>全球及区域矩张量解，包括矩心位置、矩张量分量、最佳双力偶解。</li>
+        <li><strong>宏观地震信息：</strong>震感报告（DYFI）、ShakeMap 震动图、PAGER 警报等级。</li>
+        <li><strong>构造摘要：</strong>区域构造背景、断层信息。</li>
+        <li><strong>有限断层模型：</strong>大地震的滑动分布模型。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与其他目录的差异：</strong>
+        ComCat 是<strong>美国区域的官方目录</strong>，同时对全球 Mw 4.5+ 事件提供快速定位。
+        与 ISC 目录相比，ComCat 更新更快（分钟级实时更新），
+        但 ISC 在历史地震重新定位方面更权威。
+        两者在长期地震活动性研究中常互为补充。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        ComCat 通过 FDSN Event Web Service 提供多种输出格式，
+        默认格式为 QuakeML。点击下方标签查看各格式的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="quakeml" role="tab" aria-selected="true">QuakeML</button>
+          <button class="nga-tab-btn" data-tab="geojson" role="tab" aria-selected="false">GeoJSON</button>
+          <button class="nga-tab-btn" data-tab="csv" role="tab" aria-selected="false">CSV / 文本</button>
+          <button class="nga-tab-btn" data-tab="kml" role="tab" aria-selected="false">KML</button>
+        </div>
+
+        <!-- QuakeML -->
+        <div class="nga-tab-panel active" id="tab-quakeml" role="tabpanel">
+          <h3>QuakeML</h3>
+          <div class="tagline">XML 格式 · 默认输出 · 结构化程度最高</div>
+          <p>
+            <strong>QuakeML</strong> 是 FDSN Event Web Service 的<strong>默认输出格式</strong>，
+            采用 XML 结构描述事件、震源、震级、震相、振幅、矩张量等完整信息。
+            支持同时描述一个事件的多个 Origin 和 Magnitude，并指明优选值。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">层级</th>
+                  <th>主要内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Event</code></td><td>事件标识、类型、发震时刻</td></tr>
+                <tr><td><code>Origin</code></td><td>震源位置（经纬度、深度）、定位方法、时刻精度</td></tr>
+                <tr><td><code>Magnitude</code></td><td>震级值、震级标度、计算方法、台站数</td></tr>
+                <tr><td><code>FocalMechanism</code></td><td>节面解、矩张量解</td></tr>
+                <tr><td><code>Amplitude</code></td><td>各台站振幅观测值</td></tr>
+                <tr><td><code>Pick</code></td><td>震相到时与极性</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>使用方式：</strong>在 FDSN Event Web Service 请求中指定
+              <code>format=quakeml</code>（或不指定 format 参数，默认即为 QuakeML）。
+              返回的 XML 文件可用 ObsPy 的 <code>read_events()</code> 直接读取。
+            </div>
+          </div>
+        </div>
+
+        <!-- GeoJSON -->
+        <div class="nga-tab-panel" id="tab-geojson" role="tabpanel">
+          <h3>GeoJSON</h3>
+          <div class="tagline">JSON 格式 · 地图友好 · 轻量</div>
+          <p>
+            <strong>GeoJSON</strong> 是 ComCat 推荐的<strong>地图展示格式</strong>，
+            以 JSON 结构描述事件的几何位置和属性信息。
+            USGS 官方建议自动化应用优先使用 <strong>Real-time GeoJSON Feeds</strong>
+            来显示地震信息，因为其性能和可用性最佳。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">字段</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>geometry.coordinates</code></td><td>经度、纬度、深度</td></tr>
+                <tr><td><code>properties.mag</code></td><td>震级值</td></tr>
+                <tr><td><code>properties.place</code></td><td>震中位置描述</td></tr>
+                <tr><td><code>properties.time</code></td><td>发震时刻（Unix 时间戳，毫秒）</td></tr>
+                <tr><td><code>properties.tsunami</code></td><td>海啸标志（0 或 1）</td></tr>
+                <tr><td><code>properties.felt</code></td><td>震感报告数量</td></tr>
+                <tr><td><code>properties.alert</code></td><td>PAGER 警报等级</td></tr>
+                <tr><td><code>properties.detail</code></td><td>事件详情页 URL</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>实时 Feeds：</strong>USGS 提供过去 1 小时、1 天、7 天、30 天的
+              GeoJSON 摘要文件，分为 significant、4.5+、2.5+、1.0+ 等等级。
+              地址见下方「数据中心」章节。
+            </div>
+          </div>
+        </div>
+
+        <!-- CSV -->
+        <div class="nga-tab-panel" id="tab-csv" role="tabpanel">
+          <h3>CSV / 文本</h3>
+          <div class="tagline">表格格式 · 易读易处理</div>
+          <p>
+            <strong>CSV</strong> 是 ComCat 的简单表格输出格式，
+            每行一个事件，每列一个参数。适合批量处理与 Excel 快速查看，
+            但不支持层级结构（如多个 Origin 或 Magnitude）。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">常见字段</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>time</code></td><td>发震时刻（ISO 8601 或 Unix 时间戳）</td></tr>
+                <tr><td><code>latitude</code></td><td>震中纬度（度）</td></tr>
+                <tr><td><code>longitude</code></td><td>震中经度（度）</td></tr>
+                <tr><td><code>depth</code></td><td>震源深度（km）</td></tr>
+                <tr><td><code>mag</code></td><td>震级值</td></tr>
+                <tr><td><code>magType</code></td><td>震级标度（Mw、Ms、mb、ML 等）</td></tr>
+                <tr><td><code>place</code></td><td>震中位置描述</td></tr>
+                <tr><td><code>id</code></td><td>事件唯一标识符</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>获取方式：</strong>在 FDSN Event Web Service 请求中指定
+              <code>format=csv</code>。也可使用 libcomcat 的 <code>getcsv()</code>
+              方法生成 CSV 或 Excel 文件。
+            </div>
+          </div>
+        </div>
+
+        <!-- KML -->
+        <div class="nga-tab-panel" id="tab-kml" role="tabpanel">
+          <h3>KML</h3>
+          <div class="tagline">Google Earth 格式 · 三维可视化</div>
+          <p>
+            <strong>KML</strong> 是 ComCat 提供的 Google Earth 格式，
+            用于在 Google Earth 中三维可视化地震事件的位置和震级。
+            每个事件以地标（Placemark）形式展示，包含震级、深度、位置等属性。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">特点</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>三维展示</strong></td><td>在 Google Earth 中查看地震的深度分布</td></tr>
+                <tr><td><strong>颜色编码</strong></td><td>按震级或深度着色</td></tr>
+                <tr><td><strong>点击信息</strong></td><td>点击地标查看事件详情</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>获取方式：</strong>在 FDSN Event Web Service 请求中指定
+              <code>format=kml</code>。同时可指定额外的 KML 控制参数。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">请求参数速查</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">参数</th>
+              <th style="width:120px;">类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>format</code></td><td>String</td><td>输出格式：<code>quakeml</code>（默认）/ <code>geojson</code> / <code>csv</code> / <code>kml</code> / <code>text</code></td></tr>
+            <tr><td><code>starttime</code></td><td>ISO8601</td><td>起始时间，默认 NOW-30 天</td></tr>
+            <tr><td><code>endtime</code></td><td>ISO8601</td><td>结束时间，默认当前时间</td></tr>
+            <tr><td><code>minmagnitude</code></td><td>Float</td><td>最小震级</td></tr>
+            <tr><td><code>maxmagnitude</code></td><td>Float</td><td>最大震级</td></tr>
+            <tr><td><code>minlatitude</code></td><td>Float</td><td>最小纬度（矩形区域）</td></tr>
+            <tr><td><code>maxlatitude</code></td><td>Float</td><td>最大纬度</td></tr>
+            <tr><td><code>minlongitude</code></td><td>Float</td><td>最小经度</td></tr>
+            <tr><td><code>maxlongitude</code></td><td>Float</td><td>最大经度</td></tr>
+            <tr><td><code>latitude</code></td><td>Float</td><td>中心纬度（圆形区域，需配合 maxradiuskm）</td></tr>
+            <tr><td><code>longitude</code></td><td>Float</td><td>中心经度</td></tr>
+            <tr><td><code>maxradiuskm</code></td><td>Float</td><td>圆形区域半径（km）</td></tr>
+            <tr><td><code>catalog</code></td><td>String</td><td>目录来源过滤（如 <code>ak</code>、<code>ci</code>、<code>us</code>）</td></tr>
+            <tr><td><code>eventid</code></td><td>String</td><td>按事件 ID 查询</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>服务地址：</strong><code>https://earthquake.usgs.gov/fdsnws/event/1/</code>。
+          支持 <code>query</code>、<code>count</code>、<code>catalogs</code>、<code>contributors</code>
+          等方法。
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        ComCat 由 USGS 地震灾害计划统一维护，同时整合了多个 ANSS 贡献台网的数据。
+        以下列出主要的数据入口与贡献台网。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="usgs" role="tab" aria-selected="true">USGS 主入口</button>
+          <button class="nga-tab-btn" data-tab="networks" role="tab" aria-selected="false">贡献台网</button>
+          <button class="nga-tab-btn" data-tab="realtime" role="tab" aria-selected="false">实时 Feed</button>
+        </div>
+
+        <!-- USGS 主入口 -->
+        <div class="nga-tab-panel active" id="tab-usgs" role="tabpanel">
+          <h3>USGS 主入口</h3>
+          <div class="tagline">官方发布 · 网页检索 · FDSN Web 服务</div>
+          <p>
+            USGS 地震灾害计划是 ComCat 的<strong>官方维护机构</strong>，
+            提供网页检索界面和 FDSN 标准 Web 服务两种访问方式。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>地址</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>网页检索界面</strong></td>
+                  <td><code>earthquake.usgs.gov/earthquakes/search/</code></td>
+                </tr>
+                <tr>
+                  <td><strong>FDSN Event Web 服务</strong></td>
+                  <td><code>earthquake.usgs.gov/fdsnws/event/1/</code></td>
+                </tr>
+                <tr>
+                  <td><strong>ComCat 文档</strong></td>
+                  <td><code>earthquake.usgs.gov/data/comcat/</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 贡献台网 -->
+        <div class="nga-tab-panel" id="tab-networks" role="tabpanel">
+          <h3>贡献台网</h3>
+          <div class="tagline">ANSS 组成网络 · 区域覆盖</div>
+          <p>
+            ComCat 整合了多个 ANSS 贡献台网的数据。可通过 FDSN Event Web Service
+            的 <code>catalogs</code> 方法查询可用目录列表。
+            主要贡献台网如下：
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:100px;">台网代码</th>
+                  <th style="width:260px;">台网名称</th>
+                  <th>覆盖区域</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>ak</code></td><td>Alaska Earthquake Center</td><td>阿拉斯加</td></tr>
+                <tr><td><code>ci</code></td><td>California Integrated Seismic Network</td><td>南加州</td></tr>
+                <tr><td><code>nc</code></td><td>Northern California Seismic System</td><td>北加州</td></tr>
+                <tr><td><code>hv</code></td><td>Hawaii Volcano Observatory</td><td>夏威夷</td></tr>
+                <tr><td><code>uu</code></td><td>University of Utah Seismograph Stations</td><td>犹他州</td></tr>
+                <tr><td><code>uw</code></td><td>Pacific Northwest Seismic Network</td><td>太平洋西北</td></tr>
+                <tr><td><code>pr</code></td><td>Puerto Rico Seismic Network</td><td>波多黎各</td></tr>
+                <tr><td><code>us</code></td><td>USGS National Earthquake Information Center</td><td>全球</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>查询贡献台网：</strong>访问
+              <code>earthquake.usgs.gov/fdsnws/event/1/contributors</code>
+              获取完整的贡献台网列表。
+            </div>
+          </div>
+        </div>
+
+        <!-- 实时 Feed -->
+        <div class="nga-tab-panel" id="tab-realtime" role="tabpanel">
+          <h3>实时 Feed</h3>
+          <div class="tagline">GeoJSON · 分钟级更新 · 无需认证</div>
+          <p>
+            USGS 提供<strong>实时 GeoJSON Feeds</strong>，以固定 URL 返回
+            最近 1 小时、1 天、7 天、30 天的地震事件摘要，
+            适合地图展示和监控应用。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">Feed 类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>过去 1 小时</strong></td><td>最近一小时所有事件</td></tr>
+                <tr><td><strong>过去 1 天</strong></td><td>最近一天所有事件</td></tr>
+                <tr><td><strong>过去 7 天</strong></td><td>最近一周 M1.0+ 事件</td></tr>
+                <tr><td><strong>过去 30 天</strong></td><td>最近一月 M2.5+ / M4.5+ / significant 事件</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>Feed 地址：</strong><code>earthquake.usgs.gov/earthquakes/feed/v1.0/</code>。
+              无需 API 密钥，直接 GET 即可返回 GeoJSON。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>平台选择建议：</strong>
+        需要<strong>批量历史目录</strong> → FDSN Event Web 服务或网页检索界面；
+        需要<strong>实时监控</strong> → 实时 GeoJSON Feeds；
+        需要<strong>特定区域数据</strong> → 在请求中指定 <code>catalog</code> 参数过滤贡献台网。
+      </div>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        ComCat 的获取方式分为网页检索和程序化 API 两种，均无需注册。
+        点击下方标签查看详细流程。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="web" role="tab" aria-selected="true">网页检索下载</button>
+          <button class="nga-tab-btn" data-tab="api" role="tab" aria-selected="false">FDSN Web 服务</button>
+          <button class="nga-tab-btn" data-tab="feed" role="tab" aria-selected="false">实时 Feed 订阅</button>
+        </div>
+
+        <!-- 网页检索下载 -->
+        <div class="nga-tab-panel active" id="tab-web" role="tabpanel">
+          <h3>网页检索下载</h3>
+          <div class="tagline">无需注册 · 交互式筛选 · 多格式输出</div>
+          <p>
+            适用于交互式检索与少量下载。通过 USGS 地震搜索页面
+            按条件筛选事件，直接下载结果文件。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问 USGS 地震搜索页面</div>
+                <div class="flow-desc">
+                  进入 <code>earthquake.usgs.gov/earthquakes/search/</code>。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">设置检索条件</div>
+                <div class="flow-desc">
+                  按<strong>时间范围、震级范围、地理区域（矩形或圆形）、
+                  深度</strong>等条件筛选。可选择特定贡献台网（catalog）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">查看结果</div>
+                <div class="flow-desc">
+                  结果以地图和列表形式展示，可查看事件详情页。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">选择输出格式并下载</div>
+                <div class="flow-desc">
+                  选择 <strong>CSV、GeoJSON、QuakeML、KML</strong> 等格式，
+                  点击下载按钮获取文件。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在研究成果中标注 USGS ANSS ComCat。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FDSN Web 服务 -->
+        <div class="nga-tab-panel" id="tab-api" role="tabpanel">
+          <h3>FDSN Web 服务</h3>
+          <div class="tagline">程序化访问 · 无需认证 · 多格式支持</div>
+          <p>
+            适用于批量、程序化的数据获取。
+            通过构造 URL 调用 FDSN Event Web Service，返回结构化数据。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">确定请求参数</div>
+                <div class="flow-desc">
+                  确定时间范围（<code>starttime</code>、<code>endtime</code>）、
+                  空间范围（矩形或圆形）、震级范围、输出格式等。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">构造请求 URL</div>
+                <div class="flow-desc">
+                  基础 URL：<code>earthquake.usgs.gov/fdsnws/event/1/query</code><br>
+                  示例参数：<code>?format=csv&amp;starttime=2024-01-01&amp;minmagnitude=5.0</code>
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">调用服务</div>
+                <div class="flow-desc">
+                  使用浏览器、<code>curl</code>、<code>wget</code>
+                  或 Python（<code>requests</code>、ObsPy）发送 GET 请求。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">解析返回结果</div>
+                <div class="flow-desc">
+                  根据 <code>format</code> 参数选择解析方式。
+                  QuakeML 用 ObsPy，CSV 用 pandas，GeoJSON 用 json。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在研究成果中标注 USGS ANSS ComCat。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>Python 示例：</strong>
+            可使用 <code>libcomcat</code> 库封装常用查询，
+            或直接使用 <code>requests</code> 构造 URL。
+            ObsPy 的 <code>obspy.clients.fdsn.Client</code>
+            也支持 USGS 事件服务。
+          </div>
+        </div>
+
+        <!-- 实时 Feed 订阅 -->
+        <div class="nga-tab-panel" id="tab-feed" role="tabpanel">
+          <h3>实时 Feed 订阅</h3>
+          <div class="tagline">固定 URL · 分钟级更新 · GeoJSON</div>
+          <p>
+            适用于需要<strong>实时或近实时</strong>地震信息的应用。
+            USGS 提供固定的 GeoJSON Feed URL，无需参数即可获取最新事件摘要。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">选择 Feed 类型</div>
+                <div class="flow-desc">
+                  根据需求选择时间范围（1 小时 / 1 天 / 7 天 / 30 天）
+                  和震级等级（significant / 4.5+ / 2.5+ / 1.0+ / all）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">获取 Feed URL</div>
+                <div class="flow-desc">
+                  如 <code>earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson</code>
+                  返回过去一天所有事件的 GeoJSON。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">定时拉取</div>
+                <div class="flow-desc">
+                  在应用中定时（如每 5 分钟）GET 该 URL，
+                  解析返回的 GeoJSON 更新地图或列表。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在地图或应用中标注 USGS ANSS ComCat。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 事件元数据字段说明</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">字段</th>
+              <th style="width:140px;">单位/类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>time</strong></td><td>UTC</td><td>发震时刻，ISO8601 格式</td></tr>
+            <tr><td><strong>latitude</strong></td><td>度</td><td>震中纬度</td></tr>
+            <tr><td><strong>longitude</strong></td><td>度</td><td>震中经度</td></tr>
+            <tr><td><strong>depth</strong></td><td>km</td><td>震源深度，正值向下</td></tr>
+            <tr><td><strong>mag</strong></td><td>—</td><td>震级值</td></tr>
+            <tr><td><strong>magType</strong></td><td>string</td><td>震级标度：Mw / Ms / mb / ML / Md 等</td></tr>
+            <tr><td><strong>place</strong></td><td>string</td><td>震中位置文字描述</td></tr>
+            <tr><td><strong>id</strong></td><td>string</td><td>事件唯一标识符</td></tr>
+            <tr><td><strong>tsunami</strong></td><td>0/1</td><td>海啸标志</td></tr>
+            <tr><td><strong>felt</strong></td><td>int</td><td>震感报告数量</td></tr>
+            <tr><td><strong>alert</strong></td><td>string</td><td>PAGER 警报等级（green / yellow / orange / red）</td></tr>
+            <tr><td><strong>sig</strong></td><td>int</td><td>事件重要性评分（0–1000）</td></tr>
+            <tr><td><strong>net</strong></td><td>string</td><td>贡献台网代码</td></tr>
+            <tr><td><strong>nst</strong></td><td>int</td><td>参与定位的台站数</td></tr>
+            <tr><td><strong>dmin</strong></td><td>度</td><td>最小震中距（度）</td></tr>
+            <tr><td><strong>gap</strong></td><td>度</td><td>方位角间隙</td></tr>
+            <tr><td><strong>updated</strong></td><td>UTC</td><td>最后更新时间</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">2. 数据产品类型</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">产品类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Origin</strong></td><td>震源位置解，一个事件可能有多个 Origin</td></tr>
+            <tr><td><strong>Magnitude</strong></td><td>震级解，多种标度</td></tr>
+            <tr><td><strong>Moment Tensor</strong></td><td>矩张量解（全球 GCMT 和区域矩张量）</td></tr>
+            <tr><td><strong>Focal Mechanism</strong></td><td>断层面解（走向、倾角、滑动角）</td></tr>
+            <tr><td><strong>Finite Fault</strong></td><td>有限断层滑动分布模型（大地震）</td></tr>
+            <tr><td><strong>ShakeMap</strong></td><td>震动图（地面运动分布）</td></tr>
+            <tr><td><strong>DYFI</strong></td><td>震感报告（Did You Feel It?）</td></tr>
+            <tr><td><strong>PAGER</strong></td><td>警报等级与影响评估</td></tr>
+            <tr><td><strong>Phase Data</strong></td><td>震相拾取（到时、振幅、周期）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">3. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">目录内容</div>
+          <div class="chips">
+            <span class="chip">发震时刻</span>
+            <span class="chip">震中位置</span>
+            <span class="chip">震源深度</span>
+            <span class="chip">震级标度</span>
+            <span class="chip">定位质量</span>
+            <span class="chip blue">矩张量解</span>
+            <span class="chip blue">断层面解</span>
+            <span class="chip blue">震感报告</span>
+            <span class="chip blue">ShakeMap</span>
+            <span class="chip blue">PAGER</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">格式与工具</div>
+          <div class="chips">
+            <span class="chip">QuakeML</span>
+            <span class="chip">GeoJSON</span>
+            <span class="chip">CSV</span>
+            <span class="chip">KML</span>
+            <span class="chip blue">ObsPy</span>
+            <span class="chip blue">libcomcat</span>
+            <span class="chip blue">requests</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>无需注册，免费开放：</b>
+          ComCat 提供<strong>无限制的免费访问</strong>，
+          无需注册账号或 API 密钥即可使用网页检索和 FDSN Web 服务。
+        </li>
+        <li>
+          <b>数据许可为公共领域：</b>
+          USGS 数据属于<strong>美国联邦政府公共领域</strong>，
+          可自由使用和分发，但需注明数据来源。
+        </li>
+        <li>
+          <b>实时更新，动态变化：</b>
+          ComCat 的动态特性意味着同一事件的信息可能随时间更新。
+          使用前应检查 <code>updated</code> 字段，并在论文中注明数据获取日期。
+        </li>
+        <li>
+          <b>一个事件可能有多个 Origin：</b>
+          QuakeML 格式中一个事件可包含多个 Origin 和 Magnitude。
+          使用时应优先选择标记为 <code>preferred</code> 的解。
+        </li>
+        <li>
+          <b>区域目录 vs 全球目录：</b>
+          美国区域事件优先使用区域台网目录（如 <code>ci</code>、<code>ak</code>），
+          全球事件使用 <code>us</code> 目录。可通过 <code>catalog</code> 参数指定。
+        </li>
+        <li>
+          <b>全球监测阈值：</b>
+          USGS NEIC 监测全球 <strong>Mw 4.5+</strong> 事件。
+          更低震级的事件可能仅在美国区域台网目录中提供。
+        </li>
+        <li>
+          <b>时区为 UTC：</b>
+          ComCat 中所有时间均为 <strong>UTC 时间</strong>，
+          ISO8601 格式。
+        </li>
+        <li>
+          <b>推荐使用 ObsPy：</b>
+          ObsPy 的 <code>obspy.clients.fdsn.Client</code>
+          支持 USGS 事件服务，可直接获取 QuakeML 格式的事件数据。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        USGS 对数据引用有明确规范。使用 ComCat 数据时，
+        建议引用以下标准格式，并在致谢中注明 USGS 地震灾害计划。
+      </p>
+
+      <h3 class="sub">官方推荐引用格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>U.S. Geological Survey. (2017). Advanced National Seismic System (ANSS)
+Comprehensive Catalog. U.S. Geological Survey.
+https://doi.org/10.5066/F7MS3QZH</code></pre>
+      </div>
+
+      <h3 class="sub">BibTeX 格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@misc{ANSSComCat2017,
+  title        = {Advanced National Seismic System (ANSS) Comprehensive Catalog},
+  author       = {{U.S. Geological Survey}},
+  year         = {2017},
+  howpublished = {U.S. Geological Survey},
+  doi          = {10.5066/F7MS3QZH},
+  url          = {https://earthquake.usgs.gov/data/comcat/}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">致谢格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>Earthquake information was retrieved from the ANSS Comprehensive Catalog
+(https://earthquake.usgs.gov/data/comcat/), operated by the U.S. Geological Survey.</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>引用要点：</strong>引用 ComCat 数据时，
+        应<strong>同时注明 USGS 地震灾害计划</strong>和所使用的具体贡献台网
+        （如 Alaska Earthquake Center、California Integrated Seismic Network 等）。
+        如使用了特定产品（如 ShakeMap、PAGER），也应一并引用。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · USGS ANSS 目录
+    </footer>
+
+  </main>
+</div>
+
+<!-- ===== 标签页切换脚本（全局委托，按 .nga-tabs 分组） ===== -->
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nga-tab-btn');
+    if (!btn) return;
+    var tabs = btn.closest('.nga-tabs');
+    if (!tabs) return;
+    var target = btn.getAttribute('data-tab');
+    tabs.querySelectorAll('.nga-tab-btn').forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabs.querySelectorAll('.nga-tab-panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + target);
+    });
+  });
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

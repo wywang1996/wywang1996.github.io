@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台站元数据与方位角 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">台站元数据与方位角</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>台站元数据与方位角</h1>
+      <p class="lead">
+        台站元数据（Station Metadata）是描述地震台站、通道、仪器响应等信息的结构化数据，
+        是波形数据正确使用的前提。FDSN StationXML 是当前国际通用的元数据标准，
+        方位角与仪器响应是其中最关键的两个参数——方位角决定分量旋转的正确性，
+        仪器响应决定物理量的准确还原。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">台站元数据</span>
+        <span class="pill">StationXML</span>
+        <span class="pill blue">方位角</span>
+        <span class="pill">仪器响应</span>
+        <span class="pill">FDSN 标准</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>台站元数据</strong>是描述地震观测系统配置的结构化信息，涵盖台站位置、
+        通道方向、仪器类型、响应函数等关键参数。在强震动数据处理中，元数据与波形数据
+        同等重要：仅有波形而没有正确的元数据，无法完成仪器响应校正、
+        分量旋转、震相识别等基本操作。
+      </p>
+
+      <p>
+        <strong>FDSN StationXML</strong> 是由国际数字地震台网联盟（FDSN）
+        制定的地震学元数据标准，旨在替代已有 30 年历史的 SEED 格式（dataless SEED），
+        提供更灵活、更完整的元数据描述能力。
+        StationXML 采用 XML 格式，支持描述台网、台站、通道、传感器、
+        数据采集器及响应函数等多个层级的详细信息。
+        当前主流数据中心（IRIS DMC、ORFEUS EIDA、GEOFON 等）
+        均已采用 StationXML 作为标准元数据格式。
+      </p>
+
+      <h3 class="sub">台站元数据的核心组成</h3>
+      <ul class="plain">
+        <li><strong>台网信息：</strong>台网代码、管理机构、联系人、台站总数。</li>
+        <li><strong>台站信息：</strong>台站代码、经纬度、高程、场地名称、安装日期、终止日期。</li>
+        <li><strong>通道信息：</strong>通道代码（频带码 + 仪器码 + 方向码）、
+            采样率、<strong>方位角（Azimuth）</strong>、
+            <strong>倾角（Dip）</strong>、深度。</li>
+        <li><strong>仪器响应：</strong>传感器、前置放大器、数据采集器的传递函数，
+            以 Poles and Zeros（PAZ）、系数（Coefficients）或
+            有限脉冲响应（FIR）形式描述。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>元数据为何重要：</strong>
+        现代地震学研究通常对三分量观测数据进行旋转，以分离不同类型的地震波。
+        因此<strong>两个水平分量的方位角信息是保证数据旋转正确的关键</strong>。
+        同时，仪器响应校正需要完整的传递函数信息，
+        否则无法从原始记录中准确还原地面运动物理量。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        FDSN StationXML 采用<strong>层级结构</strong>组织元数据，
+        从台网到台站，再到通道，逐级细化；同时包含方位角与仪器响应等关键参数。
+        点击下方标签查看各部分的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="network" role="tab" aria-selected="true">台网（Network）</button>
+          <button class="nga-tab-btn" data-tab="station" role="tab" aria-selected="false">台站（Station）</button>
+          <button class="nga-tab-btn" data-tab="channel" role="tab" aria-selected="false">通道（Channel）</button>
+          <button class="nga-tab-btn" data-tab="response" role="tab" aria-selected="false">响应（Response）</button>
+          <button class="nga-tab-btn" data-tab="azimuth" role="tab" aria-selected="false">方位角（Azimuth）</button>
+          <button class="nga-tab-btn" data-tab="instrument" role="tab" aria-selected="false">仪器响应校正</button>
+        </div>
+
+        <!-- 台网 -->
+        <div class="nga-tab-panel active" id="tab-network" role="tabpanel">
+          <h3>台网（Network）</h3>
+          <div class="tagline">层级结构的顶层 · 2 字符代码</div>
+          <p>
+            台网是 StationXML 层级结构的顶层，代表一个逻辑上的台站集合。
+            台网代码由 <strong>2 个字符</strong>组成，遵循 FDSN 的命名规范。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">字段</th>
+                  <th style="width:80px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Network.Code</code></td><td>string</td><td>台网代码（2 字符），如 <code>IU</code>、<code>II</code>、<code>GE</code></td></tr>
+                <tr><td><code>Network.Description</code></td><td>string</td><td>台网名称描述</td></tr>
+                <tr><td><code>Network.StartDate</code></td><td>dateTime</td><td>台网起始日期</td></tr>
+                <tr><td><code>Network.EndDate</code></td><td>dateTime</td><td>台网终止日期（留空表示仍活跃）</td></tr>
+                <tr><td><code>Network.TotalNumberStations</code></td><td>int</td><td>台网中的台站总数</td></tr>
+                <tr><td><code>Network.SelectedNumberStations</code></td><td>int</td><td>当前查询返回的台站数</td></tr>
+                <tr><td><code>Operator</code></td><td>string</td><td>运营机构名称</td></tr>
+                <tr><td><code>Contact</code></td><td>string</td><td>联系人信息（姓名、邮箱、电话）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 台站 -->
+        <div class="nga-tab-panel" id="tab-station" role="tabpanel">
+          <h3>台站（Station）</h3>
+          <div class="tagline">台网下的单个观测点 · 2–5 字符代码</div>
+          <p>
+            台站代表一个具体的观测点，包含地理位置和场地信息。
+            台站代码由 <strong>2–5 个字符</strong>组成。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:80px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Station.Code</code></td><td>string</td><td>台站代码（2–5 字符）</td></tr>
+                <tr><td><code>Station.Latitude</code></td><td>float</td><td>台站纬度（度），建议精度 6 位小数（约 10 cm）</td></tr>
+                <tr><td><code>Station.Longitude</code></td><td>float</td><td>台站经度（度）</td></tr>
+                <tr><td><code>Station.Elevation</code></td><td>float</td><td>台站高程（米）</td></tr>
+                <tr><td><code>Station.Site</code></td><td>object</td><td>场地信息，包括场地名称、国家、城市等</td></tr>
+                <tr><td><code>Station.StartDate</code></td><td>dateTime</td><td>台站安装日期（UTC）</td></tr>
+                <tr><td><code>Station.EndDate</code></td><td>dateTime</td><td>台站终止日期（留空表示仍活跃）</td></tr>
+                <tr><td><code>Station.Vault</code></td><td>string</td><td>观测室类型（如 WWSSN、CMG-3T 等）</td></tr>
+                <tr><td><code>Station.Channel</code></td><td>array</td><td>该台站下的所有通道信息</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 通道 -->
+        <div class="nga-tab-panel" id="tab-channel" role="tabpanel">
+          <h3>通道（Channel）</h3>
+          <div class="tagline">台站下的具体传感器通道 · 3 字符代码</div>
+          <p>
+            通道是 StationXML 中最细粒度的层级，描述一个具体的传感器方向。
+            通道代码由 <strong>3 个字符</strong>组成，分别代表频带码、仪器码和方向码。
+            方位角（Azimuth）和倾角（Dip）在此层级定义。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:80px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Channel.Code</code></td><td>string</td><td>通道代码（3 字符），如 BHN、BHE、BHZ</td></tr>
+                <tr><td><code>Channel.LocationCode</code></td><td>string</td><td>位置代码（2 字符），区分同一台站的不同安装位置</td></tr>
+                <tr><td><code>Channel.Latitude</code></td><td>float</td><td>通道纬度（可与台站纬度不同）</td></tr>
+                <tr><td><code>Channel.Longitude</code></td><td>float</td><td>通道经度</td></tr>
+                <tr><td><code>Channel.Elevation</code></td><td>float</td><td>通道高程（米）</td></tr>
+                <tr><td><code>Channel.Depth</code></td><td>float</td><td>传感器安装深度（米），井下台站尤为重要</td></tr>
+                <tr><td><code>Channel.Azimuth</code></td><td>float</td><td><strong>方位角</strong>（度），从正北顺时针旋转的角度</td></tr>
+                <tr><td><code>Channel.Dip</code></td><td>float</td><td><strong>倾角</strong>（度），从水平面向下旋转的角度</td></tr>
+                <tr><td><code>Channel.SampleRate</code></td><td>float</td><td>采样率（Hz）</td></tr>
+                <tr><td><code>Channel.StartDate</code></td><td>dateTime</td><td>通道起始日期</td></tr>
+                <tr><td><code>Channel.EndDate</code></td><td>dateTime</td><td>通道终止日期</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>通道命名规则：</strong>3 字符通道代码 = 频带码 + 仪器码 + 方向码。
+              频带码表示采样率（如 <code>B</code>=宽带、<code>H</code>=高宽带、<code>E</code>=极短周期），
+              仪器码表示传感器类型（如 <code>H</code>=加速度计、<code>N</code>=加速度计、<code>L</code>=加速度计），
+              方向码表示方位（<code>N</code>=北、<code>E</code>=东、<code>Z</code>=垂直）。
+              强震动加速度计常用 <code>HN</code> 或 <code>BN</code> 前缀。
+            </div>
+          </div>
+        </div>
+
+        <!-- 响应 -->
+        <div class="nga-tab-panel" id="tab-response" role="tabpanel">
+          <h3>响应（Response）</h3>
+          <div class="tagline">仪器传递函数 · 物理量还原的关键</div>
+          <p>
+            响应描述通道的仪器传递函数，是<strong>从原始 counts 还原地面运动物理量</strong>
+            的核心信息。StationXML 支持多种响应描述方式，
+            包括 Poles and Zeros（PAZ）、系数（Coefficients）和 FIR 滤波器。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>InstrumentSensitivity</code></td><td>总灵敏度：将 counts 转换为物理量的比例因子</td></tr>
+                <tr><td><code>InputUnits</code></td><td>输入单位（如 m/s²、m/s、m）</td></tr>
+                <tr><td><code>OutputUnits</code></td><td>输出单位（通常为 counts）</td></tr>
+                <tr><td><code>Stage</code></td><td>响应阶段：每个阶段描述一个处理单元（传感器、前置放大器、采集器）</td></tr>
+                <tr><td><code>PolesAndZeros</code></td><td>模拟响应：以极点和零点形式描述</td></tr>
+                <tr><td><code>Coefficients</code></td><td>数字响应：以系数形式描述 FIR 或 IIR 滤波器</td></tr>
+                <tr><td><code>NormalizationFactor</code></td><td>归一化因子，用于单位转换</td></tr>
+                <tr><td><code>NormalizationFrequency</code></td><td>归一化频率（Hz）</td></tr>
+                <tr><td><code>Sensor</code></td><td>传感器信息：厂商、型号、序列号</td></tr>
+                <tr><td><code>Datalogger</code></td><td>数据采集器信息：厂商、型号、序列号</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 方位角 -->
+        <div class="nga-tab-panel" id="tab-azimuth" role="tabpanel">
+          <h3>方位角（Azimuth）</h3>
+          <div class="tagline">传感器指向 · 分量旋转的前提</div>
+          <p>
+            <strong>方位角（Azimuth）</strong>是台站元数据中最关键的参数之一。
+            它定义为<strong>从正北方向开始，顺时针旋转到传感器水平分量指向的角度</strong>，
+            取值范围为 0°–360°。
+          </p>
+          <h4>为什么方位角至关重要</h4>
+          <ul class="plain">
+            <li><strong>分量旋转：</strong>现代地震学研究通常将三分量记录旋转至
+                径向（Radial）和切向（Transverse）分量，以分离不同类型的体波。
+                两个水平分量的方位角信息是保证旋转正确的关键。</li>
+            <li><strong>震相识别：</strong>方位角错误会导致 P 波在切向分量上出现虚假能量，
+                影响震相识别和震源机制反演。</li>
+            <li><strong>场地效应分析：</strong>在水平-竖向谱比（HVSR）等场地效应方法中，
+                方位角偏差会影响水平分量的正确合成。</li>
+          </ul>
+          <h4>方位角的获取与校正</h4>
+          <ul class="plain">
+            <li><strong>安装记录：</strong>台站安装时使用罗盘测量传感器指向，记录在元数据中。</li>
+            <li><strong>P 波质点运动法：</strong>基于远场 P 波质点运动，
+                通过最小能量法或主成分分析法测定实际方位角。</li>
+            <li><strong>背景噪声法：</strong>利用背景噪声的互相关或极化分析估计方位角偏差。</li>
+            <li><strong>中国测震站网方位角数据集：</strong>
+                国家地震科学数据中心发布了基于 P 波质点运动测定的
+                952 个宽频带台站最佳方位角数值解。</li>
+          </ul>
+          <div class="callout">
+            <strong>方位角与后方位角的区别：</strong>
+            <strong>方位角（Azimuth）</strong>描述的是<strong>传感器指向</strong>，
+            是台站本身的属性；<strong>后方位角（Back-Azimuth）</strong>描述的是
+            <strong>从台站看向震中的方向</strong>，是事件与台站的相对几何关系。
+            两者含义不同，使用时应明确区分。
+          </div>
+        </div>
+
+        <!-- 仪器响应校正 -->
+        <div class="nga-tab-panel" id="tab-instrument" role="tabpanel">
+          <h3>仪器响应校正</h3>
+          <div class="tagline">从 counts 到物理量 · 响应去卷积</div>
+          <p>
+            仪器响应是描述<strong>从地面运动物理量到数字记录 counts 之间传递关系</strong>
+            的数学函数。不进行响应校正，波形数据无法用于物理量分析。
+          </p>
+          <h4>响应描述方式</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">方式</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Poles and Zeros（PAZ）</strong></td><td>以极点和零点形式描述模拟响应，适用于传感器和模拟滤波器。</td></tr>
+                <tr><td><strong>Coefficients</strong></td><td>以系数形式描述数字 FIR 或 IIR 滤波器。</td></tr>
+                <tr><td><strong>FIR 滤波器</strong></td><td>有限脉冲响应滤波器，常用于数据采集器的抽取滤波。</td></tr>
+                <tr><td><strong>Polynomial</strong></td><td>多项式响应，用于某些特殊传感器。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h4>响应校正流程</h4>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">获取 StationXML 元数据</div>
+                <div class="flow-desc">通过 FDSN station Web 服务下载目标台站的 StationXML 文件。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">读取波形数据</div>
+                <div class="flow-desc">以 MiniSEED 或 SAC 格式读取原始波形。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">去除仪器响应</div>
+                <div class="flow-desc">
+                  使用 ObsPy 的 <code>remove_response()</code> 方法，
+                  或 SAC 的 <code>transfer</code> 命令进行去卷积。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">验证结果</div>
+                <div class="flow-desc">
+                  检查校正后的波形是否合理（如 PGA 量级、频谱形状），
+                  并与已知结果对比。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 标签切换脚本 -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        台站元数据通过各数据中心提供的 FDSN <code>station</code> Web 服务获取。
+        全球有 <strong>50 多个</strong> FDSN 注册数据中心提供 StationXML 格式的台站元数据，
+        以下按类别列出其中主要的数据中心，每项均包含格式支持、网站与说明。
+        完整列表可查阅 <a href="https://www.fdsn.org/datacenters/" target="_blank" rel="noopener noreferrer">FDSN 数据中心注册表</a>。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="global" role="tab" aria-selected="true">全球性</button>
+          <button class="nga-tab-btn" data-tab="europe" role="tab" aria-selected="false">欧洲区域</button>
+          <button class="nga-tab-btn" data-tab="namerica" role="tab" aria-selected="false">北美区域</button>
+          <button class="nga-tab-btn" data-tab="asia" role="tab" aria-selected="false">亚太区域</button>
+          <button class="nga-tab-btn" data-tab="other" role="tab" aria-selected="false">其他区域</button>
+        </div>
+
+        <!-- 全球性 -->
+        <div class="nga-tab-panel active" id="tab-global" role="tabpanel">
+          <h3>全球性数据中心</h3>
+          <div class="tagline">数据覆盖全球 · FDSN station 服务标准</div>
+          <p>
+            全球性数据中心的台站元数据覆盖世界各地台网，以 FDSN <code>station</code>
+            Web 服务提供统一接口，返回 StationXML 格式。
+            适合研究区域不固定、或需要跨区域比较的场景。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>IRIS DMC / EarthScope</strong></td>
+                  <td>StationXML · 文本 · RESP · SAC PZ</td>
+                  <td><a href="https://service.iris.edu/fdsnws/station/1/" target="_blank" rel="noopener noreferrer">service.iris.edu</a></td>
+                  <td>全球覆盖最广的元数据源。<code>fdsnws-station</code> 服务返回 StationXML v1.1 或文本格式，
+                      支持 <code>level=network/station/channel/response</code> 多层级查询。</td>
+                </tr>
+                <tr>
+                  <td><strong>GEOFON (GFZ)</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://geofon.gfz.de/" target="_blank" rel="noopener noreferrer">geofon.gfz.de</a></td>
+                  <td>德国地球科学研究中心运营，全球宽带地震台网的台站元数据。
+                      FDSN 标准接口，无需注册。</td>
+                </tr>
+                <tr>
+                  <td><strong>GEOSCOPE</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="http://geoscope.ipgp.fr" target="_blank" rel="noopener noreferrer">geoscope.ipgp.fr</a></td>
+                  <td>法国全球地震台网，提供全球范围内高质量台站的完整元数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>EMSC</strong></td>
+                  <td>StationXML（转发）</td>
+                  <td><a href="https://www.emsc-csem.org" target="_blank" rel="noopener noreferrer">emsc-csem.org</a></td>
+                  <td>欧洲-地中海地震中心，主要提供事件目录和元数据转发服务。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>引用注意：</strong>使用全球性数据中心的台站元数据时，
+              应标注<strong>原始台网代码</strong>（如 <code>IU</code>、<code>II</code>、<code>GE</code> 等），
+              而非数据中心本身。
+            </div>
+          </div>
+        </div>
+
+        <!-- 欧洲区域 -->
+        <div class="nga-tab-panel" id="tab-europe" role="tabpanel">
+          <h3>欧洲区域数据中心</h3>
+          <div class="tagline">ORFEUS EIDA 分布式网络 · 多个节点</div>
+          <p>
+            ORFEUS EIDA（European Integrated Data Archive）是欧洲的分布式数据中心网络，
+            由多个国家节点组成，通过统一 FDSN 接口提供台站元数据。
+            元数据统一采用 <strong>StationXML</strong> 格式，部分节点同时提供 dataless SEED。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:150px;">节点</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Résif-DC</strong></td>
+                  <td>StationXML · dataless SEED</td>
+                  <td><a href="https://seismology.epos-france.fr" target="_blank" rel="noopener noreferrer">seismology.epos-france.fr</a></td>
+                  <td>法国国家观测服务。提供法国及全球临时台阵的完整元数据，
+                      同时支持 dataless SEED 输出。</td>
+                </tr>
+                <tr>
+                  <td><strong>ETH / SED</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.sed.ethz.ch" target="_blank" rel="noopener noreferrer">sed.ethz.ch</a></td>
+                  <td>瑞士地震服务中心。提供瑞士及周边地区高质量台站元数据，FDSN 标准接口。</td>
+                </tr>
+                <tr>
+                  <td><strong>INGV</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.ingv.it" target="_blank" rel="noopener noreferrer">ingv.it</a></td>
+                  <td>意大利国家地球物理与火山学研究所。提供意大利及地中海区域密集台站元数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>GFZ (GEOFON)</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://geofon.gfz.de/" target="_blank" rel="noopener noreferrer">geofon.gfz.de</a></td>
+                  <td>德国地球科学研究中心。同时作为全球性数据中心和 EIDA 节点提供服务。</td>
+                </tr>
+                <tr>
+                  <td><strong>KNMI</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.knmi.nl" target="_blank" rel="noopener noreferrer">knmi.nl</a></td>
+                  <td>荷兰皇家气象研究所。提供荷兰及周边区域台站与形变观测元数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>NIEP</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.niep.ro" target="_blank" rel="noopener noreferrer">niep.ro</a></td>
+                  <td>罗马尼亚国家地球物理研究所。提供东欧 Vrancea 地震带台站元数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>KOERI</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.koeri.boun.edu.tr" target="_blank" rel="noopener noreferrer">koeri.boun.edu.tr</a></td>
+                  <td>土耳其海峡大学坎迪利天文台与地震研究所。提供土耳其及中东区域台站元数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>NOA</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.noa.gr" target="_blank" rel="noopener noreferrer">noa.gr</a></td>
+                  <td>希腊国家天文台。提供希腊及爱琴海区域地震台网元数据。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>统一入口：</strong>EIDA 提供统一的服务入口
+              <a href="https://www.orfeus-eu.org/fdsnws/station/1/query" target="_blank" rel="noopener noreferrer">orfeus-eu.org/fdsnws/station/1/query</a>，
+              可一次性查询多个节点的元数据。
+            </div>
+          </div>
+        </div>
+
+        <!-- 北美区域 -->
+        <div class="nga-tab-panel" id="tab-namerica" role="tabpanel">
+          <h3>北美区域数据中心</h3>
+          <div class="tagline">加州、阿拉斯加、加拿大 · 强震动元数据集中</div>
+          <p>
+            北美的区域数据中心以加州地区最为成熟，是强震动研究的重要元数据源。
+            这些中心均提供 StationXML 格式的台站元数据，
+            部分配套 RESP 和 SAC PZ 格式的响应文件。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>NCEDC</strong></td>
+                  <td>StationXML · RESP · SAC PZ</td>
+                  <td><a href="https://ncedc.org" target="_blank" rel="noopener noreferrer">ncedc.org</a></td>
+                  <td>北加州地震数据中心。提供 StationXML 和 RESP 格式元数据，
+                      并配套 SAC PZ 格式的仪器响应。</td>
+                </tr>
+                <tr>
+                  <td><strong>SCEDC</strong></td>
+                  <td>StationXML · RESP</td>
+                  <td><a href="https://scedc.caltech.edu" target="_blank" rel="noopener noreferrer">scedc.caltech.edu</a></td>
+                  <td>南加州地震数据中心。提供南加州密集台网的 StationXML 元数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>AEIC</strong></td>
+                  <td>StationXML · RESP</td>
+                  <td><a href="https://www.aeic.alaska.edu" target="_blank" rel="noopener noreferrer">aeic.alaska.edu</a></td>
+                  <td>阿拉斯加地震中心。提供阿拉斯加地区台站元数据，适合俯冲带研究。</td>
+                </tr>
+                <tr>
+                  <td><strong>Canadian National Seismograph Network</strong></td>
+                  <td>StationXML · RESP</td>
+                  <td><a href="https://www.earthquakescanada.nrcan.gc.ca" target="_blank" rel="noopener noreferrer">earthquakescanada.nrcan.gc.ca</a></td>
+                  <td>加拿大国家地震台网数据中心，由 Natural Resources Canada 运营。</td>
+                </tr>
+                <tr>
+                  <td><strong>IRIS DMC（北美整合）</strong></td>
+                  <td>StationXML · 文本 · RESP</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>IRIS DMC 本身是北美主入口，同时整合了以上区域中心的元数据。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 亚太区域 -->
+        <div class="nga-tab-panel" id="tab-asia" role="tabpanel">
+          <h3>亚太区域数据中心</h3>
+          <div class="tagline">中国、日本、台湾、新西兰 · 台站元数据丰富</div>
+          <p>
+            亚太区域地震活动性强，数据中心众多。
+            这些中心的元数据格式和获取方式差异较大，需根据实际需求选择。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:170px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>国家地震科学数据中心</strong></td>
+                  <td>台站元数据 · 方位角数据集</td>
+                  <td><a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">data.earthquake.cn</a></td>
+                  <td>中国测震台网台站元数据。包含台站坐标、场地类别、参考 Vs30。
+                      已发布 952 个宽频带台站的最佳方位角数据集。需实名注册。</td>
+                </tr>
+                <tr>
+                  <td><strong>NIED (日本)</strong></td>
+                  <td>台站信息 · PS 测井 · 场地数据</td>
+                  <td><a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">kyoshin.bosai.go.jp</a></td>
+                  <td>K-NET / KiK-net 台网。提供台站坐标、井下-地表台对信息、
+                      钻孔柱状图与 PS 测井数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>IESDMC (台湾)</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="http://batsws.earth.sinica.edu.tw" target="_blank" rel="noopener noreferrer">batsws.earth.sinica.edu.tw</a></td>
+                  <td>台湾中央研究院地球科学研究所数据管理中心，FDSN 注册中心。</td>
+                </tr>
+                <tr>
+                  <td><strong>GeoNet (新西兰)</strong></td>
+                  <td>StationXML · RESP</td>
+                  <td><a href="https://www.geonet.org.nz/" target="_blank" rel="noopener noreferrer">geonet.org.nz</a></td>
+                  <td>新西兰国家地震台网，FDSN 注册中心，元数据开放获取。</td>
+                </tr>
+                <tr>
+                  <td><strong>GEOFON（亚太镜像）</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://geofon.gfz.de/" target="_blank" rel="noopener noreferrer">geofon.gfz.de</a></td>
+                  <td>GEOFON 在亚太地区有部分台站元数据，可作为区域补充。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 其他区域 -->
+        <div class="nga-tab-panel" id="tab-other" role="tabpanel">
+          <h3>其他区域数据中心</h3>
+          <div class="tagline">中美洲 · 南美 · 中东 · 非洲</div>
+          <p>
+            其他区域也有各自的数据中心，提供本地台网的元数据。
+            这些中心多为 FDSN 注册节点，可通过标准 Web 服务访问。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>CATAC</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://catac.ineter.gob.ni" target="_blank" rel="noopener noreferrer">catac.ineter.gob.ni</a></td>
+                  <td>中美洲火山与地震观测中心，覆盖尼加拉瓜及周边区域。</td>
+                </tr>
+                <tr>
+                  <td><strong>IRIS DMC（南美镜像）</strong></td>
+                  <td>StationXML · 文本 · RESP</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>南美区域数据主要通过 IRIS DMC 获取，含智利、秘鲁等国台网。</td>
+                </tr>
+                <tr>
+                  <td><strong>KOERI</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.koeri.boun.edu.tr" target="_blank" rel="noopener noreferrer">koeri.boun.edu.tr</a></td>
+                  <td>土耳其海峡大学坎迪利天文台，覆盖土耳其及中东区域。</td>
+                </tr>
+                <tr>
+                  <td><strong>NIEP</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://www.niep.ro" target="_blank" rel="noopener noreferrer">niep.ro</a></td>
+                  <td>罗马尼亚国家地球物理研究所，覆盖东欧 Vrancea 地震带。</td>
+                </tr>
+                <tr>
+                  <td><strong>SAF / IRIS 非洲节点</strong></td>
+                  <td>StationXML · 文本</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>非洲区域元数据主要通过 IRIS DMC 访问，本地台网逐渐加入 FDSN。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>数据获取建议：</strong>对于非主要区域的研究，
+              优先使用 IRIS DMC 或 GEOFON 的全球覆盖；
+              如需要本地化元数据，可通过 FDSN 注册表查询该区域是否有专属数据中心。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>选择数据中心的三个原则：</strong>
+        <strong>① 区域优先</strong> — 目标区域覆盖是首要因素，本地中心元数据通常最完整；
+        <strong>② 格式匹配</strong> — 确认中心是否直接提供 StationXML，
+        或需要额外转换；
+        <strong>③ 引用规范</strong> — 各中心的引用要求不同，使用前应阅读其数据政策。
+      </div>
+
+      <!-- 标签切换脚本 -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        不同数据中心获取台站元数据的流程差异显著。以下以三种典型模式为例，
+        点击标签查看详细流程。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="open" role="tab" aria-selected="true">开放 Web 服务型</button>
+          <button class="nga-tab-btn" data-tab="order" role="tab" aria-selected="false">订单审批型</button>
+          <button class="nga-tab-btn" data-tab="convert" role="tab" aria-selected="false">格式转换型</button>
+        </div>
+
+        <!-- 开放 Web 服务型 -->
+        <div class="nga-tab-panel active" id="tab-open" role="tabpanel">
+          <h3>开放 Web 服务型</h3>
+          <div class="tagline">IRIS DMC · ORFEUS EIDA · GEOFON</div>
+          <p>
+            适用于开放数据，通过 FDSN station Web 服务直接调用，无需注册。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">确定目标数据中心与台站</div>
+                <div class="flow-desc">按研究区域选择数据中心，确定台网、台站、通道和时间范围。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">调用 FDSN station 服务</div>
+                <div class="flow-desc">
+                  构造请求 URL，指定 <code>level=response</code> 获取完整响应信息。
+                  可指定 <code>format=xml</code> 或 <code>format=text</code>。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载元数据</div>
+                <div class="flow-desc">
+                  使用浏览器、<code>wget</code>、<code>curl</code> 或 ObsPy 的
+                  <code>obspy.clients.fdsn</code> 下载 StationXML 文件。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">读取与使用</div>
+                <div class="flow-desc">
+                  使用 ObsPy 读取 StationXML，配合波形数据
+                  完成响应校正与分量旋转。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 订单审批型 -->
+        <div class="nga-tab-panel" id="tab-order" role="tabpanel">
+          <h3>订单审批型</h3>
+          <div class="tagline">国家地震科学数据中心</div>
+          <p>
+            适用于需要实名注册与人工审批的国家级数据中心。
+            以国家地震科学数据中心为例。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">实名注册</div>
+                <div class="flow-desc">进入数据中心网站，完成实名注册，填写个人信息和单位信息。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">确定用户等级</div>
+                <div class="flow-desc">
+                  普通用户（一级数据）/ 高级用户（二、三级数据，需签字盖章申请）/
+                  团队用户（需签署协议）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">提交数据订单</div>
+                <div class="flow-desc">
+                  填写数据订单、使用用途、上传证明材料，
+                  等待人工审核（一般 1 个工作日处理，3–5 天完成）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">选择服务方式并获取</div>
+                <div class="flow-desc">
+                  在线下载 / 邮件发送 / 硬盘邮寄（大数据量）。
+                  下载台站元数据与方位角数据集。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 格式转换型 -->
+        <div class="nga-tab-panel" id="tab-convert" role="tabpanel">
+          <h3>格式转换型</h3>
+          <div class="tagline">StationXML → dataless SEED / RESP / SAC PZ</div>
+          <p>
+            StationXML 是主流格式，但部分旧版软件（如 SAC、rdseed）
+            需要 dataless SEED、RESP 或 SAC PZ 格式。
+            此时需进行格式转换。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">下载 StationXML</div>
+                <div class="flow-desc">通过 FDSN station 服务下载完整的 StationXML 文件。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">使用转换工具</div>
+                <div class="flow-desc">
+                  使用 IRIS 的 <strong>StationXML Converter</strong>
+                  （<code>stationxml-converter</code>）工具进行转换。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">选择输出格式</div>
+                <div class="flow-desc">
+                  可输出为 <strong>dataless SEED</strong>、
+                  <strong>RESP</strong> 或 <strong>SAC PZ</strong> 格式。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">验证转换结果</div>
+                <div class="flow-desc">
+                  检查转换后的响应函数与原始 StationXML 是否一致。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 标签切换脚本 -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 元数据格式对比</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px;">格式</th>
+              <th style="width:140px;">类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>StationXML</strong></td>
+              <td>XML</td>
+              <td>FDSN 标准格式，结构化程度最高，支持完整响应描述</td>
+            </tr>
+            <tr>
+              <td><strong>dataless SEED</strong></td>
+              <td>二进制</td>
+              <td>传统 SEED 格式的元数据部分，正逐渐被 StationXML 取代</td>
+            </tr>
+            <tr>
+              <td><strong>RESP</strong></td>
+              <td>文本</td>
+              <td>IRIS 定义的响应描述格式，可由 StationXML 转换得到</td>
+            </tr>
+            <tr>
+              <td><strong>SAC PZ</strong></td>
+              <td>文本</td>
+              <td>SAC 专用 Poles and Zeros 格式</td>
+            </tr>
+            <tr>
+              <td><strong>文本表格</strong></td>
+              <td>文本</td>
+              <td>分隔文本格式，仅包含台站基础信息，不含响应</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">2. 关键字段速查</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">字段</th>
+              <th style="width:100px;">所属层级</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Network.Code</code></td><td>台网</td><td>2 字符台网代码</td></tr>
+            <tr><td><code>Station.Code</code></td><td>台站</td><td>2–5 字符台站代码</td></tr>
+            <tr><td><code>Station.Latitude</code></td><td>台站</td><td>台站纬度（度）</td></tr>
+            <tr><td><code>Station.Longitude</code></td><td>台站</td><td>台站经度（度）</td></tr>
+            <tr><td><code>Station.Elevation</code></td><td>台站</td><td>台站高程（米）</td></tr>
+            <tr><td><code>Channel.Code</code></td><td>通道</td><td>3 字符通道代码</td></tr>
+            <tr><td><code>Channel.Azimuth</code></td><td>通道</td><td><strong>方位角</strong>（度）</td></tr>
+            <tr><td><code>Channel.Dip</code></td><td>通道</td><td><strong>倾角</strong>（度）</td></tr>
+            <tr><td><code>Channel.SampleRate</code></td><td>通道</td><td>采样率（Hz）</td></tr>
+            <tr><td><code>Channel.Depth</code></td><td>通道</td><td>传感器深度（米）</td></tr>
+            <tr><td><code>InstrumentSensitivity</code></td><td>响应</td><td>总灵敏度（counts/物理单位）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">3. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">元数据内容</div>
+          <div class="chips">
+            <span class="chip">台网信息</span>
+            <span class="chip">台站坐标</span>
+            <span class="chip">场地信息</span>
+            <span class="chip">通道方位角</span>
+            <span class="chip blue">仪器响应</span>
+            <span class="chip blue">传感器型号</span>
+            <span class="chip blue">采集器信息</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">格式与工具</div>
+          <div class="chips">
+            <span class="chip">StationXML</span>
+            <span class="chip">dataless SEED</span>
+            <span class="chip">RESP</span>
+            <span class="chip">SAC PZ</span>
+            <span class="chip blue">ObsPy</span>
+            <span class="chip blue">StationXML Converter</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>元数据与波形必须匹配：</b>
+          下载波形时，必须同时获取该台站<strong>对应时间段</strong>的元数据。
+          台站配置可能随时间变化（传感器更换、方位角调整等），
+          使用过期元数据会导致响应校正错误。
+        </li>
+        <li>
+          <b>方位角是分量旋转的前提：</b>
+          三分量旋转至径向和切向分量时，
+          两个水平分量的方位角信息是保证旋转正确的关键。
+          方位角错误会导致 P 波在切向分量上出现虚假能量。
+        </li>
+        <li>
+          <b>方位角与后方位角不同：</b>
+          <strong>方位角（Azimuth）</strong>是传感器指向的台站属性；
+          <strong>后方位角（Back-Azimuth）</strong>是从台站看向震中的方向。
+          两者含义不同，使用时应明确区分。
+        </li>
+        <li>
+          <b>仪器响应必须去除：</b>
+          原始记录以 counts 为单位存储，
+          必须使用 StationXML 中的响应函数进行去卷积，
+          才能得到物理量（加速度、速度、位移）。
+        </li>
+        <li>
+          <b>StationXML 正在取代 dataless SEED：</b>
+          FDSN 已将 StationXML 作为推荐标准，
+          主流数据中心均以 StationXML 为主要元数据格式。
+          如需要 dataless SEED，可使用 StationXML Converter 转换。
+        </li>
+        <li>
+          <b>响应层级可选择：</b>
+          FDSN station 服务支持 <code>level</code> 参数，
+          可选择返回 <code>network</code>、<code>station</code>、
+          <code>channel</code> 或 <code>response</code> 粒度的结果。
+          需要完整响应时选择 <code>level=response</code>。
+        </li>
+        <li>
+          <b>中国台站方位角有独立数据集：</b>
+          国家地震科学数据中心发布了基于 P 波质点运动测定的
+          952 个宽频带台站最佳方位角数值解，
+          使用中国台站数据时应优先采用该数据集。
+        </li>
+        <li>
+          <b>推荐使用 ObsPy：</b>
+          ObsPy 的 <code>obspy.clients.fdsn.Client</code>
+          可直接从各数据中心获取台站元数据，
+          并提供 <code>remove_response()</code> 等方法进行响应校正。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        使用台站元数据时，建议引用 FDSN StationXML 标准文档和具体的数据中心。
+      </p>
+
+      <h3 class="sub">FDSN StationXML 标准引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@misc{FDSNStationXML,
+  title        = {FDSN StationXML Schema},
+  author       = {{International Federation of Digital Seismograph Networks}},
+  howpublished = {\url{https://www.fdsn.org/xml/station/}},
+  note         = {A metadata standard for seismological and related data}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">dataless SEED 标准引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{IRIS2012,
+  title       = {SEED Reference Manual, Version 2.4},
+  author      = {{Incorporated Research Institutions for Seismology}},
+  year        = {2012},
+  institution = {IRIS Consortium},
+  address     = {Seattle, WA}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">各数据中心的引用要求</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">数据中心</th>
+              <th>引用要求</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>IRIS DMC</strong></td>
+              <td>引用<strong>原始台网代码</strong>（如 IU、II、GE 等），而非 IRIS 本身。</td>
+            </tr>
+            <tr>
+              <td><strong>ORFEUS EIDA</strong></td>
+              <td>引用<strong>具体的 EIDA 节点</strong>及其数据集 DOI（如有）。</td>
+            </tr>
+            <tr>
+              <td><strong>国家地震科学数据中心</strong></td>
+              <td>必须标注“中国地震局工程力学研究所‘国家强震动台网中心’为本研究提供数据支持”。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>通用原则：</strong>无论使用哪个数据中心，都应在论文中
+          <strong>明确标注元数据来源</strong>，并在致谢中感谢数据提供单位。
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>致谢格式：</strong>在论文致谢中，如使用多个数据中心的元数据，
+        应逐一列出。例如：
+        “台站元数据来自 IRIS DMC 的 IU 台网 StationXML 文件，
+        以及国家地震科学数据中心的台站方位角数据集。”
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · 台站元数据与方位角
+    </footer>
+
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

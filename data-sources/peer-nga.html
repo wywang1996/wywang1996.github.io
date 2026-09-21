@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEER NGA 数据库 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#nga-series" class="nav-parent">NGA 数据库系列</a></li>
+      <li><a href="#flowchart" class="nav-parent">下载流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">下载注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">PEER NGA 数据库</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>PEER NGA 数据库</h1>
+      <p class="lead">
+        太平洋地震工程研究中心（PEER）下一代衰减（NGA）项目整理的全球强震动记录库，
+        包含数千条统一处理的加速度时程及配套震源、路径与场地元数据，
+        是 GMPE 标定与结构选波的主要数据源。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">强震动记录</span>
+        <span class="pill">全球</span>
+        <span class="pill blue">GMPE 标定</span>
+        <span class="pill">统一处理</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>PEER NGA</strong> 全称 <em>Next Generation Attenuation</em>，
+        是由美国太平洋地震工程研究中心（Pacific Earthquake Engineering Research Center,
+        PEER）牵头、多机构联合资助的<strong>强震动数据库与地震动预测模型研究计划</strong>。
+        项目于 2003 年启动，核心目标是为工程界提供一套<strong>统一处理、元数据完整、
+        跨区域可比</strong>的强震动记录集，并在此基础上开发新一代地震动预测方程（GMPE）。
+        该项目由 USGS、加州交通部（Caltrans）、加州能源委员会（CEC）、
+        美国核管理委员会（NRC）等多家机构资助。
+      </p>
+
+      <p>
+        区别于分散在各地台网的原始记录，NGA 数据库的核心价值在于
+        <strong>统一的数据处理流程</strong>：所有记录均经过同一套基线校正、
+        滤波与谱计算程序处理，避免了跨台网记录因处理标准不一致而引入的系统偏差。
+        每条记录均配套完整的元数据（震源、路径、场地、强度指标），
+        并以关系型数据表的形式组织，可直接用于统计分析。
+      </p>
+
+      <h3 class="sub">数据处理流程</h3>
+      <p>所有收录记录均经过以下标准化处理：</p>
+      <ul class="plain">
+        <li><strong>基线校正：</strong>采用分段线性或多项式方法消除加速度时程的基线漂移，确保积分得到的速度与位移时程在物理上合理。</li>
+        <li><strong>滤波：</strong>使用因果（causal）或非因果（acausal）Butterworth 滤波器，按记录信噪比选择高通与低通截止频率。</li>
+        <li><strong>谱计算：</strong>计算 5% 阻尼比伪绝对谱加速度（PSA），周期范围 0.01–10 s；同时提供不同阻尼比（0.5%–30%）与 RotDnn 旋转分量谱。</li>
+        <li><strong>强度指标：</strong>提取 PGA、PGV、PGD、Arias 强度（Ia）、有效持时（5%–95% 与 5%–75%）、卓越周期等。</li>
+        <li><strong>元数据整编：</strong>统一震级标度（以 Mw 为主）、距离定义（Rjb、Rrup、R_x 等）与场地参数（Vs30、场地类别）。</li>
+      </ul>
+
+      <h3 class="sub">使用要点</h3>
+      <ul class="plain">
+        <li><strong>下载限制：</strong>PEER 对记录下载数量有严格限制（约每两周 200 条），选波前应先明确筛选条件。</li>
+        <li><strong>未调比例记录：</strong>下载的时程为未调比例（UNSCALED）版本，如需匹配目标谱，应使用网站提供的 scaling 工具计算比例因子，再在分析软件中应用。</li>
+        <li><strong>未旋转记录：</strong>时程文件为台站原始 H1 / H2 / V 方向，RotDnn 谱需通过网站查询，不包含在时程文件中。</li>
+        <li><strong>构造环境匹配：</strong>NGA 项目包含 West、East、Sub 等多个子库，选波时需根据目标场址的构造环境选择对应数据库。</li>
+        <li><strong>版本记录：</strong>数据库会持续更新，论文中应注明所用数据版本与获取日期。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>提示：</strong>本页重点介绍 <strong>NGA-West2</strong>（当前主力数据库），
+        NGA 系列其他成员（West1、East、Sub、West3）的详情请见下一节。
+      </div>
+    </section>
+
+    <!-- ===== NGA 数据库系列 ===== -->
+    <section id="nga-series">
+      <div class="section-head">
+        <span class="section-label">NGA Series</span>
+        <h2>NGA 数据库系列</h2>
+      </div>
+      <p>
+        PEER NGA 并非单一数据库，而是一个<strong>针对不同地震构造环境</strong>的数据库系列。
+        除了本页重点介绍的 <strong>NGA-West2</strong>，该系列还包括 NGA-West1、NGA-East、
+        NGA-Sub 以及正在开发中的 NGA-West3。点击下方标签查看每个数据库的详情。
+      </p>
+
+      <div class="nga-tabs">
+        <!-- 标签按钮 -->
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="west2" role="tab" aria-selected="true">NGA-West2</button>
+          <button class="nga-tab-btn" data-tab="west1" role="tab" aria-selected="false">NGA-West1</button>
+          <button class="nga-tab-btn" data-tab="east" role="tab" aria-selected="false">NGA-East</button>
+          <button class="nga-tab-btn" data-tab="sub" role="tab" aria-selected="false">NGA-Sub</button>
+          <button class="nga-tab-btn" data-tab="west3" role="tab" aria-selected="false">NGA-West3</button>
+        </div>
+
+        <!-- 面板 1：NGA-West2 -->
+        <div class="nga-tab-panel active" id="tab-west2" role="tabpanel">
+          <h3>NGA-West2</h3>
+          <div class="tagline">浅地壳活动构造区 · 当前主力数据库</div>
+          <p>
+            在 NGA-West1 基础上扩充了 2000 年后全球活动构造区的浅地壳地震记录，
+            并新增加州 1998–2011 年间的小到中等震级事件，记录数量扩大为 West1 的 6 倍。
+            是目前学术界和工程界使用最广泛的 NGA 数据库。
+          </p>
+          <div class="nga-meta">
+            <div class="nga-meta-item"><div class="k">Events</div><div class="v">599</div></div>
+            <div class="nga-meta-item"><div class="k">Records</div><div class="v">21,336</div></div>
+            <div class="nga-meta-item"><div class="k">Coverage</div><div class="v">全球活动构造区</div></div>
+            <div class="nga-meta-item"><div class="k">Period</div><div class="v">0.01–10 s</div></div>
+            <div class="nga-meta-item"><div class="k">Damping</div><div class="v">0.5%–30%</div></div>
+            <div class="nga-meta-item"><div class="k">Status</div><div class="v"><span class="nga-status current">当前主力</span></div></div>
+          </div>
+          <p>
+            <strong>新增重要事件：</strong>2008 年汶川 Mw7.9、2010 年 Darfield Mw7.0、
+            2011 年 Christchurch Mw6.1、2010 年 El Mayor-Cucapah Mw7.2 等。
+            谱加速度提供 RotDnn 旋转分量谱（含 RotD50、RotD100）。
+          </p>
+        </div>
+
+        <!-- 面板 2：NGA-West1 -->
+        <div class="nga-tab-panel" id="tab-west1" role="tabpanel">
+          <h3>NGA-West1</h3>
+          <div class="tagline">浅地壳活动构造区 · 已被 West2 取代</div>
+          <p>
+            整个 NGA 系列的起点，由 PEER 在 2003 年前后完成。首次系统性地整理了全球
+            活动构造区浅地壳地震的强震动记录，并在此基础上开发了第一代 NGA 地震动预测方程（GMPE）。
+          </p>
+          <div class="nga-meta">
+            <div class="nga-meta-item"><div class="k">Events</div><div class="v">173</div></div>
+            <div class="nga-meta-item"><div class="k">Records</div><div class="v">3,551</div></div>
+            <div class="nga-meta-item"><div class="k">Coverage</div><div class="v">全球（以加州为主）</div></div>
+            <div class="nga-meta-item"><div class="k">Status</div><div class="v"><span class="nga-status retired">已退役</span></div></div>
+          </div>
+          <p>
+            数据来源以加州为主，同时覆盖日本、台湾、土耳其、希腊等地区。
+            NGA-West1 的 GMPE 曾被 USGS 采用于美国国家地震危险性图，
+            但该数据库已被 NGA-West2 全面取代，PEER 不再单独提供访问。
+          </p>
+        </div>
+
+        <!-- 面板 3：NGA-East -->
+        <div class="nga-tab-panel" id="tab-east" role="tabpanel">
+          <h3>NGA-East</h3>
+          <div class="tagline">稳定大陆区 · 北美中部与东部</div>
+          <p>
+            针对北美中部与东部（CENA）的<strong>稳定大陆区（SCR）</strong>地震。
+            这类区域地震活动性低、强震动记录稀缺，与活动构造区的衰减特性差异显著。
+            由 PEER 协调，美国核管理委员会（NRC）、能源部（DOE）、
+            电力研究院（EPRI）和 USGS 联合资助。
+          </p>
+          <div class="nga-meta">
+            <div class="nga-meta-item"><div class="k">Events</div><div class="v">81</div></div>
+            <div class="nga-meta-item"><div class="k">Records</div><div class="v">29,000+</div></div>
+            <div class="nga-meta-item"><div class="k">Magnitude</div><div class="v">M2.5–M7.6</div></div>
+            <div class="nga-meta-item"><div class="k">Max Distance</div><div class="v">1,500 km</div></div>
+            <div class="nga-meta-item"><div class="k">Period</div><div class="v">0.01–10 s</div></div>
+            <div class="nga-meta-item"><div class="k">Status</div><div class="v"><span class="nga-status current">已发布</span></div></div>
+          </div>
+          <p>
+            时间范围自 1988 年至今，是稳定大陆区已处理强震动记录中规模最大的数据库。
+            除 5% 阻尼 PSA 外，还提供傅里叶振幅谱（FAS）。
+            访问入口位于 NGA-West2 网站内部，需在项目选择中选择 “NGA-East”。
+          </p>
+        </div>
+
+        <!-- 面板 4：NGA-Sub -->
+        <div class="nga-tab-panel" id="tab-sub" role="tabpanel">
+          <h3>NGA-Sub</h3>
+          <div class="tagline">俯冲带 · NGA 系列中规模最大</div>
+          <p>
+            第一个专门针对<strong>俯冲带地震</strong>的 NGA 项目，同时包含
+            <strong>板间地震（interface）和板内地震（intraslab）</strong>两类事件，
+            覆盖全球七个主要俯冲带区域。
+          </p>
+          <div class="nga-meta">
+            <div class="nga-meta-item"><div class="k">Events</div><div class="v">1,880</div></div>
+            <div class="nga-meta-item"><div class="k">Records</div><div class="v">214,020</div></div>
+            <div class="nga-meta-item"><div class="k">Magnitude</div><div class="v">Mw 4–9</div></div>
+            <div class="nga-meta-item"><div class="k">Period</div><div class="v">1937–2016</div></div>
+            <div class="nga-meta-item"><div class="k">Regions</div><div class="v">7 个俯冲带</div></div>
+            <div class="nga-meta-item"><div class="k">Status</div><div class="v"><span class="nga-status current">已发布</span></div></div>
+          </div>
+          <p>
+            <strong>覆盖区域：</strong>阿拉斯加、中美与墨西哥、Cascadia、日本、
+            新西兰、南美和台湾。
+          </p>
+          <p>
+            <strong>数据组织：</strong>由于数据量巨大，NGA-Sub 采用
+            <strong>关系型数据库</strong>（23 张表）组织数据，而非传统的电子表格。
+            该项目开发了 4 个俯冲带 GMPE，其中 3 个为全球模型（含区域调整因子），
+            1 个为日本专用模型。
+          </p>
+        </div>
+
+        <!-- 面板 5：NGA-West3 -->
+        <div class="nga-tab-panel" id="tab-west3" role="tabpanel">
+          <h3>NGA-West3</h3>
+          <div class="tagline">浅地壳活动构造区 · 开发中</div>
+          <p>
+            NGA-West2 的直接后续项目，目标是为下一代 NGA GMM 提供更稳健的数据集。
+            目前已新纳入 80,000+ 条三分量记录，来自 632 个事件（震级一般大于 4.0），
+            主要集中在<strong>美国西部（以加州为主）</strong>。
+          </p>
+          <div class="nga-meta">
+            <div class="nga-meta-item"><div class="k">Events</div><div class="v">632+</div></div>
+            <div class="nga-meta-item"><div class="k">Records</div><div class="v">175,000+</div></div>
+            <div class="nga-meta-item"><div class="k">Coverage</div><div class="v">全球活动构造区</div></div>
+            <div class="nga-meta-item"><div class="k">Magnitude</div><div class="v">Mw &gt; 4.0</div></div>
+            <div class="nga-meta-item"><div class="k">Release</div><div class="v">预计 2025 年</div></div>
+            <div class="nga-meta-item"><div class="k">Status</div><div class="v"><span class="nga-status dev">开发中</span></div></div>
+          </div>
+          <p>
+            整合了意大利、日本、新西兰、台湾、阿联酋等区域合作方提供的统一处理数据。
+            总记录数超过 175,000 条，将成为 NGA-West 系列中记录数量最多、
+            区域覆盖最广的一代，计划于 2025 年内正式公开发布。
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>选波建议：</strong>
+        活动构造区浅地壳地震 → 使用 <strong>NGA-West2</strong>；
+        稳定大陆区（如美国中东部、加拿大地盾） → 使用 <strong>NGA-East</strong>；
+        俯冲带（如日本、南美、Cascadia） → 使用 <strong>NGA-Sub</strong>。
+        跨构造环境混用记录会引入难以校正的系统偏差。
+      </div>
+
+      <!-- 标签切换脚本（仅本页使用） -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 下载流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>下载流程</h2>
+      </div>
+      <p>
+        NGA 系列所有数据库共用同一个 PEER 在线平台（NGA-West2 网站），
+        通过顶部的项目选择器切换到不同子库。整体下载流程如下，各数据库的差异在步骤中标注。
+      </p>
+
+      <div class="flowchart">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-body">
+            <div class="flow-title">访问官网并注册账号</div>
+            <div class="flow-desc">
+              进入 <a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">https://ngawest2.berkeley.edu/</a>，
+              点击注册入口，使用邮箱填写注册信息。注册后网站会向邮箱发送授权确认邮件，
+              需点击确认后方可登录。<strong>所有 NGA 子库共用同一账号</strong>。
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-body">
+            <div class="flow-title">选择目标数据库</div>
+            <div class="flow-desc">
+              登录后在项目选择器中选择对应的 NGA 子库：
+              <strong>NGA-West2</strong>（浅地壳）、
+              <strong>NGA-East</strong>（稳定大陆区）、
+              <strong>NGA-Sub</strong>（俯冲带）。
+              NGA-West1 与 NGA-West3 不提供独立下载入口。
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-body">
+            <div class="flow-title">定义目标谱或筛选条件</div>
+            <div class="flow-desc">
+              两种方式：<br>
+              <strong>① 目标谱匹配：</strong>上传用户自定义谱（User Defined Spectrum），
+              系统返回 MSE 最小的记录组合（NGA-West2 与 NGA-East 支持）。<br>
+              <strong>② 参数筛选：</strong>按震级、距离、Vs30、断层类型、场地类别等条件搜索记录
+              （NGA-West2、NGA-East、NGA-Sub 均支持）。
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-body">
+            <div class="flow-title">搜索并查看记录</div>
+            <div class="flow-desc">
+              点击搜索，系统返回匹配的记录列表。可查看每条记录的 MSE、比例因子、
+              持时、Arias 强度、PGA / PGV / PGD 等参数。
+              <strong>NGA-Sub 因记录量大，建议先按区域和震级范围缩小范围</strong>。
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-body">
+            <div class="flow-title">选择记录并下载</div>
+            <div class="flow-desc">
+              勾选所需记录，点击下载。下载时选择 “Time Series Records” 获取时程数据，
+              选择 “Metadata” 获取元数据文件。
+              <strong>建议按单条记录逐一筛选下载，避免批量下载后难以识别。</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-body">
+            <div class="flow-title">获取数据文件</div>
+            <div class="flow-desc">
+              下载得到 <code>.AT2</code> 格式的加速度时程文件（每分量一个文件），
+              以及元数据文件。不同子库的元数据格式不同：
+              <strong>NGA-West2 / NGA-East</strong> 提供 Flatfile（电子表格），
+              <strong>NGA-Sub</strong> 提供关系型数据库（23 张表，SQLite 或 CSV 形式）。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>NGA-East 特殊说明：</strong>NGA-East 的访问入口位于 NGA-West2 网站内部，
+        需先登录，再在项目下拉菜单中选择 “NGA-East”。
+        NGA-East 的下载页面与 NGA-West2 略有不同，记录筛选条件增加了
+        “震中距上限 1,500 km” 的约束。
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>下载数据文件说明</h2>
+      </div>
+
+      <!-- 1. 时程文件 -->
+      <h3 class="sub">1. 时程文件（Time Series）</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">文件类型</th>
+              <th style="width:100px;">扩展名</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>加速度时程</strong></td>
+              <td><code>.AT2</code></td>
+              <td>PEER 标准格式，4 行文件头 + 5 列数据（时间、加速度等）。每个分量单独一个文件。</td>
+            </tr>
+            <tr>
+              <td><strong>速度时程</strong></td>
+              <td><code>.V2</code></td>
+              <td>在下载选项中选择速度时程时获得，格式与 AT2 类似。</td>
+            </tr>
+            <tr>
+              <td><strong>位移时程</strong></td>
+              <td><code>.D2</code></td>
+              <td>在下载选项中选择位移时程时获得。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>AT2 文件头结构：</strong>第 1 行为记录说明，第 2 行为地震名称、日期、台站信息，
+          第 3 行为数据来源与单位，第 4 行为 NPTS（点数）与 DT（时间间隔）。
+          所有 NGA 子库的时程文件采用<strong>相同的 AT2 格式</strong>。
+        </div>
+      </div>
+
+      <!-- 2. 元数据文件 -->
+      <h3 class="sub">2. 元数据文件（Metadata）</h3>
+      <p>NGA 各子库的元数据组织方式不同，对比如下：</p>
+
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:120px;">数据库</th>
+              <th style="width:130px;">元数据格式</th>
+              <th style="width:100px;">字段规模</th>
+              <th>主要内容</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>NGA-West2</strong></td>
+              <td>Flatfile（.csv / .xlsx）</td>
+              <td>130+ 列</td>
+              <td>RSN、EQID、Mw、Rjb、Rrup、Vs30、PGA、PGV、PGD、Arias 强度、持时、RotD50 谱</td>
+            </tr>
+            <tr>
+              <td><strong>NGA-East</strong></td>
+              <td>Flatfile（.csv / .xlsx）</td>
+              <td>80+ 列</td>
+              <td>事件、台站、震中距、Mw、5% 阻尼 PSA、傅里叶振幅谱（FAS）、持时</td>
+            </tr>
+            <tr>
+              <td><strong>NGA-Sub</strong></td>
+              <td>关系型数据库（23 张表）</td>
+              <td>多表关联</td>
+              <td>事件表、台站表、路径表、谱表、FAS 表、持时表等，通过外键关联</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>NGA-Sub 的关系型结构：</strong>NGA-Sub 因记录量达 21 万条，无法用单一电子表格承载，
+          因此采用 <strong>关系型数据库</strong>（23 张表）组织。
+          下载后需用 SQLite、PostgreSQL 或 Python（pandas + sqlite3）关联查询。
+          PEER 同时提供简化的“扁平化”导出，供不熟悉关系型数据库的用户使用。
+        </div>
+      </div>
+
+      <!-- 3. 反应谱与强度指标 -->
+      <h3 class="sub">3. 反应谱与强度指标</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">数据产品</th>
+              <th style="width:140px;">NGA-West2</th>
+              <th style="width:140px;">NGA-East</th>
+              <th>NGA-Sub</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>PSA 周期范围</strong></td>
+              <td>0.01–10 s（111 个周期）</td>
+              <td>0.01–10 s</td>
+              <td>0.01–10 s</td>
+            </tr>
+            <tr>
+              <td><strong>阻尼比</strong></td>
+              <td>0.5%–30%</td>
+              <td>5%（主）</td>
+              <td>5%（主）</td>
+            </tr>
+            <tr>
+              <td><strong>频谱类型</strong></td>
+              <td>RotDnn（含 RotD50、RotD100）</td>
+              <td>PSA + FAS</td>
+              <td>RotDnn + FAS</td>
+            </tr>
+            <tr>
+              <td><strong>强度指标</strong></td>
+              <td>PGA、PGV、PGD、Ia、Ds</td>
+              <td>PGA、PGV、Ia、Ds</td>
+              <td>PGA、PGV、PGD、Ia、Ds</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4. 可下载的数据种类 -->
+      <h3 class="sub">4. 可下载的数据种类</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">记录分量</div>
+          <div class="chips">
+            <span class="chip">H1 水平分量</span>
+            <span class="chip">H2 水平分量</span>
+            <span class="chip">V 竖向分量</span>
+            <span class="chip blue">RotD50 谱</span>
+            <span class="chip blue">RotD100 谱</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">数据产品</div>
+          <div class="chips">
+            <span class="chip">加速度时程</span>
+            <span class="chip">速度时程</span>
+            <span class="chip">位移时程</span>
+            <span class="chip blue">反应谱</span>
+            <span class="chip blue">FAS 谱</span>
+            <span class="chip blue">元数据</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 下载注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>下载注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>下载数量限制（各库不同）：</b>
+          NGA-West2 约 <strong>每两周 200 条记录、每月 400 条</strong>；
+          NGA-East 与 NGA-Sub 的限制相对宽松，但同样禁止批量爬取。
+          滥用下载会导致账号被限制，建议选波前先明确筛选条件。
+        </li>
+        <li>
+          <b>记录覆盖范围差异：</b>
+          NGA-West2 主要收录 <strong>Mw ≤ 7.9</strong> 且断层距 <strong>≥ 5 km</strong> 的记录；
+          NGA-East 震级范围 <strong>M2.5–M7.6</strong>，震中距最远 <strong>1,500 km</strong>；
+          NGA-Sub 震级范围 <strong>Mw 4–9</strong>，包含板间与板内两类事件。
+          选波时需注意目标场址与数据库覆盖范围的匹配。
+        </li>
+        <li>
+          <b>记录未调比例：</b>
+          所有 NGA 数据库下载的时程均为未调比例（UNSCALED）版本。
+          如需与目标谱匹配，应使用网站提供的 scaling 工具计算比例因子，
+          再在分析软件中应用。网站<strong>不会</strong>直接修改下载的时程文件。
+        </li>
+        <li>
+          <b>时程为未旋转记录：</b>
+          下载的 <code>.AT2</code> 文件为台站原始 H1 / H2 / V 方向，
+          RotDnn 谱需通过网站查询或从 Flatfile 中提取，
+          不包含在时程文件内。
+        </li>
+        <li>
+          <b>NGA-Sub 的特殊性：</b>
+          由于 NGA-Sub 采用关系型数据库（23 张表），下载后需用
+          SQLite、PostgreSQL 或 Python（pandas + sqlite3）关联查询。
+          建议先阅读 PEER 提供的数据库结构说明文档，理解表间关系。
+        </li>
+        <li>
+          <b>NGA-East 的访问入口：</b>
+          NGA-East 不提供独立网站，需从 NGA-West2 网站内部进入。
+          登录后在项目选择器中选择 “NGA-East”，即可切换至 NGA-East 的搜索页面。
+        </li>
+        <li>
+          <b>分量对齐：</b>
+          同一事件-台站的所有分量（H1、H2、V）在时间上对齐，
+          具有相同的点数和持时，可直接进行分量合成或旋转。
+        </li>
+        <li>
+          <b>数据版本记录：</b>
+          各 NGA 数据库会定期更新和扩充，
+          建议在论文中注明所用数据库名称、版本与下载日期，
+          以便结果可追溯。
+        </li>
+        <li>
+          <b>文件命名规则：</b>
+          下载的 <code>.AT2</code> 文件名通常包含 RSN 编号、台站代码与分量信息，
+          NGA-Sub 的文件名还包含区域代码（如 JP、TW、NZ 等）。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        使用 NGA 数据库时，应根据所用的具体子库引用相应的文献。
+        建议同时引用<strong>数据库文献</strong>与<strong>所采用的 GMPE 文献</strong>。
+      </p>
+
+      <h3 class="sub">NGA-West1</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Chiou2008,
+  title   = {NGA Project Strong-Motion Database},
+  author  = {Chiou, B. and Darragh, R. and Gregor, N. and Silva, W.},
+  journal = {Earthquake Spectra},
+  year    = {2008},
+  volume  = {24},
+  number  = {1},
+  pages   = {23--44}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">NGA-West2</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{Ancheta2014,
+  title       = {NGA-West2 Database},
+  author      = {Ancheta, T. D. and Darragh, R. B. and Stewart, J. P. and others},
+  year        = {2014},
+  institution = {Pacific Earthquake Engineering Research Center},
+  number      = {PEER Report 2013/03},
+  address     = {University of California, Berkeley, CA}
+}
+
+@article{Bozorgnia2014,
+  title   = {NGA-West2 Research Project},
+  author  = {Bozorgnia, Y. and Abrahamson, N. A. and Al Atik, L. and others},
+  journal = {Earthquake Spectra},
+  year    = {2014},
+  volume  = {30},
+  number  = {3},
+  pages   = {989--1005}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">NGA-East</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{Goulet2018,
+  title       = {NGA-East Ground-Motion Characterization Model},
+  author      = {Goulet, C. A. and Bozorgnia, Y. and Kuehn, N. and others},
+  year        = {2018},
+  institution = {Pacific Earthquake Engineering Research Center},
+  number      = {PEER Report 2017/03},
+  address     = {University of California, Berkeley, CA}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">NGA-Sub</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{Bozorgnia2020,
+  title       = {Data Resources for NGA-Subduction Project},
+  author      = {Bozorgnia, Y. and Stewart, J. P.},
+  year        = {2020},
+  institution = {Pacific Earthquake Engineering Research Center},
+  number      = {PEER Report 2020/02},
+  address     = {University of California, Berkeley, CA}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">NGA-West3（待发布）</h3>
+      <div class="callout">
+        NGA-West3 目前仍在开发中，正式发布后 PEER 会提供相应的引用说明。
+        在此之前，如使用其预发布数据集，建议直接引用 PEER 的
+        NGA-West3 项目页面或技术报告草稿。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · PEER NGA 数据库
+    </footer>
+
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

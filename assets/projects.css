@@ -21,7 +21,9 @@
      16. 响应式
      17. Feature 卡片（项目页主要功能）
      18. 科研公式样式
-     19. 数据与依赖（底纹 + 边框）  ← 新增
+     19. 数据与依赖（底纹 + 边框）
+     20. 流程图（数据源详情页）
+     21. NGA 数据库系列标签页（数据源详情页）
    ========================================================= */
 
 
@@ -1273,6 +1275,312 @@ h3.sub {
   .split > div {
     padding: 14px 16px;
   }
+}
+
+
+/* =========================================================
+   20. 流程图 —— 数据源详情页专用
+   ---------------------------------------------------------
+   垂直时间线式流程图，左侧圆形编号，右侧标题 + 说明，
+   步骤之间用渐变竖线连接。
+   ========================================================= */
+.flowchart {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 18px 0;
+}
+
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.flow-step:last-child { padding-bottom: 0; }
+
+/* 连接线 */
+.flow-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 36px;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--pj-accent), var(--pj-accent-2));
+  opacity: 0.35;
+}
+
+.flow-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--pj-mono);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--pj-accent-dim);
+  color: var(--pj-accent);
+  border: 1.5px solid rgba(219, 39, 119, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="dark"] .flow-num {
+  border-color: rgba(244, 114, 182, 0.4);
+}
+
+.flow-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.flow-title {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--pj-text);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.flow-desc {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--pj-text-muted);
+}
+
+.flow-desc a {
+  color: var(--pj-accent-2);
+  text-decoration: none;
+}
+.flow-desc a:hover { text-decoration: underline; }
+
+.flow-desc code {
+  font-family: var(--pj-mono);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--pj-bg-elevated);
+  border: 1px solid var(--pj-border);
+  color: var(--pj-accent);
+}
+
+@media (max-width: 820px) {
+  .flow-step { gap: 10px; }
+  .flow-num { width: 28px; height: 28px; font-size: 12px; }
+  .flow-step:not(:last-child)::after { left: 13px; top: 32px; }
+  .flow-title { font-size: 13px; }
+  .flow-desc { font-size: 12px; }
+}
+
+
+/* =========================================================
+   21. NGA 数据库系列标签页 —— 数据源详情页专用
+   ---------------------------------------------------------
+   点击标签切换面板，无横向滚动。
+   ========================================================= */
+.nga-tabs {
+  margin: 18px 0;
+  border: 1px solid var(--pj-border);
+  border-radius: var(--pj-radius);
+  background: var(--pj-bg-solid);
+  overflow: hidden;
+}
+
+/* 标签按钮行 */
+.nga-tab-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 6px 8px 0;
+  background: var(--pj-bg-elevated);
+  border-bottom: 1px solid var(--pj-border);
+}
+
+.nga-tab-btn {
+  font-family: var(--pj-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 8px 16px;
+  margin-bottom: -1px;
+  border: none;
+  background: transparent;
+  color: var(--pj-text-muted);
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.nga-tab-btn:hover {
+  color: var(--pj-accent);
+  background: var(--pj-accent-dim);
+}
+
+.nga-tab-btn.active {
+  color: var(--pj-accent);
+  background: var(--pj-bg-solid);
+  border-bottom-color: var(--pj-accent);
+  font-weight: 700;
+}
+
+.nga-tab-btn:focus-visible {
+  outline: 2px solid var(--pj-accent);
+  outline-offset: -2px;
+}
+
+/* 面板 */
+.nga-tab-panel {
+  display: none;
+  padding: 20px 22px;
+}
+
+.nga-tab-panel.active {
+  display: block;
+  animation: nga-fade 0.18s ease;
+}
+
+@keyframes nga-fade {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nga-tab-panel h3 {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  color: var(--pj-text);
+  margin: 0 0 4px;
+}
+
+.nga-tab-panel .tagline {
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--pj-accent);
+  margin-bottom: 14px;
+  letter-spacing: 0.2px;
+}
+
+.nga-tab-panel p {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--pj-text-muted);
+  margin-bottom: 12px;
+}
+
+.nga-tab-panel p:last-child { margin-bottom: 0; }
+
+.nga-tab-panel strong {
+  color: var(--pj-text);
+  font-weight: 620;
+}
+
+/* 参数卡片网格 */
+.nga-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 14px 0 16px;
+}
+
+.nga-meta-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--pj-bg-elevated);
+  border: 1px solid var(--pj-border);
+}
+
+.nga-meta-item .k {
+  font-family: var(--pj-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--pj-dim);
+  margin-bottom: 3px;
+}
+
+.nga-meta-item .v {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--pj-text);
+  line-height: 1.35;
+}
+
+/* 状态徽标 */
+.nga-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-family: var(--pj-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.nga-status.current {
+  background: var(--pj-accent-dim);
+  color: var(--pj-accent);
+  border: 1px solid rgba(219, 39, 119, 0.25);
+}
+
+.nga-status.dev {
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+}
+
+.nga-status.retired {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--pj-text-muted);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+[data-theme="dark"] .nga-status.current {
+  color: #f472b6;
+  border-color: rgba(244, 114, 182, 0.35);
+}
+
+[data-theme="dark"] .nga-status.dev {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+[data-theme="dark"] .nga-status.retired {
+  color: #9ca3af;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* 响应式 */
+@media (max-width: 820px) {
+  .nga-tab-btns {
+    padding: 5px 5px 0;
+  }
+  .nga-tab-btn {
+    font-size: 11px;
+    padding: 7px 11px;
+  }
+  .nga-tab-panel {
+    padding: 16px 16px;
+  }
+  .nga-tab-panel h3 { font-size: 15px; }
+  .nga-tab-panel p { font-size: 13px; }
+
+  .nga-meta {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+  }
+  .nga-meta-item {
+    padding: 8px 11px;
+  }
+  .nga-meta-item .v { font-size: 13px; }
 }
 
 

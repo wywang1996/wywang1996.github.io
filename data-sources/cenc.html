@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国地震台网目录 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">中国地震台网目录</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>中国地震台网目录</h1>
+      <p class="lead">
+        中国地震台网中心（China Earthquake Networks Center, CENC）编制并发布的
+        中国大陆及邻区地震目录，是中国区域地震活动性分析、地震危险性计算与
+        强震动记录选取的官方目录来源。数据通过国家地震科学数据中心对外发布，
+        自 2009 年起实现国家台网与区域台网统一编目。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震目录</span>
+        <span class="pill">中国大陆</span>
+        <span class="pill blue">统一编目</span>
+        <span class="pill">官方目录</span>
+        <span class="pill">每周更新</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>中国地震台网中心（CENC）</strong>是中国地震局直属事业单位，
+        承担全国地震监测、地震中短期预测和地震速报等任务。
+        CENC 编制的地震目录是中国大陆及邻区<strong>最权威的地震目录</strong>，
+        涵盖国家地震台网和省级区域地震台网的编目结果。
+      </p>
+
+      <p>
+        自 <strong>2009 年 1 月 1 日</strong>起，CENC 实现了国家台网产出的
+        “大震目录”与区域台网产出的“微震目录”的<strong>统一编目</strong>，
+        产出统一的中国地震台网地震目录。
+        该目录通过<strong>国家地震科学数据中心</strong>
+        （<a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">data.earthquake.cn</a>）
+        对外发布，数据量约 <strong>76 万条</strong>，每周更新。
+      </p>
+
+      <h3 class="sub">目录分类</h3>
+      <ul class="plain">
+        <li><strong>统一地震目录：</strong>国家台网与区域台网编目结果的统一目录，2009 年至今，每周更新。</li>
+        <li><strong>速报地震目录：</strong>1999 年以来国内部分地区 M3.0 级以上、
+            边境地区 Ms6.0 级以上和全球部分地区 M6.0 级以上地震的速报参数，随时更新。</li>
+        <li><strong>正式地震目录：</strong>经人工复核后的正式编目结果，按年度发布，
+            如“2017 年中国 3.0 级及以上正式地震目录数据集”。</li>
+        <li><strong>国家台网地震目录：</strong>1970 年 1 月 1 日以来国家台网测定的全球地震目录，每月更新。</li>
+      </ul>
+
+      <h3 class="sub">监测能力</h3>
+      <ul class="plain">
+        <li><strong>台站覆盖：</strong>CENC 使用全国约 <strong>90 个测震台站</strong>的数据，
+            记录中国及邻区 M≥2.5 的地震，各地震事件的记录台站均在 <strong>5 个以上</strong>。</li>
+        <li><strong>震级标度：</strong>目录中采用 <strong>Ms（面波震级）、ML（地方震级）、
+            mb（体波震级）、mB（宽频带体波震级）</strong>等多种标度。</li>
+        <li><strong>扩展参数：</strong>CENC 正在为国内 M≥3.0 地震提供震源机制解、
+            矩震级 Mw、应力降、Q 值、拐角频率等附加参数。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与其他目录的差异：</strong>
+        CENC 目录是中国大陆区域的<strong>官方目录</strong>，
+        在中国境内的完整性远高于 ISC、USGS 等全球目录。
+        但震级标度以 <strong>Ms</strong> 和 <strong>ML</strong> 为主，
+        与全球目录常用的 <strong>Mw</strong> 不同，跨目录使用时需进行标度转换。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        CENC 地震目录遵循《地震编目规范》（DB/T 66-2016）定义的产出格式，
+        该标准规定了国家地震台网和省级地震台网的地震目录编制规范。
+        目录分为<strong>基本目录</strong>和<strong>完全目录</strong>两个层级，
+        对外发布时提供 Excel/CSV、定长文本和 CSF 交换格式等多种形式。
+        点击下方标签查看各格式的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="excel" role="tab" aria-selected="true">Excel / CSV</button>
+          <button class="nga-tab-btn" data-tab="fixed" role="tab" aria-selected="false">定长文本格式</button>
+          <button class="nga-tab-btn" data-tab="csf" role="tab" aria-selected="false">CSF 交换格式</button>
+          <button class="nga-tab-btn" data-tab="plain" role="tab" aria-selected="false">纯文本格式</button>
+          <button class="nga-tab-btn" data-tab="catalog-levels" role="tab" aria-selected="false">目录层级结构</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-excel" role="tabpanel">
+          <h3>Excel / CSV 格式</h3>
+          <div class="tagline">最常用的目录格式 · 易于查看</div>
+          <p>
+            国家地震科学数据中心发布的统一地震目录主要以
+            <strong>Excel（.xlsx）</strong> 或 <strong>CSV</strong> 格式提供。
+            该格式为<strong>基本目录</strong>层级，包含地震基本参数。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">字段</th>
+                  <th style="width:120px;">单位/类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>发震时刻</strong></td><td>UTC 或北京时</td><td>格式为 <code>YYYY-MM-DDTHH:MM:SS.S</code>。部分数据集用国际时（UTC），部分用北京时（UTC+8），使用前需确认</td></tr>
+                <tr><td><strong>纬度</strong></td><td>度</td><td>震中纬度，保留两位小数，正值表示北纬，负值表示南纬</td></tr>
+                <tr><td><strong>经度</strong></td><td>度</td><td>震中经度，保留两位小数，正值表示东经，负值表示西经</td></tr>
+                <tr><td><strong>深度</strong></td><td>km</td><td>震源深度，正值向下</td></tr>
+                <tr><td><strong>Ms</strong></td><td>—</td><td>面波震级</td></tr>
+                <tr><td><strong>Mx7</strong></td><td>—</td><td>7 秒面波震级</td></tr>
+                <tr><td><strong>ML</strong></td><td>—</td><td>地方震级</td></tr>
+                <tr><td><strong>mb</strong></td><td>—</td><td>体波震级</td></tr>
+                <tr><td><strong>mB</strong></td><td>—</td><td>宽频带体波震级</td></tr>
+                <tr><td><strong>参考地点（英文）</strong></td><td>文本</td><td>按 Flinn、Engdahl 和 Hill（1974）划分的地震分区给出的大致地理位置</td></tr>
+                <tr><td><strong>参考地点（中文）</strong></td><td>文本</td><td>中文参考地名</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>时区注意：</strong>CENC 不同数据集对发震时刻的时区约定不同。
+              正式地震目录数据集通常使用<strong>国际时（UTC）</strong>，
+              而部分台网目录的纯文本格式使用<strong>北京时（UTC+8）</strong>。
+              使用前务必确认数据集的时区说明。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-fixed" role="tabpanel">
+          <h3>定长文本格式</h3>
+          <div class="tagline">按列位置解析 · 规范定义</div>
+          <p>
+            根据《地震编目规范》（DB/T 66-2016）附录 G，
+            CENC 地震目录的定长文本格式定义了严格的<strong>列位置与字段格式</strong>。
+            该格式支持<strong>完全目录</strong>层级，包含基本目录、震级参数、
+            断层面解和矩张量解等多个记录行。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:140px;">记录行</th>
+                  <th style="width:180px;">主要内容</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>基本目录行</strong></td>
+                  <td>发震时刻、纬度、经度、深度</td>
+                  <td>含定位精度参数（水平误差、深度误差、台站数、方位角间隙）</td>
+                </tr>
+                <tr>
+                  <td><strong>震级参数行</strong></td>
+                  <td>各震级标度值</td>
+                  <td>Ms、Mx7、ML、mb、mB 及对应的台站数与标准差</td>
+                </tr>
+                <tr>
+                  <td><strong>断层面解行</strong></td>
+                  <td>节面走向、倾角、滑动角</td>
+                  <td>两个节面的参数</td>
+                </tr>
+                <tr>
+                  <td><strong>矩张量解行</strong></td>
+                  <td>矩张量分量</td>
+                  <td>Mrr、Mtt、Mpp、Mrt、Mrp、Mtp 六个分量及标量地震矩</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>解析注意：</strong>定长格式需按<strong>字节位置</strong>切分字段，
+              不能按空格或分隔符解析。完整的列位置定义参见 DB/T 66-2016 附录 G 表 G.1–G.5。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-csf" role="tabpanel">
+          <h3>CSF 交换格式</h3>
+          <div class="tagline">标准交换格式 · 规范附录 M</div>
+          <p>
+            <strong>CSF（Catalog Seismic Format）</strong>是 DB/T 66-2016
+            附录 M 规定的<strong>规范性地震目录和地震观测报告交换格式</strong>。
+            该格式用于不同地震台网之间的数据交换，支持<strong>完全目录</strong>层级，
+            兼顾可读性与结构化程度。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">组成部分</th>
+                  <th>内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>卷头段</strong></td><td>卷标识、产出机构代码、台网代码、数据时间范围</td></tr>
+                <tr><td><strong>目录数据段</strong></td><td>基本目录、震级参数、定位质量参数、断层面解、矩张量解</td></tr>
+                <tr><td><strong>震相数据段</strong></td><td>台站代码、通道代码、震相名称、到时、振幅、周期、清晰度、极性</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>适用场景：</strong>台网间数据交换、长期存档。
+              如需与国内外其他台网交换数据，应优先使用 CSF 格式。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-plain" role="tabpanel">
+          <h3>纯文本格式</h3>
+          <div class="tagline">空格分隔 · 公众查询</div>
+          <p>
+            中国地震台网地震目录的纯文本格式以<strong>空格分隔</strong>各项数据，
+            文件结构为：标题行、空行、表头行、注释行、数据行。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:100px;">行号</th>
+                  <th>内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>第 1 行</td><td>标题行，说明是中国地震台网产出的地震目录</td></tr>
+                <tr><td>第 2–3 行</td><td>空行</td></tr>
+                <tr><td>第 4 行</td><td>表头行，给出各栏含义：日期、时间、经度、纬度、深度、Ms、Ms7、ML、mb、mB、参考地点</td></tr>
+                <tr><td>第 5 行</td><td>注释行，说明经度、纬度、深度的单位</td></tr>
+                <tr><td>第 6 行</td><td>空行</td></tr>
+                <tr><td>第 7 行起</td><td>数据行，每行一个地震的基本参数，按发震时间升序或降序排列</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>时区注意：</strong>此格式的日期和时间以<strong>北京时（UTC+8）</strong>给出。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-catalog-levels" role="tabpanel">
+          <h3>目录层级结构</h3>
+          <div class="tagline">基本目录 vs 完全目录 · DB/T 66-2016 定义</div>
+          <p>根据 DB/T 66-2016，地震目录分为两个层级：</p>
+
+          <h4>地震基本目录（Basic Earthquake Catalogue）</h4>
+          <p>以地震基本参数为编目对象，包含：</p>
+          <ul class="plain">
+            <li>发震时刻（日期 + 时间）</li>
+            <li>震中经纬度</li>
+            <li>参考地名</li>
+            <li>震源深度</li>
+            <li>震级</li>
+          </ul>
+
+          <h4>地震完全目录（Complete Earthquake Catalogue）</h4>
+          <p>在基本目录的基础上，增加以下参数：</p>
+          <ul class="plain">
+            <li><strong>定位质量参数：</strong>水平定位误差、深度误差、参与定位的台站数量、方位角间隙</li>
+            <li><strong>震级参数：</strong>各震级标度的测定值、台站数及标准差</li>
+            <li><strong>断层面解参数：</strong>节面走向、倾角、滑动角</li>
+            <li><strong>矩张量参数：</strong>矩张量分量、标量地震矩、矩震级 Mw</li>
+            <li><strong>中小地震震源参数：</strong>应力降、拐角频率、Q 值</li>
+          </ul>
+
+          <div class="callout">
+            <strong>对使用者的意义：</strong>
+            基本目录适用于地震活动性统计与危险性分析；
+            完全目录适用于震源机制研究、应力场分析与强震动模拟。
+            选择数据集时需确认其提供的是基本目录还是完全目录。
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">震级标度说明</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:80px;">标度</th>
+              <th style="width:160px;">全称</th>
+              <th style="width:180px;">适用场景</th>
+              <th>典型适用范围</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Ms</strong></td><td>面波震级</td><td>浅源中强震</td><td>M ≥ 4.5</td></tr>
+            <tr><td><strong>Mx7</strong></td><td>7 秒面波震级</td><td>中强震快速测定</td><td>M ≥ 4.5</td></tr>
+            <tr><td><strong>ML</strong></td><td>地方震级</td><td>地方性小震</td><td>M 1.0–6.0</td></tr>
+            <tr><td><strong>mb</strong></td><td>体波震级</td><td>深源地震、远震</td><td>M ≥ 4.0</td></tr>
+            <tr><td><strong>mB</strong></td><td>宽频带体波震级</td><td>宽频带记录</td><td>M ≥ 4.0</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>标度转换：</strong>CENC 目录以 Ms 和 ML 为主，
+          与 ISC/USGS 常用的 Mw 不同。常用经验转换关系如
+          <code>Mw ≈ 0.64 + 0.87Ms</code>，但仅适用于特定区域与震级范围。
+        </div>
+      </div>
+
+      <h3 class="sub">格式对比总表</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px;">格式</th>
+              <th style="width:100px;">结构类型</th>
+              <th style="width:180px;">适用场景</th>
+              <th style="width:120px;">目录层级</th>
+              <th>解析难度</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Excel / CSV</strong></td><td>表格</td><td>快速查看、统计分析</td><td>基本目录</td><td>低</td></tr>
+            <tr><td><strong>定长文本</strong></td><td>定长字段</td><td>台网内部编目</td><td>完全目录</td><td>中（需按列位置）</td></tr>
+            <tr><td><strong>CSF 交换格式</strong></td><td>分层文本</td><td>台网间数据交换</td><td>完全目录</td><td>中高</td></tr>
+            <tr><td><strong>纯文本</strong></td><td>空格分隔</td><td>公众查询、简单交换</td><td>基本目录</td><td>低</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        CENC 地震目录通过多个平台对外发布，各平台在数据范围、
+        更新频率和获取方式上有所不同。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="cenc" role="tab" aria-selected="true">CENC 官网</button>
+          <button class="nga-tab-btn" data-tab="data" role="tab" aria-selected="false">国家地震科学数据中心</button>
+          <button class="nga-tab-btn" data-tab="ceic" role="tab" aria-selected="false">中国地震台网（CEIC）</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-cenc" role="tabpanel">
+          <h3>CENC 官网</h3>
+          <div class="tagline">官方信息发布 · 应急产品</div>
+          <p>
+            中国地震台网中心官网（<a href="https://www.cenc.ac.cn/" target="_blank" rel="noopener noreferrer">cenc.ac.cn</a>）
+            主要发布地震应急产品、地震图集和震源机制解等，
+            同时提供地震目录的查询入口。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">内容</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>应急产品</strong></td><td>地震应急图集、震源机制解、余震序列等</td></tr>
+                <tr><td><strong>地震目录查询</strong></td><td>提供国内地震目录的在线查询</td></tr>
+                <tr><td><strong>震源机制解</strong></td><td>国内 M≥3.0 地震的震源机制解（CAP 方法等）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-data" role="tabpanel">
+          <h3>国家地震科学数据中心</h3>
+          <div class="tagline">数据下载主入口 · 统一目录</div>
+          <p>
+            国家地震科学数据中心（<a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">data.earthquake.cn</a>）
+            是 CENC 地震目录的<strong>主要下载平台</strong>。
+            CENC 是该数据中心的依托单位，
+            主要提供测震类和前兆类数据。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">数据集</th>
+                  <th style="width:120px;">时间范围</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>中国地震台网统一地震目录</strong></td><td>2009 年至今</td><td>国家台网与区域台网统一编目结果，每周更新，约 76 万条</td></tr>
+                <tr><td><strong>国家地震台网地震目录</strong></td><td>1970 年至今</td><td>国家台网测定的全球地震目录，每月更新</td></tr>
+                <tr><td><strong>国家台网速报地震目录</strong></td><td>1999 年至今</td><td>速报参数，随时更新</td></tr>
+                <tr><td><strong>正式地震目录数据集</strong></td><td>按年度</td><td>如“2017 年中国 3.0 级及以上正式地震目录数据集”</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>共享方式：</strong>提供在线下载、注册后下载、签署协议后提供
+              三种方式。大多数数据集标注为“在线下载”。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-ceic" role="tabpanel">
+          <h3>中国地震台网（CEIC）</h3>
+          <div class="tagline">实时速报 · 公众查询</div>
+          <p>
+            中国地震台网（<a href="https://www.ceic.ac.cn/" target="_blank" rel="noopener noreferrer">ceic.ac.cn</a>）
+            是面向公众的地震信息发布平台，
+            提供地震速报、历史地震查询和地震目录检索功能。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">功能</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>地震速报</strong></td><td>实时发布国内及全球地震速报信息</td></tr>
+                <tr><td><strong>历史地震查询</strong></td><td>可查询全国及各省历史地震记录</td></tr>
+                <tr><td><strong>地震目录检索</strong></td><td>按时间、区域、震级等条件检索</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>平台选择建议：</strong>
+        需要<strong>批量下载完整目录</strong> → 国家地震科学数据中心；
+        需要<strong>实时速报信息</strong> → CEIC；
+        需要<strong>应急产品与震源机制解</strong> → CENC 官网。
+      </div>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        CENC 地震目录提供多种获取方式，从直接下载到订单审批，从实时查询到离线获取。
+        不同方式的适用场景、所需时间和数据范围各不相同。点击下方标签查看每种方式的详细流程。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="direct" role="tab" aria-selected="true">在线直接下载</button>
+          <button class="nga-tab-btn" data-tab="register" role="tab" aria-selected="false">注册后下载</button>
+          <button class="nga-tab-btn" data-tab="order" role="tab" aria-selected="false">订单审批型</button>
+          <button class="nga-tab-btn" data-tab="realtime" role="tab" aria-selected="false">实时速报查询</button>
+          <button class="nga-tab-btn" data-tab="offline" role="tab" aria-selected="false">离线获取</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-direct" role="tabpanel">
+          <h3>在线直接下载</h3>
+          <div class="tagline">国家地震科学数据中心 · 无需注册 · 即时下载</div>
+          <p>
+            适用于标注为“在线下载”的数据集，如<strong>中国地震台网统一地震目录</strong>。
+            无需注册账号，直接在数据集页面点击下载即可获取。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问国家地震科学数据中心</div>
+                <div class="flow-desc">
+                  进入 <a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">data.earthquake.cn</a>，
+                  在数据分类中选择“测震数据（D11000）”。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">找到目标数据集</div>
+                <div class="flow-desc">
+                  定位到“中国地震台网统一地震目录”数据集，
+                  查看数据集摘要、时间范围、数据量和共享方式。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">确认共享方式</div>
+                <div class="flow-desc">
+                  数据集页面标注<strong>“在线下载”</strong>，
+                  说明可直接下载，无需注册或审批。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据</div>
+                <div class="flow-desc">
+                  点击下载按钮，得到 Excel（.xlsx）或 CSV 格式的目录文件。
+                  可直接用 Excel 打开或编写脚本解析。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在研究成果中按规范标注数据来源。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>适用数据集：</strong>中国地震台网统一地震目录、部分年度正式地震目录数据集。
+            数据集页面的“共享方式”字段标注为“在线下载”的均可采用此流程。
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-register" role="tabpanel">
+          <h3>注册后下载</h3>
+          <div class="tagline">国家地震科学数据中心 · 实名注册 · 直接下载</div>
+          <p>
+            适用于标注为“注册后下载”的数据集。需完成实名注册，
+            登录后即可直接下载，无需人工审批。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">注册账号</div>
+                <div class="flow-desc">
+                  在 <a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">data.earthquake.cn</a>
+                  完成注册，填写邮箱、手机号、单位信息等。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">实名认证</div>
+                <div class="flow-desc">
+                  提交实名认证信息（姓名、身份证号、单位）。
+                  认证通过后账号方可下载数据。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">登录并检索数据集</div>
+                <div class="flow-desc">
+                  登录后按时间、区域、震级等条件检索目标数据集。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据</div>
+                <div class="flow-desc">
+                  点击下载按钮，直接获取目录文件。
+                  部分数据集可能限制单次下载量。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在研究成果中按规范标注数据来源。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>适用数据集：</strong>国家地震台网地震目录、国家台网速报地震目录、
+            部分需要实名认证的数据集。
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-order" role="tabpanel">
+          <h3>订单审批型</h3>
+          <div class="tagline">国家地震科学数据中心 · 提交订单 · 人工审核</div>
+          <p>
+            适用于标注为“签署协议后提供”或需要人工审核的数据集。
+            需提交数据订单、说明用途，等待人工审核通过后方可获取。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">注册并实名认证</div>
+                <div class="flow-desc">完成国家地震科学数据中心的注册与实名认证。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">选择数据集并加入订单</div>
+                <div class="flow-desc">在目标数据集页面点击“加入数据订单”，系统生成订单。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">填写数据使用用途</div>
+                <div class="flow-desc">
+                  在订单页面填写<strong>数据使用用途、研究项目名称、申请人信息</strong>等。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">上传证明材料</div>
+                <div class="flow-desc">
+                  按要求上传单位证明、项目任务书等材料。
+                  部分数据集需下载协议模板、填写盖章后邮寄。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">等待人工审核</div>
+                <div class="flow-desc">
+                  数据中心在 1 个工作日内处理，一般 3–5 天完成审核。
+                  审核通过后系统通知申请人。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">6</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据并标注来源</div>
+                <div class="flow-desc">
+                  审核通过后登录系统下载数据，
+                  在成果中按规范标注数据来源。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout warn">
+            <strong>注意：</strong>未标注数据来源的申请者将不再受理新的数据申请。
+            申请前请仔细阅读数据集页面的使用条款与引用规范。
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-realtime" role="tabpanel">
+          <h3>实时速报查询</h3>
+          <div class="tagline">中国地震台网（CEIC） · 无需注册 · 即时查询</div>
+          <p>
+            适用于需要<strong>实时地震速报</strong>信息的场景。
+            中国地震台网（CEIC）提供地震速报、历史地震查询和目录检索功能，
+            无需注册即可使用。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问中国地震台网</div>
+                <div class="flow-desc">
+                  进入 <a href="https://www.ceic.ac.cn/" target="_blank" rel="noopener noreferrer">ceic.ac.cn</a>，
+                  查看最新地震速报信息。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">按条件检索</div>
+                <div class="flow-desc">
+                  在“地震目录”页面按<strong>时间范围、空间范围、震级</strong>等条件检索历史地震记录。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">查看与复制结果</div>
+                <div class="flow-desc">检索结果在页面以表格形式展示，可复制或截图保存。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">整理为目录</div>
+                <div class="flow-desc">
+                  如需批量使用，需手动整理为结构化格式。CEIC 不提供批量下载功能。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>适用场景：</strong>快速查询近期地震信息、核对特定事件的基本参数。
+            不适合批量获取历史目录。
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-offline" role="tabpanel">
+          <h3>离线获取</h3>
+          <div class="tagline">邮件发送 · 硬盘邮寄 · 定向推送</div>
+          <p>
+            适用于<strong>大数据量</strong>或<strong>网络条件受限</strong>的场景。
+            国家地震科学数据中心提供多种离线服务方式。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">提交需求</div>
+                <div class="flow-desc">
+                  通过数据中心网站或邮件提交数据需求，
+                  说明数据范围、格式要求和用途。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">选择服务方式</div>
+                <div class="flow-desc">
+                  <strong>邮件发送</strong>：小数据量，通过邮件附件发送<br>
+                  <strong>硬盘邮寄</strong>：大数据量，用户提供硬盘，中心拷贝后寄回<br>
+                  <strong>定向推送</strong>：单位用户专用，定期推送数据
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">数据准备</div>
+                <div class="flow-desc">数据中心根据需求准备数据，以约定的格式和介质交付。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">接收与验证</div>
+                <div class="flow-desc">接收数据后检查完整性和可用性，确认与需求一致。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">在研究成果中按规范标注数据来源。</div>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>适用场景：</strong>需要获取全量目录、长时间序列波形、
+            或网络条件不便在线下载的场景。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 事件元数据字段说明</h3>
+      <p>
+        CENC 地震目录的字段可分为<strong>基本参数</strong>、<strong>震级参数</strong>、
+        <strong>定位质量参数</strong>和<strong>扩展参数</strong>四类。
+        不同格式与层级包含的字段不同，以下为完整字段列表。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="basic" role="tab" aria-selected="true">基本参数</button>
+          <button class="nga-tab-btn" data-tab="mag" role="tab" aria-selected="false">震级参数</button>
+          <button class="nga-tab-btn" data-tab="quality" role="tab" aria-selected="false">定位质量参数</button>
+          <button class="nga-tab-btn" data-tab="extended" role="tab" aria-selected="false">扩展参数</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-basic" role="tabpanel">
+          <h3>基本参数</h3>
+          <div class="tagline">所有目录层级均包含 · 核心字段</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">字段</th>
+                  <th style="width:120px;">单位/类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>发震时刻</strong></td>
+                  <td>UTC 或北京时</td>
+                  <td>格式 <code>YYYY-MM-DDTHH:MM:SS.S</code>。
+                      正式地震目录数据集通常为 <strong>UTC</strong>，
+                      部分台网目录纯文本格式为 <strong>北京时（UTC+8）</strong></td>
+                </tr>
+                <tr><td><strong>纬度</strong></td><td>度</td><td>震中纬度，保留两位小数，正值表示北纬，负值表示南纬</td></tr>
+                <tr><td><strong>经度</strong></td><td>度</td><td>震中经度，保留两位小数，正值表示东经，负值表示西经</td></tr>
+                <tr><td><strong>深度</strong></td><td>km</td><td>震源深度，正值向下。浅源地震深度误差较大，个别事件可能固定为 10 km</td></tr>
+                <tr><td><strong>参考地点（英文）</strong></td><td>文本</td><td>按 Flinn、Engdahl 和 Hill（1974）划分的地震分区给出的大致地理位置</td></tr>
+                <tr><td><strong>参考地点（中文）</strong></td><td>文本</td><td>中文参考地名</td></tr>
+                <tr><td><strong>事件编号</strong></td><td>字符串</td><td>统一编目的事件唯一标识符，格式为 <code>YYYYMMDDHHMMSS</code> 等</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-mag" role="tabpanel">
+          <h3>震级参数</h3>
+          <div class="tagline">多种标度并行 · 需注意标度差异</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:100px;">标度</th>
+                  <th style="width:140px;">全称</th>
+                  <th style="width:160px;">适用场景</th>
+                  <th>典型适用范围</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Ms</strong></td><td>面波震级</td><td>浅源中强震</td><td>M ≥ 4.5</td></tr>
+                <tr><td><strong>Mx7</strong></td><td>7 秒面波震级</td><td>中强震快速测定</td><td>M ≥ 4.5</td></tr>
+                <tr><td><strong>ML</strong></td><td>地方震级</td><td>地方性小震</td><td>M 1.0–6.0</td></tr>
+                <tr><td><strong>mb</strong></td><td>体波震级</td><td>深源地震、远震</td><td>M ≥ 4.0</td></tr>
+                <tr><td><strong>mB</strong></td><td>宽频带体波震级</td><td>宽频带记录</td><td>M ≥ 4.0</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>字段说明：</strong>并非所有记录都包含全部震级字段。
+              部分事件可能仅有一种或两种震级标度，缺失字段以空白或特定占位符表示。
+              在完全目录中，每个震级字段还配套有<strong>台站数</strong>与<strong>标准差</strong>。
+            </div>
+          </div>
+
+          <h4>震级标度转换参考</h4>
+          <p>
+            CENC 目录以 Ms 和 ML 为主，与 ISC/USGS 常用的 Mw 不同。
+            跨目录使用时需进行标度转换，常用经验关系如下（仅适用于特定区域与震级范围）：
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">转换关系</th>
+                  <th>适用条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Mw ≈ 0.64 + 0.87 Ms</code></td><td>中国大陆浅源地震</td></tr>
+                <tr><td><code>Mw ≈ 0.67 Ms + 2.07</code></td><td>全球中强震</td></tr>
+                <tr><td><code>Mw ≈ ML + 0.3</code></td><td>小震级范围（近似）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>使用注意：</strong>上述关系为统计经验公式，
+              单次事件的转换结果可能存在偏差，跨区域使用时需谨慎。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-quality" role="tabpanel">
+          <h3>定位质量参数</h3>
+          <div class="tagline">完全目录包含 · 评估定位可靠性</div>
+          <p>
+            定位质量参数仅包含在<strong>完全目录</strong>层级中，
+            用于评估震源定位的可靠性。基本目录不包含这些字段。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>水平定位误差</strong></td><td>km</td><td>震中水平方向的定位标准差，反映定位精度</td></tr>
+                <tr><td><strong>深度误差</strong></td><td>km</td><td>震源深度方向的标准差，浅源地震的深度误差通常较大</td></tr>
+                <tr><td><strong>参与定位台站数</strong></td><td>个</td><td>参与震源定位的台站数量，台站越多定位越可靠</td></tr>
+                <tr><td><strong>方位角间隙</strong></td><td>度</td><td>台站分布的最大方位角空隙。间隙越大，定位横向约束越差</td></tr>
+                <tr><td><strong>最小震中距</strong></td><td>km</td><td>最近台站到震中的距离</td></tr>
+                <tr><td><strong>定位方法</strong></td><td>字符串</td><td>使用的定位程序或方法（如 Hypo2000、LOCSAT 等）</td></tr>
+                <tr><td><strong>速度模型</strong></td><td>字符串</td><td>定位所用的地壳速度模型</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>质量判断：</strong>通常水平误差 &lt; 5 km、台站数 ≥ 10、
+              方位角间隙 &lt; 180° 的定位较为可靠。
+              台站数少或方位角间隙大的事件，震中位置可能偏差较大。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-extended" role="tabpanel">
+          <h3>扩展参数</h3>
+          <div class="tagline">完全目录包含 · 震源机制与动力学参数</div>
+          <p>
+            扩展参数仅包含在<strong>完全目录</strong>层级中，
+            涵盖断层面解、矩张量解以及中小地震震源参数。
+            这些参数并非所有事件都有，通常只对 M≥3.0 的地震提供。
+          </p>
+
+          <h4>断层面解参数</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>节面 I 走向</strong></td><td>第一个节面的走向（0°–360°）</td></tr>
+                <tr><td><strong>节面 I 倾角</strong></td><td>第一个节面的倾角（0°–90°）</td></tr>
+                <tr><td><strong>节面 I 滑动角</strong></td><td>第一个节面的滑动角（-180°–180°）</td></tr>
+                <tr><td><strong>节面 II 走向</strong></td><td>第二个节面的走向</td></tr>
+                <tr><td><strong>节面 II 倾角</strong></td><td>第二个节面的倾角</td></tr>
+                <tr><td><strong>节面 II 滑动角</strong></td><td>第二个节面的滑动角</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>矩张量解参数</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Mrr</strong></td><td>dyne·cm</td><td>矩张量径向分量</td></tr>
+                <tr><td><strong>Mtt</strong></td><td>dyne·cm</td><td>矩张量南向分量</td></tr>
+                <tr><td><strong>Mpp</strong></td><td>dyne·cm</td><td>矩张量垂直分量</td></tr>
+                <tr><td><strong>Mrt</strong></td><td>dyne·cm</td><td>矩张量径向-南向分量</td></tr>
+                <tr><td><strong>Mrp</strong></td><td>dyne·cm</td><td>矩张量径向-垂直分量</td></tr>
+                <tr><td><strong>Mtp</strong></td><td>dyne·cm</td><td>矩张量南向-垂直分量</td></tr>
+                <tr><td><strong>标量地震矩 M0</strong></td><td>dyne·cm</td><td>由矩张量分量计算得到的标量地震矩</td></tr>
+                <tr><td><strong>矩震级 Mw</strong></td><td>—</td><td>由标量地震矩换算得到的矩震级</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>中小地震震源参数</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>应力降</strong></td><td>bar 或 MPa</td><td>地震前后断层上的应力释放量</td></tr>
+                <tr><td><strong>拐角频率</strong></td><td>Hz</td><td>震源谱的高频衰减拐点频率</td></tr>
+                <tr><td><strong>Q 值</strong></td><td>—</td><td>品质因子，反映介质的衰减特性</td></tr>
+                <tr><td><strong>震源半径</strong></td><td>km</td><td>由拐角频率估算的震源尺度</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>获取条件：</strong>扩展参数并非所有事件都有。
+              CENC 目前主要对国内 <strong>M≥3.0</strong> 地震提供震源机制解、
+              矩震级 Mw、应力降、Q 值、拐角频率等扩展参数。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">2. 目录类型对比</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">目录类型</th>
+              <th style="width:140px;">时间范围</th>
+              <th style="width:100px;">更新频率</th>
+              <th style="width:100px;">目录层级</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>统一地震目录</strong></td><td>2009 年至今</td><td>每周</td><td>基本目录</td><td>国家台网 + 区域台网统一编目</td></tr>
+            <tr><td><strong>国家台网地震目录</strong></td><td>1970 年至今</td><td>每月</td><td>基本目录</td><td>全球地震目录</td></tr>
+            <tr><td><strong>速报地震目录</strong></td><td>1999 年至今</td><td>随时</td><td>基本目录</td><td>速报参数</td></tr>
+            <tr><td><strong>正式地震目录</strong></td><td>按年度</td><td>年度</td><td>完全目录</td><td>人工复核后的正式结果</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>层级差异：</strong>统一地震目录、速报目录以基本目录为主；
+          正式地震目录以完全目录为主，包含定位质量与扩展参数。
+          选择数据集时需确认其提供的目录层级。
+        </div>
+      </div>
+
+      <h3 class="sub">3. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">目录内容</div>
+          <div class="chips">
+            <span class="chip">发震时刻</span>
+            <span class="chip">震中位置</span>
+            <span class="chip">震源深度</span>
+            <span class="chip">参考地点</span>
+            <span class="chip">Ms 震级</span>
+            <span class="chip">Mx7 震级</span>
+            <span class="chip">ML 震级</span>
+            <span class="chip blue">mb 震级</span>
+            <span class="chip blue">mB 震级</span>
+            <span class="chip blue">定位质量参数</span>
+            <span class="chip blue">断层面解</span>
+            <span class="chip blue">矩张量解</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">格式与工具</div>
+          <div class="chips">
+            <span class="chip">Excel (.xlsx)</span>
+            <span class="chip">CSV</span>
+            <span class="chip">定长文本</span>
+            <span class="chip">CSF 交换格式</span>
+            <span class="chip">纯文本</span>
+            <span class="chip blue">Excel VBA</span>
+            <span class="chip blue">MapSIS</span>
+            <span class="chip blue">ObsPy</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">4. 数据质量检查要点</h3>
+      <ol class="steps">
+        <li><b>时区一致性：</b>确认发震时刻的时区约定（UTC 或北京时），跨数据集合并前应统一为同一时区。</li>
+        <li><b>震级标度一致：</b>检查各事件的震级标度字段，跨目录合并前应统一为同一标度。</li>
+        <li><b>定位质量：</b>检查水平定位误差、参与定位台站数、方位角间隙，剔除定位质量过差的事件。</li>
+        <li><b>完整震级评估：</b>通过震级-频度关系（G-R 关系）评估目录的完整震级 Mc，避免将不完整目录用于地震活动性分析。</li>
+        <li><b>事件去重：</b>跨目录合并时按发震时刻、位置、震级进行去重，避免同一事件被多次计入。</li>
+        <li><b>深度符号：</b>确认深度的正负号约定（通常正值向下），个别历史目录可能使用相反约定。</li>
+      </ol>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>震级标度以 Ms/ML 为主：</b>
+          CENC 目录主要采用 <strong>Ms（面波震级）</strong>和
+          <strong>ML（地方震级）</strong>，与 ISC/USGS 常用的
+          <strong>Mw（矩震级）</strong>不同。跨目录使用时需进行标度转换。
+        </li>
+        <li>
+          <b>震级标度经验关系：</b>
+          常用转换关系如 <code>Mw ≈ 0.64 + 0.87Ms</code>，
+          但该关系仅适用于特定区域与震级范围，跨区域使用需谨慎。
+        </li>
+        <li>
+          <b>时区约定需确认：</b>
+          CENC 不同数据集对发震时刻的时区约定不同。
+          正式地震目录数据集通常使用<strong>国际时（UTC）</strong>，
+          而部分台网目录的纯文本格式使用<strong>北京时（UTC+8）</strong>。使用前务必确认。
+        </li>
+        <li>
+          <b>统一编目始于 2009 年：</b>
+          2009 年之前，国家台网和区域台网的目录分别产出。
+          2009 年 1 月 1 日起实现统一编目。
+          研究 2009 年之前的事件时需注意目录来源的差异。
+        </li>
+        <li>
+          <b>完整震级阈值：</b>
+          CENC 目录在中国大陆的完整震级通常在 <strong>M2.5–M3.0</strong> 左右，
+          低于全球目录的完整震级阈值。区域目录的小震记录更完整。
+        </li>
+        <li>
+          <b>定长格式需按列位置解析：</b>
+          定长文本格式的字段位置由 DB/T 66-2016 严格定义，
+          解析时需按<strong>字节位置</strong>切分，不能按空格分隔。
+        </li>
+        <li>
+          <b>数据来源标注为强制要求：</b>
+          使用 CENC 数据发表成果时，<strong>必须标注数据来源</strong>。
+          未标注的申请者将不再受理新的数据申请。
+        </li>
+        <li>
+          <b>共享方式多样：</b>
+          CENC 数据提供在线下载、注册后下载、签署协议后提供三种方式。
+          下载前应确认数据集的共享方式。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>CENC 对数据引用有明确规范，使用数据时应严格遵循。</p>
+
+      <h3 class="sub">中文引用格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>数据来源于中国地震台网中心 国家地震科学数据中心(http://data.earthquake.cn)。</code></pre>
+      </div>
+
+      <h3 class="sub">英文引用格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>The data set is provided by China Earthquake Networks Center,
+National Earthquake Data Center. (http://data.earthquake.cn).</code></pre>
+      </div>
+
+      <h3 class="sub">中文致谢格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>感谢中国地震台网中心 国家地震科学数据中心(http://data.earthquake.cn)提供数据支撑。</code></pre>
+      </div>
+
+      <h3 class="sub">英文致谢格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>Acknowledgement for the data support from "China Earthquake Networks Center,
+National Earthquake Data Center. (http://data.earthquake.cn)".</code></pre>
+      </div>
+
+      <h3 class="sub">BibTeX 格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@misc{CENC,
+  title        = {China Earthquake Networks Center Unified Earthquake Catalog},
+  author       = {{China Earthquake Networks Center}},
+  howpublished = {National Earthquake Data Center},
+  url          = {https://data.earthquake.cn},
+  note         = {Data set provided by China Earthquake Networks Center,
+                  National Earthquake Data Center}
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>引用规范依据：</strong>以上引用与致谢格式均来自
+        国家地震科学数据中心的数据使用说明。
+        使用数据前请仔细阅读数据集页面的引用规范。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · 中国地震台网目录
+    </footer>
+
+  </main>
+</div>
+
+<!-- ===== 标签页切换脚本（全局委托，按 .nga-tabs 分组） ===== -->
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nga-tab-btn');
+    if (!btn) return;
+    var tabs = btn.closest('.nga-tabs');
+    if (!tabs) return;
+    var target = btn.getAttribute('data-tab');
+    tabs.querySelectorAll('.nga-tab-btn').forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabs.querySelectorAll('.nga-tab-panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + target);
+    });
+  });
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

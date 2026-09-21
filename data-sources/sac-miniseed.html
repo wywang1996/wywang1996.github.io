@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAC / MiniSEED 波形 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">SAC / MiniSEED 波形</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>SAC / MiniSEED 波形</h1>
+      <p class="lead">
+        SAC（Seismic Analysis Code）和 MiniSEED 是地震学领域两种通用的波形数据格式。
+        SAC 用于单台波形分析，MiniSEED 用于连续波形存档与交换，
+        两者均可在 ObsPy 中读写，是强震动数据处理与结构时程分析的基础输入格式。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">波形格式</span>
+        <span class="pill">通用标准</span>
+        <span class="pill blue">ObsPy 读写</span>
+        <span class="pill">Steim 压缩</span>
+        <span class="pill">50+ 数据中心</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>SAC</strong>（Seismic Analysis Code）最初由美国劳伦斯利弗莫尔国家实验室
+        开发，后由 IRIS 维护，是地震学领域最广泛使用的波形分析工具之一。
+        SAC 格式也随之成为地震波形数据的通用交换格式。
+        一个 SAC 文件通常包含单个连续时间段的时间序列数据，
+        由<strong>头段区</strong>（header）和<strong>数据区</strong>（data）两部分组成：
+        头段区为固定长度（632 字节），存储波形元数据；数据区为浮点型数值序列，长度可变。
+      </p>
+
+      <p>
+        <strong>MiniSEED</strong> 是 SEED（Standard for the Exchange of Earthquake Data）
+        标准的子集，仅包含时间序列数据及其最基本的标识信息，
+        不包含完整的仪器响应等元数据。
+        SEED 标准是国际通用的数字地震数据交换格式，
+        自 1991 年 Version 2.2 起将格式拆分为 <strong>dataless SEED</strong>（元数据）
+        和 <strong>miniSEED</strong>（波形数据）两部分。
+        一个 MiniSEED 记录由固定头段、块ette 链表和波形样本三部分组成，
+        常见记录长度为 512 字节、1 KB 或 4 KB。
+      </p>
+
+      <h3 class="sub">两种格式的对比</h3>
+      <ul class="plain">
+        <li><strong>SAC：</strong>单台波形分析格式，头段包含台站、事件、震相到时等元数据，
+            适合交互式分析与处理，文件通常为二进制或 ASCII 格式。</li>
+        <li><strong>MiniSEED：</strong>连续波形存档与交换格式，仅包含波形数据和最基本的标识信息，
+            适合长期存储和批量传输，采用 Steim 压缩编码以减小文件体积。</li>
+        <li><strong>互补关系：</strong>SAC 侧重分析，MiniSEED 侧重存储。
+            实际工作中常将 MiniSEED 连续波形截取为事件波形后转换为 SAC 格式进行分析。</li>
+      </ul>
+
+      <h3 class="sub">在强震动数据处理中的角色</h3>
+      <ul class="plain">
+        <li><strong>数据获取：</strong>各国测震台网以 MiniSEED 格式提供连续波形数据，
+            用户可从中截取地震事件波形并写入 SAC 文件。</li>
+        <li><strong>数据处理：</strong>SAC 文件可直接用于去除趋势、去均值、仪器响应校正等预处理操作。</li>
+        <li><strong>格式转换：</strong>ObsPy 等工具可在 SAC、MiniSEED、GSE2、SEISAN 等格式之间相互转换。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>本页说明的是波形格式，而非单一数据库：</strong>
+        能提供 SAC 和 MiniSEED 格式波形数据的数据中心有<strong>50 多个</strong>，
+        它们是不同机构运营的独立服务。这些中心在<strong>数据覆盖范围、
+        格式支持、仪器响应提供方式、引用要求</strong>上差异显著。
+        下一节<strong>「数据中心」</strong>将按类别介绍主要的数据中心。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        SAC 和 MiniSEED 在文件结构上有本质区别。点击下方标签查看两种格式的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="sac" role="tab" aria-selected="true">SAC 格式</button>
+          <button class="nga-tab-btn" data-tab="mseed" role="tab" aria-selected="false">MiniSEED 格式</button>
+        </div>
+
+        <!-- SAC -->
+        <div class="nga-tab-panel active" id="tab-sac" role="tabpanel">
+          <h3>SAC 格式</h3>
+          <div class="tagline">单台波形分析格式 · 头段 632 字节</div>
+          <p>
+            SAC 文件由<strong>头段区</strong>和<strong>数据区</strong>两部分组成。
+            头段区固定为 <strong>632 字节</strong>，包含 <strong>133 个头段变量</strong>，
+            类型混合了整数（int）、浮点数（float）和字符串（char）。
+            数据区为浮点型数值序列，长度取决于数据点数和文件类型。
+          </p>
+
+          <h4>头段变量分类</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:120px;">类别</th>
+                  <th style="width:80px;">数量</th>
+                  <th>主要内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>浮点型（F）</strong></td>
+                  <td>70 个</td>
+                  <td>delta（采样间隔）、depmin、depmax、scale、b、e、o、a、t0–t9、stla、stlo 等</td>
+                </tr>
+                <tr>
+                  <td><strong>整型（I）</strong></td>
+                  <td>40 个</td>
+                  <td>npts（数据点数）、nwfid（波形 ID）、iftype（文件类型）、nzhour、nzmin、nzsec 等</td>
+                </tr>
+                <tr>
+                  <td><strong>字符串（K）</strong></td>
+                  <td>23 个</td>
+                  <td>kstnm（台站名）、knetwk（台网名）、kcmpnm（分量名）、kevnm（事件名）等</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>时间基准：</strong>SAC 中的绝对时刻由 nzyear、nzjday、nzhour、nzmin、
+              nzsec、nzmsec 六个变量共同定义，其他时刻均以相对于该基准的秒数表示。
+            </div>
+          </div>
+
+          <h4>文件类型（iftype）</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:100px;">值</th>
+                  <th style="width:160px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>时间序列</td><td>常规等间隔时间序列数据</td></tr>
+                <tr><td>2</td><td>谱数据</td><td>频谱分析结果</td></tr>
+                <tr><td>3</td><td>非等间隔序列</td><td>非均匀采样的时间序列</td></tr>
+                <tr><td>4</td><td>一般 XY 数据</td><td>通用 X-Y 数据对</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>文件命名规则</h4>
+          <p>使用 <code>rdseed</code> 从 SEED 格式解压得到的 SAC 文件通常采用固定命名格式：</p>
+          <div class="formula">yyyy.ddd.hh.mm.ss.ffff.NN.SSSSS.LL.CCC.Q.SAC</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:150px;">字段</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>yyyy.ddd.hh.mm.ss.ffff</code></td><td>第一个数据点对应的 UTC 时间</td></tr>
+                <tr><td><code>NN</code></td><td>台网代码（2 字符）</td></tr>
+                <tr><td><code>SSSSS</code></td><td>台站代码（5 字符）</td></tr>
+                <tr><td><code>LL</code></td><td>位置代码（2 字符）</td></tr>
+                <tr><td><code>CCC</code></td><td>通道代码（3 字符）</td></tr>
+                <tr><td><code>Q</code></td><td>质量标识</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MiniSEED -->
+        <div class="nga-tab-panel" id="tab-mseed" role="tabpanel">
+          <h3>MiniSEED 格式</h3>
+          <div class="tagline">连续波形存档格式 · Steim 压缩</div>
+          <p>
+            MiniSEED 是 SEED 标准的精简子集，仅用于存储时间序列数据，
+            不包含完整的仪器响应等元数据。
+            一个 MiniSEED 记录由<strong>固定头段</strong>、
+            <strong>块ette 链表</strong>（blockettes）和<strong>波形样本</strong>三部分组成。
+          </p>
+
+          <h4>记录结构</h4>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:140px;">组成部分</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>固定头段</strong></td>
+                  <td>48 字节，包含台网代码、台站代码、位置代码、通道代码、起始时间、采样率等基本信息</td>
+                </tr>
+                <tr>
+                  <td><strong>块ette 链表</strong></td>
+                  <td>可变长度，包含数据质量标识、时间校正、采样率精确值等扩展信息</td>
+                </tr>
+                <tr>
+                  <td><strong>波形样本</strong></td>
+                  <td>实际的时间序列数据，采用 Steim 压缩编码存储</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>数据编码类型</h4>
+          <p>MiniSEED 支持多种数据编码，常见类型如下：</p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:80px;">编码值</th>
+                  <th style="width:140px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>0</td><td>ASCII</td><td>文本格式</td></tr>
+                <tr><td>1</td><td>INT16</td><td>16 位整数</td></tr>
+                <tr><td>3</td><td>INT32</td><td>32 位整数</td></tr>
+                <tr><td>4</td><td>FLOAT32</td><td>32 位浮点数</td></tr>
+                <tr><td>5</td><td>FLOAT64</td><td>64 位浮点数</td></tr>
+                <tr><td><strong>10</strong></td><td><strong>Steim-1</strong></td><td>Steim-1 压缩整数，最常用</td></tr>
+                <tr><td><strong>11</strong></td><td><strong>Steim-2</strong></td><td>Steim-2 压缩整数，压缩率更高</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>Steim 压缩原理：</strong>Steim-1 和 Steim-2 将 32 位整数按差值编码压缩。
+              Steim-1 在一个 32 位块内可存储最多 4 个 1 字节差值或最少 1 个 4 字节差值，
+              Steim-2 的压缩率更高，适合高采样率数据。
+              解压后的数据为 32 位整数，需乘以灵敏度因子转换为物理单位。
+            </div>
+          </div>
+
+          <h4>记录长度</h4>
+          <p>
+            MiniSEED 的常见记录长度为 <strong>512 字节、1 KB 或 4 KB</strong>。
+            512 字节是最小记录长度，适合实时数据传输；
+            4 KB 记录适合存档。
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>格式选择建议：</strong>
+        交互式波形分析选择 <strong>SAC</strong>；
+        连续波形存档与批量交换选择 <strong>MiniSEED</strong>；
+        需要与其他地震学工具兼容时，使用 ObsPy 进行格式转换。
+      </div>
+
+      <!-- 标签切换脚本 -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        全球有 <strong>50 多个</strong> FDSN 正式注册的数据中心，
+        以及大量国家级和区域性数据中心提供 SAC 和 MiniSEED 格式波形。
+        以下按类别列出其中主要的数据中心，每项均包含格式支持、网站与说明。
+        完整列表可查阅 <a href="https://www.fdsn.org/datacenters/" target="_blank" rel="noopener noreferrer">FDSN 数据中心注册表</a>。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="global" role="tab" aria-selected="true">全球性</button>
+          <button class="nga-tab-btn" data-tab="europe" role="tab" aria-selected="false">欧洲区域</button>
+          <button class="nga-tab-btn" data-tab="namerica" role="tab" aria-selected="false">北美区域</button>
+          <button class="nga-tab-btn" data-tab="asia" role="tab" aria-selected="false">亚太区域</button>
+          <button class="nga-tab-btn" data-tab="other" role="tab" aria-selected="false">其他区域</button>
+        </div>
+
+        <!-- 全球性 -->
+        <div class="nga-tab-panel active" id="tab-global" role="tabpanel">
+          <h3>全球性数据中心</h3>
+          <div class="tagline">数据覆盖全球 · FDSN Web 服务标准</div>
+          <p>
+            全球性数据中心的数据来自世界各地台网，以 FDSN Web 服务提供统一接口。
+            适合研究区域不固定、或需要跨区域比较的场景。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>IRIS DMC / EarthScope</strong></td>
+                  <td>MiniSEED · SAC · GeoCSV · ASCII</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>全球覆盖最广。<code>dataselect</code> 返回 MiniSEED，<code>timeseries</code> 支持 SAC.zip 等。无需注册。</td>
+                </tr>
+                <tr>
+                  <td><strong>GEOFON (GFZ)</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://geofon.gfz.de/" target="_blank" rel="noopener noreferrer">geofon.gfz.de</a></td>
+                  <td>德国地球科学研究中心运营，全球宽带地震台网。FDSN 服务标准，无需注册。</td>
+                </tr>
+                <tr>
+                  <td><strong>GEOSCOPE</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="http://geoscope.ipgp.fr" target="_blank" rel="noopener noreferrer">geoscope.ipgp.fr</a></td>
+                  <td>法国全球地震台网，提供全球范围内高质量宽带记录。</td>
+                </tr>
+                <tr>
+                  <td><strong>EMSC</strong></td>
+                  <td>MiniSEED（转发）</td>
+                  <td><a href="https://www.emsc-csem.org" target="_blank" rel="noopener noreferrer">emsc-csem.org</a></td>
+                  <td>欧洲-地中海地震中心，主要提供事件目录和波形转发服务。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>引用注意：</strong>使用全球性数据中心的数据时，
+              应标注<strong>原始台网代码</strong>（如 <code>IU</code>、<code>II</code>、<code>GE</code> 等），
+              而非数据中心本身。
+            </div>
+          </div>
+        </div>
+
+        <!-- 欧洲区域 -->
+        <div class="nga-tab-panel" id="tab-europe" role="tabpanel">
+          <h3>欧洲区域数据中心</h3>
+          <div class="tagline">ORFEUS EIDA 分布式网络 · 多个节点</div>
+          <p>
+            ORFEUS EIDA（European Integrated Data Archive）是欧洲的分布式数据中心网络，
+            由多个国家节点组成，通过统一 FDSN 接口提供服务。核心格式为 <strong>MiniSEED</strong>，
+            元数据统一采用 <strong>StationXML</strong>。部分节点（如 Résif-DC）还支持 SAC 格式。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:150px;">节点</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Résif-DC</strong></td>
+                  <td>MiniSEED · SAC zip · StationXML</td>
+                  <td><a href="https://seismology.epos-france.fr" target="_blank" rel="noopener noreferrer">seismology.epos-france.fr</a></td>
+                  <td>法国国家观测服务。EIDA 节点中少数支持 SAC 格式直接下载的中心，<code>dataselect</code> 可返回 SAC zip。</td>
+                </tr>
+                <tr>
+                  <td><strong>ETH / SED</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.sed.ethz.ch" target="_blank" rel="noopener noreferrer">sed.ethz.ch</a></td>
+                  <td>瑞士地震服务中心。提供瑞士及周边地区高质量台网数据，FDSN 标准接口。</td>
+                </tr>
+                <tr>
+                  <td><strong>INGV</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.ingv.it" target="_blank" rel="noopener noreferrer">ingv.it</a></td>
+                  <td>意大利国家地球物理与火山学研究所。提供意大利及地中海区域密集台网数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>GFZ (GEOFON)</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://geofon.gfz.de/" target="_blank" rel="noopener noreferrer">geofon.gfz.de</a></td>
+                  <td>德国地球科学研究中心。同时作为全球性数据中心和 EIDA 节点提供服务。</td>
+                </tr>
+                <tr>
+                  <td><strong>KNMI</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.knmi.nl" target="_blank" rel="noopener noreferrer">knmi.nl</a></td>
+                  <td>荷兰皇家气象研究所。提供荷兰及周边区域地震与形变数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>NIEP</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.niep.ro" target="_blank" rel="noopener noreferrer">niep.ro</a></td>
+                  <td>罗马尼亚国家地球物理研究所。提供东欧 Vrancea 地震带数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>KOERI</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.koeri.boun.edu.tr" target="_blank" rel="noopener noreferrer">koeri.boun.edu.tr</a></td>
+                  <td>土耳其海峡大学坎迪利天文台与地震研究所。提供土耳其及中东区域数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>NOA</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.noa.gr" target="_blank" rel="noopener noreferrer">noa.gr</a></td>
+                  <td>希腊国家天文台。提供希腊及爱琴海区域地震台网数据。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>格式差异：</strong>大部分 EIDA 节点主要提供 MiniSEED 波形，
+              但 <strong>Résif-DC</strong> 的 <code>dataselect</code> 服务可返回 <strong>SAC zip</strong> 格式。
+              使用前应确认目标节点的格式支持情况，必要时先下载 MiniSEED 再自行转换为 SAC。
+            </div>
+          </div>
+        </div>
+
+        <!-- 北美区域 -->
+        <div class="nga-tab-panel" id="tab-namerica" role="tabpanel">
+          <h3>北美区域数据中心</h3>
+          <div class="tagline">加州、阿拉斯加、加拿大 · 强震动记录集中</div>
+          <p>
+            北美的区域数据中心以加州地区最为成熟，是强震动研究的重要数据源。
+            这些中心均提供 MiniSEED 格式波形，部分配套 SAC PZ 格式的仪器响应。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>NCEDC</strong></td>
+                  <td>MiniSEED · SAC PZ · StationXML</td>
+                  <td><a href="https://ncedc.org" target="_blank" rel="noopener noreferrer">ncedc.org</a></td>
+                  <td>北加州地震数据中心。<code>dataselect</code> 返回 MiniSEED，并提供 SAC PZ 格式的仪器响应。</td>
+                </tr>
+                <tr>
+                  <td><strong>SCEDC</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://scedc.caltech.edu" target="_blank" rel="noopener noreferrer">scedc.caltech.edu</a></td>
+                  <td>南加州地震数据中心。提供南加州密集台网的 MiniSEED 格式波形数据。</td>
+                </tr>
+                <tr>
+                  <td><strong>AEIC</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.aeic.alaska.edu" target="_blank" rel="noopener noreferrer">aeic.alaska.edu</a></td>
+                  <td>阿拉斯加地震中心。提供阿拉斯加地区地震波形，适合俯冲带研究。</td>
+                </tr>
+                <tr>
+                  <td><strong>Canadian National Seismograph Network</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.earthquakescanada.nrcan.gc.ca" target="_blank" rel="noopener noreferrer">earthquakescanada.nrcan.gc.ca</a></td>
+                  <td>加拿大国家地震台网数据中心，由 Natural Resources Canada 运营。</td>
+                </tr>
+                <tr>
+                  <td><strong>IRIS DMC（北美整合）</strong></td>
+                  <td>MiniSEED · SAC · GeoCSV</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>IRIS DMC 本身是北美主入口，同时整合了以上区域中心的数据。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 亚太区域 -->
+        <div class="nga-tab-panel" id="tab-asia" role="tabpanel">
+          <h3>亚太区域数据中心</h3>
+          <div class="tagline">中国、日本、台湾、新西兰 · 强震动数据丰富</div>
+          <p>
+            亚太区域地震活动性强，数据中心众多。
+            这些中心的数据格式和获取方式差异较大，需根据实际需求选择。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:170px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>国家地震科学数据中心</strong></td>
+                  <td>MiniSEED · SAC · SEED · AH · ASCII</td>
+                  <td><a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">data.earthquake.cn</a></td>
+                  <td>中国测震台网数据。连续波形以 MiniSEED 存储，事件波形可输出 SAC。需实名注册，订单审批。</td>
+                </tr>
+                <tr>
+                  <td><strong>NIED (日本)</strong></td>
+                  <td>ASCII · Binary · CSV</td>
+                  <td><a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">kyoshin.bosai.go.jp</a></td>
+                  <td>K-NET / KiK-net 台网。主要提供特有的 ASCII/Binary/CSV 格式，国际数据中心常镜像为 MiniSEED。</td>
+                </tr>
+                <tr>
+                  <td><strong>IESDMC (台湾)</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="http://batsws.earth.sinica.edu.tw" target="_blank" rel="noopener noreferrer">batsws.earth.sinica.edu.tw</a></td>
+                  <td>台湾中央研究院地球科学研究所数据管理中心，FDSN 注册中心。</td>
+                </tr>
+                <tr>
+                  <td><strong>GeoNet (新西兰)</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.geonet.org.nz/" target="_blank" rel="noopener noreferrer">geonet.org.nz</a></td>
+                  <td>新西兰国家地震台网，FDSN 注册中心，数据开放获取。</td>
+                </tr>
+                <tr>
+                  <td><strong>GEOFON（亚太镜像）</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://geofon.gfz.de/" target="_blank" rel="noopener noreferrer">geofon.gfz.de</a></td>
+                  <td>GEOFON 在亚太地区有部分台站数据，可作为区域补充。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 其他区域 -->
+        <div class="nga-tab-panel" id="tab-other" role="tabpanel">
+          <h3>其他区域数据中心</h3>
+          <div class="tagline">中美洲 · 南美 · 中东 · 非洲</div>
+          <p>
+            其他区域也有各自的数据中心，覆盖本地台网记录。
+            这些中心多为 FDSN 注册节点，可通过标准 Web 服务访问。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">数据中心</th>
+                  <th style="width:180px;">格式支持</th>
+                  <th style="width:200px;">网站</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>CATAC</strong></td>
+                  <td>MiniSEED</td>
+                  <td><a href="https://catac.ineter.gob.ni" target="_blank" rel="noopener noreferrer">catac.ineter.gob.ni</a></td>
+                  <td>中美洲火山与地震观测中心，覆盖尼加拉瓜及周边区域。</td>
+                </tr>
+                <tr>
+                  <td><strong>IRIS DMC（南美镜像）</strong></td>
+                  <td>MiniSEED · SAC · GeoCSV</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>南美区域数据主要通过 IRIS DMC 获取，含智利、秘鲁等国台网。</td>
+                </tr>
+                <tr>
+                  <td><strong>KOERI</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.koeri.boun.edu.tr" target="_blank" rel="noopener noreferrer">koeri.boun.edu.tr</a></td>
+                  <td>土耳其海峡大学坎迪利天文台，覆盖土耳其及中东区域。</td>
+                </tr>
+                <tr>
+                  <td><strong>NIEP</strong></td>
+                  <td>MiniSEED · StationXML</td>
+                  <td><a href="https://www.niep.ro" target="_blank" rel="noopener noreferrer">niep.ro</a></td>
+                  <td>罗马尼亚国家地球物理研究所，覆盖东欧 Vrancea 地震带。</td>
+                </tr>
+                <tr>
+                  <td><strong>SAF / IRIS 非洲节点</strong></td>
+                  <td>MiniSEED</td>
+                  <td><a href="https://ds.iris.edu" target="_blank" rel="noopener noreferrer">ds.iris.edu</a></td>
+                  <td>非洲区域数据主要通过 IRIS DMC 访问，本地台网逐渐加入 FDSN。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>数据获取建议：</strong>对于非主要区域的研究，
+              优先使用 IRIS DMC 或 GEOFON 的全球覆盖；
+              如需要本地化数据，可通过 FDSN 注册表查询该区域是否有专属数据中心。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>选择数据中心的三个原则：</strong>
+        <strong>① 区域优先</strong> — 目标区域覆盖是首要因素，本地中心数据通常最完整；
+        <strong>② 格式匹配</strong> — 确认中心是否直接提供 SAC / MiniSEED，或需要额外转换；
+        <strong>③ 引用规范</strong> — 各中心的引用要求不同，使用前应阅读其数据政策。
+      </div>
+
+      <!-- 标签切换脚本 -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        不同数据中心的获取流程差异显著。以下以三种典型模式为例，
+        点击标签查看详细流程。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="open" role="tab" aria-selected="true">开放 Web 服务型</button>
+          <button class="nga-tab-btn" data-tab="order" role="tab" aria-selected="false">订单审批型</button>
+          <button class="nga-tab-btn" data-tab="special" role="tab" aria-selected="false">专用格式型</button>
+        </div>
+
+        <!-- 开放 Web 服务型 -->
+        <div class="nga-tab-panel active" id="tab-open" role="tabpanel">
+          <h3>开放 Web 服务型</h3>
+          <div class="tagline">IRIS DMC · GEOFON · ORFEUS EIDA</div>
+          <p>
+            适用于开放数据，通过 FDSN Web 服务直接调用，无需注册。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">确定目标数据中心与数据范围</div>
+                <div class="flow-desc">按研究区域选择数据中心，确定台网、台站、通道和时间范围。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">调用 FDSN Web 服务</div>
+                <div class="flow-desc">
+                  构造请求 URL：<br>
+                  <code>dataselect</code> → MiniSEED<br>
+                  <code>timeseries</code> → MiniSEED / SAC / ASCII<br>
+                  <code>station</code> → StationXML / dataless SEED
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载波形与元数据</div>
+                <div class="flow-desc">
+                  使用浏览器、<code>wget</code>、<code>curl</code> 或 ObsPy 的
+                  <code>obspy.clients.fdsn</code> 下载。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">读取与预处理</div>
+                <div class="flow-desc">
+                  使用 ObsPy 读取波形和元数据，进行去趋势、
+                  去均值、仪器响应校正与格式转换。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 订单审批型 -->
+        <div class="nga-tab-panel" id="tab-order" role="tabpanel">
+          <h3>订单审批型</h3>
+          <div class="tagline">国家地震科学数据中心 · 部分国家级中心</div>
+          <p>
+            适用于需要实名注册与人工审批的国家级数据中心。
+            以国家地震科学数据中心为例。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">实名注册</div>
+                <div class="flow-desc">进入数据中心网站，完成实名注册，填写个人信息和单位信息。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">确定用户等级</div>
+                <div class="flow-desc">
+                  普通用户（一级数据）/ 高级用户（二、三级数据，需签字盖章申请）/
+                  团队用户（需签署协议）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">提交数据订单</div>
+                <div class="flow-desc">
+                  填写数据订单、使用用途、上传证明材料，
+                  等待人工审核（一般 1 个工作日处理，3–5 天完成）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">选择服务方式</div>
+                <div class="flow-desc">
+                  在线下载（小数据量）/ 邮件发送 / 硬盘邮寄（大数据量）/
+                  定向推送（单位用户）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">获取数据并标注来源</div>
+                <div class="flow-desc">
+                  下载 MiniSEED 或 SAC 格式波形，
+                  在成果中标注数据来源单位（必填）。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 专用格式型 -->
+        <div class="nga-tab-panel" id="tab-special" role="tabpanel">
+          <h3>专用格式型</h3>
+          <div class="tagline">NIED K-NET / KiK-net · 特定台网</div>
+          <p>
+            部分国家级台网（如日本 NIED）主要发布<strong>特有格式</strong>，
+            需自行转换为 SAC 或 MiniSEED。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">注册账号</div>
+                <div class="flow-desc">进入 NIED 强震观测网官网，完成用户注册。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">下载原始格式文件</div>
+                <div class="flow-desc">
+                  下载 ASCII、Binary 或 CSV 格式的波形文件。
+                  注意：这些格式<strong>不是</strong> SAC 或 MiniSEED。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">编写转换脚本</div>
+                <div class="flow-desc">
+                  根据文件头段（如第 14 行的 Scale Factor）
+                  将 digit 值转换为物理加速度，
+                  再按 SAC 或 MiniSEED 结构写入。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">验证与使用</div>
+                <div class="flow-desc">
+                  使用 ObsPy 读取转换后的文件，
+                  检查波形与元数据是否正确。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 标签切换脚本 -->
+      <script>
+      (function () {
+        var btns = document.querySelectorAll('.nga-tab-btn');
+        var panels = document.querySelectorAll('.nga-tab-panel');
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-tab');
+            btns.forEach(function (b) {
+              var on = b === btn;
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            panels.forEach(function (p) {
+              p.classList.toggle('active', p.id === 'tab-' + target);
+            });
+          });
+        });
+      })();
+      </script>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 文件结构对比</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px;">特性</th>
+              <th style="width:200px;">SAC</th>
+              <th>MiniSEED</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>文件粒度</strong></td>
+              <td>单台单分量单时间段</td>
+              <td>可包含多台多通道连续数据</td>
+            </tr>
+            <tr>
+              <td><strong>头段长度</strong></td>
+              <td>固定 632 字节</td>
+              <td>可变，固定头段 48 字节 + 块ette</td>
+            </tr>
+            <tr>
+              <td><strong>元数据</strong></td>
+              <td>包含台站、事件、震相等信息</td>
+              <td>仅包含最基本标识信息</td>
+            </tr>
+            <tr>
+              <td><strong>仪器响应</strong></td>
+              <td>不直接包含，需配套 SACPZ 文件</td>
+              <td>不包含，需配套 dataless SEED 或 StationXML</td>
+            </tr>
+            <tr>
+              <td><strong>数据编码</strong></td>
+              <td>浮点数（float32 或 float64）</td>
+              <td>Steim-1、Steim-2、INT32、FLOAT32 等</td>
+            </tr>
+            <tr>
+              <td><strong>典型用途</strong></td>
+              <td>交互式分析、单台处理</td>
+              <td>连续存档、批量交换</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">2. SAC 头段关键变量</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:100px;">变量名</th>
+              <th style="width:80px;">类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>delta</code></td><td>float</td><td>采样间隔（秒）</td></tr>
+            <tr><td><code>npts</code></td><td>int</td><td>数据点数</td></tr>
+            <tr><td><code>b</code></td><td>float</td><td>起始时间（相对参考时刻的秒数）</td></tr>
+            <tr><td><code>e</code></td><td>float</td><td>结束时间（相对参考时刻的秒数）</td></tr>
+            <tr><td><code>kstnm</code></td><td>char</td><td>台站名称</td></tr>
+            <tr><td><code>knetwk</code></td><td>char</td><td>台网名称</td></tr>
+            <tr><td><code>kcmpnm</code></td><td>char</td><td>分量名称（如 BHN、BHE、BHZ）</td></tr>
+            <tr><td><code>stla</code></td><td>float</td><td>台站纬度</td></tr>
+            <tr><td><code>stlo</code></td><td>float</td><td>台站经度</td></tr>
+            <tr><td><code>evla</code></td><td>float</td><td>事件纬度</td></tr>
+            <tr><td><code>evlo</code></td><td>float</td><td>事件经度</td></tr>
+            <tr><td><code>nzyear</code></td><td>int</td><td>参考时刻的年份</td></tr>
+            <tr><td><code>nzjday</code></td><td>int</td><td>参考时刻的儒略日</td></tr>
+            <tr><td><code>nzhour</code></td><td>int</td><td>参考时刻的小时</td></tr>
+            <tr><td><code>nzmin</code></td><td>int</td><td>参考时刻的分钟</td></tr>
+            <tr><td><code>nzsec</code></td><td>int</td><td>参考时刻的秒</td></tr>
+            <tr><td><code>nzmsec</code></td><td>int</td><td>参考时刻的毫秒</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">3. MiniSEED 固定头段字段</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px;">字段</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sequence Number</strong></td><td>记录序号（6 位数字）</td></tr>
+            <tr><td><strong>Station</strong></td><td>台站代码（5 字符）</td></tr>
+            <tr><td><strong>Location</strong></td><td>位置代码（2 字符）</td></tr>
+            <tr><td><strong>Channel</strong></td><td>通道代码（3 字符）</td></tr>
+            <tr><td><strong>Network</strong></td><td>台网代码（2 字符）</td></tr>
+            <tr><td><strong>Start Time</strong></td><td>记录起始时间（年、儒略日、时、分、秒、0.0001 秒）</td></tr>
+            <tr><td><strong>Number of Samples</strong></td><td>本记录中的样本数</td></tr>
+            <tr><td><strong>Sample Rate Factor</strong></td><td>采样率因子</td></tr>
+            <tr><td><strong>Sample Rate Multiplier</strong></td><td>采样率乘数</td></tr>
+            <tr><td><strong>Data Quality</strong></td><td>数据质量标识（D=不确定、R=原始、Q=质量受控、M=已校正）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">4. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">数据产品</div>
+          <div class="chips">
+            <span class="chip">SAC 二进制</span>
+            <span class="chip">SAC ASCII</span>
+            <span class="chip">MiniSEED 连续波形</span>
+            <span class="chip">MiniSEED 事件波形</span>
+            <span class="chip blue">Steim-1 压缩</span>
+            <span class="chip blue">Steim-2 压缩</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">处理工具</div>
+          <div class="chips">
+            <span class="chip">ObsPy</span>
+            <span class="chip">SAC 软件</span>
+            <span class="chip">rdseed</span>
+            <span class="chip">sac2mseed</span>
+            <span class="chip blue">libmseed</span>
+            <span class="chip blue">PySAC</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>数据中心远不止三家：</b>
+          全球有 <strong>50 多个</strong> FDSN 正式注册的数据中心。
+          选择时应考虑<strong>目标区域覆盖、格式支持、引用要求</strong>三个因素。
+          完整列表参见 <a href="https://www.fdsn.org/datacenters/" target="_blank" rel="noopener noreferrer">FDSN 数据中心注册表</a>。
+        </li>
+        <li>
+          <b>各中心的格式支持范围不同：</b>
+          IRIS DMC 的 <code>dataselect</code> 返回 <strong>MiniSEED</strong>，
+          <code>timeseries</code> 额外支持 <strong>SAC.zip</strong> 和 <strong>GeoCSV</strong>；
+          ORFEUS EIDA 节点主要返回 <strong>MiniSEED</strong>，
+          Résif-DC 也支持 <strong>SAC</strong>；
+          国家地震科学数据中心同时提供 <strong>MiniSEED</strong> 和 <strong>SAC</strong>。
+        </li>
+        <li>
+          <b>仪器响应的获取方式不同：</b>
+          IRIS DMC 通过独立的 <code>resp</code>（RESP）和 <code>sacpz</code>（SAC PZ）服务；
+          ORFEUS EIDA 统一提供 <strong>StationXML</strong>；
+          国家地震科学数据中心的部分数据在文件头段中<strong>直接包含仪器参数</strong>。
+        </li>
+        <li>
+          <b>SAC 文件不含仪器响应：</b>
+          SAC 格式本身仅包含波形数据，
+          <strong>不包含仪器响应信息</strong>。
+          需要仪器响应校正时，必须另行获取配套的 SACPZ 文件。
+        </li>
+        <li>
+          <b>MiniSEED 不包含完整元数据：</b>
+          MiniSEED 仅包含时间序列数据及其最基本的标识信息，
+          <strong>不包含仪器类型、响应函数、台站坐标</strong>等完整元数据。
+          这些信息需从 dataless SEED 或 StationXML 文件中获取。
+        </li>
+        <li>
+          <b>Steim 压缩为整数编码：</b>
+          Steim-1 和 Steim-2 压缩的 MiniSEED 数据解压后为
+          <strong>32 位整数</strong>，需乘以灵敏度因子才能得到物理单位。
+        </li>
+        <li>
+          <b>字节序需注意：</b>
+          MiniSEED 通常使用<strong>大端序</strong>（Big-Endian）存储，
+          而 SAC 二进制文件通常使用<strong>小端序</strong>（Little-Endian）。
+          跨平台读取时需注意字节序转换。
+        </li>
+        <li>
+          <b>通道命名可能不同：</b>
+          SAC 和 MiniSEED 中的通道代码由频带码、仪器码和方向码组成。
+          不同台网可能使用不同的命名约定。
+          强震动加速度计常用 <code>HN</code> 或 <code>BN</code> 前缀。
+        </li>
+        <li>
+          <b>数据质量标识：</b>
+          MiniSEED 的固定头段中包含数据质量标识。
+          <code>D</code> 表示不确定，<code>R</code> 表示原始，
+          <code>Q</code> 表示质量受控，<code>M</code> 表示已校正。
+          使用前应检查质量标识。
+        </li>
+        <li>
+          <b>时区为 UTC：</b>
+          SAC 和 MiniSEED 中的时间均为 <strong>UTC 时间</strong>。
+        </li>
+        <li>
+          <b>推荐使用 ObsPy：</b>
+          ObsPy 是 Python 地震学工具包，
+          支持 SAC、MiniSEED、GSE2、SEISAN 等多种格式的读写，
+          同时提供 FDSN Web 服务的客户端接口。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        引用 SAC 或 MiniSEED 格式的数据时，需<strong>同时引用格式规范</strong>
+        和<strong>具体的数据中心</strong>。不同数据中心的引用要求不同，使用前应阅读其数据政策。
+      </p>
+
+      <h3 class="sub">SAC 格式引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{Goldstein2003,
+  title       = {SAC User's Manual},
+  author      = {Goldstein, P. and Dodge, D. and Firpo, M. and Minner, L.},
+  year        = {2003},
+  institution = {Lawrence Livermore National Laboratory},
+  number      = {UCRL-MA-136721},
+  address     = {Livermore, CA}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">MiniSEED 格式引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{IRIS2012,
+  title       = {SEED Reference Manual, Version 2.4},
+  author      = {{Incorporated Research Institutions for Seismology}},
+  year        = {2012},
+  institution = {IRIS Consortium},
+  address     = {Seattle, WA}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">ObsPy 引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Beyreuther2010,
+  title   = {ObsPy: A Python Toolbox for Seismology},
+  author  = {Beyreuther, M. and Barsch, R. and Krischer, L. and
+             Megies, T. and Behr, Y. and Wassermann, J.},
+  journal = {Seismological Research Letters},
+  year    = {2010},
+  volume  = {81},
+  number  = {3},
+  pages   = {530--533},
+  doi     = {10.1785/gssrl.81.3.530}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">各数据中心的引用要求</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">数据中心</th>
+              <th>引用要求</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>IRIS DMC</strong></td>
+              <td>引用<strong>原始台网代码</strong>（如 IU、II、GE 等），而非 IRIS 本身。</td>
+            </tr>
+            <tr>
+              <td><strong>GEOFON</strong></td>
+              <td>引用 GEOFON 或原始台网，视数据集而定。</td>
+            </tr>
+            <tr>
+              <td><strong>ORFEUS EIDA</strong></td>
+              <td>引用<strong>具体的 EIDA 节点</strong>及其数据集 DOI（如有）。</td>
+            </tr>
+            <tr>
+              <td><strong>国家地震科学数据中心</strong></td>
+              <td>必须标注“中国地震局工程力学研究所‘国家强震动台网中心’为本研究提供数据支持”。</td>
+            </tr>
+            <tr>
+              <td><strong>NIED</strong></td>
+              <td>引用 DOI <code>10.17598/NIED.0004</code>。</td>
+            </tr>
+            <tr>
+              <td><strong>GeoNet</strong></td>
+              <td>引用 GeoNet 数据集 DOI 或台网代码。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>通用原则：</strong>无论使用哪个数据中心，都应在论文中
+          <strong>明确标注数据来源</strong>，并在致谢中感谢数据提供单位。
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>致谢格式：</strong>在论文致谢中，如使用多个数据中心的数据，
+        应逐一列出。例如：
+        “波形数据来自 IRIS DMC 的 IU 台网、ORFEUS EIDA 的 IV 台网，
+        以及国家地震科学数据中心。”
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · SAC / MiniSEED 波形
+    </footer>
+
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>
