@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="ground-motion-calc">
+<head>
+<meta charset="UTF-8">
+
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震动参数计算器 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/tools.css">
+</head>
+<body data-nav="ground-motion-calc">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span><span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <header class="page-head">
+    <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
+    <h1>地震动参数计算器</h1>
+    <p>上传 CSV / TXT 加速度时程，自动计算 PGA、PGV、PGD、Arias 强度、有效持时、RMS、平均周期、卓越周期，并绘制加速度波形、Husid 曲线与 5% 阻尼加速度反应谱。全部在浏览器本地完成。</p>
+  </header>
+
+  <!-- 上传 -->
+  <section class="panel">
+    <div class="panel-label">
+      <span>上传加速度时程</span>
+      <span class="hint">CSV / TXT · 本地处理</span>
+    </div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv,.txt">
+      <span class="drop-ico">📈</span>
+      <div class="drop-title">点击选择文件，或拖拽到此处</div>
+      <div class="drop-sub">
+        <strong>CSV / TXT</strong> 文本文件，支持两种列结构：<br>
+        <span style="display:inline-block;margin-top:4px;">
+          <strong>两列</strong> 时间 加速度 → 自动识别采样率，无需手动输入<br>
+          <strong>单列</strong> 纯加速度 → 需在下方填写采样率（Hz）
+        </span>
+      </div>
+    </div>
+
+    <div class="input-row" style="margin-top:14px; align-items:center;">
+      <select id="unitSelect" class="tool-select">
+        <option value="g">单位：g（重力加速度）</option>
+        <option value="m/s2">单位：m/s²</option>
+        <option value="gal">单位：gal（cm/s²）</option>
+      </select>
+
+      <!-- 采样率：仅在“无时间列”时显示 -->
+      <div id="fsWrap" style="display:none; flex:1; min-width:220px; align-items:center; gap:8px;">
+        <input type="number" id="fsManual" class="tool-input" style="flex:1;"
+               placeholder="采样率 Hz（单列数据必填）" step="any" min="0.01">
+        <span style="font-size:12px; color:var(--dim); white-space:nowrap;">Hz</span>
+      </div>
+    </div>
+
+    <div id="errorBox" class="alert error" hidden></div>
+    <div id="okBox" class="alert ok" hidden></div>
+  </section>
+
+  <!-- 示例：El Centro 三分量 -->
+  <section class="panel">
+    <div class="panel-label">
+      <span>示例文件 · El Centro 1940 三分量</span>
+      <span class="hint">原始 50 Hz · 直接加载，不做降采样</span>
+    </div>
+    <div class="demo-grid">
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">EW</span>
+          <span class="demo-name">elcentro_EW</span>
+        </div>
+        <div class="demo-desc">东西向，PGA ≈ 0.35 g。两列空格分隔，含时间列。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="ew" data-action="load">加载</button>
+          <button type="button" data-demo="ew" data-action="download">下载</button>
+        </div>
+      </div>
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">NS</span>
+          <span class="demo-name">elcentro_NS</span>
+        </div>
+        <div class="demo-desc">南北向，PGA ≈ 0.21 g。两列空格分隔，含时间列。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="ns" data-action="load">加载</button>
+          <button type="button" data-demo="ns" data-action="download">下载</button>
+        </div>
+      </div>
+      <div class="demo-item">
+        <div class="demo-head">
+          <span class="demo-tag">UP</span>
+          <span class="demo-name">elcentro_UP</span>
+        </div>
+        <div class="demo-desc">竖向，PGA ≈ 0.20 g。两列空格分隔，含时间列。</div>
+        <div class="demo-actions">
+          <button type="button" data-demo="up" data-action="load">加载</button>
+          <button type="button" data-demo="up" data-action="download">下载</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数据概览 -->
+  <section class="panel" id="infoPanel" hidden>
+    <div class="panel-label">
+      <span>数据概览</span>
+      <span class="hint" id="dataHint">已解析</span>
+    </div>
+
+    <div class="file-info">
+      <span class="ftag" id="fTag">—</span>
+      <span class="fname" id="fName">—</span>
+      <span class="fsize" id="fSize">—</span>
+      <button class="btn-clear" id="btnClear">清除</button>
+    </div>
+
+    <div class="trace-grid">
+      <div class="trace-item">
+        <div class="k">采样率</div>
+        <div class="v" id="tRate">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">采样点数</div>
+        <div class="v" id="tNpts">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">时间跨度</div>
+        <div class="v small" id="tDuration">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">峰值加速度 PGA</div>
+        <div class="v" id="tPGA">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">峰值速度 PGV</div>
+        <div class="v" id="tPGV">—</div>
+      </div>
+      <div class="trace-item">
+        <div class="k">峰值位移 PGD</div>
+        <div class="v" id="tPGD">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 加速度波形 -->
+  <section class="panel" id="wavePanel" hidden>
+    <div class="panel-label">
+      <span>加速度时程</span>
+      <span class="hint">去趋势后 · 原始单位</span>
+    </div>
+    <div class="wave-wrap">
+      <canvas id="accCanvas" width="1000" height="260"></canvas>
+      <div class="wave-caption">Acceleration time history</div>
+    </div>
+  </section>
+
+  <!-- Husid 曲线 -->
+  <section class="panel" id="husidPanel" hidden>
+    <div class="panel-label">
+      <span>Husid 曲线（累积能量）</span>
+      <span class="hint">5% / 95% 能量点</span>
+    </div>
+    <div class="wave-wrap">
+      <canvas id="husidCanvas" width="1000" height="260"></canvas>
+      <div class="wave-caption">Normalized cumulative squared acceleration</div>
+    </div>
+  </section>
+
+  <!-- 详细参数 -->
+  <section class="panel" id="paramPanel" hidden>
+    <div class="panel-label">详细参数</div>
+    <div class="mini-grid">
+      <div class="mini">
+        <div class="k">PGA · m/s²</div>
+        <div class="v" id="outPgaSI">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">PGA · g</div>
+        <div class="v" id="outPgaG">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">PGV · cm/s</div>
+        <div class="v" id="outPgv">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">PGD · cm</div>
+        <div class="v" id="outPgd">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">Arias 强度 Ia</div>
+        <div class="v" id="outIa">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">有效持时 D5-95</div>
+        <div class="v" id="outD595">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">括号持时</div>
+        <div class="v" id="outDbr">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">RMS 加速度</div>
+        <div class="v" id="outRms">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">平均周期 Tm</div>
+        <div class="v" id="outTm">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">卓越周期 Tp</div>
+        <div class="v" id="outTp">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">峰值时刻 tPGA</div>
+        <div class="v" id="outTpga">—</div>
+      </div>
+      <div class="mini">
+        <div class="k">PGV / PGA</div>
+        <div class="v" id="outRatio">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 反应谱 -->
+  <section class="panel" id="spectrumPanel" hidden>
+    <div class="panel-label">
+      <span>加速度反应谱</span>
+      <span class="hint">阻尼比 ζ = 5%</span>
+    </div>
+    <div class="wave-wrap">
+      <canvas id="specCanvas" class="tall" width="1000" height="320"></canvas>
+      <div class="wave-caption">5% damped acceleration response spectrum</div>
+    </div>
+  </section>
+
+  <!-- 导出 -->
+  <section class="panel" id="outPanel" hidden>
+    <div class="panel-label">导出结果</div>
+    <div class="save-row">
+      <button class="btn-primary" id="btnExport">
+        <span>💾</span>
+        <span>下载参数汇总 (CSV)</span>
+      </button>
+      <div class="save-hint">
+        <strong>CSV</strong> 包含所有计算得到的参数，可直接用 Excel / Pandas 读取。
+        时程数据已省略，如需完整时程请使用波形格式转换器。
+      </div>
+    </div>
+  </section>
+
+  <!-- 说明 -->
+  <section class="panel">
+    <div class="panel-label">方法与说明</div>
+    <div class="note">
+      <strong style="color:var(--text);">输入格式：</strong>
+      仅支持 <code>CSV</code> 与 <code>TXT</code> 文本文件，两种结构：
+      <ul>
+        <li><strong>两列</strong>：<code>时间 加速度</code>（逗号 / 空格 / 制表符分隔），自动识别采样率，<strong>无需手动输入</strong>。</li>
+        <li><strong>单列</strong>：每行一个加速度值，<strong>必须手动输入采样率</strong>（Hz）。</li>
+      </ul>
+      解析时自动跳过 <code>#</code>、<code>%</code>、<code>//</code> 开头的注释行和非数值表头。
+
+      <strong style="color:var(--text);">计算流程：</strong>
+      <ul>
+        <li><code>去趋势</code>：先减去均值，再去除线性趋势，避免积分后速度 / 位移发散。</li>
+        <li><code>速度 / 位移</code>：对加速度梯形积分得到速度，再积分得到位移（积分前后均去趋势）。</li>
+        <li><code>Arias 强度</code>：I<sub>A</sub> = π/(2g) · ∫ a² dt，单位 m/s。</li>
+        <li><code>有效持时</code>：Husid 曲线从 5% 到 95% 所对应的时间长度。</li>
+        <li><code>括号持时</code>：|a| 首次与末次超过 0.05·PGA 之间的时间长度。</li>
+        <li><code>平均周期</code>：T<sub>m</sub> = 2π · √(∫v²dt / ∫a²dt)。</li>
+        <li><code>卓越周期</code>：傅里叶幅值谱峰值对应的周期，频率分辨率取决于记录长度。</li>
+        <li><code>反应谱</code>：Newmark-β 平均加速度法（γ = 1/2，β = 1/4），周期 0.02–6 s 对数分布。</li>
+      </ul>
+
+      <strong style="color:var(--text);">示例数据：</strong>
+      示例按钮优先从 <code>assets/elcentro_EW.txt</code>、<code>elcentro_NS.txt</code>、<code>elcentro_UP.txt</code>
+      读取原始 <strong>50 Hz</strong> 记录，<strong>直接使用、不做降采样</strong>，反应谱有效周期可覆盖到约 0.05 s。
+      若示例文件缺失，则自动回退到浏览器端合成数据（同为 50 Hz）。
+    </div>
+  </section>
+
+  <footer>
+    © 2026 wayione · 地震动参数计算器
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  function $(id) { return document.getElementById(id); }
+
+  /* ============================================================
+     工具函数
+     ============================================================ */
+
+  var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
+              '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+
+  function sup(n) {
+    return String(n).split('').map(function (c) { return SUP[c] || c; }).join('');
+  }
+
+  function fmtSize(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function fmtDuration(sec) {
+    if (!isFinite(sec)) return '—';
+    if (sec < 60) return sec.toFixed(2) + ' 秒';
+    if (sec < 3600) return (sec / 60).toFixed(2) + ' 分';
+    return (sec / 3600).toFixed(2) + ' 小时';
+  }
+
+  function baseName(name) {
+    return name.replace(/\.[^.]+$/, '');
+  }
+
+  function sci(v, digits) {
+    if (digits === undefined) digits = 7;
+    var s = v.toExponential(digits);
+    var m = s.match(/^(-?\d+(?:\.\d+)?)e([+-])(\d+)$/);
+    if (!m) return s;
+    var exp = m[3];
+    while (exp.length < 3) exp = '0' + exp;
+    return m[1] + 'e' + m[2] + exp;
+  }
+
+  /* ============================================================
+     文件保存
+     ============================================================ */
+
+  function downloadBlob(blob, fileName) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  function saveBlob(blob, suggestedName) {
+    if (typeof window.showSaveFilePicker !== 'function') {
+      downloadBlob(blob, suggestedName);
+      return Promise.resolve({ fallback: true, name: suggestedName });
+    }
+    var opts = {
+      suggestedName: suggestedName,
+      types: [{ description: 'CSV 文件', accept: { 'text/csv': ['.csv'] } }]
+    };
+    return window.showSaveFilePicker(opts).then(function (handle) {
+      return handle.createWritable().then(function (w) {
+        return w.write(blob).then(function () { return w.close(); });
+      }).then(function () { return { saved: true, name: handle.name }; });
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return { aborted: true };
+      try {
+        downloadBlob(blob, suggestedName);
+        return { fallback: true, name: suggestedName };
+      } catch (e2) {
+        return { error: err };
+      }
+    });
+  }
+
+  /* ============================================================
+     数据解析
+     返回：{ acc, dt, hasTime, time }
+       hasTime = true  → 文件含时间列，dt 已自动解析
+       hasTime = false → 单列数据，需要用户手动输入采样率
+     ============================================================ */
+
+  function parseData(text) {
+    var lines = text.split(/\r?\n/);
+    var rows = [];
+
+    for (var i = 0; i < lines.length; i++) {
+      var t = lines[i].trim();
+      if (!t) continue;
+      if (t.charAt(0) === '#' || t.indexOf('//') === 0 || t.charAt(0) === '%') continue;
+
+      var parts = t.split(/[\s,;\t]+/).filter(Boolean);
+      var nums = [];
+      var ok = true;
+      for (var j = 0; j < parts.length; j++) {
+        var v = parseFloat(parts[j]);
+        if (!isFinite(v)) { ok = false; break; }
+        nums.push(v);
+      }
+      if (!ok || nums.length === 0) continue;
+      rows.push(nums);
+    }
+
+    if (rows.length === 0) {
+      throw new Error('未找到有效数据行。\n请确认文件为两列（时间 加速度）或单列加速度文本。');
+    }
+
+    var counts = {};
+    var maxCount = 0, bestNcol = rows[0].length;
+    for (var k = 0; k < rows.length; k++) {
+      var n = rows[k].length;
+      counts[n] = (counts[n] || 0) + 1;
+      if (counts[n] > maxCount) { maxCount = counts[n]; bestNcol = n; }
+    }
+    rows = rows.filter(function (r) { return r.length === bestNcol; });
+
+    if (rows.length < 10) {
+      throw new Error('有效数据点太少（' + rows.length + ' 个），无法进行积分与谱计算。');
+    }
+
+    var ncol = bestNcol;
+    var dt = null, time = null, acc = null;
+
+    if (ncol >= 2) {
+      var col0 = rows.map(function (r) { return r[0]; });
+      var d0 = col0[1] - col0[0];
+      var isTime = d0 > 0 && d0 < 1e6;
+
+      if (isTime) {
+        var nCheck = Math.min(rows.length, 50);
+        var tolerance = Math.abs(d0) * 0.05;
+        for (var m = 2; m < nCheck; m++) {
+          var dm = col0[m] - col0[m - 1];
+          if (Math.abs(dm - d0) > tolerance) { isTime = false; break; }
+        }
+      }
+
+      if (isTime) {
+        var fs = 1 / d0;
+        if (fs > 1e5 || fs < 1e-5) isTime = false;
+      }
+
+      if (isTime) {
+        dt = d0;
+        time = col0;
+        acc = rows.map(function (r) { return r[1]; });
+      } else {
+        acc = rows.map(function (r) { return r[ncol - 1]; });
+      }
+    } else {
+      acc = rows.map(function (r) { return r[0]; });
+    }
+
+    return {
+      time: time,
+      acc: new Float64Array(acc),
+      dt: dt,
+      hasTime: !!dt
+    };
+  }
+
+  /* ============================================================
+     降采样工具（当前示例未启用，保留备用）
+     ---------------------------------------------------------
+     算法：factor 点居中移动平均（抗混叠）+ 每 factor 点抽取 1 点。
+     如需把示例降到 10 Hz，在 loadDemo 中取消注释即可。
+     ============================================================ */
+
+  function decimate(parsed, targetFs) {
+    if (!parsed.dt) return parsed;
+    var fsSrc = 1 / parsed.dt;
+    if (fsSrc <= targetFs * 1.5) return parsed;
+
+    var factor = Math.max(2, Math.round(fsSrc / targetFs));
+    var src = parsed.acc;
+    var n = src.length;
+    if (n < factor * 4) return parsed;
+
+    var half = Math.floor(factor / 2);
+    var filt = new Float64Array(n);
+    for (var i = 0; i < n; i++) {
+      var lo = Math.max(0, i - half);
+      var hi = Math.min(n - 1, i + half);
+      var s = 0;
+      for (var j = lo; j <= hi; j++) s += src[j];
+      filt[i] = s / (hi - lo + 1);
+    }
+
+    var outLen = Math.floor((n - 1) / factor) + 1;
+    var out = new Float64Array(outLen);
+    for (var k = 0; k < outLen; k++) {
+      out[k] = filt[k * factor];
+    }
+
+    return {
+      acc: out,
+      dt: parsed.dt * factor,
+      time: null,
+      hasTime: true,
+      decimatedFrom: fsSrc,
+      decimatedTo: 1 / (parsed.dt * factor)
+    };
+  }
+
+  /* ============================================================
+     信号处理
+     ============================================================ */
+
+  function demeanDetrend(a) {
+    var n = a.length;
+    var out = new Float64Array(n);
+
+    var sum = 0;
+    for (var i = 0; i < n; i++) sum += a[i];
+    var mean = sum / n;
+
+    var sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (var j = 0; j < n; j++) {
+      var x = j;
+      var y = a[j] - mean;
+      sx += x;
+      sy += y;
+      sxx += x * x;
+      sxy += x * y;
+    }
+    var denom = n * sxx - sx * sx;
+    var slope = denom !== 0 ? (n * sxy - sx * sy) / denom : 0;
+    var intercept = (sy - slope * sx) / n;
+
+    for (var k = 0; k < n; k++) {
+      out[k] = a[k] - mean - (slope * k + intercept);
+    }
+    return out;
+  }
+
+  function trapezoidIntegrate(a, dt) {
+    var n = a.length;
+    var out = new Float64Array(n);
+    var s = 0;
+    for (var i = 1; i < n; i++) {
+      s += 0.5 * (a[i - 1] + a[i]) * dt;
+      out[i] = s;
+    }
+    return out;
+  }
+
+  function computeHusid(a, dt) {
+    var n = a.length;
+    var H = new Float64Array(n);
+    var ca = 0;
+    var total = 0;
+    for (var i = 0; i < n; i++) total += a[i] * a[i];
+    total *= dt;
+    if (total <= 0) return H;
+    for (var j = 0; j < n; j++) {
+      ca += a[j] * a[j] * dt;
+      H[j] = ca / total;
+    }
+    return H;
+  }
+
+  function findEnergyTime(H, dt, level) {
+    for (var i = 0; i < H.length; i++) {
+      if (H[i] >= level) return i * dt;
+    }
+    return NaN;
+  }
+
+  function computeArias(a, dt, g) {
+    var sum = 0;
+    for (var i = 0; i < a.length; i++) sum += a[i] * a[i];
+    return Math.PI / (2 * g) * sum * dt;
+  }
+
+  function computeRMS(a) {
+    var sum = 0;
+    for (var i = 0; i < a.length; i++) sum += a[i] * a[i];
+    return Math.sqrt(sum / a.length);
+  }
+
+  function computeTm(a, v, dt) {
+    var sa = 0, sv = 0;
+    for (var i = 0; i < a.length; i++) {
+      sa += a[i] * a[i];
+      sv += v[i] * v[i];
+    }
+    if (sa <= 0) return NaN;
+    return 2 * Math.PI * Math.sqrt(sv / sa);
+  }
+
+  function computePeakPeriod(a, dt) {
+    var n = a.length;
+    var nfft = 1;
+    while (nfft < n) nfft *= 2;
+    if (nfft > 8192) nfft = 8192;
+
+    var re = new Float64Array(nfft);
+    var im = new Float64Array(nfft);
+
+    var half = Math.min(n, nfft);
+    for (var i = 0; i < half; i++) {
+      var w = 0.5 * (1 - Math.cos(2 * Math.PI * i / (half - 1)));
+      re[i] = a[i] * w;
+    }
+
+    fftInPlace(re, im);
+
+    var halfN = nfft / 2;
+    var maxAmp = 0, maxIdx = 0;
+    for (var k = 1; k < halfN; k++) {
+      var amp = re[k] * re[k] + im[k] * im[k];
+      if (amp > maxAmp) { maxAmp = amp; maxIdx = k; }
+    }
+
+    if (maxIdx === 0) return NaN;
+    var freq = maxIdx / (nfft * dt);
+    return freq > 0 ? 1 / freq : NaN;
+  }
+
+  function fftInPlace(re, im) {
+    var n = re.length;
+    for (var i = 1, j = 0; i < n; i++) {
+      var bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        var tr = re[i]; re[i] = re[j]; re[j] = tr;
+        var ti = im[i]; im[i] = im[j]; im[j] = ti;
+      }
+    }
+    for (var len = 2; len <= n; len <<= 1) {
+      var ang = -2 * Math.PI / len;
+      var wRe = Math.cos(ang), wIm = Math.sin(ang);
+      for (var s = 0; s < n; s += len) {
+        var cRe = 1, cIm = 0;
+        for (var k = 0; k < len / 2; k++) {
+          var pRe = re[s + k], pIm = im[s + k];
+          var qRe = re[s + k + len / 2] * cRe - im[s + k + len / 2] * cIm;
+          var qIm = re[s + k + len / 2] * cIm + im[s + k + len / 2] * cRe;
+          re[s + k] = pRe + qRe;
+          im[s + k] = pIm + qIm;
+          re[s + k + len / 2] = pRe - qRe;
+          im[s + k + len / 2] = pIm - qIm;
+          var tmpRe = cRe * wRe - cIm * wIm;
+          cIm = cRe * wIm + cIm * wRe;
+          cRe = tmpRe;
+        }
+      }
+    }
+  }
+
+  function computeSpectrum(a, dt, periods, zeta) {
+    var Sa = new Float64Array(periods.length);
+    var gamma = 0.5, beta = 0.25;
+    var n = a.length;
+
+    for (var i = 0; i < periods.length; i++) {
+      var T = periods[i];
+      if (T <= 0.01) {
+        var mx = 0;
+        for (var q = 0; q < n; q++) if (Math.abs(a[q]) > mx) mx = Math.abs(a[q]);
+        Sa[i] = mx;
+        continue;
+      }
+
+      var omega = 2 * Math.PI / T;
+      var k = omega * omega;
+      var c = 2 * omega * zeta;
+      var K_eff = k + gamma / (beta * dt) * c + 1.0 / (beta * dt * dt);
+
+      var u = 0, v = 0, acc = -a[0];
+      var aMax = 0;
+
+      for (var j = 1; j < n; j++) {
+        var P_eff = -a[j]
+          + (1.0 / (beta * dt * dt) * u
+             + 1.0 / (beta * dt) * v
+             + (1.0 / (2 * beta) - 1.0) * acc)
+          + c * (gamma / (beta * dt) * u
+                 + (gamma / beta - 1.0) * v
+                 + dt * (gamma / (2 * beta) - 1.0) * acc);
+
+        var uNew = P_eff / K_eff;
+        var vNew = gamma / (beta * dt) * (uNew - u)
+                   - (gamma / beta - 1.0) * v
+                   - dt * (gamma / (2 * beta) - 1.0) * acc;
+        var aNew = 1.0 / (beta * dt * dt) * (uNew - u)
+                   - 1.0 / (beta * dt) * v
+                   - (1.0 / (2 * beta) - 1.0) * acc;
+
+        u = uNew; v = vNew; acc = aNew;
+
+        var absAcc = Math.abs(acc + a[j]);
+        if (absAcc > aMax) aMax = absAcc;
+      }
+      Sa[i] = aMax;
+    }
+    return Sa;
+  }
+
+  /* ============================================================
+     Canvas 绘图
+     ============================================================ */
+
+  function getCanvasColors() {
+    var s = getComputedStyle(document.documentElement);
+    function v(name, fb) { return s.getPropertyValue(name).trim() || fb; }
+    return {
+      bg:     v('--panel', '#ffffff'),
+      text:   v('--text', '#111'),
+      grid:   v('--border-soft', '#e8e8e8'),
+      border: v('--text', '#111'),
+      muted:  v('--muted', '#444'),
+      accent: v('--accent', '#b45309'),
+      accent2: v('--accent-2', '#60a5fa')
+    };
+  }
+
+  function niceTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) ticks.push(v);
+    return ticks;
+  }
+
+  function formatTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 1e4 || a < 1e-2) {
+      var e = Math.floor(Math.log10(a));
+      var m = v / Math.pow(10, e);
+      var ms = m.toFixed(1);
+      if (ms.indexOf('.0') === ms.length - 2) ms = ms.slice(0, -2);
+      return ms + '×10' + sup(e);
+    }
+    if (a >= 100) return v.toFixed(0);
+    var s;
+    if (a >= 1) s = v.toFixed(2);
+    else if (a >= 0.01) s = v.toFixed(3);
+    else s = v.toFixed(4);
+    if (s.indexOf('.') >= 0) s = s.replace(/\.?0+$/, '');
+    return s;
+  }
+
+  function prepareCanvas(canvas) {
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var cssW = rect.width || 800;
+    var cssH = rect.height || 260;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, W: cssW, H: cssH };
+  }
+
+  function drawAxes(ctx, W, H, margin, xMin, xMax, yMin, yMax, xLabel, yLabel, C) {
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    var xTicks = niceTicks(xMin, xMax, 6);
+    var yTicks = niceTicks(yMin, yMax, 5);
+
+    ctx.save();
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var py = margin.top + plotH - (yTicks[yi] - yMin) / (yMax - yMin) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, py);
+      ctx.lineTo(margin.left + plotW, py);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xTicks.length; xi++) {
+      var px = margin.left + (xTicks[xi] - xMin) / (xMax - xMin) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(px, margin.top);
+      ctx.lineTo(px, margin.top + plotH);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = C.border;
+    ctx.lineWidth = 0.9;
+    ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+    var tickLen = 5;
+    ctx.strokeStyle = C.border;
+    ctx.lineWidth = 0.8;
+    ctx.font = '11px "Times New Roman", "Songti SC", "SimSun", serif';
+    ctx.fillStyle = C.text;
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yj = 0; yj < yTicks.length; yj++) {
+      var yy = margin.top + plotH - (yTicks[yj] - yMin) / (yMax - yMin) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yy);
+      ctx.lineTo(margin.left + tickLen, yy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(margin.left + plotW, yy);
+      ctx.lineTo(margin.left + plotW - tickLen, yy);
+      ctx.stroke();
+      ctx.fillText(formatTick(yTicks[yj]), margin.left - 8, yy);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xj = 0; xj < xTicks.length; xj++) {
+      var xx = margin.left + (xTicks[xj] - xMin) / (xMax - xMin) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(xx, margin.top + plotH);
+      ctx.lineTo(xx, margin.top + plotH - tickLen);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xx, margin.top);
+      ctx.lineTo(xx, margin.top + tickLen);
+      ctx.stroke();
+      ctx.fillText(formatTick(xTicks[xj]), xx, margin.top + plotH + 8);
+    }
+
+    ctx.font = 'italic 12px "Times New Roman", "Songti SC", "SimSun", serif';
+    ctx.fillStyle = C.muted;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(xLabel, margin.left + plotW / 2, H - 18);
+
+    ctx.save();
+    ctx.translate(20, margin.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    return { plotW: plotW, plotH: plotH };
+  }
+
+  function drawWaveform(canvas, data, dt, xLabel, yLabel) {
+    var p = prepareCanvas(canvas);
+    var ctx = p.ctx, W = p.W, H = p.H;
+    var C = getCanvasColors();
+
+    var margin = { top: 16, right: 20, bottom: 46, left: 72 };
+    var xMax = (data.length - 1) * dt;
+
+    var min = Infinity, max = -Infinity;
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    if (!isFinite(min)) { min = -1; max = 1; }
+    var absMax = Math.max(Math.abs(min), Math.abs(max)) || 1;
+    var yMax = absMax * 1.08, yMin = -yMax;
+
+    var geom = drawAxes(ctx, W, H, margin, 0, xMax, yMin, yMax, xLabel, yLabel, C);
+    var plotW = geom.plotW, plotH = geom.plotH;
+
+    ctx.strokeStyle = C.text;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+
+    var n = data.length;
+    var pxCount = Math.max(1, Math.floor(plotW));
+    var step = n / pxCount;
+
+    for (var x = 0; x < pxCount; x++) {
+      var i0 = Math.floor(x * step);
+      var i1 = Math.min(n, Math.floor((x + 1) * step) + 1);
+      var lo = Infinity, hi = -Infinity;
+      for (var j = i0; j < i1; j++) {
+        var vv = data[j];
+        if (vv < lo) lo = vv;
+        if (vv > hi) hi = vv;
+      }
+      if (lo === Infinity) continue;
+      var y1 = margin.top + plotH - (hi - yMin) / (yMax - yMin) * plotH;
+      var y2 = margin.top + plotH - (lo - yMin) / (yMax - yMin) * plotH;
+      ctx.moveTo(margin.left + x + 0.5, y1);
+      ctx.lineTo(margin.left + x + 0.5, y2);
+    }
+    ctx.stroke();
+  }
+
+  function drawHusid(canvas, H, dt, t5, t95) {
+    var p = prepareCanvas(canvas);
+    var ctx = p.ctx, W = p.W, Hh = p.H;
+    var C = getCanvasColors();
+
+    var margin = { top: 16, right: 20, bottom: 46, left: 72 };
+    var xMax = (H.length - 1) * dt;
+
+    var geom = drawAxes(ctx, W, Hh, margin, 0, xMax, 0, 1.05, 'Time (s)', 'H(t)', C);
+    var plotW = geom.plotW, plotH = geom.plotH;
+
+    function toY(v) { return margin.top + plotH - (v / 1.05) * plotH; }
+
+    ctx.save();
+    ctx.strokeStyle = C.accent;
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([4, 4]);
+    [0.05, 0.95].forEach(function (lv) {
+      var yy = toY(lv);
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yy);
+      ctx.lineTo(margin.left + plotW, yy);
+      ctx.stroke();
+    });
+    ctx.restore();
+
+    if (isFinite(t5) && isFinite(t95)) {
+      ctx.strokeStyle = C.accent2;
+      ctx.lineWidth = 1.0;
+      [t5, t95].forEach(function (tv) {
+        var xx = margin.left + tv / xMax * plotW;
+        ctx.beginPath();
+        ctx.moveTo(xx, margin.top);
+        ctx.lineTo(xx, margin.top + plotH);
+        ctx.stroke();
+      });
+    }
+
+    ctx.strokeStyle = C.text;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    var n = H.length;
+    var pxCount = Math.max(2, Math.floor(plotW));
+    var step = n / pxCount;
+    for (var x = 0; x < pxCount; x++) {
+      var idx = Math.min(n - 1, Math.floor(x * step));
+      var xx = margin.left + x + 0.5;
+      var yy = toY(H[idx]);
+      if (x === 0) ctx.moveTo(xx, yy);
+      else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke();
+  }
+
+  function drawSpectrum(canvas, periods, Sa) {
+    var p = prepareCanvas(canvas);
+    var ctx = p.ctx, W = p.W, Hh = p.H;
+    var C = getCanvasColors();
+
+    var margin = { top: 16, right: 20, bottom: 46, left: 72 };
+    var xMin = periods[0], xMax = periods[periods.length - 1];
+
+    var maxSa = 0;
+    for (var i = 0; i < Sa.length; i++) if (Sa[i] > maxSa) maxSa = Sa[i];
+    if (maxSa <= 0) maxSa = 1;
+
+    var xMinLog = Math.log10(xMin), xMaxLog = Math.log10(xMax);
+
+    var geom = drawAxes(ctx, W, Hh, margin, xMinLog, xMaxLog, 0, maxSa * 1.08, 'Period (s)', 'Sa', C);
+    var plotW = geom.plotW, plotH = geom.plotH;
+
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(margin.left, margin.top + plotH + 1, plotW, 30);
+
+    ctx.font = '11px "Times New Roman", "Songti SC", "SimSun", serif';
+    ctx.fillStyle = C.text;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    var tickVals = [0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5];
+    for (var tv = 0; tv < tickVals.length; tv++) {
+      var tvv = tickVals[tv];
+      if (tvv < xMin || tvv > xMax) continue;
+      var lx = Math.log10(tvv);
+      var xx = margin.left + (lx - xMinLog) / (xMaxLog - xMinLog) * plotW;
+      ctx.beginPath();
+      ctx.strokeStyle = C.border;
+      ctx.lineWidth = 0.8;
+      ctx.moveTo(xx, margin.top + plotH);
+      ctx.lineTo(xx, margin.top + plotH - 5);
+      ctx.stroke();
+      ctx.fillText(tvv.toString(), xx, margin.top + plotH + 8);
+    }
+
+    ctx.strokeStyle = C.accent;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for (var k = 0; k < periods.length; k++) {
+      var lx2 = Math.log10(periods[k]);
+      var px = margin.left + (lx2 - xMinLog) / (xMaxLog - xMinLog) * plotW;
+      var py = margin.top + plotH - Sa[k] / (maxSa * 1.08) * plotH;
+      if (k === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  /* ============================================================
+     状态
+     ============================================================ */
+
+  var state = {
+    fileName: '',
+    fileSize: 0,
+    dt: 0,
+    accRaw: null,
+    accCorr: null,
+    vel: null,
+    disp: null,
+    params: null,
+    periods: null,
+    Sa: null
+  };
+
+  /* 已解析但还缺采样率的文件（单列数据） */
+  var pending = null;   // { parsed, fileName, fileSize }
+
+  var G = 9.80665;
+
+  function showError(msg) {
+    var box = $('errorBox');
+    box.textContent = msg;
+    box.hidden = false;
+    $('okBox').hidden = true;
+  }
+
+  function showOk(msg) {
+    var box = $('okBox');
+    box.textContent = msg;
+    box.hidden = false;
+    $('errorBox').hidden = true;
+  }
+
+  function hideAlerts() {
+    $('errorBox').hidden = true;
+    $('okBox').hidden = true;
+  }
+
+  /* 控制采样率输入框显隐 */
+  function updateFsVisibility(hasTime) {
+    var wrap = $('fsWrap');
+    var input = $('fsManual');
+    if (hasTime) {
+      wrap.style.display = 'none';
+      input.value = '';
+    } else {
+      wrap.style.display = 'flex';
+      setTimeout(function () { try { input.focus(); } catch (e) {} }, 0);
+    }
+  }
+
+  /* ============================================================
+     处理流程
+     ============================================================ */
+
+  function unitFactor(unit) {
+    if (unit === 'g') return G;
+    if (unit === 'gal') return 0.01;
+    return 1;
+  }
+
+  function processRecord(parsed, fileName, fileSize) {
+    hideAlerts();
+
+    var dt = parsed.dt;
+    if (!dt) {
+      var fsManual = parseFloat($('fsManual').value);
+      if (!isFinite(fsManual) || fsManual <= 0) {
+        throw new Error('未检测到时间列。请填写采样率（Hz）后再试。');
+      }
+      dt = 1 / fsManual;
+    }
+
+    var n = parsed.acc.length;
+    var unit = $('unitSelect').value;
+    var factor = unitFactor(unit);
+
+    var accSI = new Float64Array(n);
+    for (var i = 0; i < n; i++) accSI[i] = parsed.acc[i] * factor;
+
+    var acc = demeanDetrend(accSI);
+
+    var vel = trapezoidIntegrate(acc, dt);
+    vel = demeanDetrend(vel);
+
+    var disp = trapezoidIntegrate(vel, dt);
+    disp = demeanDetrend(disp);
+
+    var pga = 0, tPgaIdx = 0;
+    for (var j = 0; j < n; j++) {
+      var aa = Math.abs(acc[j]);
+      if (aa > pga) { pga = aa; tPgaIdx = j; }
+    }
+
+    var pgv = 0, pgd = 0;
+    for (var k = 0; k < n; k++) {
+      var vv = Math.abs(vel[k]); if (vv > pgv) pgv = vv;
+      var dd = Math.abs(disp[k]); if (dd > pgd) pgd = dd;
+    }
+
+    var Husid = computeHusid(acc, dt);
+    var t5 = findEnergyTime(Husid, dt, 0.05);
+    var t95 = findEnergyTime(Husid, dt, 0.95);
+    var d595 = (isFinite(t5) && isFinite(t95)) ? (t95 - t5) : NaN;
+
+    var thresh = 0.05 * pga;
+    var firstIdx = -1, lastIdx = -1;
+    for (var m = 0; m < n; m++) {
+      if (Math.abs(acc[m]) >= thresh) {
+        if (firstIdx < 0) firstIdx = m;
+        lastIdx = m;
+      }
+    }
+    var dbr = (firstIdx >= 0) ? (lastIdx - firstIdx) * dt : NaN;
+
+    var ia = computeArias(acc, dt, G);
+    var rms = computeRMS(acc);
+    var Tm = computeTm(acc, vel, dt);
+    var Tp = computePeakPeriod(acc, dt);
+
+    var periods = [];
+    var logMin = Math.log10(0.02);
+    var logMax = Math.log10(6.0);
+    var nPer = 60;
+    for (var p = 0; p < nPer; p++) {
+      periods.push(Math.pow(10, logMin + (logMax - logMin) * p / (nPer - 1)));
+    }
+    var Sa = computeSpectrum(acc, dt, periods, 0.05);
+
+    state.fileName = fileName;
+    state.fileSize = fileSize;
+    state.dt = dt;
+    state.accRaw = parsed.acc;
+    state.accCorr = acc;
+    state.vel = vel;
+    state.disp = disp;
+    state.periods = periods;
+    state.Sa = Sa;
+    state.params = {
+      pga: pga, pgv: pgv, pgd: pgd,
+      ia: ia, d595: d595, dbr: dbr,
+      rms: rms, Tm: Tm, Tp: Tp,
+      tPga: tPgaIdx * dt,
+      ratio: pgv / pga,
+      unit: unit
+    };
+
+    renderAll();
+
+    if (!parsed.dt) {
+      showOk('已使用手动输入的采样率 ' + (1/dt).toFixed(4) + ' Hz。');
+    }
+  }
+
+  /* ============================================================
+     渲染
+     ============================================================ */
+
+  function renderAll() {
+    var p = state.params;
+    var dt = state.dt;
+    var n = state.accCorr.length;
+
+    $('fTag').textContent = '加速度时程';
+    $('fName').textContent = state.fileName;
+    $('fSize').textContent = fmtSize(state.fileSize);
+    $('dataHint').textContent = '采样 ' + (1 / dt).toFixed(2) + ' Hz · ' + n + ' 点';
+
+    $('tRate').textContent = (1 / dt).toFixed(2) + ' Hz';
+    $('tNpts').textContent = n.toLocaleString();
+    $('tDuration').textContent = fmtDuration((n - 1) * dt);
+    $('tPGA').textContent = p.pga.toFixed(4) + ' m/s²';
+    $('tPGV').textContent = (p.pgv * 100).toFixed(3) + ' cm/s';
+    $('tPGD').textContent = (p.pgd * 100).toFixed(3) + ' cm';
+
+    $('outPgaSI').textContent = p.pga.toFixed(4) + ' m/s²';
+    $('outPgaG').textContent = (p.pga / G).toFixed(4) + ' g';
+    $('outPgv').textContent = (p.pgv * 100).toFixed(3) + ' cm/s';
+    $('outPgd').textContent = (p.pgd * 100).toFixed(3) + ' cm';
+    $('outIa').textContent = p.ia.toFixed(4) + ' m/s';
+    $('outD595').textContent = isFinite(p.d595) ? p.d595.toFixed(2) + ' s' : '—';
+    $('outDbr').textContent = isFinite(p.dbr) ? p.dbr.toFixed(2) + ' s' : '—';
+    $('outRms').textContent = p.rms.toFixed(4) + ' m/s²';
+    $('outTm').textContent = isFinite(p.Tm) ? p.Tm.toFixed(3) + ' s' : '—';
+    $('outTp').textContent = isFinite(p.Tp) ? p.Tp.toFixed(3) + ' s' : '—';
+    $('outTpga').textContent = p.tPga.toFixed(3) + ' s';
+    $('outRatio').textContent = isFinite(p.ratio) ? p.ratio.toFixed(4) + ' s' : '—';
+
+    $('infoPanel').hidden = false;
+    $('wavePanel').hidden = false;
+    $('husidPanel').hidden = false;
+    $('paramPanel').hidden = false;
+    $('spectrumPanel').hidden = false;
+    $('outPanel').hidden = false;
+
+    requestAnimationFrame(function () {
+      var Husid = computeHusid(state.accCorr, dt);
+      drawWaveform($('accCanvas'), state.accCorr, dt, 'Time (s)', 'Acceleration (m/s²)');
+      drawHusid($('husidCanvas'), Husid, dt,
+                findEnergyTime(Husid, dt, 0.05),
+                findEnergyTime(Husid, dt, 0.95));
+      drawSpectrum($('specCanvas'), state.periods, state.Sa);
+    });
+  }
+
+  function clearAll() {
+    state.fileName = '';
+    state.fileSize = 0;
+    state.dt = 0;
+    state.accRaw = null;
+    state.accCorr = null;
+    state.vel = null;
+    state.disp = null;
+    state.params = null;
+    state.periods = null;
+    state.Sa = null;
+    pending = null;
+
+    $('infoPanel').hidden = true;
+    $('wavePanel').hidden = true;
+    $('husidPanel').hidden = true;
+    $('paramPanel').hidden = true;
+    $('spectrumPanel').hidden = true;
+    $('outPanel').hidden = true;
+    $('fileInput').value = '';
+    $('fsManual').value = '';
+    updateFsVisibility(true);
+    hideAlerts();
+  }
+
+  /* ============================================================
+     导出
+     ============================================================ */
+
+  function buildCSV() {
+    var p = state.params;
+    var rows = [];
+    rows.push('parameter,value,unit');
+    rows.push(['file_name', state.fileName, ''].join(','));
+    rows.push(['sample_rate', (1 / state.dt).toFixed(6), 'Hz'].join(','));
+    rows.push(['n_points', state.accCorr.length, ''].join(','));
+    rows.push(['duration', ((state.accCorr.length - 1) * state.dt).toFixed(4), 's'].join(','));
+    rows.push('');
+    rows.push(['PGA_SI', p.pga.toFixed(6), 'm/s^2'].join(','));
+    rows.push(['PGA_g', (p.pga / G).toFixed(6), 'g'].join(','));
+    rows.push(['PGV', (p.pgv * 100).toFixed(6), 'cm/s'].join(','));
+    rows.push(['PGD', (p.pgd * 100).toFixed(6), 'cm'].join(','));
+    rows.push(['Arias_Ia', p.ia.toFixed(6), 'm/s'].join(','));
+    rows.push(['D5_95', isFinite(p.d595) ? p.d595.toFixed(4) : '', 's'].join(','));
+    rows.push(['D_bracketed', isFinite(p.dbr) ? p.dbr.toFixed(4) : '', 's'].join(','));
+    rows.push(['RMS_acc', p.rms.toFixed(6), 'm/s^2'].join(','));
+    rows.push(['Tm', isFinite(p.Tm) ? p.Tm.toFixed(4) : '', 's'].join(','));
+    rows.push(['Tp', isFinite(p.Tp) ? p.Tp.toFixed(4) : '', 's'].join(','));
+    rows.push(['t_PGA', p.tPga.toFixed(4), 's'].join(','));
+    rows.push(['PGV_PGA', isFinite(p.ratio) ? p.ratio.toFixed(6) : '', 's'].join(','));
+    return rows.join('\n') + '\n';
+  }
+
+  function doExport() {
+    if (!state.params) {
+      showError('请先上传加速度时程文件。');
+      return;
+    }
+    var base = baseName(state.fileName) || 'gm_params';
+    var blob = new Blob([buildCSV()], { type: 'text/csv;charset=utf-8' });
+    var fileName = base + '_params.csv';
+
+    saveBlob(blob, fileName).then(function (r) {
+      if (r.aborted) showOk('已取消保存。');
+      else if (r.fallback) showOk('已下载到默认目录：' + r.name);
+      else if (r.saved) showOk('已保存为 ' + r.name);
+      else if (r.error) showError('保存失败：' + (r.error.message || r.error));
+    });
+  }
+
+  /* ============================================================
+     示例数据：优先 fetch 原始文件，失败时合成回退
+     ---------------------------------------------------------
+     原始记录为 50 Hz，直接加载使用，不做降采样。
+     （如需降采样，在 loadDemo 中取消 decimate 调用的注释即可。）
+     ============================================================ */
+
+  var DEMO_NAMES = { ew: 'EW', ns: 'NS', up: 'UP' };
+  var DEMO_URL   = {
+    ew: 'assets/elcentro_EW.txt',
+    ns: 'assets/elcentro_NS.txt',
+    up: 'assets/elcentro_UP.txt'
+  };
+
+  /* 合成回退参数（示例文件缺失时使用，同为 50 Hz） */
+  var DEMO_CFG = {
+    ew: { fs: 50, dur: 54, pga: 0.35, seed: 19401,
+      waves: [
+        { t0: 1.9,  amp: 0.10, tau: 0.6, freq: 3.5 },
+        { t0: 2.5,  amp: 0.30, tau: 2.5, freq: 2.5 },
+        { t0: 3.5,  amp: 0.25, tau: 4.0, freq: 2.0 },
+        { t0: 5.0,  amp: 0.20, tau: 5.0, freq: 1.5 },
+        { t0: 11.0, amp: 0.20, tau: 3.0, freq: 1.8 },
+        { t0: 15.0, amp: 0.10, tau: 6.0, freq: 0.8 }
+      ]
+    },
+    ns: { fs: 50, dur: 54, pga: 0.21, seed: 19402,
+      waves: [
+        { t0: 2.0,  amp: 0.08, tau: 0.7, freq: 3.0 },
+        { t0: 2.5,  amp: 0.20, tau: 2.5, freq: 2.2 },
+        { t0: 4.5,  amp: 0.15, tau: 4.0, freq: 1.8 },
+        { t0: 11.5, amp: 0.18, tau: 3.5, freq: 1.6 },
+        { t0: 15.0, amp: 0.08, tau: 6.0, freq: 0.7 }
+      ]
+    },
+    up: { fs: 50, dur: 54, pga: 0.20, seed: 19403,
+      waves: [
+        { t0: 2.1,  amp: 0.06, tau: 0.8, freq: 3.2 },
+        { t0: 3.0,  amp: 0.18, tau: 3.0, freq: 2.4 },
+        { t0: 5.0,  amp: 0.15, tau: 4.5, freq: 1.9 },
+        { t0: 11.0, amp: 0.15, tau: 3.5, freq: 1.7 },
+        { t0: 15.0, amp: 0.08, tau: 6.5, freq: 0.9 }
+      ]
+    }
+  };
+
+  function makeSynthAcc(kind) {
+    var cfg = DEMO_CFG[kind];
+    if (!cfg) return null;
+    var fs = cfg.fs;
+    var n = Math.floor(fs * cfg.dur);
+    var a = new Float64Array(n);
+    var seed = cfg.seed;
+    function rnd() {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    }
+    for (var i = 0; i < n; i++) {
+      var t = i / fs;
+      var v = 0;
+      for (var w = 0; w < cfg.waves.length; w++) {
+        var wv = cfg.waves[w];
+        var tw = t - wv.t0;
+        if (tw > 0) {
+          v += wv.amp * Math.exp(-tw / wv.tau) * Math.sin(2 * Math.PI * wv.freq * tw);
+        }
+      }
+      if (t > 2) {
+        var env = Math.exp(-(t - 2) / 10);
+        v += 0.005 * (rnd() * 2 - 1) * env;
+      }
+      a[i] = v;
+    }
+    var maxAbs = 0;
+    for (var j = 0; j < n; j++) if (Math.abs(a[j]) > maxAbs) maxAbs = Math.abs(a[j]);
+    if (maxAbs > 0) {
+      var scale = cfg.pga / maxAbs;
+      for (var k = 0; k < n; k++) a[k] *= scale;
+    }
+    return a;
+  }
+
+  function buildSynthText(kind) {
+    var cfg = DEMO_CFG[kind];
+    if (!cfg) return '';
+    var a = makeSynthAcc(kind);
+    var fs = cfg.fs;
+    var lines = [];
+    for (var i = 0; i < a.length; i++) {
+      lines.push(sci(i / fs, 7) + ' ' + sci(a[i], 7));
+    }
+    return lines.join('\n') + '\n';
+  }
+
+  function demoFileName(kind) {
+    return 'elcentro_' + DEMO_NAMES[kind] + '.txt';
+  }
+
+  /* -------- 加载：fetch → 解析 → 直接计算（不降采样） -------- */
+
+  function loadDemo(kind) {
+    hideAlerts();
+    if (!DEMO_URL[kind]) return;
+    var url = DEMO_URL[kind];
+    var fileName = demoFileName(kind);
+
+    fetch(url, { cache: 'no-cache' })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.text();
+      })
+      .then(function (text) {
+        var parsed = parseData(text);
+
+        /* 如需降采样到 10 Hz，取消下面这行的注释：
+         * parsed = decimate(parsed, 10);
+         */
+
+        var fsOut = parsed.dt ? (1 / parsed.dt) : null;
+        var nOut = parsed.acc.length;
+
+        updateFsVisibility(parsed.hasTime);
+        processRecord(parsed, fileName, text.length);
+
+        setTimeout(function () {
+          showOk('已加载 ' + fileName + '（' +
+                 (fsOut ? fsOut.toFixed(1) + ' Hz · ' : '') +
+                 nOut + ' 点）');
+        }, 0);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[demo] ' + url + ' 加载失败，使用合成数据：', err);
+        }
+        loadSynthFallback(kind);
+      });
+  }
+
+  function loadSynthFallback(kind) {
+    var text = buildSynthText(kind);
+    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    var fileName = demoFileName(kind);
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var txt = new TextDecoder('utf-8').decode(e.target.result);
+        var parsed = parseData(txt);
+        updateFsVisibility(parsed.hasTime);
+        processRecord(parsed, fileName, blob.size);
+        setTimeout(function () {
+          showOk('示例文件 assets/' + fileName + ' 未找到，已使用合成数据。');
+        }, 0);
+      } catch (err) {
+        clearAll();
+        showError('示例加载失败：\n' + (err && err.message ? err.message : String(err)));
+      }
+    };
+    reader.onerror = function () {
+      clearAll();
+      showError('示例读取失败。');
+    };
+    reader.readAsArrayBuffer(blob);
+  }
+
+  /* -------- 下载：优先下载原始文件，失败时下载合成数据 -------- */
+
+  function downloadDemo(kind) {
+    if (!DEMO_URL[kind]) return;
+    var url = DEMO_URL[kind];
+    var fileName = demoFileName(kind);
+
+    fetch(url, { cache: 'no-cache' })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.blob();
+      })
+      .then(function (blob) {
+        return saveBlob(blob, fileName).then(function (r) {
+          if (r.aborted) showOk('已取消保存。');
+          else if (r.fallback) showOk('已下载：' + r.name);
+          else if (r.saved) showOk('已保存：' + r.name);
+          else if (r.error) showError('保存失败：' + (r.error.message || r.error));
+        });
+      })
+      .catch(function () {
+        var text = buildSynthText(kind);
+        var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        saveBlob(blob, fileName).then(function (r) {
+          if (r.aborted) showOk('已取消保存。');
+          else if (r.fallback) showOk('已下载合成数据：' + r.name + '（原始文件未找到）');
+          else if (r.saved) showOk('已保存合成数据：' + r.name);
+          else if (r.error) showError('保存失败：' + (r.error.message || r.error));
+        });
+      });
+  }
+
+  /* ============================================================
+     文件读取（CSV / TXT）
+     ============================================================ */
+
+  function handleParsed(parsed, fileName, fileSize) {
+    var hasTime = !!parsed.dt;
+    updateFsVisibility(hasTime);
+
+    if (hasTime) {
+      pending = null;
+      processRecord(parsed, fileName, fileSize);
+    } else {
+      pending = { parsed: parsed, fileName: fileName, fileSize: fileSize };
+      hideAlerts();
+      showOk('已读取 ' + fileName + '（' + parsed.acc.length + ' 点，未检测到时间列）。\n' +
+             '请在上方「采样率 Hz」框中输入采样率，输入后自动计算。');
+    }
+  }
+
+  function readFile(file) {
+    hideAlerts();
+    if (file.size === 0) { showError('文件为空。'); return; }
+    if (file.size > 30 * 1024 * 1024) {
+      showError('文件超过 30 MB，浏览器端处理可能非常缓慢。建议先裁剪记录。');
+      return;
+    }
+
+    var lower = (file.name || '').toLowerCase();
+    if (lower && !/\.(csv|txt)$/.test(lower)) {
+      showError('仅支持 CSV / TXT 文本文件。\n请确认文件扩展名为 .csv 或 .txt。');
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var text = new TextDecoder('utf-8', { fatal: false }).decode(e.target.result);
+        var parsed = parseData(text);
+        handleParsed(parsed, file.name, file.size);
+      } catch (err) {
+        clearAll();
+        showError(err && err.message ? err.message : String(err));
+      }
+    };
+    reader.onerror = function () {
+      clearAll();
+      showError('读取文件失败，请重试。');
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  /* ============================================================
+     事件绑定
+     ============================================================ */
+
+  var dropZone = $('dropZone');
+  var fileInput = $('fileInput');
+
+  fileInput.addEventListener('change', function (e) {
+    var files = e.target.files;
+    if (files && files.length > 0) readFile(files[0]);
+  });
+
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    dropZone.addEventListener(ev, function (e) {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.add('drag');
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    dropZone.addEventListener(ev, function (e) {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.remove('drag');
+    });
+  });
+  dropZone.addEventListener('drop', function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length > 0) {
+      if (files.length > 1) {
+        showError('请一次只拖入一个文件。当前拖入 ' + files.length + ' 个。');
+        return;
+      }
+      readFile(files[0]);
+    }
+  });
+
+  $('fsManual').addEventListener('input', function () {
+    if (!pending) return;
+    var fs = parseFloat(this.value);
+    if (!isFinite(fs) || fs <= 0) return;
+    try {
+      processRecord(pending.parsed, pending.fileName, pending.fileSize);
+      pending = null;
+    } catch (e) {}
+  });
+
+  $('unitSelect').addEventListener('change', function () {
+    if (state.accRaw) {
+      try {
+        processRecord({ acc: state.accRaw, dt: state.dt, hasTime: true },
+                      state.fileName, state.fileSize);
+      } catch (e) {}
+    }
+  });
+
+  $('btnClear').addEventListener('click', clearAll);
+  $('btnExport').addEventListener('click', doExport);
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-demo]');
+    if (!btn) return;
+    var kind = btn.getAttribute('data-demo');
+    var action = btn.getAttribute('data-action');
+    if (action === 'load') loadDemo(kind);
+    else if (action === 'download') downloadDemo(kind);
+  });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (!state.params) return;
+      var dt = state.dt;
+      var Husid = computeHusid(state.accCorr, dt);
+      drawWaveform($('accCanvas'), state.accCorr, dt, 'Time (s)', 'Acceleration (m/s²)');
+      drawHusid($('husidCanvas'), Husid, dt,
+                findEnergyTime(Husid, dt, 0.05),
+                findEnergyTime(Husid, dt, 0.95));
+      drawSpectrum($('specCanvas'), state.periods, state.Sa);
+    }, 180);
+  });
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function () {
+      setTimeout(function () {
+        if (!state.params) return;
+        var dt = state.dt;
+        var Husid = computeHusid(state.accCorr, dt);
+        drawWaveform($('accCanvas'), state.accCorr, dt, 'Time (s)', 'Acceleration (m/s²)');
+        drawHusid($('husidCanvas'), Husid, dt,
+                  findEnergyTime(Husid, dt, 0.05),
+                  findEnergyTime(Husid, dt, 0.95));
+        drawSpectrum($('specCanvas'), state.periods, state.Sa);
+      }, 60);
+    });
+  }
+
+  updateFsVisibility(true);
+
+})();
+</script>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>需求谱 vs 能力谱 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.dc-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.dc-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.dc-canvas-wrap canvas {
+  width: 100%;
+  height: 560px;
+  display: block;
+}
+.dc-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.dc-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.dc-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+.dc-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.dc-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.dc-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      需求谱 vs 能力谱
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 抗震设计</div>
+      <h1>需求谱 vs 能力谱</h1>
+      <p class="lead">
+        性能化设计（Performance-Based Design）的核心图件：
+        在 <strong>ADRS 格式</strong>（S<sub>a</sub>–S<sub>d</sub>）下，
+        把结构的<strong>能力谱</strong>（由 Pushover 曲线转换）与地震的
+        <strong>需求谱</strong>（由设计谱转换）放在同一张图上，
+        两者的交点即<strong>性能点</strong>，对应结构在给定地震作用下的
+        位移与加速度需求。这是 ATC-40、FEMA 440 的核心方法。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">ADRS</span>
+        <span class="pill">性能点</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本页需要<strong>两个 CSV 文件</strong>：一个描述结构能力（能力谱），
+        一个描述地震需求（需求谱）。
+        页面默认读取 <code>assets/capacity_spectrum.csv</code> 与
+        <code>assets/demand_spectrum.csv</code>；
+        若文件不存在，则使用内置的合成数据演示。
+      </p>
+
+      <div class="io-card">
+        <h4>文件 1：能力谱（由 Pushover 转换）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          Pushover 曲线（V–d）通过模态转换得到能力谱（S<sub>a</sub>–S<sub>d</sub>）：
+        </p>
+        <div class="formula" style="text-align:center;">
+          S<sub>a</sub> = V / (α<sub>1</sub> · W) &nbsp;&nbsp;,&nbsp;&nbsp;
+          S<sub>d</sub> = d / (γ<sub>1</sub> · φ<sub>roof,1</sub>)
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>Sd_m</code></td><td>谱位移 S<sub>d</sub></td><td><code>m</code></td><td>能力谱横坐标</td></tr>
+            <tr><td><code>Sa_g</code></td><td>谱加速度 S<sub>a</sub></td><td><code>g</code></td><td>能力谱纵坐标</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">文件 2：需求谱（由设计谱转换）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          设计谱 Sa(T) 通过以下关系转为 ADRS 格式：
+        </p>
+        <div class="formula" style="text-align:center;">
+          S<sub>d</sub> = S<sub>a</sub> · g · T² / (4π²)
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>period_s</code></td><td>自振周期 T</td><td><code>s</code></td><td>对数分布</td></tr>
+            <tr><td><code>Sa_g</code></td><td>设计谱加速度</td><td><code>g</code></td><td>来自 GB 50011 或 PSHA</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例</h4>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>capacity_spectrum.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># capacity_spectrum.csv
+# 能力谱 —— 由 Pushover 曲线转换
+# 单位：Sd (m)  Sa (g)
+Sd_m,Sa_g
+0.000,0.000
+0.010,0.048
+0.020,0.092
+0.030,0.132
+0.040,0.168
+0.050,0.200
+0.060,0.226
+0.080,0.268
+0.100,0.300
+0.120,0.320
+0.140,0.330
+...
+</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>demand_spectrum.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># demand_spectrum.csv
+# 需求谱 —— 由设计谱转换
+# 单位：T (s)  Sa (g)
+period_s,Sa_g
+0.050,0.320
+0.100,0.320
+0.200,0.320
+0.300,0.320
+0.400,0.320
+0.500,0.256
+0.700,0.183
+1.000,0.128
+1.500,0.085
+2.000,0.064
+3.000,0.043
+...
+</code></pre>
+      </div>
+
+      <div class="dc-download">
+        <button type="button" id="btn-download-csv">下载示例 CSV</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>能力谱</strong>——由 Pushover 分析得到的 V–d 曲线，
+            按模态参与系数转换。可使用 ETABS、SAP2000 的 Pushover 结果，
+            或在 Python/MATLAB 里自行转换。</li>
+          <li><strong>需求谱</strong>——来自 GB 50011-2010 设计谱、
+            一致危险性谱（UHS）或场地专项地震安全性评价报告。</li>
+          <li><strong>性能点求解</strong>——ATC-40 等效线性化方法
+            （Capacity Spectrum Method），或 FEMA 440 改进方法。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一个中等刚度框架的能力谱与
+          7 度（0.10 g）II 类场地设计谱的转换结果，
+          性能点约在 S<sub>d</sub> ≈ 0.14 m、S<sub>a</sub> ≈ 0.33 g 处。
+          替换为你自己的分析结果只需修改两个 CSV 文件。
+        </div>
+      </div>
+
+      <!-- ============================================================
+           计算步骤：从 Pushover 曲线到性能点
+           ============================================================ -->
+      <h3 class="sub">计算步骤：从 Pushover 曲线到性能点</h3>
+
+      <p>
+        性能点的求解分四步：<strong>能力谱转换 → 需求谱转换 →
+        等效线性化 → 迭代求交点</strong>。
+      </p>
+
+      <div class="flow">
+        Pushover (V–d) → 模态转换 → 能力谱 (S<sub>a</sub>–S<sub>d</sub>)
+        → 设计谱 Sa(T) → 转换为 ADRS
+        → 假设性能点 d<sub>i</sub> → 双线性化 → 等效阻尼比 β<sub>eff</sub>
+        → 折减需求谱 → 求交点 d<sub>i+1</sub>
+        → 若 |d<sub>i+1</sub> − d<sub>i</sub>| &lt; ε → 收敛，输出性能点
+      </div>
+
+      <div class="io-card">
+        <h4>四步详解</h4>
+        <ol>
+          <li>
+            <strong>能力谱转换</strong>——把 Pushover 曲线 (V, d) 转换为 ADRS 格式：
+            S<sub>a</sub> = V/(α<sub>1</sub>·W)，S<sub>d</sub> = d/(γ<sub>1</sub>·φ<sub>roof,1</sub>)。
+            其中 α<sub>1</sub> 是第一振型质量参与系数，γ<sub>1</sub> 是模态参与因子。
+          </li>
+          <li>
+            <strong>需求谱转换</strong>——把设计谱 Sa(T) 转换为 ADRS 格式：
+            S<sub>d</sub> = S<sub>a</sub>·g·T²/(4π²)。每条 (T, Sa) 对应 ADRS 上的一点。
+          </li>
+          <li>
+            <strong>等效线性化</strong>——假设性能点位移 d<sub>i</sub>，
+            在能力谱上做双线性化，计算等效粘滞阻尼比：
+            β<sub>eff</sub> = β<sub>0</sub> + κ·A<sub>h</sub>/(2π·S<sub>a</sub>·S<sub>d</sub>)。
+            根据 β<sub>eff</sub> 折减需求谱：
+            SR = (3.21 − 0.68·ln β<sub>eff</sub>) / 2.12（ATC-40 公式）。
+          </li>
+          <li>
+            <strong>迭代求交点</strong>——折减需求谱与能力谱的交点作为新的 d<sub>i+1</sub>，
+            重复第 3 步，直到 |d<sub>i+1</sub> − d<sub>i</sub>| &lt; ε 收敛。
+          </li>
+        </ol>
+
+        <div class="warn-text">
+          <strong>ATC-40 折减系数</strong>（Short-Period 与 Long-Period 两种）：
+          <br>
+          SR<sub>A</sub> = (3.21 − 0.68·ln β<sub>eff</sub>) / 2.12（短周期）
+          <br>
+          SR<sub>V</sub> = (2.31 − 0.41·ln β<sub>eff</sub>) / 1.65（长周期）
+          <br>
+          本页简化为短周期形式，作为演示。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">
+        Python 代码：性能点求解
+      </h4>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>demand_capacity.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 需求谱 vs 能力谱 | 性能点求解（ATC-40 等效线性化）
+# -------------------------------------------------------------
+# 输入：
+#   capacity_spectrum.csv   Sd_m, Sa_g
+#   demand_spectrum.csv     period_s, Sa_g
+# -------------------------------------------------------------
+# 输出：
+#   demand-capacity.png     性能点求解图
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+G = 9.80665
+CAP_FILE = 'capacity_spectrum.csv'
+DEM_FILE = 'demand_spectrum.csv'
+
+
+def generate_synthetic():
+    """生成合成数据。"""
+    # 能力谱：三段折线
+    Sd_cap = np.array([0.000, 0.010, 0.020, 0.030, 0.040, 0.050,
+                       0.060, 0.080, 0.100, 0.120, 0.140, 0.160,
+                       0.180, 0.200, 0.220, 0.240])
+    Sa_cap = np.array([0.000, 0.048, 0.092, 0.132, 0.168, 0.200,
+                       0.226, 0.268, 0.300, 0.320, 0.330, 0.332,
+                       0.330, 0.325, 0.318, 0.308])
+
+    # 需求谱：设计谱
+    period = np.array([0.05, 0.10, 0.20, 0.30, 0.40, 0.50,
+                       0.70, 1.00, 1.50, 2.00, 3.00, 4.00, 5.00])
+    Sa_g = np.array([0.320, 0.320, 0.320, 0.320, 0.320, 0.256,
+                     0.183, 0.128, 0.085, 0.064, 0.043, 0.032, 0.026])
+    return Sd_cap, Sa_cap, period, Sa_g
+
+
+# ---- 1. 读取数据 ----
+if os.path.exists(CAP_FILE) and os.path.exists(DEM_FILE):
+    cap = np.loadtxt(CAP_FILE, delimiter=',', skiprows=1)
+    Sd_cap = cap[:, 0]
+    Sa_cap = cap[:, 1]
+    dem = np.loadtxt(DEM_FILE, delimiter=',', skiprows=1)
+    period = dem[:, 0]
+    Sa_g = dem[:, 1]
+    print(f'从 CSV 读取：能力谱 {len(Sd_cap)} 点，需求谱 {len(period)} 点')
+else:
+    print('CSV 不存在，使用合成数据演示')
+    Sd_cap, Sa_cap, period, Sa_g = generate_synthetic()
+
+
+# ---- 2. 需求谱转换为 ADRS ----
+Sd_dem = Sa_g * G * period ** 2 / (4.0 * np.pi ** 2)
+
+
+# ---- 3. ATC-40 等效线性化迭代 ----
+def atc40_reduction(beta_eff):
+    """ATC-40 短周期折减系数。"""
+    sr = (3.21 - 0.68 * np.log(beta_eff)) / 2.12
+    return max(sr, 0.3)   # 不低于 0.3
+
+
+def find_performance_point(Sd_cap, Sa_cap, Sd_dem, Sa_dem,
+                            d_init=0.05, tol=1e-4, max_iter=50):
+    """迭代求性能点。"""
+    d_i = d_init
+    history = []
+
+    for it in range(max_iter):
+        # 在能力谱上插值 Sa(d_i)
+        Sa_i = np.interp(d_i, Sd_cap, Sa_cap)
+
+        # 用 0 → (d_i, Sa_i) 双线性化，计算等效阻尼比
+        Ke = Sa_i / d_i               # 割线刚度
+        # 滞回面积（简化：取双线性）
+        Ah = 2 * d_i * Sa_i * 0.5     # 简化系数
+        # 等效粘滞阻尼比
+        beta_eff = 0.05 + Ah / (2 * np.pi * Sa_i * d_i)
+
+        # ATC-40 折减
+        SR = atc40_reduction(beta_eff)
+
+        # 折减需求谱
+        Sd_dem_red = Sd_dem * SR
+        Sa_dem_red = Sa_dem * SR
+
+        # 求折减需求谱与能力谱的交点
+        # 用插值把能力谱外推到需求谱的 Sd 网格上
+        Sa_cap_interp = np.interp(Sd_dem_red, Sd_cap, Sa_cap,
+                                   left=Sa_cap[0], right=Sa_cap[-1])
+        diff = Sa_dem_red - Sa_cap_interp
+
+        # 找第一个符号变化
+        idx = None
+        for j in range(1, len(diff)):
+            if diff[j - 1] * diff[j] < 0:
+                idx = j
+                break
+
+        if idx is None:
+            # 无交点，取最接近的点
+            d_new = Sd_dem_red[np.argmin(np.abs(diff))]
+        else:
+            # 线性插值
+            x1, x2 = Sd_dem_red[idx - 1], Sd_dem_red[idx]
+            y1, y2 = diff[idx - 1], diff[idx]
+            d_new = x1 - y1 * (x2 - x1) / (y2 - y1)
+
+        history.append({
+            'iter': it, 'd': d_i, 'Sa': Sa_i,
+            'beta_eff': beta_eff, 'SR': SR, 'd_new': d_new
+        })
+
+        if abs(d_new - d_i) < tol:
+            d_i = d_new
+            break
+
+        d_i = 0.5 * d_new + 0.5 * d_i   # 松弛迭代，防止振荡
+
+    Sa_i = np.interp(d_i, Sd_cap, Sa_cap)
+    return d_i, Sa_i, history
+
+
+d_perf, Sa_perf, history = find_performance_point(
+    Sd_cap, Sa_cap, Sd_dem, Sa_g)
+
+print(f'\n性能点：Sd = {d_perf:.4f} m, Sa = {Sa_perf:.4f} g')
+print(f'迭代次数：{len(history)}')
+print(f'最终等效阻尼比：{history[-1]["beta_eff"]:.3f}')
+print(f'折减系数：{history[-1]["SR"]:.3f}')
+
+
+# ---- 4. 绘图（A4 尺寸 7.2 × 5.6 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+# 弹性需求谱
+ax.plot(Sd_dem, Sa_g, lw=1.8, color='#2563eb',
+        marker='o', ms=4, mfc='#2563eb', mec='none',
+        label='Elastic demand spectrum')
+
+# 折减需求谱
+SR_final = history[-1]['SR']
+Sd_dem_red = Sd_dem * SR_final
+Sa_dem_red = Sa_g * SR_final
+ax.plot(Sd_dem_red, Sa_dem_red, lw=1.8, color='#9333ea',
+        ls='--', marker='s', ms=4, mfc='#9333ea', mec='none',
+        label=f'Reduced demand (SR = {SR_final:.2f})')
+
+# 能力谱
+ax.plot(Sd_cap, Sa_cap, lw=2.4, color='#b45309',
+        marker='^', ms=4, mfc='#b45309', mec='none',
+        label='Capacity spectrum', zorder=5)
+
+# 性能点
+ax.plot(d_perf, Sa_perf, '*', color='#dc2626', ms=18,
+        mec='#222222', mew=0.8, zorder=10,
+        label='Performance point')
+
+# 性能点标注
+ax.annotate(
+    f'PP\nSd = {d_perf:.3f} m\nSa = {Sa_perf:.3f} g',
+    xy=(d_perf, Sa_perf),
+    xytext=(d_perf * 0.35, Sa_perf * 1.35),
+    fontsize=9, color='#dc2626',
+    arrowprops=dict(arrowstyle='->', color='#dc2626', lw=0.8))
+
+# 坐标轴
+ax.set_xlabel('Spectral displacement  $S_d$ (m)')
+ax.set_ylabel('Spectral acceleration  $S_a$ (g)')
+ax.set_title('Demand spectrum vs capacity spectrum  ·  ADRS format',
+             fontsize=11)
+ax.set_xlim(0, max(Sd_cap.max(), Sd_dem.max()) * 1.1)
+ax.set_ylim(0, max(Sa_cap.max(), Sa_g.max()) * 1.15)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('demand-capacity.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>能力谱转换</strong>：从 Pushover 的 V–d 得到
+            ADRS 格式的 S<sub>a</sub>–S<sub>d</sub>，需要模态参与系数。</li>
+          <li><strong>需求谱转换</strong>：<code>Sd = Sa·g·T²/(4π²)</code>，
+            把周期域的设计谱转到位移–加速度平面。</li>
+          <li><strong>等效阻尼比</strong>：
+            <code>β_eff = 0.05 + Ah/(2π·Sa·Sd)</code>，
+            滞回环越饱满，β_eff 越大，需求谱折减越多。</li>
+          <li><strong>ATC-40 折减</strong>：<code>SR = (3.21 − 0.68·ln β_eff)/2.12</code>，
+            β_eff 从 0.05 增大到 0.30 时 SR 从 1.0 降到约 0.6。</li>
+          <li><strong>迭代收敛</strong>：用松弛迭代 <code>d_new = 0.5·d + 0.5·d_old</code>
+            防止振荡，通常 5–10 次收敛。</li>
+          <li><strong>性能点</strong>：折减需求谱与能力谱的交点，
+            对应结构的位移需求 S<sub>d</sub> 与加速度需求 S<sub>a</sub>。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        需求谱 vs 能力谱（也称<strong>能力谱法</strong>，Capacity Spectrum Method）
+        是 ATC-40 提出的性能化设计方法。它把<strong>结构的能力</strong>与
+        <strong>地震的需求</strong>放在同一张图上，通过两者的交点确定
+        结构在给定地震作用下的<strong>性能点</strong>。
+      </p>
+
+      <h3 class="sub">ADRS 格式</h3>
+
+      <p>
+        ADRS（Acceleration-Displacement Response Spectrum）格式
+        把传统的 Sa–T 谱转换为 Sa–Sd 平面：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        S<sub>d</sub> = S<sub>a</sub> · g · T² / (4π²)
+      </div>
+
+      <p>
+        这种格式的优点是：<strong>结构的能力曲线（Pushover）与地震需求曲线
+        可以直接叠加</strong>，交点即性能点。
+        同一条传统谱曲线在 ADRS 上不再是水平–下降的形状，
+        而是从低频短周期到高频长周期的对角曲线。
+      </p>
+
+      <h3 class="sub">两类曲线</h3>
+
+      <ul class="plain">
+        <li>
+          <strong>能力谱</strong>——由结构的 Pushover 曲线转换。
+          反映结构自身的承载力与变形能力，与地震动无关。
+          形状与 Pushover 曲线相似：先线性上升，然后屈服段，最后下降。
+        </li>
+        <li>
+          <strong>需求谱</strong>——由设计谱转换。
+          反映地震对结构的位移与加速度需求。
+          弹性需求谱按结构弹性响应计算，折减需求谱考虑弹塑性耗能后降低。
+        </li>
+      </ul>
+
+      <h3 class="sub">等效线性化的意义</h3>
+
+      <p>
+        结构进入弹塑性后，动力特性不再是常值，
+        无法直接用弹性反应谱求性能点。ATC-40 用<strong>等效线性化</strong>
+        方法解决这个问题：
+      </p>
+
+      <ul class="plain">
+        <li>用<strong>割线刚度</strong>代替弹性刚度，反映刚度的退化；</li>
+        <li>用<strong>等效粘滞阻尼比</strong> β<sub>eff</sub> 反映滞回耗能，
+          β<sub>eff</sub> = β<sub>0</sub> + κ·A<sub>h</sub>/(2π·S<sub>a</sub>·S<sub>d</sub>)；</li>
+        <li>用 β<sub>eff</sub> 折减弹性需求谱，得到折减需求谱；</li>
+        <li>折减需求谱与能力谱的交点即性能点。</li>
+      </ul>
+
+      <h3 class="sub">性能点的意义</h3>
+
+      <ul class="plain">
+        <li><strong>S<sub>d</sub></strong>——结构的位移需求，
+          与性能水平直接对应。0.5% 高度对应 IO，
+          1.5% 对应 LS，2.5% 对应 CP（以层间位移角表示）。</li>
+        <li><strong>S<sub>a</sub></strong>——结构的加速度需求，
+          反映惯性力水平，可用于判断构件是否进入屈服。</li>
+        <li><strong>与抗震验算的关系</strong>——性能点的层间位移角
+          与规范限值比较，判断结构是否满足性能目标。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>三种性能水平（ATC-40）：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>IO</strong>（Immediate Occupancy，立即入住）——结构基本完好，
+            可继续使用；</li>
+          <li><strong>LS</strong>（Life Safety，生命安全）——结构有损伤但
+            不倒塌，人员安全；</li>
+          <li><strong>CP</strong>（Collapse Prevention，防止倒塌）——结构
+            严重损伤但不倒塌。</li>
+        </ul>
+        性能化设计的目标：结构在指定地震作用下的性能点不超过
+        目标性能水平对应的限值。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>ATC-40 方法在近场脉冲型地震动、
+        强度退化型结构、高阶振型主导结构中可能失效。
+        FEMA 440 对 ATC-40 的方法做了改进，用 M 因子代替 SR 折减，
+        更适合这些情况。高精度分析应直接用非线性时程分析验证。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由页面内的 JavaScript 实时计算：
+        读取两个 CSV → 需求谱转 ADRS → ATC-40 迭代 →
+        求解性能点 → 绘制弹性需求谱、折减需求谱、能力谱与性能点。
+        画布尺寸按 A4 排版（720 × 560 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">capacity_spectrum.csv · demand_spectrum.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="dc-canvas-wrap">
+        <canvas id="c-demand-capacity"></canvas>
+      </div>
+
+      <div class="dc-legend">
+        <span><span class="line" style="background:#2563eb"></span>弹性需求谱</span>
+        <span><span class="line" style="background:#9333ea"></span>折减需求谱</span>
+        <span><span class="line" style="background:#b45309"></span>能力谱</span>
+        <span><span class="line" style="background:#dc2626"></span>性能点</span>
+      </div>
+
+      <div class="dc-note" style="margin-top:14px;">
+        横轴为谱位移 S<sub>d</sub>（m），纵轴为谱加速度 S<sub>a</sub>（g）。
+        蓝色曲线为弹性需求谱，紫色虚线为按 ATC-40 折减后的需求谱，
+        橙色粗线为能力谱，红色五角星为性能点。
+        性能点标注给出 S<sub>d</sub>、S<sub>a</sub> 与折减系数 SR。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心函数 <code>find_performance_point</code> 用 ATC-40 等效线性化
+        迭代求解性能点。两个 CSV 文件不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>demand-capacity.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 需求谱 vs 能力谱 | 性能点求解（ATC-40 等效线性化）
+# -------------------------------------------------------------
+# 输入：
+#   capacity_spectrum.csv   Sd_m, Sa_g
+#   demand_spectrum.csv     period_s, Sa_g
+# -------------------------------------------------------------
+# 输出：
+#   demand-capacity.png     性能点求解图
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+G = 9.80665
+CAP_FILE = 'capacity_spectrum.csv'
+DEM_FILE = 'demand_spectrum.csv'
+
+
+def generate_synthetic():
+    """生成合成数据。"""
+    Sd_cap = np.array([0.000, 0.010, 0.020, 0.030, 0.040, 0.050,
+                       0.060, 0.080, 0.100, 0.120, 0.140, 0.160,
+                       0.180, 0.200, 0.220, 0.240])
+    Sa_cap = np.array([0.000, 0.048, 0.092, 0.132, 0.168, 0.200,
+                       0.226, 0.268, 0.300, 0.320, 0.330, 0.332,
+                       0.330, 0.325, 0.318, 0.308])
+
+    period = np.array([0.05, 0.10, 0.20, 0.30, 0.40, 0.50,
+                       0.70, 1.00, 1.50, 2.00, 3.00, 4.00, 5.00])
+    Sa_g = np.array([0.320, 0.320, 0.320, 0.320, 0.320, 0.256,
+                     0.183, 0.128, 0.085, 0.064, 0.043, 0.032, 0.026])
+    return Sd_cap, Sa_cap, period, Sa_g
+
+
+# ---- 1. 读取数据 ----
+if os.path.exists(CAP_FILE) and os.path.exists(DEM_FILE):
+    cap = np.loadtxt(CAP_FILE, delimiter=',', skiprows=1)
+    Sd_cap = cap[:, 0]
+    Sa_cap = cap[:, 1]
+    dem = np.loadtxt(DEM_FILE, delimiter=',', skiprows=1)
+    period = dem[:, 0]
+    Sa_g = dem[:, 1]
+    print(f'从 CSV 读取：能力谱 {len(Sd_cap)} 点，需求谱 {len(period)} 点')
+else:
+    print('CSV 不存在，使用合成数据演示')
+    Sd_cap, Sa_cap, period, Sa_g = generate_synthetic()
+
+
+# ---- 2. 需求谱转换为 ADRS ----
+Sd_dem = Sa_g * G * period ** 2 / (4.0 * np.pi ** 2)
+
+
+# ---- 3. ATC-40 等效线性化迭代 ----
+def atc40_reduction(beta_eff):
+    """ATC-40 短周期折减系数。"""
+    sr = (3.21 - 0.68 * np.log(beta_eff)) / 2.12
+    return max(sr, 0.3)
+
+
+def find_performance_point(Sd_cap, Sa_cap, Sd_dem, Sa_dem,
+                            d_init=0.05, tol=1e-4, max_iter=50):
+    """迭代求性能点。"""
+    d_i = d_init
+    history = []
+
+    for it in range(max_iter):
+        Sa_i = np.interp(d_i, Sd_cap, Sa_cap)
+        Ke = Sa_i / d_i
+        Ah = 2 * d_i * Sa_i * 0.5
+        beta_eff = 0.05 + Ah / (2 * np.pi * Sa_i * d_i)
+        SR = atc40_reduction(beta_eff)
+
+        Sd_dem_red = Sd_dem * SR
+        Sa_dem_red = Sa_dem * SR
+
+        Sa_cap_interp = np.interp(Sd_dem_red, Sd_cap, Sa_cap,
+                                   left=Sa_cap[0], right=Sa_cap[-1])
+        diff = Sa_dem_red - Sa_cap_interp
+
+        idx = None
+        for j in range(1, len(diff)):
+            if diff[j - 1] * diff[j] < 0:
+                idx = j
+                break
+
+        if idx is None:
+            d_new = Sd_dem_red[np.argmin(np.abs(diff))]
+        else:
+            x1, x2 = Sd_dem_red[idx - 1], Sd_dem_red[idx]
+            y1, y2 = diff[idx - 1], diff[idx]
+            d_new = x1 - y1 * (x2 - x1) / (y2 - y1)
+
+        history.append({
+            'iter': it, 'd': d_i, 'Sa': Sa_i,
+            'beta_eff': beta_eff, 'SR': SR, 'd_new': d_new
+        })
+
+        if abs(d_new - d_i) < tol:
+            d_i = d_new
+            break
+
+        d_i = 0.5 * d_new + 0.5 * d_i
+
+    Sa_i = np.interp(d_i, Sd_cap, Sa_cap)
+    return d_i, Sa_i, history
+
+
+d_perf, Sa_perf, history = find_performance_point(
+    Sd_cap, Sa_cap, Sd_dem, Sa_g)
+
+print(f'\n性能点：Sd = {d_perf:.4f} m, Sa = {Sa_perf:.4f} g')
+print(f'迭代次数：{len(history)}')
+print(f'最终等效阻尼比：{history[-1]["beta_eff"]:.3f}')
+print(f'折减系数：{history[-1]["SR"]:.3f}')
+
+
+# ---- 4. 绘图（A4 尺寸 7.2 × 5.6 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+ax.plot(Sd_dem, Sa_g, lw=1.8, color='#2563eb',
+        marker='o', ms=4, mfc='#2563eb', mec='none',
+        label='Elastic demand spectrum')
+
+SR_final = history[-1]['SR']
+Sd_dem_red = Sd_dem * SR_final
+Sa_dem_red = Sa_g * SR_final
+ax.plot(Sd_dem_red, Sa_dem_red, lw=1.8, color='#9333ea',
+        ls='--', marker='s', ms=4, mfc='#9333ea', mec='none',
+        label=f'Reduced demand (SR = {SR_final:.2f})')
+
+ax.plot(Sd_cap, Sa_cap, lw=2.4, color='#b45309',
+        marker='^', ms=4, mfc='#b45309', mec='none',
+        label='Capacity spectrum', zorder=5)
+
+ax.plot(d_perf, Sa_perf, '*', color='#dc2626', ms=18,
+        mec='#222222', mew=0.8, zorder=10,
+        label='Performance point')
+
+ax.annotate(
+    f'PP\nSd = {d_perf:.3f} m\nSa = {Sa_perf:.3f} g',
+    xy=(d_perf, Sa_perf),
+    xytext=(d_perf * 0.35, Sa_perf * 1.35),
+    fontsize=9, color='#dc2626',
+    arrowprops=dict(arrowstyle='->', color='#dc2626', lw=0.8))
+
+ax.set_xlabel('Spectral displacement  $S_d$ (m)')
+ax.set_ylabel('Spectral acceleration  $S_a$ (g)')
+ax.set_title('Demand spectrum vs capacity spectrum  ·  ADRS format',
+             fontsize=11)
+ax.set_xlim(0, max(Sd_cap.max(), Sd_dem.max()) * 1.1)
+ax.set_ylim(0, max(Sa_cap.max(), Sa_g.max()) * 1.15)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('demand-capacity.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。<code>local_atc40_reduction</code> 实现折减系数，
+        <code>local_find_pp</code> 实现迭代求解。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>demand-capacity.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 需求谱 vs 能力谱 | 性能点求解（ATC-40 等效线性化）
+% -------------------------------------------------------------
+% 输入：
+%   capacity_spectrum.csv   Sd_m, Sa_g
+%   demand_spectrum.csv     period_s, Sa_g
+% =============================================================
+
+G = 9.80665;
+CAP_FILE = 'capacity_spectrum.csv';
+DEM_FILE = 'demand_spectrum.csv';
+
+% ---- 1. 读取数据 ----
+if isfile(CAP_FILE) && isfile(DEM_FILE)
+    cap = readmatrix(CAP_FILE, 'NumHeaderLines', 1);
+    Sd_cap = cap(:, 1); Sa_cap = cap(:, 2);
+    dem = readmatrix(DEM_FILE, 'NumHeaderLines', 1);
+    period = dem(:, 1); Sa_g = dem(:, 2);
+    fprintf('从 CSV 读取：能力谱 %d 点，需求谱 %d 点\n', ...
+            numel(Sd_cap), numel(period));
+else
+    fprintf('CSV 不存在，使用合成数据演示\n');
+    Sd_cap = [0.000 0.010 0.020 0.030 0.040 0.050 ...
+              0.060 0.080 0.100 0.120 0.140 0.160 ...
+              0.180 0.200 0.220 0.240]';
+    Sa_cap = [0.000 0.048 0.092 0.132 0.168 0.200 ...
+              0.226 0.268 0.300 0.320 0.330 0.332 ...
+              0.330 0.325 0.318 0.308]';
+    period = [0.05 0.10 0.20 0.30 0.40 0.50 ...
+              0.70 1.00 1.50 2.00 3.00 4.00 5.00]';
+    Sa_g   = [0.320 0.320 0.320 0.320 0.320 0.256 ...
+              0.183 0.128 0.085 0.064 0.043 0.032 0.026]';
+end
+
+% ---- 2. 需求谱转换为 ADRS ----
+Sd_dem = Sa_g * G .* period .^ 2 / (4 * pi ^ 2);
+
+% ---- 3. 迭代求性能点 ----
+[d_perf, Sa_perf, history] = local_find_pp(Sd_cap, Sa_cap, Sd_dem, Sa_g);
+
+fprintf('\n性能点：Sd = %.4f m, Sa = %.4f g\n', d_perf, Sa_perf);
+fprintf('迭代次数：%d\n', numel(history.iter));
+fprintf('最终等效阻尼比：%.3f\n', history.beta_eff(end));
+fprintf('折减系数：%.3f\n', history.SR(end));
+
+% ---- 4. 绘图（A4 尺寸 720 × 560 px） ----
+figure('Color', 'w', 'Position', [100 100 720 560]);
+hold on;
+
+% 弹性需求谱
+plot(Sd_dem, Sa_g, '-o', 'Color', [0.15 0.39 0.92], ...
+     'LineWidth', 1.8, 'MarkerSize', 4, ...
+     'MarkerFaceColor', [0.15 0.39 0.92], 'MarkerEdgeColor', 'none');
+
+% 折减需求谱
+SR_final = history.SR(end);
+Sd_dem_red = Sd_dem * SR_final;
+Sa_dem_red = Sa_g * SR_final;
+plot(Sd_dem_red, Sa_dem_red, '--s', 'Color', [0.58 0.20 0.92], ...
+     'LineWidth', 1.8, 'MarkerSize', 4, ...
+     'MarkerFaceColor', [0.58 0.20 0.92], 'MarkerEdgeColor', 'none');
+
+% 能力谱
+plot(Sd_cap, Sa_cap, '-^', 'Color', [0.71 0.33 0.04], ...
+     'LineWidth', 2.4, 'MarkerSize', 4, ...
+     'MarkerFaceColor', [0.71 0.33 0.04], 'MarkerEdgeColor', 'none');
+
+% 性能点
+plot(d_perf, Sa_perf, 'p', 'MarkerSize', 18, ...
+     'MarkerFaceColor', [0.86 0.15 0.15], ...
+     'MarkerEdgeColor', [0.13 0.13 0.13], 'LineWidth', 0.8);
+
+% 性能点标注
+text(d_perf * 0.35, Sa_perf * 1.35, ...
+     sprintf('PP\nSd = %.3f m\nSa = %.3f g', d_perf, Sa_perf), ...
+     'FontSize', 9, 'Color', [0.86 0.15 0.15]);
+
+xlabel('Spectral displacement  S_d (m)');
+ylabel('Spectral acceleration  S_a (g)');
+title('Demand spectrum vs capacity spectrum  ·  ADRS format', ...
+      'FontSize', 11);
+xlim([0, max(max(Sd_cap), max(Sd_dem)) * 1.1]);
+ylim([0, max(max(Sa_cap), max(Sa_g)) * 1.15]);
+grid on; box on;
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in');
+legend({'Elastic demand', sprintf('Reduced demand (SR = %.2f)', SR_final), ...
+        'Capacity spectrum', 'Performance point'}, ...
+       'Location', 'northeast', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'demand-capacity.png', 'Resolution', 300);
+
+
+% ===== 局部函数 =====
+function SR = local_atc40_reduction(beta_eff)
+    sr = (3.21 - 0.68 * log(beta_eff)) / 2.12;
+    SR = max(sr, 0.3);
+end
+
+function [d_perf, Sa_perf, history] = local_find_pp(Sd_cap, Sa_cap, Sd_dem, Sa_dem)
+    d_i = 0.05; tol = 1e-4; max_iter = 50;
+    hist_iter = []; hist_d = []; hist_Sa = [];
+    hist_beta = []; hist_SR = [];
+
+    for it = 1:max_iter
+        Sa_i = interp1(Sd_cap, Sa_cap, d_i, 'linear', 'extrap');
+        Ke = Sa_i / d_i;
+        Ah = 2 * d_i * Sa_i * 0.5;
+        beta_eff = 0.05 + Ah / (2 * pi * Sa_i * d_i);
+        SR = local_atc40_reduction(beta_eff);
+
+        Sd_dem_red = Sd_dem * SR;
+        Sa_dem_red = Sa_dem * SR;
+
+        Sa_cap_interp = interp1(Sd_cap, Sa_cap, Sd_dem_red, ...
+                                 'linear', Sa_cap(end));
+        diff = Sa_dem_red - Sa_cap_interp;
+
+        idx = [];
+        for j = 2:numel(diff)
+            if diff(j-1) * diff(j) < 0
+                idx = j;
+                break;
+            end
+        end
+
+        if isempty(idx)
+            [~, imin] = min(abs(diff));
+            d_new = Sd_dem_red(imin);
+        else
+            x1 = Sd_dem_red(idx-1); x2 = Sd_dem_red(idx);
+            y1 = diff(idx-1); y2 = diff(idx);
+            d_new = x1 - y1 * (x2 - x1) / (y2 - y1);
+        end
+
+        hist_iter(end+1) = it;
+        hist_d(end+1) = d_i;
+        hist_Sa(end+1) = Sa_i;
+        hist_beta(end+1) = beta_eff;
+        hist_SR(end+1) = SR;
+
+        if abs(d_new - d_i) < tol
+            d_i = d_new;
+            break;
+        end
+
+        d_i = 0.5 * d_new + 0.5 * d_i;
+    end
+
+    d_perf = d_i;
+    Sa_perf = interp1(Sd_cap, Sa_cap, d_i, 'linear', 'extrap');
+    history.iter = hist_iter;
+    history.d = hist_d;
+    history.Sa = hist_Sa;
+    history.beta_eff = hist_beta;
+    history.SR = hist_SR;
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:180px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 能力谱位移</td><td>S<sub>d</sub></td><td><code>m</code></td></tr>
+            <tr><td><strong>输入</strong> · 能力谱加速度</td><td>S<sub>a</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输入</strong> · 需求谱周期</td><td>T</td><td><code>s</code></td></tr>
+            <tr><td><strong>输入</strong> · 需求谱加速度</td><td>S<sub>a</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输出</strong> · 性能点位移</td><td>S<sub>d,PP</sub></td><td><code>m</code></td></tr>
+            <tr><td><strong>输出</strong> · 性能点加速度</td><td>S<sub>a,PP</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输出</strong> · 等效阻尼比</td><td>β<sub>eff</sub></td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 折减系数</td><td>SR</td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>能力谱转换：</strong>S<sub>a</sub> = V/(α<sub>1</sub>·W)，
+          S<sub>d</sub> = d/(γ<sub>1</sub>·φ<sub>roof,1</sub>)。
+          本页假设 CSV 中已经是转换后的 ADRS 格式。</li>
+        <li><strong>需求谱转换：</strong>S<sub>d</sub> = S<sub>a</sub>·g·T²/(4π²)。
+          本页从周期–谱加速度自动转换。</li>
+        <li><strong>等效阻尼比：</strong>β<sub>eff</sub> = β<sub>0</sub> + κ·A<sub>h</sub>/(2π·S<sub>a</sub>·S<sub>d</sub>)。
+          β<sub>0</sub> = 0.05，κ 是阻尼修正系数，通常在 0.33–1.0 之间。</li>
+        <li><strong>ATC-40 折减：</strong>SR = (3.21 − 0.68·ln β<sub>eff</sub>)/2.12。
+          短周期形式。长周期用另一个公式。</li>
+        <li><strong>迭代松弛：</strong>d<sub>new</sub> = 0.5·d + 0.5·d<sub>old</sub>，
+          防止在交点附近振荡。</li>
+        <li><strong>收敛判据：</strong>|d<sub>new</sub> − d<sub>old</sub>| &lt; 1e-4 m，
+          通常 5–10 次迭代收敛。</li>
+        <li><strong>FEMA 440 改进：</strong>用 M 因子代替 SR，
+          M = (T<sub>eff</sub>/T<sub>0</sub>)² 或 M = 1 + (1/β<sub>eff</sub> − 1)/a，
+          对近场脉冲型地震动更准。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>迭代不收敛 → 检查能力谱与需求谱是否有交点，
+              或改用 FEMA 440 的 M 因子。</li>
+            <li>性能点落在能力谱的下降段 → 结构已进入极限状态，
+              需重新设计。</li>
+            <li>折减系数 SR &lt; 0.3 → 阻尼比过大，可能超出 ATC-40 适用范围，
+              需用非线性时程验证。</li>
+            <li>能力谱与需求谱数量级差别大 → 检查单位（Sd 用 m 还是 mm）。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（性能化设计、ATC-40、FEMA 440）、
+        <a href="../structural-dynamics.html">结构动力学</a>（SDOF 弹塑性响应、等效线性化）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>
+        （设计谱、UHS）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 需求谱 vs 能力谱</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CAP = [
+    'Sd_m,Sa_g',
+    '0.000,0.000',
+    '0.010,0.048',
+    '0.020,0.092',
+    '0.030,0.132',
+    '0.040,0.168',
+    '0.050,0.200',
+    '0.060,0.226',
+    '0.080,0.268',
+    '0.100,0.300',
+    '0.120,0.320',
+    '0.140,0.330',
+    '0.160,0.332',
+    '0.180,0.330',
+    '0.200,0.325',
+    '0.220,0.318',
+    '0.240,0.308'
+  ].join('\n') + '\n';
+
+  var DEFAULT_DEM = [
+    'period_s,Sa_g',
+    '0.050,0.320',
+    '0.100,0.320',
+    '0.200,0.320',
+    '0.300,0.320',
+    '0.400,0.320',
+    '0.500,0.256',
+    '0.700,0.183',
+    '1.000,0.128',
+    '1.500,0.085',
+    '2.000,0.064',
+    '3.000,0.043',
+    '4.000,0.032',
+    '5.000,0.026'
+  ].join('\n') + '\n';
+
+  var G = 9.80665;
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+  function parseCap(text) {
+    var lines = text.split(/\r?\n/);
+    var Sd = [], Sa = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (line.toLowerCase().indexOf('sd_') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 2) continue;
+      var x = parseFloat(parts[0]);
+      var y = parseFloat(parts[1]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      Sd.push(x); Sa.push(y);
+    }
+    return { Sd: Sd, Sa: Sa };
+  }
+
+  function parseDem(text) {
+    var lines = text.split(/\r?\n/);
+    var T = [], Sa = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (line.toLowerCase().indexOf('period') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 2) continue;
+      var x = parseFloat(parts[0]);
+      var y = parseFloat(parts[1]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      T.push(x); Sa.push(y);
+    }
+    return { T: T, Sa: Sa };
+  }
+
+  /* ============================================================
+     ATC-40 折减与迭代
+     ============================================================ */
+  function atc40Reduction(betaEff) {
+    var sr = (3.21 - 0.68 * Math.log(betaEff)) / 2.12;
+    return Math.max(sr, 0.3);
+  }
+
+  function interp(x, xp, fp) {
+    var n = xp.length;
+    if (x <= xp[0]) return fp[0];
+    if (x >= xp[n - 1]) return fp[n - 1];
+    for (var i = 1; i < n; i++) {
+      if (xp[i] >= x) {
+        var t = (x - xp[i - 1]) / (xp[i] - xp[i - 1]);
+        return fp[i - 1] + t * (fp[i] - fp[i - 1]);
+      }
+    }
+    return fp[n - 1];
+  }
+
+  function findPerformancePoint(SdCap, SaCap, SdDem, SaDem) {
+    var dI = 0.05;
+    var tol = 1e-4;
+    var maxIter = 50;
+    var hist = [];
+
+    for (var it = 0; it < maxIter; it++) {
+      var SaI = interp(dI, SdCap, SaCap);
+      var Ah = 2 * dI * SaI * 0.5;
+      var betaEff = 0.05 + Ah / (2 * Math.PI * SaI * dI);
+      var SR = atc40Reduction(betaEff);
+
+      var SdRed = [], SaRed = [];
+      for (var k = 0; k < SdDem.length; k++) {
+        SdRed.push(SdDem[k] * SR);
+        SaRed.push(SaDem[k] * SR);
+      }
+
+      var diff = [];
+      for (var k2 = 0; k2 < SdRed.length; k2++) {
+        var SaCapInterp = interp(SdRed[k2], SdCap, SaCap);
+        diff.push(SaRed[k2] - SaCapInterp);
+      }
+
+      var idx = null;
+      for (var j = 1; j < diff.length; j++) {
+        if (diff[j - 1] * diff[j] < 0) { idx = j; break; }
+      }
+
+      var dNew;
+      if (idx === null) {
+        var minAbs = Infinity, iMin = 0;
+        for (var m = 0; m < diff.length; m++) {
+          if (Math.abs(diff[m]) < minAbs) {
+            minAbs = Math.abs(diff[m]); iMin = m;
+          }
+        }
+        dNew = SdRed[iMin];
+      } else {
+        var x1 = SdRed[idx - 1], x2 = SdRed[idx];
+        var y1 = diff[idx - 1], y2 = diff[idx];
+        dNew = x1 - y1 * (x2 - x1) / (y2 - y1);
+      }
+
+      hist.push({
+        iter: it, d: dI, Sa: SaI,
+        betaEff: betaEff, SR: SR, dNew: dNew
+      });
+
+      if (Math.abs(dNew - dI) < tol) {
+        dI = dNew;
+        break;
+      }
+      dI = 0.5 * dNew + 0.5 * dI;
+    }
+
+    var SaPerf = interp(dI, SdCap, SaCap);
+    return { d: dI, Sa: SaPerf, hist: hist };
+  }
+
+  /* ============================================================
+     工具
+     ============================================================ */
+  function niceTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + 1e-9; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtTick(v, step) {
+    if (v === 0) return '0';
+    if (step < 0.05) return v.toFixed(2);
+    if (step < 0.5) return v.toFixed(2);
+    if (step < 1) return v.toFixed(2);
+    return v.toFixed(1);
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawChart(canvasId, cap, dem, pp) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 560);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* ---- ADRS 转换 ---- */
+    var SdDem = [], SaDem = [];
+    for (var i = 0; i < dem.T.length; i++) {
+      SdDem.push(dem.Sa[i] * G * dem.T[i] * dem.T[i] / (4 * Math.PI * Math.PI));
+      SaDem.push(dem.Sa[i]);
+    }
+
+    /* ---- 范围 ---- */
+    var xMax = 0, yMax = 0;
+    for (var a = 0; a < cap.Sd.length; a++) {
+      if (cap.Sd[a] > xMax) xMax = cap.Sd[a];
+      if (cap.Sa[a] > yMax) yMax = cap.Sa[a];
+    }
+    for (var b = 0; b < SdDem.length; b++) {
+      if (SdDem[b] > xMax) xMax = SdDem[b];
+      if (SaDem[b] > yMax) yMax = SaDem[b];
+    }
+    xMax *= 1.08;
+    yMax *= 1.12;
+
+    var xMin = 0, yMin = 0;
+    var margin = { top: 20, right: 26, bottom: 54, left: 76 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + (v - xMin) / (xMax - xMin) * pw; }
+    function toY(v) { return py + ph - (v - yMin) / (yMax - yMin) * ph; }
+
+    var xTicks = niceTicks(xMin, xMax, 6);
+    var yTicks = niceTicks(yMin, yMax, 6);
+    var xStep = xTicks.length > 1 ? xTicks[1] - xTicks[0] : 0.05;
+    var yStep = yTicks.length > 1 ? yTicks[1] - yTicks[0] : 0.05;
+
+    /* ---- 网格 ---- */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var yy = toY(yTicks[yi]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xTicks.length; xi++) {
+      var xx = toX(xTicks[xi]);
+      ctx.beginPath();
+      ctx.moveTo(xx, py);
+      ctx.lineTo(xx, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 折减需求谱 ---- */
+    var SR = pp.hist[pp.hist.length - 1].SR;
+    var SdRed = [], SaRed = [];
+    for (var c = 0; c < SdDem.length; c++) {
+      SdRed.push(SdDem[c] * SR);
+      SaRed.push(SaDem[c] * SR);
+    }
+
+    /* ---- 弹性需求谱 ---- */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    for (var d = 0; d < SdDem.length; d++) {
+      var xd = toX(SdDem[d]);
+      var yd = toY(SaDem[d]);
+      if (d === 0) ctx.moveTo(xd, yd);
+      else ctx.lineTo(xd, yd);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#2563eb';
+    for (var d2 = 0; d2 < SdDem.length; d2++) {
+      ctx.beginPath();
+      ctx.arc(toX(SdDem[d2]), toY(SaDem[d2]), 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---- 折减需求谱 ---- */
+    ctx.strokeStyle = '#9333ea';
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    for (var e = 0; e < SdRed.length; e++) {
+      var xe = toX(SdRed[e]);
+      var ye = toY(SaRed[e]);
+      if (e === 0) ctx.moveTo(xe, ye);
+      else ctx.lineTo(xe, ye);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#9333ea';
+    for (var e2 = 0; e2 < SdRed.length; e2++) {
+      var xe2 = toX(SdRed[e2]);
+      var ye2 = toY(SaRed[e2]);
+      ctx.fillRect(xe2 - 3, ye2 - 3, 6, 6);
+    }
+
+    /* ---- 能力谱 ---- */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var f = 0; f < cap.Sd.length; f++) {
+      var xf = toX(cap.Sd[f]);
+      var yf = toY(cap.Sa[f]);
+      if (f === 0) ctx.moveTo(xf, yf);
+      else ctx.lineTo(xf, yf);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#b45309';
+    for (var f2 = 0; f2 < cap.Sd.length; f2++) {
+      var xf2 = toX(cap.Sd[f2]);
+      var yf2 = toY(cap.Sa[f2]);
+      ctx.beginPath();
+      ctx.moveTo(xf2, yf2 - 4);
+      ctx.lineTo(xf2 + 4, yf2 + 3);
+      ctx.lineTo(xf2 - 4, yf2 + 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    /* ---- 性能点 ---- */
+    var xPP = toX(pp.d);
+    var yPP = toY(pp.Sa);
+
+    /* 五角星 */
+    ctx.fillStyle = '#dc2626';
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    drawStar(ctx, xPP, yPP, 5, 9, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    /* 性能点标注 */
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'bold 10.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var lx = xPP + 14;
+    var ly = yPP - 30;
+    if (lx + 130 > px + pw) { lx = xPP - 130; ctx.textAlign = 'right'; }
+    ctx.fillText('PP', lx, ly - 10);
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.fillText('Sd = ' + pp.d.toFixed(3) + ' m', lx, ly + 4);
+    ctx.fillText('Sa = ' + pp.Sa.toFixed(3) + ' g', lx, ly + 17);
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度 ---- */
+    var mainTick = 6;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+    for (var yk = 0; yk < yTicks.length; yk++) {
+      var yky = toY(yTicks[yk]);
+      ctx.beginPath(); ctx.moveTo(px, yky); ctx.lineTo(px + mainTick, yky); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, yky); ctx.lineTo(px + pw - mainTick, yky); ctx.stroke();
+    }
+    for (var xk = 0; xk < xTicks.length; xk++) {
+      var xkx = toX(xTicks[xk]);
+      ctx.beginPath(); ctx.moveTo(xkx, py + ph); ctx.lineTo(xkx, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xkx, py); ctx.lineTo(xkx, py + mainTick); ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      ctx.fillText(fmtTick(yTicks[yl], yStep), px - 6, toY(yTicks[yl]));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xTicks.length; xl++) {
+      ctx.fillText(fmtTick(xTicks[xl], xStep), toX(xTicks[xl]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 58, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Spectral acceleration  S\u2090 (g)', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Spectral displacement  S\u2091 (m)', px + pw / 2, H - 4);
+
+    /* ---- 图例 ---- */
+    var legendItems = [
+      { name: 'Elastic demand', color: '#2563eb', lw: 1.8 },
+      { name: 'Reduced demand (SR = ' + SR.toFixed(2) + ')',
+        color: '#9333ea', lw: 1.8, dash: [6, 4] },
+      { name: 'Capacity spectrum', color: '#b45309', lw: 2.4 },
+      { name: 'Performance point', color: '#dc2626', lw: 0, star: true }
+    ];
+
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    var lgW = 0;
+    for (var li = 0; li < legendItems.length; li++) {
+      var w = ctx.measureText(legendItems[li].name).width + 36;
+      if (w > lgW) lgW = w;
+    }
+    var lgH = 16 * legendItems.length + 10;
+    var lgx = px + pw - lgW - 8;
+    var lgy = py + 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var lj = 0; lj < legendItems.length; lj++) {
+      var ly2 = lgy + 8 + lj * 16;
+      var it = legendItems[lj];
+      if (it.star) {
+        ctx.fillStyle = '#dc2626';
+        drawStar(ctx, lgx + 14, ly2, 5, 6, 2.7);
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = it.lw;
+        if (it.dash) ctx.setLineDash(it.dash);
+        ctx.beginPath();
+        ctx.moveTo(lgx + 6, ly2);
+        ctx.lineTo(lgx + 22, ly2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.fillStyle = '#222222';
+      ctx.fillText(it.name, lgx + 28, ly2);
+    }
+  }
+
+  function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
+    var rot = -Math.PI / 2;
+    var step = Math.PI / spikes;
+    ctx.beginPath();
+    ctx.moveTo(cx + outerR * Math.cos(rot), cy + outerR * Math.sin(rot));
+    for (var i = 0; i < spikes; i++) {
+      rot += step;
+      ctx.lineTo(cx + innerR * Math.cos(rot), cy + innerR * Math.sin(rot));
+      rot += step;
+      ctx.lineTo(cx + outerR * Math.cos(rot), cy + outerR * Math.sin(rot));
+    }
+    ctx.closePath();
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render(cap, dem) {
+    /* 转换为 ADRS */
+    var SdDem = [], SaDem = [];
+    for (var i = 0; i < dem.T.length; i++) {
+      SdDem.push(dem.Sa[i] * G * dem.T[i] * dem.T[i] / (4 * Math.PI * Math.PI));
+      SaDem.push(dem.Sa[i]);
+    }
+
+    var pp = findPerformancePoint(cap.Sd, cap.Sa, SdDem, SaDem);
+    drawChart('c-demand-capacity', cap, dem, pp);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var last = pp.hist[pp.hist.length - 1];
+      status.textContent = '性能点 · Sd = ' + pp.d.toFixed(4) + ' m · ' +
+                           'Sa = ' + pp.Sa.toFixed(4) + ' g · ' +
+                           'βeff = ' + last.betaEff.toFixed(3) + ' · ' +
+                           'SR = ' + last.SR.toFixed(3) + ' · ' +
+                           '迭代 ' + pp.hist.length + ' 次';
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    Promise.all([
+      fetch('../assets/capacity_spectrum.csv', { cache: 'no-cache' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('cap HTTP ' + r.status);
+          return r.text();
+        }).catch(function () { return null; }),
+      fetch('../assets/demand_spectrum.csv', { cache: 'no-cache' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('dem HTTP ' + r.status);
+          return r.text();
+        }).catch(function () { return null; })
+    ]).then(function (results) {
+      var capText = results[0] || DEFAULT_CAP;
+      var demText = results[1] || DEFAULT_DEM;
+      var cap = parseCap(capText);
+      var dem = parseDem(demText);
+      if (cap.Sd.length < 2 || dem.T.length < 2) {
+        throw new Error('数据不足');
+      }
+      render(cap, dem);
+    }).catch(function (err) {
+      if (window.console) {
+        console.warn('[demand-capacity] 加载失败：', err);
+      }
+      var cap = parseCap(DEFAULT_CAP);
+      var dem = parseDem(DEFAULT_DEM);
+      render(cap, dem);
+    });
+  }
+
+  /* ============================================================
+     下载 CSV
+     ============================================================ */
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      /* 合并两个 CSV 到一个文件（用注释分隔） */
+      var combined = DEFAULT_CAP + '\n' +
+        '# --------------- 分割线，下面是需求谱 ---------------\n' +
+        DEFAULT_DEM;
+      var blob = new Blob([combined], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'demand_capacity_example.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

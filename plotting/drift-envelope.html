@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>层间位移角包络 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.df-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.df-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.df-canvas-wrap canvas {
+  width: 100%;
+  height: 560px;
+  display: block;
+}
+.df-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.df-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.df-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      层间位移角包络
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 结构弹塑性响应</div>
+      <h1>层间位移角包络</h1>
+      <p class="lead">
+        多层框架在<strong>多条地震波</strong>作用下的层间位移角包络曲线。
+        每条曲线对应一条地震波的时程分析结果，<strong>粗黑线</strong>为所有地震波
+        的逐层最大值（即包络），红色虚线为规范限值（如 1/550 或 1/50）。
+        这是性能化设计、抗震验算与规范审查的关键图件。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">层间位移角</span>
+        <span class="pill">多波包络</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/drift_envelope.csv</code> 作为输入。
+        文件是<strong>多波时程分析结果的整理输出</strong>：第一列为楼层号，
+        后续每列对应一条地震波，单元格为该楼层在该波作用下的
+        <strong>最大层间位移角</strong>（无量纲小数）。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>story</code></td><td>楼层号</td><td>整数</td><td>从 1 开始，1 为底层</td></tr>
+            <tr><td><code>wave1</code></td><td>波 1 的层间位移角</td><td>无量纲</td><td>max<sub>t</sub>|Δu<sub>i</sub>(t)| / h<sub>i</sub></td></tr>
+            <tr><td><code>wave2</code></td><td>波 2 的层间位移角</td><td>无量纲</td><td>同上</td></tr>
+            <tr><td><code>wave3</code></td><td>波 3 的层间位移角</td><td>无量纲</td><td>同上</td></tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:12.5px; color:var(--text-muted); margin:10px 0 0;">
+          列数可以任意扩展——增加一条地震波就增加一列。程序会自动识别列数。
+        </p>
+
+        <h4 style="margin-top:16px;">CSV 示例（10 层框架，3 条波）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/drift_envelope.csv</code> 不存在，
+          则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>drift_envelope.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># drift_envelope.csv
+# 三条地震波作用下的层间位移角包络
+# 单位：位移角（无量纲小数），例如 0.0025 = 1/400
+story,wave1,wave2,wave3
+1,0.00028,0.00032,0.00030
+2,0.00058,0.00066,0.00062
+3,0.00086,0.00098,0.00092
+4,0.00112,0.00128,0.00120
+5,0.00136,0.00156,0.00146
+6,0.00158,0.00181,0.00170
+7,0.00178,0.00204,0.00192
+8,0.00196,0.00225,0.00211
+9,0.00212,0.00243,0.00228
+10,0.00226,0.00259,0.00243
+</code></pre>
+      </div>
+
+      <div class="df-download">
+        <button type="button" id="btn-download-csv">下载 drift_envelope.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>弹性时程分析</strong>——ETABS、SAP2000、Perform-3D、OpenSees、
+            MIDAS Gen、ABAQUS，输入一组地震波，输出每层的位移时程，
+            取绝对值最大值除以层高即得层间位移角。</li>
+          <li><strong>弹塑性时程分析</strong>——用于罕遇地震验算，
+            层间位移角反映结构的塑性变形需求。</li>
+          <li><strong>规范选波要求</strong>——GB 50011-2010 规定：
+            至少选 2 组实际强震记录 + 1 组人工模拟波；
+            实际强震记录数量不少于总数的 2/3。</li>
+          <li><strong>结果包络</strong>——把每条波的结果逐层取最大值，
+            即得包络曲线，用于抗震验算。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一个 10 层框架在三条地震波下的弹性层间位移角。
+          最大值出现在第 10 层，约 2.59 × 10⁻³（wave2）。
+          按 GB 50011-2010 对钢筋混凝土框架多遇地震的限值 1/550 ≈ 1.82 × 10⁻³，
+          wave2 在 7–10 层超过限值。替换为你自己的时程分析结果只需修改
+          <code>drift_envelope.csv</code>。
+        </div>
+      </div>
+            <!-- ============================================================
+           计算步骤：用 Newmark-β 做 MDOF 时程分析，得到层间位移角
+           ============================================================ -->
+      <h3 class="sub">计算步骤：用 Newmark-β 做 MDOF 时程分析</h3>
+
+      <p>
+        <code>drift_envelope.csv</code> 里的层间位移角不是直接测出来的，
+        而是通过<strong>多自由度（MDOF）结构时程分析</strong>计算得到。
+        对每一条地震波，建立结构的质量、刚度、阻尼矩阵，用
+        <strong>Newmark-β 平均加速度法</strong>逐步积分得到各层位移时程 u<sub>i</sub>(t)，
+        再取相邻两层位移差的最大值除以层高，即得该层的层间位移角。
+      </p>
+
+      <div class="flow">
+        建立 MDOF 模型 (M, K, C) → 读取地震波 a<sub>g</sub>(t)
+        → Newmark-β 逐步积分 → 各层位移时程 u<sub>i</sub>(t)
+        → 层间位移差 Δu<sub>i</sub>(t) = u<sub>i</sub>(t) − u<sub>i−1</sub>(t)
+        → max<sub>t</sub>|Δu<sub>i</sub>| / h<sub>i</sub>
+        → 每条波一组 θ<sub>i</sub> → 合并为 drift_envelope.csv
+      </div>
+
+      <div class="io-card">
+        <h4>结构模型（剪切型 MDOF）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          采用最常用的<strong>剪切型模型</strong>：每层一个集中质量 m<sub>i</sub>，
+          相邻层之间用层间刚度 k<sub>i</sub> 连接。这是框架结构、砌体结构
+          时程分析的基本简化模型。
+        </p>
+        <table>
+          <thead><tr>
+            <th style="width:160px;">参数</th>
+            <th style="width:180px;">符号</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>层数</td><td>N</td><td>整数</td><td>默认 10 层</td></tr>
+            <tr><td>层质量</td><td>m<sub>i</sub></td><td><code>kg</code></td><td>每层集中质量，取 <code>1.0×10⁵ kg</code></td></tr>
+            <tr><td>层间刚度</td><td>k<sub>i</sub></td><td><code>N/m</code></td><td>每层抗侧刚度，取 <code>5.0×10⁷ N/m</code></td></tr>
+            <tr><td>层高</td><td>h<sub>i</sub></td><td><code>mm</code></td><td>默认 3000 mm</td></tr>
+            <tr><td>阻尼比</td><td>ζ</td><td>无量纲</td><td>5%，用瑞利阻尼</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">输入文件（地震波）</h4>
+        <table>
+          <thead><tr>
+            <th style="width:100px;">列号</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>第 1 列</td><td>时间 t</td><td><code>s</code></td><td>等间隔</td></tr>
+            <tr><td>第 2 列</td><td>地面加速度 a<sub>g</sub></td><td><code>g</code></td><td>可换算为 m/s²</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>单位一致性：</strong>位移时程与层高必须使用<strong>同一单位</strong>。
+          本页代码中质量 kg、刚度 N/m、地震动 m/s²，输出的位移为 m，
+          最后换算为 mm 再除以层高 mm，位移角无量纲。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">
+        Python 代码：MDOF 时程分析 → 层间位移角
+      </h4>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>mdof_drift.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# MDOF 时程分析 | 剪切型模型 + Newmark-β 法
+# -------------------------------------------------------------
+# 输入：
+#   elcentro_EW.txt（或你自己的地震波文件）
+#     第 1 列：时间 t (s)
+#     第 2 列：地面加速度 ag (g)
+# -------------------------------------------------------------
+# 输出：
+#   wave1_disp.csv  各层位移时程（mm）
+#   drift_envelope.csv  各波下每层的最大层间位移角
+# =============================================================
+
+import numpy as np
+
+# ---------- 1. 结构参数 ----------
+N = 10                                # 层数
+m = 1.0e5 * np.ones(N)                # 每层质量 (kg)
+k = 5.0e7 * np.ones(N)                # 层间刚度 (N/m)
+h = 3000.0 * np.ones(N)               # 层高 (mm)
+zeta = 0.05                           # 阻尼比
+
+# ---------- 2. 组装质量矩阵 ----------
+M = np.diag(m)
+
+# ---------- 3. 组装刚度矩阵（剪切型） ----------
+K = np.zeros((N, N))
+for i in range(N):
+    if i == 0:
+        K[i, i] = k[0] + (k[1] if N > 1 else 0)
+        if N > 1:
+            K[i, i + 1] = -k[1]
+    elif i == N - 1:
+        K[i, i] = k[i]
+        K[i, i - 1] = -k[i]
+    else:
+        K[i, i] = k[i] + k[i + 1]
+        K[i, i - 1] = -k[i]
+        K[i, i + 1] = -k[i + 1]
+
+# ---------- 4. 瑞利阻尼 ----------
+eigvals = np.linalg.eigvalsh(np.linalg.solve(M, K))
+omega = np.sqrt(np.sort(eigvals))
+omega1, omega2 = omega[0], omega[1]
+a0 = 2 * zeta * omega1 * omega2 / (omega1 + omega2)
+a1 = 2 * zeta / (omega1 + omega2)
+C = a0 * M + a1 * K
+
+print(f'第 1 阶频率 f1 = {omega1 / (2 * np.pi):.3f} Hz')
+print(f'第 2 阶频率 f2 = {omega2 / (2 * np.pi):.3f} Hz')
+print(f'瑞利阻尼系数 a0 = {a0:.4f}, a1 = {a1:.6f}')
+
+# ---------- 5. 读取地震波 ----------
+g = 9.80665
+t, ag_g = np.loadtxt('elcentro_EW.txt', unpack=True)
+ag = ag_g * g                         # g → m/s²
+dt = t[1] - t[0]
+n = len(ag)
+
+# ---------- 6. Newmark-β 平均加速度法 ----------
+gamma, beta = 0.5, 0.25
+Keff = K + gamma / (beta * dt) * C + 1.0 / (beta * dt ** 2) * M
+Keff_inv = np.linalg.inv(Keff)
+
+# 初始条件
+u   = np.zeros(N)                     # 位移
+v   = np.zeros(N)                     # 速度
+acc = -ag[0] * np.ones(N)             # 相对加速度
+
+# 存储位移时程
+U = np.zeros((n, N))
+U[0] = u
+
+for j in range(1, n):
+    # 等效荷载
+    p = (-M @ (ag[j] * np.ones(N))
+         + M @ (1.0 / (beta * dt ** 2) * u
+                + 1.0 / (beta * dt) * v
+                + (1.0 / (2 * beta) - 1) * acc)
+         + C @ (gamma / (beta * dt) * u
+                + (gamma / beta - 1) * v
+                + dt * (gamma / (2 * beta) - 1) * acc))
+
+    u_new = Keff_inv @ p
+    v_new = (gamma / (beta * dt) * (u_new - u)
+             - (gamma / beta - 1) * v
+             - dt * (gamma / (2 * beta) - 1) * acc)
+    acc_new = (1.0 / (beta * dt ** 2) * (u_new - u)
+               - 1.0 / (beta * dt) * v
+               - (1.0 / (2 * beta) - 1) * acc)
+
+    u, v, acc = u_new, v_new, acc_new
+    U[j] = u
+
+# ---------- 7. 输出各层位移时程（mm） ----------
+disp_mm = U * 1000.0
+header_disp = 'time,' + ','.join([f'u{i+1}' for i in range(N)])
+np.savetxt('wave1_disp.csv',
+           np.column_stack([t, disp_mm]),
+           delimiter=',', header=header_disp,
+           comments='', fmt='%.6f')
+print('\n已保存 wave1_disp.csv')
+
+# ---------- 8. 计算层间位移角 ----------
+drifts = np.zeros(N)
+drifts[0] = np.max(np.abs(disp_mm[:, 0])) / h[0]
+for i in range(1, N):
+    du = disp_mm[:, i] - disp_mm[:, i - 1]
+    drifts[i] = np.max(np.abs(du)) / h[i]
+
+print('\n各层最大层间位移角：')
+for i in range(N):
+    print(f'  第 {i+1:2d} 层：{drifts[i]:.5f}  '
+          f'(= 1/{1/drifts[i]:.0f})')
+
+i_peak = int(np.argmax(drifts))
+print(f'\n峰值在第 {i_peak+1} 层，θmax = {drifts[i_peak]:.5f}')
+
+# ---------- 9. 多条波循环 + 合并 ----------
+# 实际使用时把下面的 wave_files 换成你的三个文件
+wave_files = ['elcentro_EW.txt', 'elcentro_NS.txt', 'elcentro_UP.txt']
+wave_names = ['wave1', 'wave2', 'wave3']
+
+all_drifts = np.zeros((N, len(wave_files)))
+
+for w, fname in enumerate(wave_files):
+    # 对每条波重复上面第 5–8 步
+    t_w, ag_g_w = np.loadtxt(fname, unpack=True)
+    ag_w = ag_g_w * g
+    n_w = len(ag_w)
+
+    u_w   = np.zeros(N)
+    v_w   = np.zeros(N)
+    acc_w = -ag_w[0] * np.ones(N)
+    U_w = np.zeros((n_w, N))
+    U_w[0] = u_w
+
+    for j in range(1, n_w):
+        p = (-M @ (ag_w[j] * np.ones(N))
+             + M @ (1.0 / (beta * dt ** 2) * u_w
+                    + 1.0 / (beta * dt) * v_w
+                    + (1.0 / (2 * beta) - 1) * acc_w)
+             + C @ (gamma / (beta * dt) * u_w
+                    + (gamma / beta - 1) * v_w
+                    + dt * (gamma / (2 * beta) - 1) * acc_w))
+        u_new = Keff_inv @ p
+        v_new = (gamma / (beta * dt) * (u_new - u_w)
+                 - (gamma / beta - 1) * v_w
+                 - dt * (gamma / (2 * beta) - 1) * acc_w)
+        acc_new = (1.0 / (beta * dt ** 2) * (u_new - u_w)
+                   - 1.0 / (beta * dt) * v_w
+                   - (1.0 / (2 * beta) - 1) * acc_w)
+        u_w, v_w, acc_w = u_new, v_new, acc_new
+        U_w[j] = u_w
+
+    disp_w = U_w * 1000.0
+    drifts_w = np.zeros(N)
+    drifts_w[0] = np.max(np.abs(disp_w[:, 0])) / h[0]
+    for i in range(1, N):
+        du = disp_w[:, i] - disp_w[:, i - 1]
+        drifts_w[i] = np.max(np.abs(du)) / h[i]
+    all_drifts[:, w] = drifts_w
+
+# 合并为 drift_envelope.csv
+story = np.arange(1, N + 1)
+out = np.column_stack([story, all_drifts])
+header = 'story,' + ','.join(wave_names)
+np.savetxt('drift_envelope.csv', out,
+           delimiter=',', header=header,
+           comments='', fmt='%.6f')
+print('\n已保存 drift_envelope.csv')</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>运动方程：</strong>M·ü + C·u̇ + K·u = −M·1·a<sub>g</sub>(t)。
+            右边把地面加速度等效为惯性力，作用在所有楼层上。</li>
+          <li><strong>刚度矩阵：</strong>剪切型模型下 K 是三对角矩阵，
+            对角线为相邻层刚度之和，非对角线为负的层间刚度。</li>
+          <li><strong>瑞利阻尼：</strong>C = a<sub>0</sub>·M + a<sub>1</sub>·K，
+            系数由前两阶频率与阻尼比确定。</li>
+          <li><strong>Newmark-β：</strong>γ = 1/2，β = 1/4，
+            平均加速度法，<strong>无条件稳定</strong>。</li>
+          <li><strong>等效刚度：</strong>K<sub>eff</sub> = K + γ/(β·dt)·C + 1/(β·dt²)·M，
+            只需在最开始求一次逆。</li>
+          <li><strong>层间位移角：</strong>第 1 层 = max|u₁|/h₁；
+            第 i 层 = max|u<sub>i</sub> − u<sub>i−1</sub>|/h<sub>i</sub>。</li>
+          <li><strong>三条波循环：</strong>对每条波重复一遍 Newmark-β 积分，
+            最后按列合并得到 CSV。</li>
+        </ul>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">
+        MATLAB 代码：MDOF 时程分析 → 层间位移角
+      </h4>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>mdof_drift.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% MDOF 时程分析 | 剪切型模型 + Newmark-β 法
+% -------------------------------------------------------------
+% 输入：
+%   elcentro_EW.txt
+%     第 1 列：时间 t (s)
+%     第 2 列：地面加速度 ag (g)
+% -------------------------------------------------------------
+% 输出：
+%   drift_envelope.csv  各波下每层的最大层间位移角
+% =============================================================
+
+% ---------- 1. 结构参数 ----------
+N = 10;                                 % 层数
+m = 1.0e5 * ones(N, 1);                 % 每层质量 (kg)
+k = 5.0e7 * ones(N, 1);                 % 层间刚度 (N/m)
+h = 3000.0 * ones(N, 1);                % 层高 (mm)
+zeta = 0.05;                            % 阻尼比
+
+% ---------- 2. 质量矩阵 ----------
+M = diag(m);
+
+% ---------- 3. 刚度矩阵（剪切型） ----------
+K = zeros(N, N);
+for i = 1:N
+    if i == 1
+        K(i, i) = k(1) + (k(2) * (N > 1));
+        if N > 1
+            K(i, i + 1) = -k(2);
+        end
+    elseif i == N
+        K(i, i) = k(i);
+        K(i, i - 1) = -k(i);
+    else
+        K(i, i) = k(i) + k(i + 1);
+        K(i, i - 1) = -k(i);
+        K(i, i + 1) = -k(i + 1);
+    end
+end
+
+% ---------- 4. 瑞利阻尼 ----------
+eigvals = sort(eig(M \ K));
+omega = sqrt(eigvals);
+w1 = omega(1); w2 = omega(2);
+a0 = 2 * zeta * w1 * w2 / (w1 + w2);
+a1 = 2 * zeta / (w1 + w2);
+C = a0 * M + a1 * K;
+
+fprintf('第 1 阶频率 f1 = %.3f Hz\n', w1 / (2 * pi));
+fprintf('第 2 阶频率 f2 = %.3f Hz\n', w2 / (2 * pi));
+
+% ---------- 5. 读取地震波 ----------
+g = 9.80665;
+data = readmatrix('elcentro_EW.txt');
+t = data(:, 1);
+ag = data(:, 2) * g;                    % g → m/s²
+dt = t(2) - t(1);
+n = numel(ag);
+
+% ---------- 6. Newmark-β 参数 ----------
+gamma = 0.5; beta = 0.25;
+Keff = K + gamma / (beta * dt) * C + 1 / (beta * dt^2) * M;
+
+% ---------- 7. 逐步积分 ----------
+u   = zeros(N, 1);
+v   = zeros(N, 1);
+acc = -ag(1) * ones(N, 1);
+U = zeros(n, N);
+U(1, :) = u';
+
+for j = 2:n
+    p = -M * (ag(j) * ones(N, 1)) ...
+        + M * (1/(beta*dt^2)*u + 1/(beta*dt)*v + (1/(2*beta)-1)*acc) ...
+        + C * (gamma/(beta*dt)*u + (gamma/beta-1)*v ...
+               + dt*(gamma/(2*beta)-1)*acc);
+
+    u_new = Keff \ p;
+    v_new = gamma/(beta*dt)*(u_new - u) ...
+            - (gamma/beta-1)*v - dt*(gamma/(2*beta)-1)*acc;
+    acc_new = 1/(beta*dt^2)*(u_new - u) ...
+              - 1/(beta*dt)*v - (1/(2*beta)-1)*acc;
+
+    u = u_new; v = v_new; acc = acc_new;
+    U(j, :) = u';
+end
+
+% ---------- 8. 位移时程（mm） ----------
+disp_mm = U * 1000.0;
+
+% ---------- 9. 层间位移角 ----------
+drifts = zeros(N, 1);
+drifts(1) = max(abs(disp_mm(:, 1))) / h(1);
+for i = 2:N
+    du = disp_mm(:, i) - disp_mm(:, i - 1);
+    drifts(i) = max(abs(du)) / h(i);
+end
+
+fprintf('\n各层最大层间位移角：\n');
+for i = 1:N
+    fprintf('  第 %2d 层：%.5f  (= 1/%.0f)\n', ...
+            i, drifts(i), 1/drifts(i));
+end
+[peak, ipeak] = max(drifts);
+fprintf('\n峰值在第 %d 层，θmax = %.5f\n', ipeak, peak);
+
+% ---------- 10. 三条波循环 + 合并 ----------
+wave_files = {'elcentro_EW.txt', 'elcentro_NS.txt', 'elcentro_UP.txt'};
+wave_names = {'wave1', 'wave2', 'wave3'};
+
+all_drifts = zeros(N, numel(wave_files));
+
+for w = 1:numel(wave_files)
+    d_w = readmatrix(wave_files{w});
+    t_w = d_w(:, 1);
+    ag_w = d_w(:, 2) * g;
+    n_w = numel(ag_w);
+
+    u_w = zeros(N, 1); v_w = zeros(N, 1);
+    acc_w = -ag_w(1) * ones(N, 1);
+    U_w = zeros(n_w, N);
+    U_w(1, :) = u_w';
+
+    for j = 2:n_w
+        p = -M * (ag_w(j) * ones(N, 1)) ...
+            + M * (1/(beta*dt^2)*u_w + 1/(beta*dt)*v_w ...
+                   + (1/(2*beta)-1)*acc_w) ...
+            + C * (gamma/(beta*dt)*u_w + (gamma/beta-1)*v_w ...
+                   + dt*(gamma/(2*beta)-1)*acc_w);
+        u_new = Keff \ p;
+        v_new = gamma/(beta*dt)*(u_new - u_w) ...
+                - (gamma/beta-1)*v_w - dt*(gamma/(2*beta)-1)*acc_w;
+        acc_new = 1/(beta*dt^2)*(u_new - u_w) ...
+                  - 1/(beta*dt)*v_w - (1/(2*beta)-1)*acc_w;
+        u_w = u_new; v_w = v_new; acc_w = acc_new;
+        U_w(j, :) = u_w';
+    end
+
+    disp_w = U_w * 1000.0;
+    drifts_w = zeros(N, 1);
+    drifts_w(1) = max(abs(disp_w(:, 1))) / h(1);
+    for i = 2:N
+        du = disp_w(:, i) - disp_w(:, i - 1);
+        drifts_w(i) = max(abs(du)) / h(i);
+    end
+    all_drifts(:, w) = drifts_w;
+end
+
+% ---------- 11. 导出 CSV ----------
+story = (1:N)';
+T_out = array2table([story, all_drifts], ...
+    'VariableNames', [{'story'}, wave_names]);
+writetable(T_out, 'drift_envelope.csv');
+fprintf('\n已保存 drift_envelope.csv\n');</code></pre>
+      </div>
+
+      <div class="callout warn">
+        <strong>常见问题：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>频率不合理</strong>——检查质量与刚度单位。k 用 N/m，
+            m 用 kg，得到 rad/s；若用 kN 与 t，结果会差 1000 倍。</li>
+          <li><strong>位移发散</strong>——时间步长过大（dt &gt; 0.1·T<sub>min</sub>），
+            减小 dt 或改无条件稳定的 Newmark-β（本页已用平均加速度法）。</li>
+          <li><strong>瑞利阻尼系数异常</strong>——检查前两阶频率是否取对，
+            高层结构第 2 阶可能是扭转或高阶振型。</li>
+          <li><strong>层间位移角在某层突变</strong>——该层刚度突变，
+            需检查结构布置或 k 数组。</li>
+          <li><strong>多条波结果差异大</strong>——频谱不同，属正常现象，
+            这也是规范要求多波包络的原因。</li>
+          <li><strong>未调幅</strong>——多遇地震验算时，
+            各波峰值加速度需调到设防烈度对应值，否则位移角偏小。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        <strong>层间位移角</strong>（inter-story drift ratio）定义为：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        θ<sub>i</sub> = max<sub>t</sub> | u<sub>i</sub>(t) − u<sub>i−1</sub>(t) | / h<sub>i</sub>
+      </div>
+
+      <p>
+        其中 u<sub>i</sub>、u<sub>i−1</sub> 分别是第 i 层与第 i−1 层的位移时程，
+        h<sub>i</sub> 是第 i 层的层高。它是衡量结构<strong>非结构构件损伤
+        与整体变形能力</strong>的关键指标。
+      </p>
+
+      <h3 class="sub">规范限值（GB 50011-2010）</h3>
+
+      <p>
+        不同结构类型、不同设防水平的限值不同：
+      </p>
+
+      <table class="io-card" style="width:100%;">
+        <thead><tr>
+          <th style="width:180px;">结构类型</th>
+          <th style="width:120px;">多遇地震</th>
+          <th style="width:120px;">罕遇地震</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>钢筋混凝土框架</td><td><code>1/550</code></td><td><code>1/50</code></td></tr>
+          <tr><td>钢筋混凝土框架-剪力墙</td><td><code>1/800</code></td><td><code>1/100</code></td></tr>
+          <tr><td>钢筋混凝土剪力墙</td><td><code>1/1000</code></td><td><code>1/120</code></td></tr>
+          <tr><td>钢结构（多高层）</td><td><code>1/250</code></td><td><code>1/50</code></td></tr>
+          <tr><td>钢框架-支撑</td><td><code>1/300</code></td><td><code>1/50</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="sub">从包络曲线上能读出什么</h3>
+
+      <ul class="plain">
+        <li><strong>最大值位置</strong>——通常在结构的中上部或顶部。
+          若最大值出现在底部，可能表示薄弱层在底层。</li>
+        <li><strong>曲线形状</strong>——沿高度单调递增表示结构刚度沿高度递减；
+          中部出现突变表示该层存在薄弱环节或刚度突变。</li>
+        <li><strong>地震波间差异</strong>——不同波的曲线形状与峰值不同，
+          说明结构对不同频谱成分的响应有差异。
+          如果某条波的结果明显偏大，可能是该波的频谱与结构自振周期接近。</li>
+        <li><strong>与限值的关系</strong>——包络曲线与限值线的相对位置决定
+          结构是否满足规范要求。任何一层超过限值，都需要调整结构设计。</li>
+        <li><strong>层间位移角与位移的关系</strong>——层间位移角是位移的差分，
+          它反映的是"局部变形"，而层位移反映的是"整体侧移"。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>性能化设计中的用法：</strong>
+        在基于性能的地震工程中，层间位移角是最常用的
+        <strong>工程需求参数</strong>（EDP）。它与结构损伤状态直接对应：
+        约 0.5% 对应"立即入住"（IO），约 1.5% 对应"生命安全"（LS），
+        约 2.5% 对应"防止倒塌"（CP）。性能化设计的目标就是让层间位移角
+        在各个性能水平下不超过相应限值。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>本页只对已有时程分析结果做<strong>后处理</strong>，
+        不重新计算层间位移角。真实的层间位移角必须由时程分析中
+        每层节点的位移时程计算得到。若数据未经调幅或只用了单条地震波，
+        结果不能直接用于抗震验算。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由 <code>assets/drift_envelope.csv</code> 实时计算：
+        读取 CSV → 逐层计算多波最大值 → 绘制各波曲线 + 包络 + 规范限值。
+        画布尺寸按 A4 排版（720 × 560 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/drift_envelope.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="df-canvas-wrap">
+        <canvas id="c-drift"></canvas>
+      </div>
+
+      <div class="df-note" style="margin-top:14px;">
+        纵轴为楼层号（1 为底层），横轴为层间位移角（× 10⁻³）。
+        三条细线为各条地震波的逐层结果；粗黑线为所有地震波的
+        <strong>逐层最大值</strong>（包络）；红色虚线为规范限值
+        （默认 1/550，可在代码里修改）。最大包络值在 10 层附近，
+        约为 2.59 × 10⁻³。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        代码读取 CSV 后自动识别地震波列数，绘制各波曲线与包络线，
+        并标出规范限值。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>drift-envelope.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 层间位移角包络 | 多条地震波对比
+# -------------------------------------------------------------
+# 输入数据：drift_envelope.csv
+#   story,wave1,wave2,wave3
+#   1,0.00028,0.00032,0.00030
+#   2,0.00058,0.00066,0.00062
+#   ...
+#   单位：位移角（无量纲小数）
+# -------------------------------------------------------------
+# 功能：
+#   1. 读取 CSV（自动识别地震波列数）
+#   2. 计算逐层包络（所有波的最大值）
+#   3. 绘制各波曲线 + 包络 + 规范限值
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'drift_envelope.csv'
+
+# ---- 规范限值（无量纲小数），按需要修改 ----
+DRIFT_LIMIT = 1.0 / 550.0       # 钢筋混凝土框架，多遇地震
+LIMIT_LABEL = '1/550 limit'
+
+
+def generate_synthetic():
+    """CSV 缺失时生成合成数据（10 层，3 条波）。"""
+    story = np.arange(1, 11)
+    wave1 = np.array([0.00028, 0.00058, 0.00086, 0.00112, 0.00136,
+                      0.00158, 0.00178, 0.00196, 0.00212, 0.00226])
+    wave2 = np.array([0.00032, 0.00066, 0.00098, 0.00128, 0.00156,
+                      0.00181, 0.00204, 0.00225, 0.00243, 0.00259])
+    wave3 = np.array([0.00030, 0.00062, 0.00092, 0.00120, 0.00146,
+                      0.00170, 0.00192, 0.00211, 0.00228, 0.00243])
+    return story, {'wave1': wave1, 'wave2': wave2, 'wave3': wave3}
+
+
+# ---- 1. 读取 CSV ----
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    story = np.asarray(data['story'], dtype=float)
+    wave_names = [n for n in data.dtype.names if n != 'story']
+    waves = {name: np.asarray(data[name], dtype=float)
+             for name in wave_names}
+    print(f'从 {CSV_FILE} 读取 {len(story)} 层、{len(wave_names)} 条波')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    story, waves = generate_synthetic()
+    wave_names = list(waves.keys())
+
+
+# ---- 2. 计算逐层包络 ----
+envelope = np.zeros_like(story)
+for name in wave_names:
+    envelope = np.maximum(envelope, waves[name])
+
+i_peak = int(np.argmax(envelope))
+print(f'包络最大值：{envelope[i_peak]:.5f} 在第 {int(story[i_peak])} 层')
+print(f'规范限值：{DRIFT_LIMIT:.5f}')
+
+
+# ---- 3. 绘图（A4 尺寸 6.0 × 7.2 in） ----
+fig, ax = plt.subplots(figsize=(6.0, 7.2))
+
+# 各条地震波曲线（细线）
+colors = ['#2563eb', '#b45309', '#15803d', '#9333ea', '#dc2626',
+          '#0891b2', '#ca8a04']
+for i, name in enumerate(wave_names):
+    ax.plot(waves[name] * 1000, story, '-o', lw=1.2, ms=4,
+            color=colors[i % len(colors)],
+            alpha=0.65, label=name)
+
+# 包络（粗黑线）
+ax.plot(envelope * 1000, story, '-', lw=2.4, color='#111111',
+        label='Envelope', zorder=5)
+
+# 规范限值（红色虚线）
+ax.axvline(DRIFT_LIMIT * 1000, color='#dc2626', lw=1.2,
+           ls='--', label=LIMIT_LABEL, zorder=4)
+
+# 峰值标注
+ax.plot(envelope[i_peak] * 1000, story[i_peak], 'o',
+        color='#111111', ms=8, zorder=6)
+ax.annotate(
+    f'Peak = {envelope[i_peak]*1000:.2f}×10⁻³\n(story {int(story[i_peak])})',
+    xy=(envelope[i_peak] * 1000, story[i_peak]),
+    xytext=(envelope[i_peak] * 1000 + 0.3, story[i_peak] - 1.5),
+    fontsize=9,
+    arrowprops=dict(arrowstyle='-', color='#555555', lw=0.6))
+
+# 坐标轴
+ax.set_xlabel('Inter-story drift ratio  (× 10$^{-3}$)')
+ax.set_ylabel('Story')
+ax.set_yticks(story)
+ax.set_ylim(0.3, story.max() + 0.7)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='lower right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('drift-envelope.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>自动识别列数</strong>：<code>data.dtype.names</code> 会自动读取所有列，
+            增加地震波只需在 CSV 里增加一列，代码不用改。</li>
+          <li><strong>逐层包络</strong>：对每层用 <code>np.maximum</code> 取所有波的最大值，
+            即得包络曲线。</li>
+          <li><strong>单位显示</strong>：绘图时乘 1000，以 10⁻³ 为单位显示，
+            避免坐标轴上出现 0.0005 这类小数。</li>
+          <li><strong>规范限值</strong>：<code>DRIFT_LIMIT</code> 是变量，
+            改一个值即可切换多遇 / 罕遇、不同结构类型。</li>
+          <li><strong>配色</strong>：地震波用蓝、橙、绿、紫、红等，
+            包络用黑色粗线，限值用红色虚线，视觉层次清晰。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应，用 <code>readtable</code> 读取 CSV，
+        <code>max</code> 计算逐层包络。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>drift-envelope.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 层间位移角包络 | 多条地震波对比
+% -------------------------------------------------------------
+% 输入数据：drift_envelope.csv
+%   story,wave1,wave2,wave3
+%   1,0.00028,0.00032,0.00030
+%   ...
+%   单位：位移角（无量纲小数）
+% =============================================================
+
+CSV_FILE = 'drift_envelope.csv';
+
+% 规范限值
+DRIFT_LIMIT = 1 / 550;
+LIMIT_LABEL = '1/550 limit';
+
+% ---- 1. 读取 CSV ----
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    story = T.story;
+    wave_names = T.Properties.VariableNames(2:end);
+    fprintf('从 %s 读取 %d 层、%d 条波\n', ...
+            CSV_FILE, numel(story), numel(wave_names));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    story = (1:10)';
+    T = table(story, ...
+        [0.00028 0.00058 0.00086 0.00112 0.00136 ...
+         0.00158 0.00178 0.00196 0.00212 0.00226]', ...
+        [0.00032 0.00066 0.00098 0.00128 0.00156 ...
+         0.00181 0.00204 0.00225 0.00243 0.00259]', ...
+        [0.00030 0.00062 0.00092 0.00120 0.00146 ...
+         0.00170 0.00192 0.00211 0.00228 0.00243]', ...
+        'VariableNames', {'story', 'wave1', 'wave2', 'wave3'});
+    wave_names = {'wave1', 'wave2', 'wave3'};
+end
+
+% ---- 2. 计算逐层包络 ----
+envelope = zeros(numel(story), 1);
+for i = 1:numel(wave_names)
+    envelope = max(envelope, T.(wave_names{i}));
+end
+
+[env_peak, i_peak] = max(envelope);
+fprintf('包络最大值：%.5f 在第 %d 层\n', env_peak, story(i_peak));
+fprintf('规范限值：%.5f\n', DRIFT_LIMIT);
+
+% ---- 3. 绘图（A4 尺寸 600 × 720 px） ----
+figure('Color', 'w', 'Position', [100 100 600 720]);
+hold on;
+
+colors = [0.15 0.39 0.92; 0.71 0.33 0.04; 0.08 0.50 0.24;
+          0.58 0.20 0.92; 0.86 0.15 0.15; 0.03 0.57 0.70];
+
+% 各条地震波
+for i = 1:numel(wave_names)
+    plot(T.(wave_names{i}) * 1000, story, '-o', ...
+         'Color', colors(mod(i-1, size(colors,1)) + 1, :), ...
+         'LineWidth', 1.2, 'MarkerSize', 4, ...
+         'MarkerFaceColor', colors(mod(i-1, size(colors,1)) + 1, :), ...
+         'DisplayName', wave_names{i}, 'MarkerEdgeColor', 'none');
+end
+
+% 包络（粗黑线）
+plot(envelope * 1000, story, '-', 'Color', [0.07 0.07 0.07], ...
+     'LineWidth', 2.4, 'DisplayName', 'Envelope');
+
+% 规范限值
+xline(DRIFT_LIMIT * 1000, '--', 'Color', [0.86 0.15 0.15], ...
+      'LineWidth', 1.2, 'DisplayName', LIMIT_LABEL);
+
+% 峰值标记
+plot(env_peak * 1000, story(i_peak), 'o', ...
+     'MarkerFaceColor', [0.07 0.07 0.07], ...
+     'MarkerEdgeColor', 'none', 'MarkerSize', 9, ...
+     'HandleVisibility', 'off');
+text(env_peak * 1000 + 0.25, story(i_peak) - 1.2, ...
+     sprintf('Peak = %.2f×10^{-3}\n(story %d)', env_peak * 1000, story(i_peak)), ...
+     'FontSize', 9);
+
+% 坐标轴
+xlabel('Inter-story drift ratio  (× 10^{-3})');
+ylabel('Story');
+set(gca, 'YTick', story, 'FontName', 'Times New Roman', ...
+    'FontSize', 10, 'TickDir', 'in');
+ylim([0.3, max(story) + 0.7]);
+grid on; box on;
+legend('Location', 'southeast', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'drift-envelope.png', 'Resolution', 300);</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:160px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 楼层号</td><td>i</td><td>整数（1 为底层）</td></tr>
+            <tr><td><strong>输入</strong> · 层间位移角</td><td>θ<sub>i</sub></td><td>无量纲小数</td></tr>
+            <tr><td><strong>输出</strong> · 层间位移角包络</td><td>max<sub>wave</sub> θ<sub>i</sub></td><td>无量纲小数</td></tr>
+            <tr><td><strong>输出</strong> · 包络峰值</td><td>θ<sub>max</sub></td><td>无量纲小数</td></tr>
+            <tr><td><strong>输出</strong> · 峰值所在楼层</td><td>i<sub>peak</sub></td><td>整数</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>定义：</strong>θ<sub>i</sub> = max<sub>t</sub>|u<sub>i</sub>(t) − u<sub>i−1</sub>(t)| / h<sub>i</sub>，
+          对每条地震波单独计算。</li>
+        <li><strong>包络：</strong>对每一层，取所有地震波的最大值。
+          包络曲线用于抗震验算，而不是取平均。</li>
+        <li><strong>规范选波：</strong>GB 50011-2010 要求至少 2 组实际强震记录 + 1 组人工波；
+          实际记录不少于总数的 2/3。</li>
+        <li><strong>调幅：</strong>多遇地震验算时，各波峰值加速度需调到设防烈度对应值；
+          罕遇地震验算时调到罕遇设防值。</li>
+        <li><strong>层高：</strong>底层层高通常较大，若底层位移角偏小，
+          表示底部相对刚，属于正常现象。</li>
+        <li><strong>与位移的关系：</strong>层间位移角是位移的差分，
+          反映"局部变形"，比顶层位移更能反映结构的损伤程度。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>包络曲线在某层突变 → 该层存在刚度突变或薄弱层，
+              需检查结构布置。</li>
+            <li>某条波结果明显偏大 → 该波的频谱与结构自振周期接近，
+              属于正常现象。</li>
+            <li>底层位移角小于上部 → 底层层高大或底部刚度大，
+              需对照结构布置判断。</li>
+            <li>所有波都超限 → 结构整体偏柔，需加大截面或增加支撑。</li>
+            <li>CSV 编码乱码 → 保存为 UTF-8，列名严格按示例。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（时程分析、性能化设计）、
+        <a href="../structural-dynamics.html">结构动力学</a>（振型分解、位移响应）、
+        <a href="../strong-motion-observation.html">强震动观测</a>（选波与调幅）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 层间位移角包络</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# drift_envelope.csv',
+    '# 三条地震波作用下的层间位移角包络',
+    '# 单位：位移角（无量纲小数），例如 0.0025 = 1/400',
+    'story,wave1,wave2,wave3',
+    '1,0.00028,0.00032,0.00030',
+    '2,0.00058,0.00066,0.00062',
+    '3,0.00086,0.00098,0.00092',
+    '4,0.00112,0.00128,0.00120',
+    '5,0.00136,0.00156,0.00146',
+    '6,0.00158,0.00181,0.00170',
+    '7,0.00178,0.00204,0.00192',
+    '8,0.00196,0.00225,0.00211',
+    '9,0.00212,0.00243,0.00228',
+    '10,0.00226,0.00259,0.00243'
+  ].join('\n') + '\n';
+
+  /* ============================================================
+     常量
+     ============================================================ */
+  var DRIFT_LIMIT = 1.0 / 550.0;
+  var LIMIT_LABEL = '1/550 limit';
+  var WAVE_COLORS = [
+    '#2563eb', '#b45309', '#15803d', '#9333ea',
+    '#dc2626', '#0891b2', '#ca8a04', '#db2777'
+  ];
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var header = null;
+    var rows = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      var parts = line.split(',').map(function (s) { return s.trim(); });
+      if (!header) {
+        // 第一行非注释行视为表头
+        header = parts;
+        continue;
+      }
+      if (parts.length < 2) continue;
+      var story = parseFloat(parts[0]);
+      if (!isFinite(story)) continue;
+      var vals = [];
+      var ok = true;
+      for (var j = 1; j < parts.length; j++) {
+        var v = parseFloat(parts[j]);
+        if (!isFinite(v)) { ok = false; break; }
+        vals.push(v);
+      }
+      if (!ok) continue;
+      rows.push({ story: story, vals: vals });
+    }
+    if (!header || rows.length === 0) return null;
+
+    var waveNames = header.slice(1);
+    var nWaves = waveNames.length;
+
+    var stories = [];
+    var waves = [];
+    for (var w = 0; w < nWaves; w++) {
+      waves.push({ name: waveNames[w] || ('wave' + (w + 1)), values: [] });
+    }
+
+    for (var r = 0; r < rows.length; r++) {
+      stories.push(rows[r].story);
+      for (var w2 = 0; w2 < nWaves; w2++) {
+        waves[w2].values.push(rows[r].vals[w2] || 0);
+      }
+    }
+
+    return { stories: stories, waves: waves };
+  }
+
+  /* ============================================================
+     计算逐层包络
+     ============================================================ */
+  function computeEnvelope(data) {
+    var n = data.stories.length;
+    var env = new Array(n).fill(0);
+    for (var i = 0; i < n; i++) {
+      var m = 0;
+      for (var w = 0; w < data.waves.length; w++) {
+        var v = data.waves[w].values[i];
+        if (v > m) m = v;
+      }
+      env[i] = m;
+    }
+    return env;
+  }
+
+  /* ============================================================
+     工具函数
+     ============================================================ */
+  function niceTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + 1e-9; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtDriftTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 10) return v.toFixed(0);
+    if (a >= 1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawDrift(canvasId, data, envelope) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(400, Math.round(rect.height) || 560);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var stories = data.stories;
+    var waves = data.waves;
+    var nStories = stories.length;
+    var nWaves = waves.length;
+
+    /* ---- 计算 x 范围（以 10⁻³ 为单位） ---- */
+    var xMax = 0;
+    for (var i = 0; i < nStories; i++) {
+      for (var w = 0; w < nWaves; w++) {
+        if (waves[w].values[i] > xMax) xMax = waves[w].values[i];
+      }
+      if (envelope[i] > xMax) xMax = envelope[i];
+    }
+    if (DRIFT_LIMIT > xMax) xMax = DRIFT_LIMIT;
+    xMax = xMax * 1.35 * 1000;   /* 转换为 10⁻³ */
+
+    var SCALE = 1000;
+    var limitScaled = DRIFT_LIMIT * SCALE;
+
+    /* ---- 边距 ---- */
+    var margin = { top: 20, right: 26, bottom: 52, left: 72 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + v / xMax * pw; }
+    function toY(story) {
+      /* 楼层 1 在底部，story N 在顶部 */
+      return py + ph - (story - 0.5) / nStories * ph;
+    }
+
+    /* ---- 网格 ---- */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+
+    /* 水平网格（每层） */
+    for (var s = 0; s < nStories; s++) {
+      var yh = toY(stories[s]);
+      ctx.beginPath();
+      ctx.moveTo(px, yh);
+      ctx.lineTo(px + pw, yh);
+      ctx.stroke();
+    }
+
+    /* 竖直网格（x 刻度） */
+    var xTicks = niceTicks(0, xMax, 7);
+    for (var t = 0; t < xTicks.length; t++) {
+      var xv = toX(xTicks[t]);
+      ctx.beginPath();
+      ctx.moveTo(xv, py);
+      ctx.lineTo(xv, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 规范限值竖线 ---- */
+    if (limitScaled >= 0 && limitScaled <= xMax) {
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([7, 4]);
+      var xl = toX(limitScaled);
+      ctx.beginPath();
+      ctx.moveTo(xl, py);
+      ctx.lineTo(xl, py + ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      /* 限值标签 */
+      ctx.fillStyle = '#dc2626';
+      ctx.font = 'bold 10.5px "Times New Roman", "Songti SC", serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(LIMIT_LABEL, xl + 5, py + 6);
+    }
+
+    /* ---- 各条地震波曲线 ---- */
+    for (var w2 = 0; w2 < nWaves; w2++) {
+      ctx.strokeStyle = WAVE_COLORS[w2 % WAVE_COLORS.length];
+      ctx.lineWidth = 1.2;
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = 0.65;
+      ctx.beginPath();
+      for (var k = 0; k < nStories; k++) {
+        var xd = toX(waves[w2].values[k] * SCALE);
+        var yd = toY(stories[k]);
+        if (k === 0) ctx.moveTo(xd, yd);
+        else ctx.lineTo(xd, yd);
+      }
+      ctx.stroke();
+
+      /* 数据点 */
+      ctx.fillStyle = WAVE_COLORS[w2 % WAVE_COLORS.length];
+      for (var k2 = 0; k2 < nStories; k2++) {
+        var xd2 = toX(waves[w2].values[k2] * SCALE);
+        var yd2 = toY(stories[k2]);
+        ctx.beginPath();
+        ctx.arc(xd2, yd2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    /* ---- 包络曲线（粗黑线） ---- */
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var e = 0; e < nStories; e++) {
+      var xe = toX(envelope[e] * SCALE);
+      var ye = toY(stories[e]);
+      if (e === 0) ctx.moveTo(xe, ye);
+      else ctx.lineTo(xe, ye);
+    }
+    ctx.stroke();
+
+    /* 包络数据点 */
+    ctx.fillStyle = '#111111';
+    for (var e2 = 0; e2 < nStories; e2++) {
+      var xe2 = toX(envelope[e2] * SCALE);
+      var ye2 = toY(stories[e2]);
+      ctx.beginPath();
+      ctx.arc(xe2, ye2, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---- 峰值标记 ---- */
+    var iPeak = 0;
+    for (var p = 1; p < nStories; p++) {
+      if (envelope[p] > envelope[iPeak]) iPeak = p;
+    }
+    var xp = toX(envelope[iPeak] * SCALE);
+    var yp = toY(stories[iPeak]);
+    ctx.fillStyle = '#111111';
+    ctx.beginPath();
+    ctx.arc(xp, yp, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* 峰值文字标注 */
+    ctx.fillStyle = '#111111';
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var peakText1 = 'Peak = ' + (envelope[iPeak] * SCALE).toFixed(2) + ' \u00d7 10\u207b\u00b3';
+    var peakText2 = '(story ' + stories[iPeak] + ')';
+    var pkX = xp + 10;
+    var pkY = yp - 4;
+    if (pkX + 120 > px + pw) {
+      pkX = xp - 130;
+      ctx.textAlign = 'right';
+    }
+    ctx.fillText(peakText1, pkX, pkY - 7);
+    ctx.fillText(peakText2, pkX, pkY + 7);
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    for (var yk = 0; yk < nStories; yk++) {
+      var ykY = toY(stories[yk]);
+      ctx.beginPath();
+      ctx.moveTo(px, ykY);
+      ctx.lineTo(px + mainTick, ykY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px + pw, ykY);
+      ctx.lineTo(px + pw - mainTick, ykY);
+      ctx.stroke();
+    }
+    for (var xk = 0; xk < xTicks.length; xk++) {
+      var xkX = toX(xTicks[xk]);
+      ctx.beginPath();
+      ctx.moveTo(xkX, py + ph);
+      ctx.lineTo(xkX, py + ph - mainTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xkX, py);
+      ctx.lineTo(xkX, py + mainTick);
+      ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    /* y 轴（楼层号） */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < nStories; yl++) {
+      var ylY = toY(stories[yl]);
+      ctx.fillText(stories[yl].toFixed(0), px - 6, ylY);
+    }
+
+    /* x 轴（位移角 × 10⁻³） */
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl2 = 0; xl2 < xTicks.length; xl2++) {
+      ctx.fillText(fmtDriftTick(xTicks[xl2]),
+                   toX(xTicks[xl2]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 54, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Story', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Inter-story drift ratio  (\u00d7 10\u207b\u00b3)',
+                 px + pw / 2, H - 4);
+
+    /* ---- 图例（右下角） ---- */
+    var legendItems = [];
+    for (var w3 = 0; w3 < nWaves; w3++) {
+      legendItems.push({
+        name: waves[w3].name,
+        color: WAVE_COLORS[w3 % WAVE_COLORS.length],
+        lw: 1.2,
+        alpha: 0.75
+      });
+    }
+    legendItems.push({ name: 'Envelope', color: '#111111', lw: 2.4 });
+    legendItems.push({
+      name: LIMIT_LABEL, color: '#dc2626', lw: 1.2, dash: [5, 4]
+    });
+
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    var lgW = 0;
+    for (var li = 0; li < legendItems.length; li++) {
+      var wText = ctx.measureText(legendItems[li].name).width + 34;
+      if (wText > lgW) lgW = wText;
+    }
+    var lgH = 15 * legendItems.length + 10;
+    var lgx = px + pw - lgW - 8;
+    var lgy = py + ph - lgH - 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var lj = 0; lj < legendItems.length; lj++) {
+      var ly = lgy + 8 + lj * 15;
+      var it = legendItems[lj];
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = it.lw || 1.2;
+      ctx.globalAlpha = it.alpha || 1.0;
+      if (it.dash) ctx.setLineDash(it.dash);
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly);
+      ctx.lineTo(lgx + 22, ly);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#222222';
+      ctx.fillText(it.name, lgx + 26, ly);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render(data) {
+    var envelope = computeEnvelope(data);
+    drawDrift('c-drift', data, envelope);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var iPeak = 0;
+      for (var p = 1; p < envelope.length; p++) {
+        if (envelope[p] > envelope[iPeak]) iPeak = p;
+      }
+      var peakVal = (envelope[iPeak] * 1000).toFixed(2);
+      var limVal = (DRIFT_LIMIT * 1000).toFixed(2);
+      status.textContent = data.stories.length + ' 层 · ' +
+                           data.waves.length + ' 条波 · ' +
+                           '包络峰值 ' + peakVal + ' × 10\u207b\u00b3 ' +
+                           '(第 ' + data.stories[iPeak] + ' 层) · ' +
+                           '限值 ' + limVal + ' × 10\u207b\u00b3';
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/drift_envelope.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var data = parseCSV(text);
+        if (!data || data.stories.length < 2) {
+          throw new Error('有效数据不足');
+        }
+        render(data);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[drift-envelope] 读取 assets/drift_envelope.csv 失败，使用内联 CSV：', err);
+        }
+        var data = parseCSV(DEFAULT_CSV);
+        render(data);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV
+     ============================================================ */
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'drift_envelope.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

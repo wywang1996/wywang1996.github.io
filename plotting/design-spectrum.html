@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设计反应谱 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.ds-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.ds-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.ds-canvas-wrap canvas {
+  width: 100%;
+  height: 540px;
+  display: block;
+}
+.ds-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.ds-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.ds-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入参数</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      设计反应谱
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 抗震设计</div>
+      <h1>设计反应谱</h1>
+      <p class="lead">
+        GB 50011-2010《建筑抗震设计规范》的地震影响系数曲线 α(T)。
+        曲线由<strong>四段</strong>组成：上升段、平台段、下降段、直线下降段，
+        阻尼调整系数 η<sub>1</sub>、η<sub>2</sub>、γ 按规范公式计算。
+        本页支持<strong>多设防烈度同图对比</strong>与<strong>阻尼比敏感性</strong>，
+        是抗震设计最常用的图件。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">GB 50011-2010</span>
+        <span class="pill">地震影响系数</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">Parameters</span>
+        <h2>输入参数</h2>
+      </div>
+
+      <p>
+        设计反应谱是<strong>解析式</strong>，不需要外部数据文件。
+        只需三个规范参数：<strong>设防烈度</strong>（决定 α<sub>max</sub>）、
+        <strong>场地类别与设计地震分组</strong>（决定特征周期 T<sub>g</sub>）、
+        <strong>结构阻尼比</strong> ζ。所有参数直接写在代码里，便于批量修改。
+      </p>
+
+      <div class="io-card">
+        <h4>三个核心参数</h4>
+        <table>
+          <thead><tr>
+            <th style="width:160px;">参数</th>
+            <th style="width:120px;">符号</th>
+            <th style="width:160px;">默认值</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td>设防烈度</td>
+              <td>—</td>
+              <td><code>6 / 7 / 8 / 9 度</code></td>
+              <td>决定 α<sub>max</sub>，四条曲线对比</td>
+            </tr>
+            <tr>
+              <td>特征周期</td>
+              <td>T<sub>g</sub></td>
+              <td><code>0.35 / 0.40 / 0.55 / 0.65 s</code></td>
+              <td>由场地类别与设计地震分组查表</td>
+            </tr>
+            <tr>
+              <td>阻尼比</td>
+              <td>ζ</td>
+              <td><code>0.05</code></td>
+              <td>钢筋混凝土结构常用 0.05</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">α<sub>max</sub> 取值（多遇地震）</h4>
+        <table>
+          <thead><tr>
+            <th style="width:160px;">设防烈度</th>
+            <th style="width:160px;">设计基本加速度</th>
+            <th style="width:160px;">α<sub>max</sub>（多遇）</th>
+            <th>α<sub>max</sub>（罕遇）</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>6 度</td><td><code>0.05 g</code></td><td><code>0.04</code></td><td><code>0.28</code></td></tr>
+            <tr><td>7 度</td><td><code>0.10 g</code></td><td><code>0.08</code></td><td><code>0.50</code></td></tr>
+            <tr><td>7 度</td><td><code>0.15 g</code></td><td><code>0.12</code></td><td><code>0.72</code></td></tr>
+            <tr><td>8 度</td><td><code>0.20 g</code></td><td><code>0.16</code></td><td><code>0.90</code></td></tr>
+            <tr><td>8 度</td><td><code>0.30 g</code></td><td><code>0.24</code></td><td><code>1.20</code></td></tr>
+            <tr><td>9 度</td><td><code>0.40 g</code></td><td><code>0.32</code></td><td><code>1.40</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">特征周期 T<sub>g</sub> 取值（GB 50011-2010 表 5.1.4-2）</h4>
+        <table>
+          <thead><tr>
+            <th style="width:100px;">设计地震分组</th>
+            <th style="width:120px;">I<sub>0</sub> / I<sub>1</sub> 类</th>
+            <th style="width:120px;">II 类</th>
+            <th style="width:120px;">III 类</th>
+            <th>IV 类</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>第一组</td><td><code>0.20 / 0.25</code></td><td><code>0.35</code></td><td><code>0.45</code></td><td><code>0.65</code></td></tr>
+            <tr><td>第二组</td><td><code>0.25 / 0.30</code></td><td><code>0.40</code></td><td><code>0.55</code></td><td><code>0.75</code></td></tr>
+            <tr><td>第三组</td><td><code>0.30 / 0.35</code></td><td><code>0.45</code></td><td><code>0.65</code></td><td><code>0.90</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>采用 7 度（0.10 g）设防、II 类场地、第二组，
+          对应 T<sub>g</sub> = 0.40 s、α<sub>max</sub> = 0.08。
+          修改代码中的参数即可切换为其他设防烈度或场地条件。
+        </div>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        GB 50011-2010 的地震影响系数曲线 α(T) 是<strong>设计反应谱</strong>，
+        表示结构自振周期为 T 时地震作用引起的等效加速度与重力加速度之比。
+        它是<strong>多遇地震</strong>（小震）或<strong>罕遇地震</strong>（大震）
+        作用下结构弹性或弹塑性反应的规范化包络。
+      </p>
+
+      <h3 class="sub">四段曲线的含义</h3>
+
+      <ul class="plain">
+        <li>
+          <strong>上升段</strong>（T &lt; 0.1 s）：<br>
+          α = [0.45 + 10(η<sub>2</sub> − 0.45)T] · α<sub>max</sub><br>
+          从 0.45·α<sub>max</sub> 线性增加到 η<sub>2</sub>·α<sub>max</sub>。
+          周期很小时结构接近刚体，响应跟随地面运动。
+        </li>
+        <li>
+          <strong>平台段</strong>（0.1 s ≤ T ≤ T<sub>g</sub>）：<br>
+          α = η<sub>2</sub> · α<sub>max</sub><br>
+          结构自振周期与场地卓越周期接近，动力放大达到最大。
+          平台高度即为<strong>地震影响系数最大值</strong> η<sub>2</sub>·α<sub>max</sub>。
+        </li>
+        <li>
+          <strong>下降段</strong>（T<sub>g</sub> &lt; T ≤ 5T<sub>g</sub>）：<br>
+          α = (T<sub>g</sub>/T)<sup>γ</sup> · η<sub>2</sub> · α<sub>max</sub><br>
+          随周期增大按幂函数衰减，γ 为衰减指数（默认 0.9）。
+        </li>
+        <li>
+          <strong>直线下降段</strong>（5T<sub>g</sub> &lt; T ≤ 6 s）：<br>
+          α = [η<sub>2</sub>·0.2<sup>γ</sup> − η<sub>1</sub>(T − 5T<sub>g</sub>)] · α<sub>max</sub><br>
+          长周期段按线性衰减，斜率由 η<sub>1</sub> 控制。
+        </li>
+      </ul>
+
+      <h3 class="sub">三个阻尼调整系数</h3>
+
+      <p>
+        当阻尼比不等于 5% 时，需要用三个系数修正曲线：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        η<sub>2</sub> = 1 + (0.05 − ζ) / (0.08 + 1.6ζ)<br>
+        γ = 0.9 + (0.05 − ζ) / (0.3 + 6ζ)<br>
+        η<sub>1</sub> = 0.02 + (0.05 − ζ) / (4 + 32ζ)
+      </div>
+
+      <ul class="plain">
+        <li><strong>η<sub>2</sub></strong>——阻尼调整系数，影响平台段高度与下降段幅值。
+          ζ &gt; 0.05 时 η<sub>2</sub> &lt; 1（曲线降低）；ζ &lt; 0.05 时 η<sub>2</sub> &gt; 1（曲线抬高）。</li>
+        <li><strong>γ</strong>——下降段衰减指数，ζ &gt; 0.05 时 γ &lt; 0.9（衰减更快）。</li>
+        <li><strong>η<sub>1</sub></strong>——直线下降段斜率调整系数，
+          只在 5T<sub>g</sub> &lt; T ≤ 6 s 段起作用。</li>
+      </ul>
+
+      <h3 class="sub">从图上能读出什么</h3>
+
+      <ul class="plain">
+        <li><strong>平台高度</strong>——即 η<sub>2</sub>·α<sub>max</sub>，
+          是地震影响系数的最大值，直接反映设防烈度。</li>
+        <li><strong>平台起点</strong>——T = 0.1 s，规范统一规定的下限。</li>
+        <li><strong>平台终点</strong>——T = T<sub>g</sub>，
+          特征周期越长，平台越宽，软土场地对长周期结构更不利。</li>
+        <li><strong>下降段斜率</strong>——由 γ 控制，反映结构响应随周期的衰减速度。</li>
+        <li><strong>曲线截止</strong>——T = 6 s 处截止，规范不考虑更长的周期。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与地震影响系数 α 的关系：</strong>
+        地震影响系数 α 与谱加速度 S<sub>a</sub> 的关系为
+        <strong>α = S<sub>a</sub> / g</strong>。所以 α 本质上就是
+        <strong>以 g 为单位的谱加速度</strong>。
+        设计时用水平地震作用 F<sub>Ek</sub> = α · G<sub>eq</sub>，
+        其中 G<sub>eq</sub> 是结构等效总重力荷载。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>规范设计谱是<strong>标准化 + 保守包络</strong>，
+        不是任何一次真实地震的反应谱。它的平台段对应场地的卓越周期，
+        下降段则考虑到真实地震动的高频衰减特性。
+        与一致危险性谱（UHS）相比，规范谱更光滑、更保守。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由页面内的 JavaScript 实时计算。
+        默认展示四条曲线：<strong>6 / 7 / 8 / 9 度</strong>（多遇地震），
+        阻尼比 ζ = 5%，特征周期 T<sub>g</sub> = 0.40 s。
+        画布尺寸按 A4 排版（720 × 540 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">参数</span>
+        <span class="fname">GB 50011-2010 · II 类场地 · 第二组 · ζ = 0.05</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="ds-canvas-wrap">
+        <canvas id="c-design-spectrum"></canvas>
+      </div>
+
+      <div class="ds-legend">
+        <span><span class="line" style="background:#0891b2"></span>6 度 (0.04)</span>
+        <span><span class="line" style="background:#2563eb"></span>7 度 (0.08)</span>
+        <span><span class="line" style="background:#b45309"></span>8 度 (0.16)</span>
+        <span><span class="line" style="background:#dc2626"></span>9 度 (0.32)</span>
+      </div>
+
+      <div class="ds-note" style="margin-top:14px;">
+        横轴为结构自振周期 T（s，对数），纵轴为地震影响系数 α（线性）。
+        四条曲线对应不同设防烈度（括号内为 α<sub>max</sub>）。
+        特征周期 T<sub>g</sub> = 0.40 s，在图上以竖虚线标注。
+        四条曲线在平台段的比值等于各自 α<sub>max</sub> 的比值。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心函数 <code>gb50011_spectrum</code> 按规范公式实现四段曲线，
+        并按阻尼比自动计算 η<sub>1</sub>、η<sub>2</sub>、γ。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>design-spectrum.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# GB 50011-2010 地震影响系数曲线（设计反应谱）
+# -------------------------------------------------------------
+# 四段曲线：
+#   T &lt; 0.1 s        α = [0.45 + 10(η₂ - 0.45)T] · α_max
+#   0.1 ≤ T ≤ Tg     α = η₂ · α_max
+#   Tg &lt; T ≤ 5Tg     α = (Tg/T)^γ · η₂ · α_max
+#   5Tg &lt; T ≤ 6 s    α = [η₂·0.2^γ - η₁(T - 5Tg)] · α_max
+#
+# 阻尼调整系数：
+#   η₂ = 1 + (0.05 - ζ) / (0.08 + 1.6ζ)
+#   γ  = 0.9 + (0.05 - ζ) / (0.3 + 6ζ)
+#   η₁ = 0.02 + (0.05 - ζ) / (4 + 32ζ)
+# =============================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+
+def gb50011_spectrum(T, alpha_max, Tg=0.40, zeta=0.05):
+    """GB 50011-2010 地震影响系数曲线。
+
+    参数
+    ----
+    T         : 周期数组 (s)
+    alpha_max : 地震影响系数最大值
+    Tg        : 特征周期 (s)
+    zeta      : 阻尼比
+
+    返回
+    ----
+    alpha : 地震影响系数数组，与 T 同形状
+    """
+    T = np.asarray(T, dtype=float)
+    alpha = np.zeros_like(T)
+
+    # ---- 阻尼调整系数 ----
+    eta2 = 1.0 + (0.05 - zeta) / (0.08 + 1.6 * zeta)
+    gamma = 0.9 + (0.05 - zeta) / (0.3 + 6.0 * zeta)
+    eta1 = 0.02 + (0.05 - zeta) / (4.0 + 32.0 * zeta)
+
+    for i, Ti in enumerate(T):
+        if Ti &lt; 0.1:
+            alpha[i] = (0.45 + 10.0 * (eta2 - 0.45) * Ti) * alpha_max
+        elif Ti &lt;= Tg:
+            alpha[i] = eta2 * alpha_max
+        elif Ti &lt;= 5.0 * Tg:
+            alpha[i] = (Tg / Ti) ** gamma * eta2 * alpha_max
+        elif Ti &lt;= 6.0:
+            alpha[i] = (eta2 * 0.2 ** gamma - eta1 * (Ti - 5.0 * Tg)) * alpha_max
+        else:
+            alpha[i] = 0.0
+
+    return alpha
+
+
+# ---- 1. 参数设置 ----
+T = np.logspace(np.log10(0.01), np.log10(6.0), 400)
+
+# 四个设防烈度（多遇地震）
+cases = [
+    {'name': '6 度 (0.04)',  'alpha_max': 0.04, 'color': '#0891b2'},
+    {'name': '7 度 (0.08)',  'alpha_max': 0.08, 'color': '#2563eb'},
+    {'name': '8 度 (0.16)',  'alpha_max': 0.16, 'color': '#b45309'},
+    {'name': '9 度 (0.32)',  'alpha_max': 0.32, 'color': '#dc2626'},
+]
+
+Tg = 0.40    # II 类场地，第二组
+zeta = 0.05  # 钢筋混凝土结构
+
+# ---- 2. 绘图（A4 尺寸 7.2 × 5.4 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 5.4))
+
+for case in cases:
+    alpha = gb50011_spectrum(T, case['alpha_max'], Tg, zeta)
+    ax.semilogx(T, alpha, lw=1.8, color=case['color'],
+                label=f"{case['name']}")
+
+# 标注特征周期 Tg
+ax.axvline(Tg, color='#888888', lw=0.7, ls='--')
+ax.text(Tg * 1.05, 0.01, f'Tg = {Tg:.2f} s',
+        fontsize=9, color='#555555', rotation=90,
+        va='bottom', ha='left')
+
+# 标注平台段
+ax.axvspan(0.1, Tg, color='#fde68a', alpha=0.15, zorder=0)
+
+ax.set_xlabel('Period  T (s)')
+ax.set_ylabel('Seismic influence coefficient  α')
+ax.set_title('GB 50011-2010 design spectrum  ·  Tg = 0.40 s, ζ = 0.05',
+             fontsize=11)
+ax.set_xlim(0.01, 6.0)
+ax.set_ylim(0, 0.36)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('design-spectrum.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# ---- 3. 打印关键量 ----
+print('特征周期 Tg = {:.2f} s'.format(Tg))
+print('阻尼比   ζ  = {:.2f}'.format(zeta))
+print('阻尼调整系数：')
+eta2 = 1.0 + (0.05 - zeta) / (0.08 + 1.6 * zeta)
+gamma = 0.9 + (0.05 - zeta) / (0.3 + 6.0 * zeta)
+eta1 = 0.02 + (0.05 - zeta) / (4.0 + 32.0 * zeta)
+print('  η₂ = {:.4f}'.format(eta2))
+print('  γ  = {:.4f}'.format(gamma))
+print('  η₁ = {:.4f}'.format(eta1))</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>四个设防烈度</strong>：6 / 7 / 8 / 9 度（多遇地震），
+            α<sub>max</sub> 分别为 0.04 / 0.08 / 0.16 / 0.32。</li>
+          <li><strong>特征周期</strong>：默认 Tg = 0.40 s（II 类场地、第二组），
+            可改为其他场地条件。</li>
+          <li><strong>阻尼比</strong>：默认 ζ = 0.05，若用消能减震结构（ζ = 0.10）
+            或钢结构（ζ = 0.02），η<sub>2</sub> 会自动调整。</li>
+          <li><strong>对数横轴</strong>：周期范围 0.01–6 s，与规范一致。</li>
+          <li><strong>平台段阴影</strong>：<code>axvspan(0.1, Tg)</code>
+            用浅黄色标出平台段，直观看到平台宽度。</li>
+          <li><strong>曲线截断</strong>：T &gt; 6 s 后 α = 0，规范不再考虑。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。局部函数 <code>local_gb50011</code>
+        按规范公式计算单个周期的 α 值，用 <code>arrayfun</code> 向量化调用。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>design-spectrum.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% GB 50011-2010 地震影响系数曲线（设计反应谱）
+% -------------------------------------------------------------
+% 四段曲线 + 阻尼调整系数 η₁、η₂、γ
+% =============================================================
+
+% ---- 1. 参数设置 ----
+T = logspace(log10(0.01), log10(6.0), 400);
+
+Tg = 0.40;      % 特征周期
+zeta = 0.05;    % 阻尼比
+
+cases = {
+    struct('name', '6 度 (0.04)', 'alpha_max', 0.04, 'color', [0.03 0.57 0.70]);
+    struct('name', '7 度 (0.08)', 'alpha_max', 0.08, 'color', [0.15 0.39 0.92]);
+    struct('name', '8 度 (0.16)', 'alpha_max', 0.16, 'color', [0.71 0.33 0.04]);
+    struct('name', '9 度 (0.32)', 'alpha_max', 0.32, 'color', [0.86 0.15 0.15]);
+};
+
+% ---- 2. 绘图（A4 尺寸 720 × 540 px） ----
+figure('Color', 'w', 'Position', [100 100 720 540]);
+hold on;
+
+% 平台段阴影
+patch([0.1 Tg Tg 0.1], [0 0 0.36 0.36], ...
+      [0.99 0.90 0.55], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
+
+for i = 1:numel(cases)
+    c = cases{i};
+    alpha = arrayfun(@(x) local_gb50011(x, c.alpha_max, Tg, zeta), T);
+    semilogx(T, alpha, 'Color', c.color, 'LineWidth', 1.8, ...
+             'DisplayName', c.name);
+end
+
+% 特征周期竖线
+xline(Tg, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7, ...
+      'HandleVisibility', 'off');
+text(Tg * 1.05, 0.01, sprintf('Tg = %.2f s', Tg), ...
+     'FontSize', 9, 'Color', [0.33 0.33 0.33], 'Rotation', 90, ...
+     'VerticalAlignment', 'bottom');
+
+xlabel('Period  T (s)');
+ylabel('Seismic influence coefficient  \alpha');
+title('GB 50011-2010 design spectrum  ·  Tg = 0.40 s, \zeta = 0.05', ...
+      'FontSize', 11);
+xlim([0.01 6.0]);
+ylim([0 0.36]);
+grid on; box on;
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in');
+legend('Location', 'northeast', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'design-spectrum.png', 'Resolution', 300);
+
+% ---- 3. 打印关键量 ----
+fprintf('特征周期 Tg = %.2f s\n', Tg);
+fprintf('阻尼比   ζ  = %.2f\n', zeta);
+eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta);
+eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+fprintf('阻尼调整系数：\n');
+fprintf('  η₂ = %.4f\n', eta2);
+fprintf('  γ  = %.4f\n', gamma);
+fprintf('  η₁ = %.4f\n', eta1);
+
+
+% ===== 局部函数 =====
+function alpha = local_gb50011(T, alpha_max, Tg, zeta)
+    eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+    gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta);
+    eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+
+    if T < 0.1
+        alpha = (0.45 + 10 * (eta2 - 0.45) * T) * alpha_max;
+    elseif T <= Tg
+        alpha = eta2 * alpha_max;
+    elseif T <= 5 * Tg
+        alpha = (Tg / T) ^ gamma * eta2 * alpha_max;
+    elseif T <= 6
+        alpha = (eta2 * 0.2 ^ gamma - eta1 * (T - 5 * Tg)) * alpha_max;
+    else
+        alpha = 0;
+    end
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:180px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 周期</td><td>T</td><td><code>s</code></td></tr>
+            <tr><td><strong>输入</strong> · 特征周期</td><td>T<sub>g</sub></td><td><code>s</code></td></tr>
+            <tr><td><strong>输入</strong> · 阻尼比</td><td>ζ</td><td>无量纲</td></tr>
+            <tr><td><strong>输入</strong> · 地震影响系数最大值</td><td>α<sub>max</sub></td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 地震影响系数</td><td>α(T)</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 阻尼调整系数</td><td>η<sub>1</sub>, η<sub>2</sub>, γ</td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>公式来源：</strong>GB 50011-2010《建筑抗震设计规范》第 5.1.5 条。</li>
+        <li><strong>α<sub>max</sub> 取值：</strong>多遇地震查表 5.1.4-1，
+          罕遇地震按规范调整。本页默认多遇。</li>
+        <li><strong>特征周期 T<sub>g</sub>：</strong>查表 5.1.4-2，
+          由场地类别与设计地震分组共同确定。</li>
+        <li><strong>阻尼比调整：</strong>ζ = 0.05 时 η<sub>2</sub> = 1、γ = 0.9、η<sub>1</sub> = 0.02，
+          曲线无调整。ζ ≠ 0.05 时按公式计算。</li>
+        <li><strong>周期截断：</strong>规范规定 T &gt; 6 s 时不再使用本曲线，
+          需专门研究。</li>
+        <li><strong>与 UHS 的关系：</strong>规范设计谱是标准化 + 保守包络，
+          UHS 是真实 PSHA 结果，两者物理意义不同但形状相似。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>平台段高度与预期不符 → 检查 α<sub>max</sub> 取值是否正确。</li>
+            <li>下降段衰减太快或太慢 → 检查阻尼比 ζ 是否用了非常规值。</li>
+            <li>曲线在某周期处突变 → 检查是否在 5T<sub>g</sub> 处出现了分段衔接问题。</li>
+            <li>消能减震结构 ζ = 0.20 → η<sub>2</sub> ≈ 0.63，曲线整体降低约 37%。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（抗震设计、地震作用计算）、
+        <a href="../spectral-analysis.html">地震动谱分析入门</a>（反应谱基础）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>
+        （场地分类与特征周期）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 设计反应谱</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     常量
+     ============================================================ */
+  var TG = 0.40;
+  var ZETA = 0.05;
+  var T_MIN = 0.01, T_MAX = 6.0;
+
+  var CASES = [
+    { name: '6 度 (0.04)',  alphaMax: 0.04, color: '#0891b2' },
+    { name: '7 度 (0.08)',  alphaMax: 0.08, color: '#2563eb' },
+    { name: '8 度 (0.16)',  alphaMax: 0.16, color: '#b45309' },
+    { name: '9 度 (0.32)',  alphaMax: 0.32, color: '#dc2626' }
+  ];
+
+  /* ============================================================
+     GB 50011-2010 曲线
+     ============================================================ */
+  function gb50011(T, alphaMax, Tg, zeta) {
+    if (zeta === undefined) zeta = 0.05;
+    if (Tg === undefined) Tg = 0.40;
+
+    var eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+    var gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta);
+    var eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+
+    if (T < 0.1) {
+      return (0.45 + 10 * (eta2 - 0.45) * T) * alphaMax;
+    } else if (T <= Tg) {
+      return eta2 * alphaMax;
+    } else if (T <= 5 * Tg) {
+      return Math.pow(Tg / T, gamma) * eta2 * alphaMax;
+    } else if (T <= 6) {
+      return (eta2 * Math.pow(0.2, gamma) - eta1 * (T - 5 * Tg)) * alphaMax;
+    } else {
+      return 0;
+    }
+  }
+
+  /* ============================================================
+     工具函数
+     ============================================================ */
+  function log10(v) { return Math.log(v) / Math.LN10; }
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtLogTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 1) return v.toFixed(0);
+    if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+    return v.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function fmtLinTick(v, step) {
+    if (v === 0) return '0';
+    if (step < 0.05) return v.toFixed(2);
+    if (step < 0.5) return v.toFixed(2);
+    return v.toFixed(1);
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawSpectrum(canvasId) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 540);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var yMin = 0, yMax = 0.36;
+    var xMin = log10(T_MIN), xMax = log10(T_MAX);
+    var yLo = yMin, yHi = yMax;
+
+    var margin = { top: 20, right: 26, bottom: 52, left: 76 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(t) { return px + (log10(t) - xMin) / (xMax - xMin) * pw; }
+    function toY(a) { return py + ph - (a - yLo) / (yHi - yLo) * ph; }
+
+    /* ---- 平台段阴影 ---- */
+    ctx.fillStyle = 'rgba(253, 230, 138, 0.18)';
+    var xSpanStart = toX(0.1);
+    var xSpanEnd = toX(TG);
+    ctx.fillRect(xSpanStart, py, xSpanEnd - xSpanStart, ph);
+
+    /* ---- 网格 ---- */
+    var xMajor = niceDecades(T_MIN, T_MAX);
+    var xMinor = niceMinorTicks(T_MIN, T_MAX);
+    var yMajor = niceLinearTicks(yLo, yHi, 6);
+    var yStep = yMajor.length > 1 ? yMajor[1] - yMajor[0] : 0.1;
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yi = 0; yi < yMajor.length; yi++) {
+      var yy = toY(yMajor[yi]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xMajor.length; xi++) {
+      var xx = toX(xMajor[xi]);
+      ctx.beginPath();
+      ctx.moveTo(xx, py);
+      ctx.lineTo(xx, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- Tg 竖线 ---- */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([6, 4]);
+    var xTg = toX(TG);
+    ctx.beginPath();
+    ctx.moveTo(xTg, py);
+    ctx.lineTo(xTg, py + ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 四条曲线 ---- */
+    for (var c = 0; c < CASES.length; c++) {
+      var kase = CASES[c];
+      ctx.strokeStyle = kase.color;
+      ctx.lineWidth = 1.8;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i <= 600; i++) {
+        var lT = log10(T_MIN) + (log10(T_MAX) - log10(T_MIN)) * i / 600;
+        var Tv = Math.pow(10, lT);
+        var av = gb50011(Tv, kase.alphaMax, TG, ZETA);
+        if (!(av >= 0)) continue;
+        var cx = toX(Tv);
+        var cy = toY(av);
+        if (!started) { ctx.moveTo(cx, cy); started = true; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+    }
+
+    /* ---- Tg 文字标注 ---- */
+    ctx.save();
+    ctx.translate(xTg + 5, py + ph - 8);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = '#555555';
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Tg = ' + TG.toFixed(2) + ' s', 0, 0);
+    ctx.restore();
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    /* y 轴主刻度 */
+    for (var yk = 0; yk < yMajor.length; yk++) {
+      var yky = toY(yMajor[yk]);
+      ctx.beginPath();
+      ctx.moveTo(px, yky);
+      ctx.lineTo(px + mainTick, yky);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px + pw, yky);
+      ctx.lineTo(px + pw - mainTick, yky);
+      ctx.stroke();
+    }
+    /* x 轴主刻度 */
+    for (var xk = 0; xk < xMajor.length; xk++) {
+      var xkx = toX(xMajor[xk]);
+      ctx.beginPath();
+      ctx.moveTo(xkx, py + ph);
+      ctx.lineTo(xkx, py + ph - mainTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xkx, py);
+      ctx.lineTo(xkx, py + mainTick);
+      ctx.stroke();
+    }
+    /* x 轴次刻度 */
+    for (var xmk = 0; xmk < xMinor.length; xmk++) {
+      var xmkx = toX(xMinor[xmk]);
+      ctx.beginPath();
+      ctx.moveTo(xmkx, py + ph);
+      ctx.lineTo(xmkx, py + ph - minorTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xmkx, py);
+      ctx.lineTo(xmkx, py + minorTick);
+      ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yMajor.length; yl++) {
+      ctx.fillText(fmtLinTick(yMajor[yl], yStep), px - 6, toY(yMajor[yl]));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xMajor.length; xl++) {
+      ctx.fillText(fmtLogTick(xMajor[xl]), toX(xMajor[xl]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 58, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Seismic influence coefficient  \u03b1', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Period  T (s)', px + pw / 2, H - 4);
+
+    /* ---- 图例（右上角） ---- */
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    var lgW = 0;
+    for (var li = 0; li < CASES.length; li++) {
+      var w = ctx.measureText(CASES[li].name).width + 32;
+      if (w > lgW) lgW = w;
+    }
+    var lgH = 15 * CASES.length + 10;
+    var lgx = px + pw - lgW - 8;
+    var lgy = py + 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var lj = 0; lj < CASES.length; lj++) {
+      var ly = lgy + 8 + lj * 15;
+      ctx.strokeStyle = CASES[lj].color;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly);
+      ctx.lineTo(lgx + 22, ly);
+      ctx.stroke();
+      ctx.fillStyle = '#222222';
+      ctx.fillText(CASES[lj].name, lgx + 26, ly);
+    }
+
+    /* ---- 状态信息 ---- */
+    var eta2 = 1 + (0.05 - ZETA) / (0.08 + 1.6 * ZETA);
+    var gamma = 0.9 + (0.05 - ZETA) / (0.3 + 6 * ZETA);
+    var eta1 = 0.02 + (0.05 - ZETA) / (4 + 32 * ZETA);
+    var status = document.getElementById('info-stats');
+    if (status) {
+      status.textContent = 'Tg = ' + TG.toFixed(2) + ' s · ' +
+                           'ζ = ' + ZETA.toFixed(2) + ' · ' +
+                           'η₂ = ' + eta2.toFixed(3) + ' · ' +
+                           'γ = ' + gamma.toFixed(3) + ' · ' +
+                           'η₁ = ' + eta1.toFixed(3) + ' · ' +
+                           CASES.length + ' 个设防烈度';
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render() {
+    drawSpectrum('c-design-spectrum');
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(render, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+  else render();
+
+})();
+</script>
+
+</body>
+</html>

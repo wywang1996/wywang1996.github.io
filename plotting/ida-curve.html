@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDA 曲线 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.ida-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.ida-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.ida-canvas-wrap canvas {
+  width: 100%;
+  height: 560px;
+  display: block;
+}
+.ida-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.ida-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.ida-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+.ida-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.ida-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.ida-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      IDA 曲线
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 结构损伤与评估</div>
+      <h1>IDA 曲线</h1>
+      <p class="lead">
+        增量动力分析（Incremental Dynamic Analysis，IDA）曲线：
+        多条地震波在逐渐增大的强度下，结构<strong>损伤指标</strong>
+        DM（通常为最大层间位移角）随<strong>强度指标</strong>
+        IM（通常为 S<sub>a</sub>(T<sub>1</sub>)）的变化曲线。
+        页面上叠加 <strong>16% / 50% / 84% 分位曲线</strong>，
+        并给出<strong>倒塌裕度比 CMR</strong>，是结构抗倒塌能力评估的标准方法。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">IDA</span>
+        <span class="pill">分位曲线</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/ida_curves.csv</code> 作为输入。
+        文件是 IDA 分析结果的整理输出：<strong>宽格式表格</strong>，
+        第一列为强度指标 IM，后续每列对应一条地震波的损伤指标 DM。
+        若文件不存在，页面会使用内置的合成数据演示。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>Sa_g</code></td><td>强度指标 IM = S<sub>a</sub>(T<sub>1</sub>)</td><td><code>g</code></td><td>第一振型谱加速度，单调递增</td></tr>
+            <tr><td><code>wave1</code></td><td>波 1 的损伤指标 DM</td><td>无量纲</td><td>最大层间位移角</td></tr>
+            <tr><td><code>wave2</code></td><td>波 2 的 DM</td><td>无量纲</td><td>同上</td></tr>
+            <tr><td><code>…</code></td><td>…</td><td>—</td><td>每条波一列</td></tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:12.5px; color:var(--text-muted); margin:10px 0 0;">
+          列数可以任意扩展——增加一条地震波就增加一列。程序会自动识别列数。
+        </p>
+
+        <h4 style="margin-top:16px;">CSV 示例（7 条波，9 个 IM 水平）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/ida_curves.csv</code> 不存在，
+          则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>ida_curves.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># ida_curves.csv
+# IDA 曲线 —— 7 条地震波
+# 单位：Sa_g (g)，DM 无量纲（最大层间位移角）
+Sa_g,wave1,wave2,wave3,wave4,wave5,wave6,wave7
+0.05,0.00095,0.00110,0.00085,0.00125,0.00082,0.00105,0.00090
+0.10,0.00190,0.00215,0.00175,0.00240,0.00170,0.00210,0.00185
+0.15,0.00290,0.00330,0.00270,0.00360,0.00260,0.00320,0.00285
+0.20,0.00480,0.00550,0.00450,0.00600,0.00430,0.00530,0.00470
+0.30,0.00870,0.00990,0.00820,0.01080,0.00780,0.00950,0.00850
+0.40,0.01360,0.01540,0.01280,0.01680,0.01220,0.01480,0.01330
+0.50,0.01920,0.02180,0.01820,0.02380,0.01750,0.02100,0.01880
+0.70,0.03080,0.03480,0.02920,0.03800,0.02800,0.03350,0.03020
+1.00,0.04800,0.05400,0.04550,0.05900,0.04350,0.05200,0.04700
+</code></pre>
+      </div>
+
+      <div class="ida-download">
+        <button type="button" id="btn-download-csv">下载 ida_curves.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>弹塑性时程分析</strong>——OpenSees、Perform-3D、ABAQUS、
+            MIDAS、ETABS（非线性版本），对每条地震波做多个强度水平的时程分析。</li>
+          <li><strong>调幅方案</strong>——常用的有两种：
+            <strong>等步长</strong>（0.1 g, 0.2 g, 0.3 g …）和
+            <strong>变步长（hunt &amp; fill）</strong>（先粗后细，效率更高）。</li>
+          <li><strong>选波要求</strong>——通常 10–20 条实际地震记录，
+            与场地条件匹配，符合规范选波要求。</li>
+          <li><strong>倒塌判定</strong>——DM 超过倒塌阈值（通常 4%–5% 层间位移角），
+            或动力失稳、求解不收敛。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一个 7 条地震波的 IDA 结果：
+          IM 从 0.05 g 到 1.0 g，DM 从 0.001 增大到约 0.05。
+          <strong>50% 分位曲线</strong>在 0.4 g 附近屈服，
+          在 1.0 g 处达到 0.048；<strong>16% / 84% 分位</strong>
+          反映曲线间的离散程度。替换为你自己的 IDA 结果只需修改
+          <code>ida_curves.csv</code>。
+        </div>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        增量动力分析（IDA）由 Vamvatsikos 与 Cornell（2002）提出，
+        通过<strong>对每条地震波逐步增大强度，反复做弹塑性时程分析</strong>，
+        得到结构从弹性到倒塌的完整行为。每一条波产生一条 IDA 曲线，
+        多条曲线叠加后给出结构抗倒塌能力的统计特征。
+      </p>
+
+      <h3 class="sub">两个关键指标</h3>
+
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr>
+            <th style="width:180px;">指标</th>
+            <th style="width:200px;">符号</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>强度指标</strong>（IM）</td>
+              <td>S<sub>a</sub>(T<sub>1</sub>)</td>
+              <td>第一振型谱加速度，单位 g。反映地震动强度。</td>
+            </tr>
+            <tr>
+              <td><strong>损伤指标</strong>（DM）</td>
+              <td>θ<sub>max</sub></td>
+              <td>最大层间位移角，无量纲。反映结构损伤程度。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">IDA 曲线的三段特征</h3>
+
+      <ul class="plain">
+        <li><strong>弹性段</strong>——所有构件保持弹性，IM 与 DM 近似线性，
+          曲线在双对数坐标下斜率约为 1。</li>
+        <li><strong>屈服段</strong>——部分构件屈服，刚度退化，
+          曲线开始弯曲，斜率逐渐减小。</li>
+        <li><strong>倒塌段</strong>——结构接近或达到倒塌，
+          DM 急剧增大，曲线几乎水平或略微下降。</li>
+      </ul>
+
+      <h3 class="sub">16% / 50% / 84% 分位曲线</h3>
+
+      <p>
+        对每一个 IM 水平，把各条地震波的 DM 值排序，取三个分位：
+      </p>
+
+      <ul class="plain">
+        <li><strong>50% 分位</strong>——中位曲线，代表典型结构行为；</li>
+        <li><strong>16% 分位</strong>——下界曲线，代表有利情况；</li>
+        <li><strong>84% 分位</strong>——上界曲线，代表不利情况。</li>
+      </ul>
+
+      <p>
+        16% 与 84% 分位之间大致对应±1 倍对数标准差的范围。
+        如果三条曲线间距越大，说明结构对不同地震波的敏感度越高，
+        <strong>地震动不确定性</strong>越大。
+      </p>
+
+      <h3 class="sub">倒塌裕度比 CMR</h3>
+
+      <p>
+        倒塌裕度比（Collapse Margin Ratio）定义为：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        CMR = S<sub>a</sub><sup>中位倒塌容量</sup> / S<sub>a</sub><sup>MCE</sup>
+      </div>
+
+      <p>
+        即<strong>50% 分位倒塌容量</strong>与<strong>最大考虑地震（MCE）</strong>
+        对应强度的比值。CMR 越大，结构抗倒塌储备越高。
+        FEMA P695 要求 CMR 不低于 1.5–2.5（取决于结构类型）。
+      </p>
+
+      <div class="callout">
+        <strong>倒塌容量的定义：</strong>
+        通常取 50% 分位曲线首次达到 DM = 0.04（或 0.05）时的 IM 值。
+        也可以用曲线斜率的退化（切线刚度降到初始的 20%）来定义。
+        不同定义下的 CMR 略有差异，报告中必须说明。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>IDA 需要大量弹塑性时程分析，
+        计算成本很高。对于中等规模结构，
+        通常 10 条波 × 15 个强度水平 = 150 次时程分析。
+        实际工程中可用<strong>简化 IDA</strong>（如 MPA-based）
+        或<strong>云图法</strong>（不调幅，用多波随机 IM）替代。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由 <code>assets/ida_curves.csv</code> 实时计算：
+        读取 CSV → 逐 IM 水平计算 16/50/84 分位 → 绘制各波曲线、
+        分位曲线、倒塌阈值线。画布尺寸按 A4 排版（720 × 560 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/ida_curves.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="ida-canvas-wrap">
+        <canvas id="c-ida"></canvas>
+      </div>
+
+      <div class="ida-legend">
+        <span><span class="line" style="background:#cccccc"></span>各条波</span>
+        <span><span class="line" style="background:#2563eb"></span>16% 分位</span>
+        <span><span class="line" style="background:#b45309"></span>50% 分位</span>
+        <span><span class="line" style="background:#9333ea"></span>84% 分位</span>
+        <span><span class="line" style="background:#dc2626"></span>倒塌阈值</span>
+      </div>
+
+      <div class="ida-note" style="margin-top:14px;">
+        横轴为强度指标 S<sub>a</sub>(T<sub>1</sub>)（g，对数），
+        纵轴为损伤指标 DM = 最大层间位移角（线性）。
+        灰色细线为 7 条地震波的 IDA 曲线；三条彩色曲线为
+        16% / 50% / 84% 分位曲线；红色虚线为倒塌阈值
+        （DM = 0.04）。50% 分位曲线与倒塌阈值的交点即中位倒塌容量。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心步骤：读取 CSV → 逐 IM 水平计算 16/50/84 分位 →
+        绘制各波曲线与分位曲线 → 计算中位倒塌容量与 CMR。
+        CSV 文件不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>ida-curve.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# IDA 曲线 | 增量动力分析
+# -------------------------------------------------------------
+# 输入数据：ida_curves.csv
+#   Sa_g,wave1,wave2,...,waveN
+#   0.05,0.00095,0.00110,...
+#   ...
+#   单位：Sa_g (g)，DM 无量纲（最大层间位移角）
+# -------------------------------------------------------------
+# 功能：
+#   1. 读取 CSV（自动识别地震波列数）
+#   2. 逐 IM 计算 16% / 50% / 84% 分位
+#   3. 绘制各波 + 分位 + 倒塌阈值
+#   4. 计算中位倒塌容量与 CMR
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'ida_curves.csv'
+COLLAPSE_DRIFT = 0.04           # 倒塌阈值（4% 层间位移角）
+MCE_SA = 0.60                   # 最大考虑地震 Sa(T1)，用于 CMR 计算
+
+
+def generate_synthetic():
+    """CSV 缺失时生成合成 IDA 数据。"""
+    Sa = np.array([0.05, 0.10, 0.15, 0.20, 0.30,
+                   0.40, 0.50, 0.70, 1.00])
+
+    # 7 条波，带随机变化
+    rng = np.random.default_rng(42)
+    waves = []
+    for _ in range(7):
+        # 基础形状
+        base = np.array([0.00095, 0.00190, 0.00290, 0.00480, 0.00870,
+                         0.01360, 0.01920, 0.03080, 0.04800])
+        # ±15% 随机变化
+        factor = 1.0 + 0.15 * (rng.random(len(Sa)) - 0.5) * 2
+        waves.append(base * factor)
+    return Sa, waves
+
+
+# ---- 1. 读取 CSV ----
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    Sa = np.asarray(data['Sa_g'], dtype=float)
+    wave_names = [n for n in data.dtype.names if n != 'Sa_g']
+    DM = np.column_stack([np.asarray(data[n], dtype=float)
+                          for n in wave_names])
+    print(f'从 {CSV_FILE} 读取 {len(Sa)} 个 IM、{len(wave_names)} 条波')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    Sa, wave_list = generate_synthetic()
+    DM = np.column_stack(wave_list)
+    wave_names = [f'wave{i+1}' for i in range(DM.shape[1])]
+
+
+# ---- 2. 逐 IM 计算分位数 ----
+p16 = np.percentile(DM, 16, axis=1)
+p50 = np.percentile(DM, 50, axis=1)
+p84 = np.percentile(DM, 84, axis=1)
+
+print(f'\n每个 IM 水平的分位数：')
+for i, sa in enumerate(Sa):
+    print(f'  Sa = {sa:.2f} g：16% = {p16[i]:.4f}, '
+          f'50% = {p50[i]:.4f}, 84% = {p84[i]:.4f}')
+
+
+# ---- 3. 中位倒塌容量与 CMR ----
+def interp_collapse(Sa, DM_curve, threshold):
+    """插值求 DM 首次达到 threshold 对应的 Sa。"""
+    for i in range(1, len(DM_curve)):
+        if DM_curve[i] >= threshold:
+            # 在 (Sa[i-1], Sa[i]) 之间线性插值
+            x1, x2 = Sa[i-1], Sa[i]
+            y1, y2 = DM_curve[i-1], DM_curve[i]
+            return x1 + (threshold - y1) / (y2 - y1) * (x2 - x1)
+    return None
+
+
+Sa_collapse = interp_collapse(Sa, p50, COLLAPSE_DRIFT)
+print(f'\n50% 分位倒塌容量：Sa_c = {Sa_collapse:.3f} g')
+print(f'MCE 强度：Sa_MCE = {MCE_SA:.3f} g')
+
+if Sa_collapse is not None:
+    CMR = Sa_collapse / MCE_SA
+    print(f'倒塌裕度比：CMR = {CMR:.3f}')
+else:
+    CMR = None
+    print('未达到倒塌阈值，无法计算 CMR')
+
+
+# ---- 4. 绘图（A4 尺寸 7.2 × 5.6 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+# 各条波（灰色细线）
+for i in range(DM.shape[1]):
+    ax.plot(Sa, DM[:, i], '-', color='#cccccc', lw=0.9,
+            alpha=0.75, zorder=1)
+
+# 分位曲线
+ax.plot(Sa, p16, '--', color='#2563eb', lw=1.8,
+        label='16th percentile', zorder=3)
+ax.plot(Sa, p50, '-',  color='#b45309', lw=2.6,
+        label='50th percentile (median)', zorder=4)
+ax.plot(Sa, p84, '--', color='#9333ea', lw=1.8,
+        label='84th percentile', zorder=3)
+
+# 倒塌阈值线
+ax.axhline(COLLAPSE_DRIFT, color='#dc2626', lw=1.0, ls=':',
+           label=f'Collapse threshold = {COLLAPSE_DRIFT:.2f}')
+
+# 标注中位倒塌容量
+if Sa_collapse is not None:
+    ax.plot(Sa_collapse, COLLAPSE_DRIFT, '*',
+            color='#dc2626', ms=16, mec='#222222', mew=0.8,
+            zorder=10)
+    ax.annotate(
+        f'Median collapse capacity\nSa_c = {Sa_collapse:.3f} g\n'
+        f'CMR = {CMR:.2f}',
+        xy=(Sa_collapse, COLLAPSE_DRIFT),
+        xytext=(Sa_collapse * 0.32, COLLAPSE_DRIFT * 0.42),
+        fontsize=9, color='#dc2626',
+        arrowprops=dict(arrowstyle='->', color='#dc2626', lw=0.8))
+
+# 坐标轴
+ax.set_xscale('log')
+ax.set_xlabel('Intensity measure  Sa(T$_1$)  (g)')
+ax.set_ylabel('Damage measure  —  maximum inter-story drift')
+ax.set_title('IDA curves and percentiles', fontsize=11)
+ax.set_xlim(Sa.min() * 0.85, Sa.max() * 1.15)
+ax.set_ylim(0, max(DM.max() * 1.12, COLLAPSE_DRIFT * 1.3))
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper left', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('ida-curve.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>自动识别列数</strong>：<code>data.dtype.names</code> 会自动读取所有波，
+            增加波只需在 CSV 里增加一列。</li>
+          <li><strong>分位数计算</strong>：<code>np.percentile(DM, 16, axis=1)</code>
+            沿波方向计算每个 IM 水平的 16% 分位数。</li>
+          <li><strong>横轴对数</strong>：IM 跨越一个量级以上时用对数坐标更清晰。</li>
+          <li><strong>倒塌容量</strong>：用线性插值精确求 DM = 0.04 时的 Sa。</li>
+          <li><strong>CMR</strong>：需要给定 MCE 强度（本页取 0.60 g），
+            实际工程按场地危险性确定。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。用 <code>readtable</code> 读取 CSV，
+        <code>prctile</code> 计算分位数，<code>interp1</code> 插值倒塌容量。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>ida-curve.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% IDA 曲线 | 增量动力分析
+% -------------------------------------------------------------
+% 输入数据：ida_curves.csv
+%   Sa_g,wave1,wave2,...,waveN
+%   单位：Sa_g (g)，DM 无量纲
+% =============================================================
+
+CSV_FILE = 'ida_curves.csv';
+COLLAPSE_DRIFT = 0.04;
+MCE_SA = 0.60;
+
+% ---- 1. 读取 CSV ----
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    Sa = T.Sa_g;
+    wave_names = T.Properties.VariableNames(2:end);
+    DM = table2array(T(:, 2:end));
+    fprintf('从 %s 读取 %d 个 IM、%d 条波\n', ...
+            CSV_FILE, numel(Sa), numel(wave_names));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    Sa = [0.05 0.10 0.15 0.20 0.30 0.40 0.50 0.70 1.00]';
+    base = [0.00095 0.00190 0.00290 0.00480 0.00870 ...
+            0.01360 0.01920 0.03080 0.04800]';
+    rng(42);
+    DM = zeros(numel(Sa), 7);
+    for i = 1:7
+        DM(:, i) = base .* (1 + 0.15 * (rand(numel(Sa), 1) - 0.5) * 2);
+    end
+    wave_names = {'wave1', 'wave2', 'wave3', 'wave4', ...
+                  'wave5', 'wave6', 'wave7'};
+end
+
+% ---- 2. 逐 IM 计算分位数 ----
+p16 = prctile(DM, 16, 2);
+p50 = prctile(DM, 50, 2);
+p84 = prctile(DM, 84, 2);
+
+fprintf('\n每个 IM 水平的分位数：\n');
+for i = 1:numel(Sa)
+    fprintf('  Sa = %.2f g: 16%% = %.4f, 50%% = %.4f, 84%% = %.4f\n', ...
+            Sa(i), p16(i), p50(i), p84(i));
+end
+
+% ---- 3. 中位倒塌容量与 CMR ----
+idx = find(p50 >= COLLAPSE_DRIFT, 1, 'first');
+if ~isempty(idx) && idx > 1
+    x1 = Sa(idx-1); x2 = Sa(idx);
+    y1 = p50(idx-1); y2 = p50(idx);
+    Sa_collapse = x1 + (COLLAPSE_DRIFT - y1) / (y2 - y1) * (x2 - x1);
+    CMR = Sa_collapse / MCE_SA;
+    fprintf('\n50%% 分位倒塌容量：Sa_c = %.3f g\n', Sa_collapse);
+    fprintf('倒塌裕度比：CMR = %.3f\n', CMR);
+else
+    Sa_collapse = NaN; CMR = NaN;
+    fprintf('未达到倒塌阈值\n');
+end
+
+% ---- 4. 绘图（A4 尺寸 720 × 560 px） ----
+figure('Color', 'w', 'Position', [100 100 720 560]);
+hold on;
+
+% 各条波（灰色细线）
+for i = 1:size(DM, 2)
+    semilogx(Sa, DM(:, i), '-', 'Color', [0.8 0.8 0.8], ...
+             'LineWidth', 0.9, 'HandleVisibility', 'off');
+end
+
+% 分位曲线
+semilogx(Sa, p16, '--', 'Color', [0.15 0.39 0.92], ...
+         'LineWidth', 1.8, 'DisplayName', '16th percentile');
+semilogx(Sa, p50, '-', 'Color', [0.71 0.33 0.04], ...
+         'LineWidth', 2.6, 'DisplayName', '50th percentile (median)');
+semilogx(Sa, p84, '--', 'Color', [0.58 0.20 0.92], ...
+         'LineWidth', 1.8, 'DisplayName', '84th percentile');
+
+% 倒塌阈值线
+yline(COLLAPSE_DRIFT, ':', 'Color', [0.86 0.15 0.15], ...
+      'LineWidth', 1.0, 'DisplayName', ...
+      sprintf('Collapse threshold = %.2f', COLLAPSE_DRIFT));
+
+% 标注中位倒塌容量
+if ~isnan(Sa_collapse)
+    plot(Sa_collapse, COLLAPSE_DRIFT, 'p', ...
+         'MarkerSize', 16, 'MarkerFaceColor', [0.86 0.15 0.15], ...
+         'MarkerEdgeColor', [0.13 0.13 0.13], 'LineWidth', 0.8, ...
+         'HandleVisibility', 'off');
+    text(Sa_collapse * 0.32, COLLAPSE_DRIFT * 0.42, ...
+         sprintf('Median collapse\nSa_c = %.3f g\nCMR = %.2f', ...
+                 Sa_collapse, CMR), ...
+         'FontSize', 9, 'Color', [0.86 0.15 0.15]);
+end
+
+xlabel('Intensity measure  Sa(T_1)  (g)');
+ylabel('Damage measure  —  maximum inter-story drift');
+title('IDA curves and percentiles', 'FontSize', 11);
+xlim([min(Sa) * 0.85, max(Sa) * 1.15]);
+ylim([0, max(max(DM(:)) * 1.12, COLLAPSE_DRIFT * 1.3)]);
+grid on; box on;
+set(gca, 'XScale', 'log', 'FontName', 'Times New Roman', ...
+    'FontSize', 10, 'TickDir', 'in');
+legend('Location', 'northwest', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'ida-curve.png', 'Resolution', 300);</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:180px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 强度指标</td><td>S<sub>a</sub>(T<sub>1</sub>)</td><td><code>g</code></td></tr>
+            <tr><td><strong>输入</strong> · 损伤指标</td><td>θ<sub>max</sub></td><td>无量纲（层间位移角）</td></tr>
+            <tr><td><strong>输出</strong> · 16% 分位</td><td>θ<sub>16</sub>(IM)</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 50% 分位</td><td>θ<sub>50</sub>(IM)</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 84% 分位</td><td>θ<sub>84</sub>(IM)</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 中位倒塌容量</td><td>S<sub>a,c</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输出</strong> · 倒塌裕度比</td><td>CMR</td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>IDA 定义：</strong>对每条地震波逐步增大强度，
+          反复做弹塑性时程分析，得到完整的 IM–DM 曲线。</li>
+        <li><strong>IM 选择：</strong>常用 S<sub>a</sub>(T<sub>1</sub>)、
+          S<sub>a,avg</sub>(T<sub>1</sub>–T<sub>2</sub>)、
+          PGV 等。S<sub>a</sub>(T<sub>1</sub>) 最常用，因为与结构响应相关性最好。</li>
+        <li><strong>DM 选择：</strong>常用最大层间位移角、屋顶位移、
+          残余位移等。θ<sub>max</sub> 最常用，因为与倒塌直接相关。</li>
+        <li><strong>调幅方案：</strong>等步长（简单但浪费计算），
+          变步长（hunt &amp; fill，效率高）。</li>
+        <li><strong>分位数：</strong>16% / 50% / 84% 对应
+          对数正态分布的±1 倍对数标准差。</li>
+        <li><strong>倒塌容量：</strong>通常取 DM = 0.04 或 0.05
+          对应的 IM，或用斜率退化（切线刚度 &lt; 20% 初始刚度）定义。</li>
+        <li><strong>CMR：</strong>中位倒塌容量与 MCE 强度的比值。
+          FEMA P695 要求不同结构类型的 CMR 不低于 1.5–2.5。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>曲线不单调 → 检查时程分析是否收敛，或调幅方案是否有重复点。</li>
+            <li>分位数曲线不光滑 → 地震波数量太少，
+              建议 10 条以上；或 IM 水平太少。</li>
+            <li>某条波明显偏离 → 该波的频谱与结构自振周期接近，
+              属正常现象，需保留。</li>
+            <li>中位倒塌容量 &lt; MCE → 结构抗倒塌能力不足，需重新设计。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（IDA、FEMA P695、抗倒塌评估）、
+        <a href="../structural-dynamics.html">结构动力学</a>（弹塑性时程分析、SDOF/MDOF）、
+        <a href="../probability-statistics.html">概率论与数理统计</a>
+        （对数正态分布、分位数）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · IDA 曲线</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# ida_curves.csv',
+    '# IDA 曲线 —— 7 条地震波',
+    '# 单位：Sa_g (g)，DM 无量纲（最大层间位移角）',
+    'Sa_g,wave1,wave2,wave3,wave4,wave5,wave6,wave7',
+    '0.05,0.00095,0.00110,0.00085,0.00125,0.00082,0.00105,0.00090',
+    '0.10,0.00190,0.00215,0.00175,0.00240,0.00170,0.00210,0.00185',
+    '0.15,0.00290,0.00330,0.00270,0.00360,0.00260,0.00320,0.00285',
+    '0.20,0.00480,0.00550,0.00450,0.00600,0.00430,0.00530,0.00470',
+    '0.30,0.00870,0.00990,0.00820,0.01080,0.00780,0.00950,0.00850',
+    '0.40,0.01360,0.01540,0.01280,0.01680,0.01220,0.01480,0.01330',
+    '0.50,0.01920,0.02180,0.01820,0.02380,0.01750,0.02100,0.01880',
+    '0.70,0.03080,0.03480,0.02920,0.03800,0.02800,0.03350,0.03020',
+    '1.00,0.04800,0.05400,0.04550,0.05900,0.04350,0.05200,0.04700'
+  ].join('\n') + '\n';
+
+  var COLLAPSE_DRIFT = 0.04;
+  var MCE_SA = 0.60;
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var Sa = [], waves = [];
+    var header = null;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      var parts = line.split(',').map(function (s) { return s.trim(); });
+      if (!header) {
+        header = parts;
+        for (var w = 1; w < header.length; w++) {
+          waves.push({ name: header[w], values: [] });
+        }
+        continue;
+      }
+      if (parts.length < 2) continue;
+      var sa = parseFloat(parts[0]);
+      if (!isFinite(sa)) continue;
+      Sa.push(sa);
+      for (var k = 0; k < waves.length; k++) {
+        var v = parseFloat(parts[k + 1]);
+        waves[k].values.push(isFinite(v) ? v : 0);
+      }
+    }
+    return { Sa: Sa, waves: waves };
+  }
+
+  /* ============================================================
+     分位数计算（线性插值）
+     ============================================================ */
+  function percentile(sortedArr, p) {
+    var n = sortedArr.length;
+    if (n === 0) return 0;
+    if (n === 1) return sortedArr[0];
+    var idx = (n - 1) * p;
+    var lo = Math.floor(idx);
+    var hi = Math.ceil(idx);
+    if (lo === hi) return sortedArr[lo];
+    return sortedArr[lo] + (idx - lo) * (sortedArr[hi] - sortedArr[lo]);
+  }
+
+  function computePercentiles(data) {
+    var nIM = data.Sa.length;
+    var nWaves = data.waves.length;
+    var p16 = [], p50 = [], p84 = [];
+
+    for (var i = 0; i < nIM; i++) {
+      var vals = [];
+      for (var w = 0; w < nWaves; w++) {
+        vals.push(data.waves[w].values[i]);
+      }
+      vals.sort(function (a, b) { return a - b; });
+      p16.push(percentile(vals, 0.16));
+      p50.push(percentile(vals, 0.50));
+      p84.push(percentile(vals, 0.84));
+    }
+    return { p16: p16, p50: p50, p84: p84 };
+  }
+
+  /* ============================================================
+     工具
+     ============================================================ */
+  function log10(v) { return Math.log(v) / Math.LN10; }
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtLogTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 1) return v.toFixed(0);
+    if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+    return v.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function fmtLinTick(v, step) {
+    if (v === 0) return '0';
+    if (step < 0.005) return v.toFixed(3);
+    if (step < 0.05) return v.toFixed(3);
+    return v.toFixed(2);
+  }
+
+  /* ============================================================
+     中位倒塌容量
+     ============================================================ */
+  function findCollapseCapacity(Sa, p50, threshold) {
+    for (var i = 1; i < p50.length; i++) {
+      if (p50[i] >= threshold) {
+        var x1 = Sa[i - 1], x2 = Sa[i];
+        var y1 = p50[i - 1], y2 = p50[i];
+        return x1 + (threshold - y1) / (y2 - y1) * (x2 - x1);
+      }
+    }
+    return null;
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawIDA(canvasId, data, pcts, SaCollapse) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 560);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var Sa = data.Sa;
+    var waves = data.waves;
+
+    /* ---- 范围 ---- */
+    var saMin = Sa[0], saMax = Sa[Sa.length - 1];
+    var dmMax = 0;
+    for (var w = 0; w < waves.length; w++) {
+      for (var i = 0; i < waves[w].values.length; i++) {
+        if (waves[w].values[i] > dmMax) dmMax = waves[w].values[i];
+      }
+    }
+    for (var p = 0; p < pcts.p84.length; p++) {
+      if (pcts.p84[p] > dmMax) dmMax = pcts.p84[p];
+    }
+    dmMax = Math.max(dmMax * 1.12, COLLAPSE_DRIFT * 1.3);
+
+    var xMinV = saMin * 0.85;
+    var xMaxV = saMax * 1.15;
+    var xMin = log10(xMinV), xMax = log10(xMaxV);
+    var yMin = 0, yMax = dmMax;
+
+    var margin = { top: 20, right: 26, bottom: 54, left: 82 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + (log10(v) - xMin) / (xMax - xMin) * pw; }
+    function toY(v) { return py + ph - (v - yMin) / (yMax - yMin) * ph; }
+
+    /* ---- 网格 ---- */
+    var xMajor = niceDecades(xMinV, xMaxV);
+    var xMinor = niceMinorTicks(xMinV, xMaxV);
+    var yMajor = niceLinearTicks(yMin, yMax, 5);
+    var yStep = yMajor.length > 1 ? yMajor[1] - yMajor[0] : 0.01;
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yi = 0; yi < yMajor.length; yi++) {
+      var yy = toY(yMajor[yi]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xMajor.length; xi++) {
+      var xx = toX(xMajor[xi]);
+      ctx.beginPath();
+      ctx.moveTo(xx, py);
+      ctx.lineTo(xx, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 各条波（灰色细线） ---- */
+    for (var w2 = 0; w2 < waves.length; w2++) {
+      ctx.strokeStyle = '#cccccc';
+      ctx.lineWidth = 0.9;
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath();
+      for (var k = 0; k < Sa.length; k++) {
+        var wx = toX(Sa[k]);
+        var wy = toY(waves[w2].values[k]);
+        if (k === 0) ctx.moveTo(wx, wy);
+        else ctx.lineTo(wx, wy);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    /* ---- 16% 分位 ---- */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    for (var a = 0; a < Sa.length; a++) {
+      var xa = toX(Sa[a]);
+      var ya = toY(pcts.p16[a]);
+      if (a === 0) ctx.moveTo(xa, ya);
+      else ctx.lineTo(xa, ya);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 50% 分位（粗实线） ---- */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 2.6;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var b = 0; b < Sa.length; b++) {
+      var xb = toX(Sa[b]);
+      var yb = toY(pcts.p50[b]);
+      if (b === 0) ctx.moveTo(xb, yb);
+      else ctx.lineTo(xb, yb);
+    }
+    ctx.stroke();
+
+    /* ---- 84% 分位 ---- */
+    ctx.strokeStyle = '#9333ea';
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    for (var c = 0; c < Sa.length; c++) {
+      var xc = toX(Sa[c]);
+      var yc = toY(pcts.p84[c]);
+      if (c === 0) ctx.moveTo(xc, yc);
+      else ctx.lineTo(xc, yc);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 倒塌阈值线 ---- */
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 1.0;
+    ctx.setLineDash([2, 4]);
+    var yColl = toY(COLLAPSE_DRIFT);
+    ctx.beginPath();
+    ctx.moveTo(px, yColl);
+    ctx.lineTo(px + pw, yColl);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 倒塌阈值标签 */
+    ctx.fillStyle = '#dc2626';
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Collapse threshold = ' + COLLAPSE_DRIFT.toFixed(2),
+                 px + pw - 4, yColl - 3);
+
+    /* ---- 中位倒塌容量标记 ---- */
+    if (SaCollapse !== null && isFinite(SaCollapse)) {
+      var xc2 = toX(SaCollapse);
+      var yc2 = toY(COLLAPSE_DRIFT);
+
+      /* 五角星 */
+      ctx.fillStyle = '#dc2626';
+      ctx.strokeStyle = '#222222';
+      ctx.lineWidth = 0.8;
+      drawStar(ctx, xc2, yc2, 5, 9, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      /* 标注 */
+      var CMR = SaCollapse / MCE_SA;
+      ctx.fillStyle = '#dc2626';
+      ctx.font = 'bold 10.5px "Times New Roman", "Songti SC", serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      var lx = xc2 + 14;
+      var ly = yc2 - 30;
+      if (lx + 140 > px + pw) { lx = xc2 - 150; ctx.textAlign = 'right'; }
+      ctx.fillText('Median collapse', lx, ly - 12);
+      ctx.font = '10px "Times New Roman", "Songti SC", serif';
+      ctx.fillText('Sa_c = ' + SaCollapse.toFixed(3) + ' g', lx, ly + 2);
+      ctx.fillText('CMR = ' + CMR.toFixed(2), lx, ly + 15);
+    }
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    for (var yk = 0; yk < yMajor.length; yk++) {
+      var yky = toY(yMajor[yk]);
+      ctx.beginPath(); ctx.moveTo(px, yky); ctx.lineTo(px + mainTick, yky); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, yky); ctx.lineTo(px + pw - mainTick, yky); ctx.stroke();
+    }
+    for (var xk = 0; xk < xMajor.length; xk++) {
+      var xkx = toX(xMajor[xk]);
+      ctx.beginPath(); ctx.moveTo(xkx, py + ph); ctx.lineTo(xkx, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xkx, py); ctx.lineTo(xkx, py + mainTick); ctx.stroke();
+    }
+    for (var xmk = 0; xmk < xMinor.length; xmk++) {
+      var xmkx = toX(xMinor[xmk]);
+      ctx.beginPath(); ctx.moveTo(xmkx, py + ph); ctx.lineTo(xmkx, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xmkx, py); ctx.lineTo(xmkx, py + minorTick); ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yMajor.length; yl++) {
+      ctx.fillText(fmtLinTick(yMajor[yl], yStep), px - 6, toY(yMajor[yl]));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xMajor.length; xl++) {
+      ctx.fillText(fmtLogTick(xMajor[xl]), toX(xMajor[xl]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 60, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Damage measure  \u2014  max inter-story drift', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Intensity measure  Sa(T\u2081)  (g)', px + pw / 2, H - 4);
+
+    /* ---- 图例（左上角） ---- */
+    var legendItems = [
+      { name: 'Individual records', color: '#cccccc', lw: 0.9 },
+      { name: '16th percentile', color: '#2563eb', lw: 1.8, dash: [5, 4] },
+      { name: '50th percentile', color: '#b45309', lw: 2.6 },
+      { name: '84th percentile', color: '#9333ea', lw: 1.8, dash: [5, 4] },
+      { name: 'Collapse threshold', color: '#dc2626', lw: 1.0, dash: [2, 4] }
+    ];
+
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    var lgW = 0;
+    for (var li = 0; li < legendItems.length; li++) {
+      var w3 = ctx.measureText(legendItems[li].name).width + 34;
+      if (w3 > lgW) lgW = w3;
+    }
+    var lgH = 16 * legendItems.length + 10;
+    var lgx = px + 8;
+    var lgy = py + 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var lj = 0; lj < legendItems.length; lj++) {
+      var ly2 = lgy + 8 + lj * 16;
+      var it = legendItems[lj];
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = it.lw;
+      if (it.dash) ctx.setLineDash(it.dash);
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly2);
+      ctx.lineTo(lgx + 22, ly2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#222222';
+      ctx.fillText(it.name, lgx + 26, ly2);
+    }
+  }
+
+  function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
+    var rot = -Math.PI / 2;
+    var step = Math.PI / spikes;
+    ctx.beginPath();
+    ctx.moveTo(cx + outerR * Math.cos(rot), cy + outerR * Math.sin(rot));
+    for (var i = 0; i < spikes; i++) {
+      rot += step;
+      ctx.lineTo(cx + innerR * Math.cos(rot), cy + innerR * Math.sin(rot));
+      rot += step;
+      ctx.lineTo(cx + outerR * Math.cos(rot), cy + outerR * Math.sin(rot));
+    }
+    ctx.closePath();
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render(data) {
+    var pcts = computePercentiles(data);
+    var SaCollapse = findCollapseCapacity(data.Sa, pcts.p50, COLLAPSE_DRIFT);
+
+    drawIDA('c-ida', data, pcts, SaCollapse);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var CMR = (SaCollapse !== null) ? (SaCollapse / MCE_SA).toFixed(2) : '—';
+      var collapseStr = (SaCollapse !== null)
+        ? SaCollapse.toFixed(3) + ' g'
+        : '未达到';
+      status.textContent = data.Sa.length + ' 个 IM · ' +
+                           data.waves.length + ' 条波 · ' +
+                           '中位倒塌容量 ' + collapseStr + ' · ' +
+                           'CMR = ' + CMR + ' · ' +
+                           '倒塌阈值 DM = ' + COLLAPSE_DRIFT;
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/ida_curves.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var data = parseCSV(text);
+        if (data.Sa.length < 3 || data.waves.length < 2) {
+          throw new Error('数据不足');
+        }
+        render(data);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[ida-curve] 读取 assets/ida_curves.csv 失败，使用内联 CSV：', err);
+        }
+        var data = parseCSV(DEFAULT_CSV);
+        render(data);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV
+     ============================================================ */
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'ida_curves.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

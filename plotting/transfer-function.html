@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>场地传递函数 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.tf-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.tf-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.tf-canvas-wrap canvas {
+  width: 100%;
+  height: 800px;
+  display: block;
+}
+.tf-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.tf-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.tf-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>CSV 输入数据</span></a></li>
+      <li><a href="#model" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>物理模型</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      场地传递函数
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 场地效应</div>
+      <h1>场地传递函数</h1>
+      <p class="lead">
+        一维土层反应分析的核心图件：从基岩到地表的传递函数 |TF(f)|，
+        展示多层土对地震动的<strong>频率选择性放大</strong>。
+        峰值对应的卓越频率 f<sub>0</sub> 与放大因子 A<sub>0</sub>
+        是场地分类与地震动输入的关键参数。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">CSV 输入</span>
+        <span class="pill">多层土</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>CSV 输入数据</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/site_profile.csv</code> 作为输入。
+        这是一个<strong>场地分层模型</strong>文件，每行代表一层土，
+        最后一行标记为 <code>rock</code>，表示基岩半空间。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:120px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>layer</code></td><td>层号</td><td>—</td><td>整数 1, 2, 3…；基岩用 <code>rock</code></td></tr>
+            <tr><td><code>H_m</code></td><td>层厚 H</td><td><code>m</code></td><td>基岩行可留空</td></tr>
+            <tr><td><code>Vs_m_s</code></td><td>剪切波速 Vs</td><td><code>m/s</code></td><td>场地勘察给出</td></tr>
+            <tr><td><code>rho_kg_m3</code></td><td>密度 ρ</td><td><code>kg/m³</code></td><td>通常 1700–2400</td></tr>
+            <tr><td><code>zeta</code></td><td>阻尼比 ζ</td><td>无量纲</td><td>通常 0.01–0.10</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">模拟 CSV 文件内容</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/site_profile.csv</code> 不存在，则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>site_profile.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># site_profile.csv
+# 场地分层模型 —— 用于一维土层反应分析（Thomson-Haskell 传递矩阵法）
+# 单位：H_m (m)  Vs_m_s (m/s)  rho_kg_m3 (kg/m^3)  zeta (无量纲)
+# 最后一行 layer 标记为 rock，表示基岩半空间，H_m 可留空
+layer,H_m,Vs_m_s,rho_kg_m3,zeta
+1,10,150,1750,0.05
+2,15,250,1850,0.045
+3,15,400,1950,0.035
+rock,,800,2400,0.01
+</code></pre>
+      </div>
+
+      <div class="tf-download">
+        <button type="button" id="btn-download-csv">下载 site_profile.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>钻孔波速测试</strong>——单孔或跨孔法，实测各层 Vs 与层厚 H</li>
+          <li><strong>室内共振柱 / 扭剪试验</strong>——给出各层的小应变 Vs 与阻尼比 ζ</li>
+          <li><strong>经验关系</strong>——Vs 与标准贯入击数 N 或 CPT 锥尖阻力 q<sub>c</sub> 的经验相关式</li>
+          <li><strong>场地分类数据库</strong>——如 USGS Global Vs30 Map、中国地震局场地资料</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一个 40 m 厚的三层土剖面，
+          等效 Vs ≈ 244 m/s，理论 f<sub>0</sub> ≈ 1.5 Hz。
+          替换为你自己的钻孔数据只需修改 <code>site_profile.csv</code> 各行。
+        </div>
+      </div>
+    </section>
+
+    <section id="model">
+      <div class="section-head">
+        <span class="section-label">Model</span>
+        <h2>物理模型</h2>
+      </div>
+
+      <p>
+        本页采用<strong>多层水平土覆盖基岩半空间</strong>模型，
+        用 <strong>Thomson-Haskell 传递矩阵法</strong>计算从基岩露头到地表的传递函数。
+        SH 波从基岩垂直向上传播，在土层界面多次反射与透射。
+      </p>
+
+      <h3 class="sub">传递矩阵</h3>
+      <p>
+        每一层的层矩阵为：
+      </p>
+      <div class="formula" style="text-align:center;">
+        M<sub>j</sub> = [ cos θ<sub>j</sub> &nbsp; i·sin θ<sub>j</sub>/Z<sub>j</sub> ; &nbsp;
+                        i·Z<sub>j</sub>·sin θ<sub>j</sub> &nbsp; cos θ<sub>j</sub> ]
+      </div>
+      <p style="font-size:13px; color:var(--text-muted);">
+        其中 θ<sub>j</sub> = ω·h<sub>j</sub>/Vs<sub>j</sub>·(1 − i·ζ<sub>j</sub>) 为复波数，
+        Z<sub>j</sub> = ρ<sub>j</sub>·Vs<sub>j</sub> 为波阻抗。
+      </p>
+
+      <h3 class="sub">总传递函数</h3>
+      <p>
+        总传递矩阵 M = M<sub>n</sub>·M<sub>n−1</sub>·…·M<sub>1</sub>（从基岩往地表乘），
+        传递函数为：
+      </p>
+      <div class="formula" style="text-align:center;">
+        |TF(f)| = 1 / | M<sub>11</sub> + M<sub>21</sub> / Z<sub>rock</sub> |
+      </div>
+      <p>
+        对于单层情况，这个公式退化为常见的：
+      </p>
+      <div class="formula" style="text-align:center;">
+        |TF(f)| = 1 / √[ cos²(kH) + α²·sin²(kH) ] &nbsp;&nbsp;,
+        &nbsp;&nbsp; α = Z<sub>soil</sub> / Z<sub>rock</sub>
+      </div>
+
+      <h3 class="sub">两个关键量的理论关系</h3>
+      <ul class="plain">
+        <li><strong>卓越频率：</strong>f<sub>0</sub> ≈ Vs<sub>eq</sub> / (4H<sub>total</sub>)，
+          其中 Vs<sub>eq</sub> = H<sub>total</sub> / Σ(h<sub>j</sub>/Vs<sub>j</sub>) 为传播时间加权平均。</li>
+        <li><strong>放大因子：</strong>A<sub>0</sub> ≈ 1/α（无阻尼极限）；
+          阻尼使实际峰值降低。</li>
+      </ul>
+
+      <div class="warn-text">
+        <strong>本页使用线性粘弹性模型</strong>（阻尼比固定）。
+        强震下土层剪切模量下降、阻尼增加，传递函数的峰值位置会向低频移动、
+        峰值高度降低。严格分析需要一维等效线性化程序（SHAKE91、DEEPSOIL）
+        或真非线性分析。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面三张子图由 <code>site_profile.csv</code> 实时计算：
+        读取 CSV → Thomson-Haskell 矩阵法 → |TF(f)|。
+        画布尺寸按 A4 排版（720 × 800 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/site_profile.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="tf-canvas-wrap">
+        <canvas id="c-tf"></canvas>
+      </div>
+
+      <div class="tf-note" style="margin-top:14px;">
+        <strong>(a)</strong> 完整分层模型（来自 CSV）；
+        <strong>(b)</strong> 与等效单层模型对比（H<sub>total</sub> 与传播时间加权 Vs<sub>eq</sub>）；
+        <strong>(c)</strong> 阻尼敏感性分析（ζ 乘以 0.5 / 1.0 / 2.0）。
+        横轴为频率 f（Hz，对数），纵轴为 |TF(f)|（线性），
+        峰值点用圆点标记，理论 f<sub>0</sub> 用竖虚线标注。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心函数 <code>transfer_function</code> 用 Thomson-Haskell 矩阵法计算多层场地的传递函数。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>transfer-function.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 多层土场地的传递函数 |TF(f)|
+# -------------------------------------------------------------
+# 输入数据：site_profile.csv
+#   layer,H_m,Vs_m_s,rho_kg_m3,zeta
+#   1,10,150,1750,0.05
+#   2,15,250,1850,0.045
+#   3,15,400,1950,0.035
+#   rock,,800,2400,0.01
+# -------------------------------------------------------------
+# 方法：Thomson-Haskell 传递矩阵法，SH 波垂直入射
+# =============================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 9,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+
+def read_profile(csv_file):
+    """读取场地分层 CSV，返回 (layers, rock)。
+
+    layers: list of dict，从地表向下的各土层
+    rock:   dict，半空间基岩参数
+    """
+    layers = []
+    rock = None
+    with open(csv_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if line.startswith('layer'):
+                continue  # 表头
+            parts = line.split(',')
+            tag = parts[0].strip()
+            if tag.lower() == 'rock':
+                rock = {
+                    'Vs':  float(parts[2]),
+                    'rho': float(parts[3]),
+                    'zeta': float(parts[4]) if parts[4] else 0.01,
+                }
+            else:
+                layers.append({
+                    'H':    float(parts[1]),
+                    'Vs':   float(parts[2]),
+                    'rho':  float(parts[3]),
+                    'zeta': float(parts[4]),
+                })
+    return layers, rock
+
+
+def layer_matrix(f, L, Vs_scale=1.0, zeta_scale=1.0):
+    """单层传递矩阵 M_j（2×2 复数矩阵）。"""
+    omega = 2 * np.pi * f
+    Vs  = L['Vs'] * Vs_scale
+    rho = L['rho']
+    zeta = L['zeta'] * zeta_scale
+    Z = rho * Vs
+
+    # 复角度 theta = omega*h/Vs * (1 - i*zeta)
+    a = omega * L['H'] / Vs
+    theta = a * (1 - 1j * zeta)
+
+    cosT = np.cos(theta)
+    sinT = np.sin(theta)
+
+    M = np.array([
+        [cosT, 1j * sinT / Z],
+        [1j * Z * sinT, cosT]
+    ], dtype=complex)
+    return M
+
+
+def transfer_function(f, layers, rock, Vs_scale=1.0, zeta_scale=1.0):
+    """计算多层场地传递函数 |TF(f)|。f 为标量频率。"""
+    M = np.eye(2, dtype=complex)
+    for L in layers:
+        Mj = layer_matrix(f, L, Vs_scale, zeta_scale)
+        M = Mj @ M   # 从左乘 —— 从基岩向上累积
+
+    Z_rock = rock['rho'] * rock['Vs']
+    denom = M[0, 0] + M[1, 0] / Z_rock
+    return 1.0 / abs(denom)
+
+
+# ---------- 1. 读取 CSV ----------
+layers, rock = read_profile('site_profile.csv')
+print(f'共 {len(layers)} 层土 + 基岩')
+H_total = sum(L['H'] for L in layers)
+Vs_eq = H_total / sum(L['H'] / L['Vs'] for L in layers)
+print(f'总厚度 H_total = {H_total:.1f} m')
+print(f'等效 Vs_eq = {Vs_eq:.1f} m/s')
+print(f'理论 f0 ≈ {Vs_eq / (4 * H_total):.3f} Hz')
+
+# ---------- 2. 频率数组 ----------
+f = np.logspace(np.log10(0.2), np.log10(20.0), 500)
+
+# ---------- 3. 三张子图 ----------
+fig, axes = plt.subplots(3, 1, figsize=(7.2, 8.0))
+
+# ===== (a) 完整分层模型 =====
+ax = axes[0]
+TF_full = np.array([transfer_function(fi, layers, rock) for fi in f])
+ax.semilogx(f, TF_full, lw=1.8, color='#b45309',
+            label=f'{len(layers)}-layer model')
+# 找峰值
+i0 = np.argmax(TF_full)
+f0 = f[i0]; A0 = TF_full[i0]
+ax.plot(f0, A0, 'o', color='#b45309', ms=6)
+ax.axvline(f0, color='#b45309', lw=0.7, ls=':', alpha=0.7)
+ax.annotate(f'f$_0$ = {f0:.2f} Hz\nA$_0$ = {A0:.2f}',
+            xy=(f0, A0), xytext=(f0 * 1.5, A0 * 0.75),
+            fontsize=9,
+            arrowprops=dict(arrowstyle='-', color='#888888', lw=0.6))
+ax.set_xlabel('Frequency f (Hz)')
+ax.set_ylabel('|TF(f)|')
+ax.set_title('(a) Multi-layer model  ·  from CSV', fontsize=10)
+ax.set_xlim(0.2, 20.0)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+
+# ===== (b) 等效单层模型对比 =====
+ax = axes[1]
+# 等效单层：H_total、Vs_eq、厚度加权平均阻尼比
+H_eq = H_total
+Vs_eq_val = Vs_eq
+zeta_eq = sum(L['H'] * L['zeta'] for L in layers) / H_total
+rho_eq = sum(L['H'] * L['rho'] for L in layers) / H_total
+layers_eq = [{'H': H_eq, 'Vs': Vs_eq_val, 'rho': rho_eq, 'zeta': zeta_eq}]
+TF_eq = np.array([transfer_function(fi, layers_eq, rock) for fi in f])
+
+ax.semilogx(f, TF_full, lw=1.5, color='#b45309', label='Multi-layer (CSV)')
+ax.semilogx(f, TF_eq, lw=1.5, color='#2563eb', ls='--',
+            label=f'Equivalent single layer\n(Vs_eq={Vs_eq_val:.0f} m/s, H={H_eq:.0f} m)')
+ax.set_xlabel('Frequency f (Hz)')
+ax.set_ylabel('|TF(f)|')
+ax.set_title('(b) Full model vs equivalent single layer', fontsize=10)
+ax.set_xlim(0.2, 20.0)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+
+# ===== (c) 阻尼敏感性 =====
+ax = axes[2]
+colors3 = ['#2563eb', '#b45309', '#15803d']
+for scale, color in zip([0.5, 1.0, 2.0], colors3):
+    TF_z = np.array([transfer_function(fi, layers, rock, zeta_scale=scale) for fi in f])
+    ax.semilogx(f, TF_z, lw=1.5, color=color,
+                label=f'ζ × {scale:.1f}')
+ax.set_xlabel('Frequency f (Hz)')
+ax.set_ylabel('|TF(f)|')
+ax.set_title('(c) Damping sensitivity  ·  ζ × 0.5 / 1.0 / 2.0', fontsize=10)
+ax.set_xlim(0.2, 20.0)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+
+for ax in axes:
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('transfer-function.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应，用 <code>readtable</code> 读取 CSV，
+        <code>local_tf</code> 局部函数计算传递函数。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>transfer-function.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 多层土场地的传递函数 |TF(f)|
+% -------------------------------------------------------------
+% 输入数据：site_profile.csv
+%   layer,H_m,Vs_m_s,rho_kg_m3,zeta
+%   1,10,150,1750,0.05
+%   2,15,250,1850,0.045
+%   3,15,400,1950,0.035
+%   rock,,800,2400,0.01
+% -------------------------------------------------------------
+% 方法：Thomson-Haskell 传递矩阵法，SH 波垂直入射
+% =============================================================
+
+CSV_FILE = 'site_profile.csv';
+
+% ---------- 1. 读取 CSV ----------
+T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+              'VariableNamingRule', 'preserve');
+
+% 识别基岩行（layer == 'rock'）
+is_rock = strcmp(T.layer, 'rock');
+layers = table2struct(T(~is_rock, :));
+rock_row = T(find(is_rock, 1), :);
+
+rock.Vs = rock_row.Vs_m_s;
+rock.rho = rock_row.rho_kg_m3;
+if isnan(rock_row.zeta), rock.zeta = 0.01; else, rock.zeta = rock_row.zeta; end
+
+% 输出场地概览
+H_total = sum([layers.H_m]);
+Vs_eq = H_total / sum([layers.H_m] ./ [layers.Vs_m_s]);
+fprintf('共 %d 层土 + 基岩\n', numel(layers));
+fprintf('总厚度 H_total = %.1f m\n', H_total);
+fprintf('等效 Vs_eq = %.1f m/s\n', Vs_eq);
+fprintf('理论 f0 ≈ %.3f Hz\n', Vs_eq / (4 * H_total));
+
+% ---------- 2. 频率数组 ----------
+f = logspace(log10(0.2), log10(20.0), 500);
+
+% ---------- 3. 三张子图 ----------
+figure('Color', 'w', 'Position', [100 100 720 800]);
+
+% ===== (a) 完整分层模型 =====
+subplot(3, 1, 1);
+TF_full = arrayfun(@(fi) local_tf(fi, layers, rock, 1.0, 1.0), f);
+semilogx(f, TF_full, 'Color', [0.71 0.33 0.04], 'LineWidth', 1.8);
+hold on;
+[A0, i0] = max(TF_full);
+f0 = f(i0);
+plot(f0, A0, 'o', 'MarkerFaceColor', [0.71 0.33 0.04], ...
+     'MarkerEdgeColor', 'none', 'MarkerSize', 7);
+xline(f0, ':', 'Color', [0.71 0.33 0.04], 'LineWidth', 0.7);
+text(f0 * 1.5, A0 * 0.75, sprintf('f_0 = %.2f Hz\nA_0 = %.2f', f0, A0), ...
+     'FontSize', 9);
+xlabel('Frequency f (Hz)'); ylabel('|TF(f)|');
+title('(a) Multi-layer model  ·  from CSV', 'FontSize', 10);
+xlim([0.2 20.0]);
+grid on; box on;
+
+% ===== (b) 等效单层对比 =====
+subplot(3, 1, 2);
+zeta_eq = sum([layers.H_m] .* [layers.zeta]) / H_total;
+rho_eq  = sum([layers.H_m] .* [layers.rho_kg_m3]) / H_total;
+layers_eq = struct('H_m', H_total, 'Vs_m_s', Vs_eq, ...
+                   'rho_kg_m3', rho_eq, 'zeta', zeta_eq);
+TF_eq = arrayfun(@(fi) local_tf(fi, layers_eq, rock, 1.0, 1.0), f);
+semilogx(f, TF_full, 'Color', [0.71 0.33 0.04], 'LineWidth', 1.5);
+hold on;
+semilogx(f, TF_eq, '--', 'Color', [0.15 0.39 0.92], 'LineWidth', 1.5);
+xlabel('Frequency f (Hz)'); ylabel('|TF(f)|');
+title('(b) Full model vs equivalent single layer', 'FontSize', 10);
+xlim([0.2 20.0]);
+grid on; box on;
+legend({'Multi-layer (CSV)', sprintf('Equivalent single layer (Vs=%.0f, H=%.0f)', Vs_eq, H_total)}, ...
+       'Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+
+% ===== (c) 阻尼敏感性 =====
+subplot(3, 1, 3);
+colors3 = [0.15 0.39 0.92; 0.71 0.33 0.04; 0.08 0.50 0.24];
+scales  = [0.5 1.0 2.0];
+for i = 1:numel(scales)
+    TF_z = arrayfun(@(fi) local_tf(fi, layers, rock, 1.0, scales(i)), f);
+    semilogx(f, TF_z, 'Color', colors3(i, :), 'LineWidth', 1.5);
+    hold on;
+end
+xlabel('Frequency f (Hz)'); ylabel('|TF(f)|');
+title('(c) Damping sensitivity  ·  \zeta \times 0.5 / 1.0 / 2.0', 'FontSize', 10);
+xlim([0.2 20.0]);
+grid on; box on;
+legend({'\zeta \times 0.5', '\zeta \times 1.0', '\zeta \times 2.0'}, ...
+       'Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+
+for k = 1:3
+    subplot(3, 1, k);
+    set(gca, 'FontName', 'Times New Roman', 'FontSize', 9, 'TickDir', 'in');
+end
+
+exportgraphics(gcf, 'transfer-function.png', 'Resolution', 300);
+
+
+% ===== 局部函数：传递函数 =====
+function TF = local_tf(f, layers, rock, Vs_scale, zeta_scale)
+    omega = 2 * pi * f;
+    M = eye(2);
+    for k = 1:numel(layers)
+        L = layers(k);
+        Vs   = L.Vs_m_s * Vs_scale;
+        rho  = L.rho_kg_m3;
+        zeta = L.zeta * zeta_scale;
+        H    = L.H_m;
+        Z    = rho * Vs;
+        a    = omega * H / Vs;
+        theta = a * (1 - 1j * zeta);
+        cosT = cos(theta);
+        sinT = sin(theta);
+        Mj = [cosT, 1j*sinT/Z; 1j*Z*sinT, cosT];
+        M = Mj * M;
+    end
+    Z_rock = rock.rho * rock.Vs;
+    denom = M(1, 1) + M(2, 1) / Z_rock;
+    TF = 1 / abs(denom);
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:160px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 层厚</td><td>h<sub>j</sub></td><td><code>m</code></td></tr>
+            <tr><td><strong>输入</strong> · 剪切波速</td><td>Vs<sub>j</sub></td><td><code>m/s</code></td></tr>
+            <tr><td><strong>输入</strong> · 密度</td><td>ρ<sub>j</sub></td><td><code>kg/m³</code></td></tr>
+            <tr><td><strong>输入</strong> · 阻尼比</td><td>ζ<sub>j</sub></td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 传递函数</td><td>|TF(f)|</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 卓越频率</td><td>f<sub>0</sub></td><td><code>Hz</code></td></tr>
+            <tr><td><strong>输出</strong> · 放大因子</td><td>A<sub>0</sub></td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>方法：</strong>Thomson-Haskell 传递矩阵法，垂直入射 SH 波。</li>
+        <li><strong>复波数：</strong>θ<sub>j</sub> = ω·h<sub>j</sub>/Vs<sub>j</sub>·(1 − i·ζ<sub>j</sub>)，包含土层阻尼。</li>
+        <li><strong>波阻抗：</strong>Z<sub>j</sub> = ρ<sub>j</sub>·Vs<sub>j</sub>。</li>
+        <li><strong>总矩阵：</strong>M = M<sub>n</sub>·M<sub>n−1</sub>·…·M<sub>1</sub>（从基岩向上累积）。</li>
+        <li><strong>传递函数：</strong>|TF(f)| = 1 / |M<sub>11</sub> + M<sub>21</sub>/Z<sub>rock</sub>|。</li>
+        <li><strong>等效单层：</strong>H<sub>eq</sub> = Σh<sub>j</sub>，
+          Vs<sub>eq</sub> = H<sub>eq</sub> / Σ(h<sub>j</sub>/Vs<sub>j</sub>)（传播时间加权）。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>峰值很低（&lt; 1.5） → 阻抗比 α 接近 1，或 Vs<sub>rock</sub> 设置过低。</li>
+            <li>峰值个数 > 3 → 多层模型下会出现更多次级峰，属于正常现象。</li>
+            <li>与实际钻孔数据对比不符 → 检查 CSV 中 Vs 和 H 的单位是否正确。</li>
+            <li>强震下峰值位置偏低 → 非线性场地效应，需用等效线性化或真非线性分析。</li>
+            <li>CSV 编码乱码 → 保存为 UTF-8，列名严格按示例。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../soil-dynamics.html">土动力学</a>（动剪切模量、场地反应）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>、
+        <a href="../spectral-analysis.html">地震动谱分析入门</a>。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 场地传递函数</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV（当 assets/site_profile.csv 不存在时使用）
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# site_profile.csv',
+    '# 场地分层模型 —— 用于一维土层反应分析（Thomson-Haskell 传递矩阵法）',
+    '# 单位：H_m (m)  Vs_m_s (m/s)  rho_kg_m3 (kg/m^3)  zeta (无量纲)',
+    '# 最后一行 layer 标记为 rock，表示基岩半空间，H_m 可留空',
+    'layer,H_m,Vs_m_s,rho_kg_m3,zeta',
+    '1,10,150,1750,0.05',
+    '2,15,250,1850,0.045',
+    '3,15,400,1950,0.035',
+    'rock,,800,2400,0.01'
+  ].join('\n') + '\n';
+
+  var F_MIN = 0.2, F_MAX = 20.0, N_F = 400;
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+
+  function parseProfile(csvText) {
+    var lines = csvText.split(/\r?\n/);
+    var layers = [], rock = null;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (line.toLowerCase().indexOf('layer') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 4) continue;
+      var tag = parts[0].trim();
+      if (tag.toLowerCase() === 'rock') {
+        rock = {
+          Vs:   parseFloat(parts[2]),
+          rho:  parseFloat(parts[3]),
+          zeta: parts[4] ? parseFloat(parts[4]) : 0.01
+        };
+      } else {
+        layers.push({
+          H:    parseFloat(parts[1]),
+          Vs:   parseFloat(parts[2]),
+          rho:  parseFloat(parts[3]),
+          zeta: parseFloat(parts[4])
+        });
+      }
+    }
+    return { layers: layers, rock: rock };
+  }
+
+  /* ============================================================
+     复数运算
+     ============================================================ */
+
+  function cmul(a, b) {
+    return { re: a.re*b.re - a.im*b.im, im: a.re*b.im + a.im*b.re };
+  }
+  function cadd(a, b) {
+    return { re: a.re + b.re, im: a.im + b.im };
+  }
+  function cabs(a) {
+    return Math.sqrt(a.re*a.re + a.im*a.im);
+  }
+
+  function matMul2x2(A, B) {
+    return [
+      [cadd(cmul(A[0][0], B[0][0]), cmul(A[0][1], B[1][0])),
+       cadd(cmul(A[0][0], B[0][1]), cmul(A[0][1], B[1][1]))],
+      [cadd(cmul(A[1][0], B[0][0]), cmul(A[1][1], B[1][0])),
+       cadd(cmul(A[1][0], B[0][1]), cmul(A[1][1], B[1][1]))]
+    ];
+  }
+
+  /* ============================================================
+     传递函数（Thomson-Haskell 矩阵法）
+     ============================================================ */
+
+  function layerMatrix(omega, H, Vs, rho, zeta) {
+    var Z = rho * Vs;
+    var a = omega * H / Vs;
+    var az = a * zeta;
+    var cosA = Math.cos(a), sinA = Math.sin(a);
+    var coshAZ = Math.cosh(az), sinhAZ = Math.sinh(az);
+
+    // cos(a - i*az) = cos(a)*cosh(az) + i*sin(a)*sinh(az)
+    var cosT = { re: cosA * coshAZ, im: sinA * sinhAZ };
+    // sin(a - i*az) = sin(a)*cosh(az) - i*cos(a)*sinh(az)
+    var sinT = { re: sinA * coshAZ, im: -cosA * sinhAZ };
+    // i*sinT = -sinT.im + i*sinT.re
+    var iSinT = { re: -sinT.im, im: sinT.re };
+
+    return [
+      [cosT, { re: iSinT.re / Z, im: iSinT.im / Z }],
+      [{ re: iSinT.re * Z, im: iSinT.im * Z }, cosT]
+    ];
+  }
+
+  function transferFunction(freq, layers, rock, VsScale, zetaScale) {
+    if (!VsScale) VsScale = 1;
+    if (!zetaScale) zetaScale = 1;
+    var omega = 2 * Math.PI * freq;
+    var Zrock = rock.rho * rock.Vs;
+
+    // M 从单位矩阵开始，从地表往基岩左乘
+    var I = [[{ re: 1, im: 0 }, { re: 0, im: 0 }],
+             [{ re: 0, im: 0 }, { re: 1, im: 0 }]];
+    var M = I;
+    for (var j = 0; j < layers.length; j++) {
+      var L = layers[j];
+      var Mj = layerMatrix(omega, L.H,
+                           L.Vs * VsScale, L.rho,
+                           L.zeta * zetaScale);
+      M = matMul2x2(Mj, M);
+    }
+
+    var M11 = M[0][0];
+    var M21 = M[1][0];
+    var denom = cadd(M11, { re: M21.re / Zrock, im: M21.im / Zrock });
+    return 1.0 / cabs(denom);
+  }
+
+  /* ============================================================
+     绘图工具
+     ============================================================ */
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.floor(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      if (v >= min - step * 1e-6) ticks.push(v);
+    }
+    return ticks;
+  }
+  function fmtLogLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.001 && a < 10000) {
+      if (a >= 1) return v.toFixed(0);
+      if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+      return v.toFixed(2).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(Math.log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(0) + 'e' + e;
+  }
+  function fmtLinearLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 100) return v.toFixed(0);
+    if (a >= 10) return v.toFixed(0);
+    if (a >= 1) return v.toFixed(1).replace(/\.0$/, '');
+    if (a >= 0.1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  function makeFrame(ctx, box, xLog, yLog, xRange, yRange, xLabel, yLabel, title) {
+    var margin = { top: 24, right: 16, bottom: 42, left: 62 };
+    var px = box.x + margin.left;
+    var py = box.y + margin.top;
+    var pw = box.w - margin.left - margin.right;
+    var ph = box.h - margin.top - margin.bottom;
+
+    var xMinV = xRange[0], xMaxV = xRange[1];
+    var yMinV = yRange[0], yMaxV = yRange[1];
+
+    var xMin = xLog ? Math.log10(xMinV) : xMinV;
+    var xMax = xLog ? Math.log10(xMaxV) : xMaxV;
+    var yMin = yLog ? Math.log10(yMinV) : yMinV;
+    var yMax = yLog ? Math.log10(yMaxV) : yMaxV;
+
+    function toX(v) {
+      var xv = xLog ? Math.log10(v) : v;
+      return px + (xv - xMin) / (xMax - xMin) * pw;
+    }
+    function toY(v) {
+      var yv = yLog ? Math.log10(v) : v;
+      return py + ph - (yv - yMin) / (yMax - yMin) * ph;
+    }
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, box.x + box.w / 2, box.y + 4);
+
+    var xTicksMajor, yTicksMajor, xTicksMinor, yTicksMinor;
+    if (xLog) {
+      xTicksMajor = niceDecades(xMinV, xMaxV);
+      xTicksMinor = niceMinorTicks(xMinV, xMaxV);
+    } else {
+      xTicksMajor = niceLinearTicks(xMinV, xMaxV, 5);
+      xTicksMinor = [];
+    }
+    if (yLog) {
+      yTicksMajor = niceDecades(yMinV, yMaxV);
+      yTicksMinor = niceMinorTicks(yMinV, yMaxV);
+    } else {
+      yTicksMajor = niceLinearTicks(yMinV, yMaxV, 5);
+      yTicksMinor = [];
+    }
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py); ctx.lineTo(x, py + ph); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    var mainTick = 5, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + mainTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - mainTick, y); ctx.stroke();
+    });
+    yTicksMinor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + minorTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - minorTick, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + mainTick);      ctx.stroke();
+    });
+    xTicksMinor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + minorTick);      ctx.stroke();
+    });
+
+    ctx.fillStyle = '#222222';
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      var s = yLog ? fmtLogLabel(v) : fmtLinearLabel(v);
+      ctx.fillText(s, px - 5, y);
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      var s = xLog ? fmtLogLabel(v) : fmtLinearLabel(v);
+      ctx.fillText(s, x, py + ph + 6);
+    });
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(box.x + 12, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, px + pw / 2, box.y + box.h - 2);
+
+    return { toX: toX, toY: toY, px: px, py: py, pw: pw, ph: ph };
+  }
+
+  /* ============================================================
+     绘制一个子图
+     ============================================================ */
+
+  function drawPanel(ctx, box, title, series, f0Marker, legendWidth) {
+    /* 计算 y 范围 */
+    var yMax = 0;
+    for (var i = 0; i < series.length; i++) {
+      for (var j = 0; j < series[i].y.length; j++) {
+        if (series[i].y[j] > yMax) yMax = series[i].y[j];
+      }
+    }
+    yMax *= 1.15;
+    if (yMax < 1) yMax = 1;
+    var yRange = [0, yMax];
+
+    var frame = makeFrame(ctx, box, true, false,
+      [F_MIN, F_MAX], yRange,
+      'Frequency f (Hz)', '|TF(f)|', title);
+
+    /* f0 竖虚线 */
+    if (f0Marker && f0Marker.f0 > F_MIN && f0Marker.f0 < F_MAX) {
+      var xf0 = frame.toX(f0Marker.f0);
+      ctx.strokeStyle = f0Marker.color;
+      ctx.lineWidth = 0.7;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(xf0, frame.py);
+      ctx.lineTo(xf0, frame.py + frame.ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    /* 曲线 */
+    for (var s = 0; s < series.length; s++) {
+      ctx.strokeStyle = series[s].color;
+      ctx.lineWidth = series[s].lw || 1.5;
+      ctx.lineJoin = 'round';
+      if (series[s].dash) ctx.setLineDash(series[s].dash);
+      ctx.beginPath();
+      var started = false;
+      var xArr = series[s].x, yArr = series[s].y;
+      for (var k = 0; k < xArr.length; k++) {
+        var xv = xArr[k], yv = yArr[k];
+        if (!(yv > 0)) continue;
+        var cxp = frame.toX(xv), cyp = frame.toY(yv);
+        if (!started) { ctx.moveTo(cxp, cyp); started = true; }
+        else ctx.lineTo(cxp, cyp);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    /* 峰值标记 */
+    if (f0Marker && f0Marker.f0 > F_MIN && f0Marker.f0 < F_MAX) {
+      var px2 = frame.toX(f0Marker.f0);
+      var py2 = frame.toY(f0Marker.A0);
+      if (py2 >= frame.py && py2 <= frame.py + frame.ph) {
+        ctx.fillStyle = f0Marker.color;
+        ctx.beginPath();
+        ctx.arc(px2, py2, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    /* 图例 */
+    if (series.length > 0) {
+      var lgW = legendWidth || 118;
+      var lgH = 16 * series.length + 8;
+      var lgx = frame.px + frame.pw - lgW - 6;
+      var lgy = frame.py + 6;
+
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.strokeStyle = '#888888';
+      ctx.lineWidth = 0.5;
+      ctx.fillRect(lgx, lgy, lgW, lgH);
+      ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+      ctx.font = '10px "Times New Roman", "Songti SC", serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (var lg = 0; lg < series.length; lg++) {
+        var ly = lgy + 8 + lg * 16;
+        ctx.strokeStyle = series[lg].color;
+        ctx.lineWidth = series[lg].lw || 1.5;
+        if (series[lg].dash) ctx.setLineDash(series[lg].dash);
+        ctx.beginPath();
+        ctx.moveTo(lgx + 6, ly);
+        ctx.lineTo(lgx + 22, ly);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#222222';
+        ctx.fillText(series[lg].name, lgx + 26, ly);
+      }
+    }
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+
+  function drawAll(canvasId, profile) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(400, Math.round(rect.height) || 800);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var padX = 8, padY = 8, gapY = 10;
+    var usableH = H - padY * 2 - gapY * 2;
+    var panelH = usableH / 3;
+    var boxes = [
+      { x: padX, y: padY,                                  w: W - padX * 2, h: panelH },
+      { x: padX, y: padY + panelH + gapY,                  w: W - padX * 2, h: panelH },
+      { x: padX, y: padY + (panelH + gapY) * 2,            w: W - padX * 2, h: panelH }
+    ];
+
+    /* 频率数组 */
+    var fArr = [];
+    var logMin = Math.log10(F_MIN), logMax = Math.log10(F_MAX);
+    for (var i = 0; i < N_F; i++) {
+      fArr.push(Math.pow(10, logMin + (logMax - logMin) * i / (N_F - 1)));
+    }
+
+    var layers = profile.layers;
+    var rock = profile.rock;
+
+    /* ---- 计算 (a) 完整分层模型的曲线 ---- */
+    var tfFull = [];
+    var maxFull = 0, f0Full = 1;
+    for (var k = 0; k < fArr.length; k++) {
+      var v = transferFunction(fArr[k], layers, rock, 1, 1);
+      tfFull.push(v);
+      if (v > maxFull) { maxFull = v; f0Full = fArr[k]; }
+    }
+
+    drawPanel(ctx, boxes[0],
+      '(a) Multi-layer model  ·  from CSV',
+      [{ name: layers.length + '-layer (CSV)', color: '#b45309', lw: 1.8,
+         x: fArr.slice(), y: tfFull.slice() }],
+      { f0: f0Full, A0: maxFull, color: '#b45309' },
+      130);
+
+    /* ---- 计算 (b) 与等效单层对比 ---- */
+    var H_total = 0, sumHOverVs = 0, sumRhoH = 0, sumZetaH = 0;
+    for (var L = 0; L < layers.length; L++) {
+      H_total += layers[L].H;
+      sumHOverVs += layers[L].H / layers[L].Vs;
+      sumRhoH += layers[L].H * layers[L].rho;
+      sumZetaH += layers[L].H * layers[L].zeta;
+    }
+    var Vs_eq = H_total / sumHOverVs;
+    var rho_eq = sumRhoH / H_total;
+    var zeta_eq = sumZetaH / H_total;
+
+    var layersEq = [{
+      H: H_total, Vs: Vs_eq, rho: rho_eq, zeta: zeta_eq
+    }];
+
+    var tfEq = [];
+    for (var k2 = 0; k2 < fArr.length; k2++) {
+      tfEq.push(transferFunction(fArr[k2], layersEq, rock, 1, 1));
+    }
+
+    drawPanel(ctx, boxes[1],
+      '(b) Full model vs equivalent single layer',
+      [
+        { name: 'Multi-layer (CSV)', color: '#b45309', lw: 1.5,
+          x: fArr.slice(), y: tfFull.slice() },
+        { name: 'Vs_eq=' + Vs_eq.toFixed(0) + ' m/s, H=' + H_total.toFixed(0) + ' m',
+          color: '#2563eb', lw: 1.5, dash: [6, 4],
+          x: fArr.slice(), y: tfEq.slice() }
+      ],
+      null,
+      170);
+
+    /* ---- 计算 (c) 阻尼敏感性 ---- */
+    var zetaScales = [0.5, 1.0, 2.0];
+    var colors = ['#2563eb', '#b45309', '#15803d'];
+    var seriesC = [];
+    for (var s = 0; s < zetaScales.length; s++) {
+      var tf_z = [];
+      for (var k3 = 0; k3 < fArr.length; k3++) {
+        tf_z.push(transferFunction(fArr[k3], layers, rock, 1, zetaScales[s]));
+      }
+      seriesC.push({
+        name: 'ζ × ' + zetaScales[s].toFixed(1),
+        color: colors[s], lw: 1.5,
+        x: fArr.slice(), y: tf_z
+      });
+    }
+
+    drawPanel(ctx, boxes[2],
+      '(c) Damping sensitivity  ·  ζ × 0.5 / 1.0 / 2.0',
+      seriesC, null, 100);
+
+    /* ---- 状态信息 ---- */
+    var status = document.getElementById('info-stats');
+    if (status) {
+      status.textContent = layers.length + ' 层土 + 基岩 · ' +
+                           'H_total = ' + H_total.toFixed(0) + ' m · ' +
+                           'Vs_eq = ' + Vs_eq.toFixed(0) + ' m/s · ' +
+                           'f\u2080 ≈ ' + f0Full.toFixed(2) + ' Hz · ' +
+                           'A\u2080 ≈ ' + maxFull.toFixed(2);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/site_profile.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var profile = parseProfile(text);
+        if (!profile.rock || profile.layers.length === 0) {
+          throw new Error('CSV 缺少 rock 行或土层数据');
+        }
+        drawAll('c-tf', profile);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[transfer-function] 读取 assets/site_profile.csv 失败，使用内联 CSV：', err);
+        }
+        var profile = parseProfile(DEFAULT_CSV);
+        drawAll('c-tf', profile);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV 按钮
+     ============================================================ */
+
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'site_profile.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

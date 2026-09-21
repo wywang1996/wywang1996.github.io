@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据来源 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/projects.css">
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+
+      <li>
+        <a href="index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#overview" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4"/><path d="M12 8h.01"/>
+          </svg>
+          <span>概述</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#sources" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据分类</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="#g-strong-motion">强震动记录</a></li>
+          <li><a href="#g-waveform">波形与台站</a></li>
+          <li><a href="#g-catalog">地震目录</a></li>
+          <li><a href="#g-source">震源与构造</a></li>
+          <li><a href="#g-site">场地条件</a></li>
+          <li><a href="#g-internal">项目内部数据</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="#table" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M3 9h18"/><path d="M3 15h18"/>
+            <path d="M9 3v18"/><path d="M15 3v18"/>
+          </svg>
+          <span>数据一览表</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#usage" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          <span>使用方式</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="#refs" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          </svg>
+          <span>参考资料</span>
+        </a>
+      </li>
+
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="index.html#projects">项目</a>
+      <span class="sep">/</span>
+      <a href="data-sources.html" class="current" aria-current="page">数据来源</a>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Project · Data Sources</div>
+      <h1>数据来源</h1>
+      <p class="lead">
+        强震动数据处理、地震动参数分析与地震危险性分析三个项目的<strong>输入数据汇总</strong>。
+        按数据类型分为<strong>强震动记录</strong>、<strong>波形与台站</strong>、
+        <strong>地震目录</strong>、<strong>震源与构造</strong>、
+        <strong>场地条件</strong>与<strong>项目内部数据</strong>六类，
+        覆盖国际主流数据库、国内台网与规范依据。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">16 个数据源</span>
+        <span class="pill">6 个类别</span>
+        <span class="pill">国际 · 国内</span>
+        <span class="pill blue">记录 · 目录 · 场地</span>
+        <span class="pill">规范依据</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+      <p>
+        地震工程相关的研究与工程分析，本质上是<strong>数据驱动</strong>的工作：
+        强震动记录决定了地震动特性与场地效应研究的基础，
+        地震目录决定了地震活动性参数标定与危险性计算的结果，
+        场地与波速数据决定了土层反应与场地分类的可靠性。
+        数据源的选取、版本与处理方式，直接决定最终结果的可用性。
+      </p>
+      <p>
+        本页把三个项目用到的输入数据整理在一起，按类型分组，
+        每个数据源给出<strong>覆盖范围</strong>、<strong>主要用途</strong>与
+        <strong>格式兼容性</strong>，便于复用与交叉引用。
+        实际使用时请注意各数据源的引用规范与许可条款，
+        报告中应注明数据版本与获取时间。
+      </p>
+      <div class="callout">
+        <strong>数据使用原则：</strong>不同数据源的处理标准与元数据完整性差异很大。
+        跨库混合使用前，应统一<strong>采样率</strong>、<strong>单位</strong>、
+        <strong>坐标基准</strong>与<strong>震级标度</strong>，
+        否则会引入难以排查的系统偏差。
+      </div>
+    </section>
+
+    <!-- ===== 数据分类 ===== -->
+    <section id="sources">
+      <div class="section-head">
+        <span class="section-label">Sources</span>
+        <h2>数据分类</h2>
+      </div>
+
+      <!-- ============================================================
+           § 01 强震动记录
+           ============================================================ -->
+      <div class="notes-group" id="g-strong-motion">
+        <div class="notes-group-title">
+          <span>强震动记录</span>
+          <span class="count">5</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="ds-peer">
+            <div class="card-head">
+              <h3><a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">PEER NGA 数据库</a></h3>
+            </div>
+            <p class="desc">
+              太平洋地震工程研究中心（PEER）下一代衰减（NGA）项目整理的全球强震动记录库，
+              包含数千条统一处理的加速度时程及配套震源、路径与场地元数据，
+              是 GMPE 标定与结构选波的主要数据源。
+            </p>
+            <div class="subnotes">
+              <a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">全球覆盖</a>
+              <a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">统一处理</a>
+              <a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">元数据完整</a>
+            </div>
+            <div class="tags">
+              <span class="tag">强震动</span>
+              <span class="tag">全球</span>
+              <span class="tag blue">GMPE 标定</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-cosmos">
+            <div class="card-head">
+              <h3><a href="https://www.strongmotioncenter.org/" target="_blank" rel="noopener noreferrer">COSMOS 强震记录</a></h3>
+            </div>
+            <p class="desc">
+              美国 COSMOS 强震动数据库，收录全球范围的强震动记录，
+              提供统一的格式、元数据与处理日志，
+              适合记录特性统计与场地效应研究。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.strongmotioncenter.org/" target="_blank" rel="noopener noreferrer">V1 / V2 格式</a>
+              <a href="https://www.strongmotioncenter.org/" target="_blank" rel="noopener noreferrer">处理日志</a>
+              <a href="https://www.strongmotioncenter.org/" target="_blank" rel="noopener noreferrer">台站信息</a>
+            </div>
+            <div class="tags">
+              <span class="tag">强震动</span>
+              <span class="tag">COSMOS</span>
+              <span class="tag blue">元数据</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-csmnc">
+            <div class="card-head">
+              <h3><a href="http://www.csmnc.net/" target="_blank" rel="noopener noreferrer">中国强震动台网</a></h3>
+            </div>
+            <p class="desc">
+              中国地震局强震动台网中心发布的记录，覆盖中国大陆主要地震活动区，
+              是开展中国大陆地震动特性、场地效应与规范校核的基础数据。
+            </p>
+            <div class="subnotes">
+              <a href="http://www.csmnc.net/" target="_blank" rel="noopener noreferrer">国内记录</a>
+              <a href="http://www.csmnc.net/" target="_blank" rel="noopener noreferrer">台站元数据</a>
+              <a href="http://www.csmnc.net/" target="_blank" rel="noopener noreferrer">数据申请</a>
+            </div>
+            <div class="tags">
+              <span class="tag">强震动</span>
+              <span class="tag">中国</span>
+              <span class="tag blue">台网</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-knet">
+            <div class="card-head">
+              <h3><a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">NIED K-NET / KiK-net</a></h3>
+            </div>
+            <p class="desc">
+              日本防灾科学技术研究所（NIED）运营的全国强震动台网。
+              K-NET 为地表台，KiK-net 为井下-地表台对，
+              记录密度高、触发事件多，适合场地效应与衰减关系研究。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">地表台</a>
+              <a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">井下台对</a>
+              <a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">高密度</a>
+            </div>
+            <div class="tags">
+              <span class="tag">强震动</span>
+              <span class="tag">日本</span>
+              <span class="tag blue">场地效应</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-esm">
+            <div class="card-head">
+              <h3><a href="https://esm-db.eu/" target="_blank" rel="noopener noreferrer">ESM 工程强震库</a></h3>
+            </div>
+            <p class="desc">
+              欧洲工程强震动数据库（Engineering Strong Motion Database），
+              整合欧洲及地中海地区的强震动记录，
+              提供统一的元数据与处理结果。
+            </p>
+            <div class="subnotes">
+              <a href="https://esm-db.eu/" target="_blank" rel="noopener noreferrer">欧洲记录</a>
+              <a href="https://esm-db.eu/" target="_blank" rel="noopener noreferrer">统一处理</a>
+              <a href="https://esm-db.eu/" target="_blank" rel="noopener noreferrer">元数据</a>
+            </div>
+            <div class="tags">
+              <span class="tag">强震动</span>
+              <span class="tag">欧洲</span>
+              <span class="tag blue">ESM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           § 02 波形与台站
+           ============================================================ -->
+      <div class="notes-group" id="g-waveform">
+        <div class="notes-group-title">
+          <span>波形与台站</span>
+          <span class="count">3</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="ds-sac-miniseed">
+            <div class="card-head">
+              <h3><a href="https://www.obspy.org/" target="_blank" rel="noopener noreferrer">SAC / MiniSEED 波形</a></h3>
+            </div>
+            <p class="desc">
+              地震学通用的波形数据格式。SAC 用于单台波形分析，
+              MiniSEED 用于连续波形存档与交换，两者均可在 ObsPy 中读写，
+              是强震动数据处理的基础输入。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.obspy.org/" target="_blank" rel="noopener noreferrer">SAC</a>
+              <a href="https://www.obspy.org/" target="_blank" rel="noopener noreferrer">MiniSEED</a>
+              <a href="https://www.obspy.org/" target="_blank" rel="noopener noreferrer">ObsPy 读写</a>
+            </div>
+            <div class="tags">
+              <span class="tag">波形</span>
+              <span class="tag">格式</span>
+              <span class="tag blue">ObsPy</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-station-meta">
+            <div class="card-head">
+              <h3><a href="#g-waveform">台站元数据与方位角</a></h3>
+            </div>
+            <p class="desc">
+              记录台站坐标、仪器响应、通道方位角与采样率等信息。
+              方位角在分量旋转与合成中至关重要，
+              缺少方位角会导致旋转结果错误。
+            </p>
+            <div class="subnotes">
+              <a href="#g-waveform">坐标</a>
+              <a href="#g-waveform">方位角</a>
+              <a href="#g-waveform">仪器响应</a>
+            </div>
+            <div class="tags">
+              <span class="tag">元数据</span>
+              <span class="tag">台站</span>
+              <span class="tag blue">方位角</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-event-meta">
+            <div class="card-head">
+              <h3><a href="#g-waveform">台站与事件元数据</a></h3>
+            </div>
+            <p class="desc">
+              包含事件震级、震中位置、震源深度、发震时刻，
+              以及台站坐标、场地类别等信息，
+              用于记录分组统计与经验关系拟合。
+            </p>
+            <div class="subnotes">
+              <a href="#g-waveform">事件信息</a>
+              <a href="#g-waveform">台站信息</a>
+              <a href="#g-waveform">分组统计</a>
+            </div>
+            <div class="tags">
+              <span class="tag">元数据</span>
+              <span class="tag">事件</span>
+              <span class="tag blue">分组统计</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           § 03 地震目录
+           ============================================================ -->
+      <div class="notes-group" id="g-catalog">
+        <div class="notes-group-title">
+          <span>地震目录</span>
+          <span class="count">3</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="ds-cenc">
+            <div class="card-head">
+              <h3><a href="https://www.cenc.ac.cn/" target="_blank" rel="noopener noreferrer">中国地震台网目录</a></h3>
+            </div>
+            <p class="desc">
+              中国地震台网中心发布的地震目录，包含国内及周边地区的地震事件，
+              是地震活动性参数标定与国内 PSHA 的主要输入。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.cenc.ac.cn/" target="_blank" rel="noopener noreferrer">国内目录</a>
+              <a href="https://www.cenc.ac.cn/" target="_blank" rel="noopener noreferrer">活动性标定</a>
+              <a href="https://www.cenc.ac.cn/" target="_blank" rel="noopener noreferrer">完整震级</a>
+            </div>
+            <div class="tags">
+              <span class="tag">地震目录</span>
+              <span class="tag">中国</span>
+              <span class="tag blue">PSHA</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-usgs">
+            <div class="card-head">
+              <h3><a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener noreferrer">USGS ANSS 目录</a></h3>
+            </div>
+            <p class="desc">
+              美国地质调查局先进国家地震系统（ANSS）发布的全球地震目录，
+              更新及时、覆盖范围广，
+              适合全球尺度的活动性统计与全球 PSHA。
+            </p>
+            <div class="subnotes">
+              <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener noreferrer">全球目录</a>
+              <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener noreferrer">实时更新</a>
+              <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener noreferrer">USGS</a>
+            </div>
+            <div class="tags">
+              <span class="tag">地震目录</span>
+              <span class="tag">全球</span>
+              <span class="tag blue">USGS</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-iscgem">
+            <div class="card-head">
+              <h3><a href="http://www.isc.ac.uk/" target="_blank" rel="noopener noreferrer">ISC-GEM 目录</a></h3>
+            </div>
+            <p class="desc">
+              国际地震中心（ISC）与全球地震模型（GEM）联合发布的统一地震目录，
+              对历史地震进行了重新定位与统一震级，
+              是长期活动性统计与地震危险性分析的重要输入。
+            </p>
+            <div class="subnotes">
+              <a href="http://www.isc.ac.uk/" target="_blank" rel="noopener noreferrer">统一震级</a>
+              <a href="http://www.isc.ac.uk/" target="_blank" rel="noopener noreferrer">历史地震</a>
+              <a href="http://www.isc.ac.uk/" target="_blank" rel="noopener noreferrer">GEM</a>
+            </div>
+            <div class="tags">
+              <span class="tag">地震目录</span>
+              <span class="tag">ISC</span>
+              <span class="tag blue">GEM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           § 04 震源与构造
+           ============================================================ -->
+      <div class="notes-group" id="g-source">
+        <div class="notes-group-title">
+          <span>震源与构造</span>
+          <span class="count">1</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="ds-gem-fault">
+            <div class="card-head">
+              <h3><a href="https://www.globalquakemodel.org/" target="_blank" rel="noopener noreferrer">GEM 全球活动断层库</a></h3>
+            </div>
+            <p class="desc">
+              全球地震模型基金会（GEM）整理的全球活动断层数据库，
+              包含断层几何、滑动速率与古地震信息，
+              是构建震源模型与进行断层活动性分析的基础数据。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.globalquakemodel.org/" target="_blank" rel="noopener noreferrer">断层几何</a>
+              <a href="https://www.globalquakemodel.org/" target="_blank" rel="noopener noreferrer">滑动速率</a>
+              <a href="https://www.globalquakemodel.org/" target="_blank" rel="noopener noreferrer">古地震</a>
+            </div>
+            <div class="tags">
+              <span class="tag">活动断层</span>
+              <span class="tag">GEM</span>
+              <span class="tag blue">震源模型</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           § 05 场地条件
+           ============================================================ -->
+      <div class="notes-group" id="g-site">
+        <div class="notes-group-title">
+          <span>场地条件</span>
+          <span class="count">3</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="ds-vs30">
+            <div class="card-head">
+              <h3><a href="https://www.usgs.gov/" target="_blank" rel="noopener noreferrer">Vs30 地形坡度外推</a></h3>
+            </div>
+            <p class="desc">
+              基于地形坡度经验关系外推得到的 30 米平均剪切波速（Vs30）栅格数据，
+              适合区域尺度的场地分类与危险性区划图计算。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.usgs.gov/" target="_blank" rel="noopener noreferrer">地形坡度</a>
+              <a href="https://www.usgs.gov/" target="_blank" rel="noopener noreferrer">Vs30</a>
+              <a href="https://www.usgs.gov/" target="_blank" rel="noopener noreferrer">区域尺度</a>
+            </div>
+            <div class="tags">
+              <span class="tag">场地</span>
+              <span class="tag">Vs30</span>
+              <span class="tag blue">区划图</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-borehole">
+            <div class="card-head">
+              <h3><a href="#g-site">钻孔剪切波速剖面</a></h3>
+            </div>
+            <p class="desc">
+              钻孔波速测试得到的各土层剪切波速剖面，
+              是场地效应评估与一维土层反应分析的直接输入，
+              也是场点相关 PSHA 的关键数据。
+            </p>
+            <div class="subnotes">
+              <a href="#g-site">钻孔</a>
+              <a href="#g-site">Vs 剖面</a>
+              <a href="#g-site">土层反应</a>
+            </div>
+            <div class="tags">
+              <span class="tag">场地</span>
+              <span class="tag">钻孔</span>
+              <span class="tag blue">土层反应</span>
+            </div>
+          </div>
+
+          <div class="card card-parent" id="ds-gb18306">
+            <div class="card-head">
+              <h3><a href="https://www.gb688.cn/" target="_blank" rel="noopener noreferrer">GB 18306-2015 区划图</a></h3>
+            </div>
+            <p class="desc">
+              《中国地震动参数区划图》给出全国各城镇不同设防水准的地震动参数，
+              是规范选波、场地分类与工程校核的强制性依据。
+            </p>
+            <div class="subnotes">
+              <a href="https://www.gb688.cn/" target="_blank" rel="noopener noreferrer">区划图</a>
+              <a href="https://www.gb688.cn/" target="_blank" rel="noopener noreferrer">设防水准</a>
+              <a href="https://www.gb688.cn/" target="_blank" rel="noopener noreferrer">规范依据</a>
+            </div>
+            <div class="tags">
+              <span class="tag">规范</span>
+              <span class="tag">区划</span>
+              <span class="tag blue">GB</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           § 06 项目内部数据
+           ============================================================ -->
+      <div class="notes-group" id="g-internal">
+        <div class="notes-group-title">
+          <span>项目内部数据</span>
+          <span class="count">1</span>
+        </div>
+        <div class="grid">
+
+          <div class="card card-parent" id="ds-preprocessed">
+            <div class="card-head">
+              <h3><a href="strong-motion.html">强震动预处理结果</a></h3>
+            </div>
+            <p class="desc">
+              由强震动数据处理项目输出的处理后时程与处理日志，
+              包含加速度、速度、位移时程及质量标记，
+              可直接作为地震动参数分析与结构时程分析的输入。
+            </p>
+            <div class="subnotes">
+              <a href="strong-motion.html">处理后时程</a>
+              <a href="strong-motion.html">处理日志</a>
+              <a href="strong-motion.html">质量标记</a>
+            </div>
+            <div class="tags">
+              <span class="tag">内部数据</span>
+              <span class="tag">预处理</span>
+              <span class="tag blue">时程</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===== 数据一览表 ===== -->
+    <section id="table">
+      <div class="section-head">
+        <span class="section-label">Table</span>
+        <h2>数据一览表</h2>
+      </div>
+
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:200px;">数据源</th>
+              <th style="width:130px;">类型</th>
+              <th style="width:130px;">覆盖范围</th>
+              <th>主要用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>PEER NGA 数据库</strong></td><td>强震动记录</td><td>全球</td><td>GMPE 标定、选波</td></tr>
+            <tr><td><strong>COSMOS 强震记录</strong></td><td>强震动记录</td><td>全球</td><td>记录统计、场地效应</td></tr>
+            <tr><td><strong>中国强震动台网</strong></td><td>强震动记录</td><td>中国</td><td>国内地震动特性研究</td></tr>
+            <tr><td><strong>NIED K-NET / KiK-net</strong></td><td>强震动记录</td><td>日本</td><td>场地效应、衰减关系</td></tr>
+            <tr><td><strong>ESM 工程强震库</strong></td><td>强震动记录</td><td>欧洲</td><td>记录统计、场地效应</td></tr>
+            <tr><td><strong>SAC / MiniSEED</strong></td><td>波形格式</td><td>通用</td><td>波形存储与交换</td></tr>
+            <tr><td><strong>台站元数据</strong></td><td>元数据</td><td>通用</td><td>分量旋转、处理</td></tr>
+            <tr><td><strong>台站与事件元数据</strong></td><td>元数据</td><td>通用</td><td>分组统计、回归拟合</td></tr>
+            <tr><td><strong>中国地震台网目录</strong></td><td>地震目录</td><td>中国</td><td>PSHA、活动性标定</td></tr>
+            <tr><td><strong>USGS ANSS 目录</strong></td><td>地震目录</td><td>全球</td><td>PSHA、活动性统计</td></tr>
+            <tr><td><strong>ISC-GEM 目录</strong></td><td>地震目录</td><td>全球</td><td>长期活动性统计</td></tr>
+            <tr><td><strong>GEM 全球活动断层库</strong></td><td>震源模型</td><td>全球</td><td>震源建模、断层分析</td></tr>
+            <tr><td><strong>Vs30 地形坡度外推</strong></td><td>场地数据</td><td>区域</td><td>场地分类、区划图</td></tr>
+            <tr><td><strong>钻孔剪切波速剖面</strong></td><td>场地数据</td><td>场点</td><td>土层反应分析</td></tr>
+            <tr><td><strong>GB 18306-2015 区划图</strong></td><td>规范依据</td><td>中国</td><td>选波、工程校核</td></tr>
+            <tr><td><strong>强震动预处理结果</strong></td><td>内部数据</td><td>项目内</td><td>参数分析、结构时程</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>部分数据源需要注册账号或提交申请才能下载完整数据，
+        使用时请遵守各数据库的使用条款与引用规范。
+        国内台网数据通常需要通过正式渠道申请，不得私自传播。
+      </div>
+    </section>
+
+    <!-- ===== 使用方式 ===== -->
+    <section id="usage">
+      <div class="section-head">
+        <span class="section-label">Usage</span>
+        <h2>使用方式</h2>
+      </div>
+      <ol class="steps">
+        <li><b>确定数据类型</b>：根据分析目标，判断需要强震动记录、地震目录还是场地数据。</li>
+        <li><b>选择数据源</b>：优先选覆盖范围匹配、元数据完整、处理标准统一的数据库。</li>
+        <li><b>下载与申请</b>：按各数据源的要求注册、申请或下载。国内台网通常需要提交正式申请。</li>
+        <li><b>统一格式</b>：用 ObsPy 或自研脚本统一采样率、单位、时间基准与坐标系统。</li>
+        <li><b>元数据校验</b>：检查台站方位角、仪器响应、事件震级标度是否完整。</li>
+        <li><b>记录引用</b>：在论文或报告中注明数据源名称、版本、获取时间与访问链接。</li>
+        <li><b>交叉验证</b>：同一事件可对比多个数据源，识别记录或目录中的异常。</li>
+      </ol>
+    </section>
+
+    <!-- ===== 参考资料 ===== -->
+    <section id="refs">
+      <div class="section-head">
+        <span class="section-label">References</span>
+        <h2>参考资料</h2>
+      </div>
+      <ol class="refs">
+        <li>PEER NGA-West2 Ground Motion Database. <a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">ngawest2.berkeley.edu</a></li>
+        <li>COSMOS Strong Motion Virtual Data Center. <a href="https://www.strongmotioncenter.org/" target="_blank" rel="noopener noreferrer">strongmotioncenter.org</a></li>
+        <li>中国强震动台网中心. <a href="http://www.csmnc.net/" target="_blank" rel="noopener noreferrer">csmnc.net</a></li>
+        <li>NIED K-NET / KiK-net. <a href="https://www.kyoshin.bosai.go.jp/" target="_blank" rel="noopener noreferrer">kyoshin.bosai.go.jp</a></li>
+        <li>Engineering Strong Motion Database (ESM). <a href="https://esm-db.eu/" target="_blank" rel="noopener noreferrer">esm-db.eu</a></li>
+        <li>ObsPy: A Python Toolbox for Seismology. <a href="https://www.obspy.org/" target="_blank" rel="noopener noreferrer">obspy.org</a></li>
+        <li>中国地震台网中心. <a href="https://www.cenc.ac.cn/" target="_blank" rel="noopener noreferrer">cenc.ac.cn</a></li>
+        <li>USGS Earthquake Hazards Program. <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener noreferrer">earthquake.usgs.gov</a></li>
+        <li>International Seismological Centre. <a href="http://www.isc.ac.uk/" target="_blank" rel="noopener noreferrer">isc.ac.uk</a></li>
+        <li>Global Earthquake Model Foundation. <a href="https://www.globalquakemodel.org/" target="_blank" rel="noopener noreferrer">globalquakemodel.org</a></li>
+        <li>GB 18306-2015《中国地震动参数区划图》. 中国标准出版社.</li>
+        <li>GB/T 36072-2018《强震动观测数据处理与交换》. 中国标准出版社.</li>
+      </ol>
+    </section>
+
+    <a class="back-link" href="index.html">
+      <span class="arrow">←</span> 返回主页
+    </a>
+
+    <footer>
+      © 2026 wayione · 数据来源
+    </footer>
+
+  </main>
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

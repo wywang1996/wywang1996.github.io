@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三联谱 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.tp-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.tp-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.tp-canvas-wrap canvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      三联谱
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 地震动特性</div>
+      <h1>三联谱（Tripartite Spectrum）</h1>
+      <p class="lead">
+        把加速度谱、速度谱、位移谱画在同一张四对数坐标图上，纵轴为伪速度谱 PSv(T)，
+        叠加等加速度线、等速度线、等位移线三族参考线。这是地震工程中最经典的
+        谱图表达方式，直观显示结构响应在不同周期段由哪个物理量主导。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">三联谱</span>
+        <span class="pill">四对数坐标</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">Input Format</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本模板读取<strong>两列文本文件</strong>（空格、制表符或逗号分隔），
+        与 El Centro、SAC ASCII 等地震记录格式一致。<strong>量纲必须明确</strong>，
+        否则计算出的谱值会差若干量级。
+      </p>
+
+      <div class="io-card">
+        <h4>输入文件要求</h4>
+        <table>
+          <thead><tr>
+            <th style="width:80px;">列号</th><th style="width:120px;">物理量</th>
+            <th style="width:160px;">推荐单位</th><th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>第 1 列</td><td>时间 t</td><td><code>s</code>（秒）</td><td>等间隔。程序用相邻两点之差推算采样步长 dt。</td></tr>
+            <tr><td>第 2 列</td><td>地面加速度 a<sub>g</sub></td><td><code>g</code>（重力加速度）</td><td>也可为 <code>m/s²</code> 或 <code>gal</code>（cm/s²）。</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">常用量纲的换算</h4>
+        <table>
+          <thead><tr>
+            <th style="width:160px;">你的数据单位</th>
+            <th style="width:200px;">换算到 m/s²</th>
+            <th>代码里怎么写</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>g</code></td><td>× 9.80665</td><td><code>ag = a * 9.80665</code></td></tr>
+            <tr><td><code>m/s²</code></td><td>× 1</td><td><code>ag = a</code></td></tr>
+            <tr><td><code>gal</code>（cm/s²）</td><td>× 0.01</td><td><code>ag = a * 0.01</code></td></tr>
+            <tr><td><code>mm/s²</code></td><td>× 0.001</td><td><code>ag = a * 0.001</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>本页示例</strong> <code>assets/elcentro_EW.txt</code> 的第 2 列单位是 <strong>g</strong>。
+          代码<strong>不做去均值、不去线性趋势</strong>，直接对原始记录计算反应谱。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">输入文件示例（前 5 行）</h4>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>elcentro_EW.txt</span><span class="lang">TXT</span></div>
+        </div>
+<pre><code>0.0000000e+000 3.0591000e-004
+2.0000000e-002 1.9374299e-003
+4.0000000e-002 6.9339600e-003
+6.0000000e-002 2.9571300e-003
+8.0000000e-002 2.9571300e-003
+...
+</code></pre>
+      </div>
+      <p style="font-size:12.5px; color:var(--dim); margin-top:8px;">
+        第 1 列：时间，单位 s；第 2 列：加速度，单位 g。采样率 50 Hz，记录长度约 54 s。
+      </p>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        三联谱（Tripartite Spectrum）把 Sa、Sv、Sd 三个物理量统一到一张图上：
+        纵轴为<strong>伪速度谱 PSv(T)</strong>，横轴为周期 T，双对数坐标。
+        通过三条基本关系式把三者在同一坐标上表达：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        PSa(T) = ω · PSv(T) &nbsp;&nbsp;,&nbsp;&nbsp; PSv(T) = ω · PSd(T) &nbsp;&nbsp;,&nbsp;&nbsp; ω = 2π/T
+      </div>
+
+      <p>
+        即 PSa = ω²·PSd，PSv = ω·PSd，PSd = PSd。三者只差一个 ω 的幂次，
+        所以在双对数坐标上它们是同一条曲线的三种表示。
+      </p>
+
+      <h3 class="sub">三族参考线</h3>
+
+      <p>图上叠加了三族斜率和水平虚线：</p>
+
+      <ul class="plain">
+        <li><strong>等加速度线</strong>（斜率 +1）——固定 PSa，随 T 增大 PSv 线性增加。对应结构处于<strong>加速度敏感区</strong>，短周期结构主要受惯性力控制。</li>
+        <li><strong>等速度线</strong>（水平）——固定 PSv。对应结构处于<strong>速度敏感区</strong>，中周期结构主要受能量输入控制。</li>
+        <li><strong>等位移线</strong>（斜率 −1）——固定 PSd，随 T 增大 PSv 线性减小。对应结构处于<strong>位移敏感区</strong>，长周期结构主要受位移需求控制。</li>
+      </ul>
+
+      <p>
+        把实际 PSv 曲线叠加到这三族参考线上，就能一目了然地看出：
+      </p>
+
+      <ul class="plain">
+        <li>短周期段（T &lt; 0.5 s），曲线与某条等加速度线几乎平行 → <strong>Sa 主导</strong>；</li>
+        <li>中周期段（0.5 &lt; T &lt; 5 s），曲线接近水平 → <strong>Sv 主导</strong>；</li>
+        <li>长周期段（T &gt; 5 s），曲线与某条等位移线平行 → <strong>Sd 主导</strong>。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>为什么用三联谱？</strong>
+        单独看 Sa、Sv、Sd 三条谱线，很难快速判断每个周期段是哪个物理量占主导。
+        三联谱用四条参考线把频谱空间切成三个区域，一眼看出主导量，
+        是 Newmark-Hall 谱、规范设计谱、隔震设计等工作的共同语言。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>本页不做去均值处理。原始记录的直流偏置会放大长周期段谱值，
+        使 PSv 在长周期端出现异常抬升。工程应用中通常需要先做基线校正。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面的三联图由 <code>assets/elcentro_EW.txt</code> 实时计算得到：
+        读取两列文本（时间 s / 加速度 g）→ 单位换算 → Newmark-β 遍历周期 →
+        输出 PSv(T)，叠加三族参考线。<strong>不做去均值</strong>。
+        画布尺寸按 A4 排版（720 × 400 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">示例数据</span>
+        <span class="fname">elcentro_EW.txt</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="tp-canvas-wrap">
+        <canvas id="c-tripartite"></canvas>
+      </div>
+
+      <div class="tp-note" style="margin-top:14px;">
+        横轴为结构自振周期 T（s），纵轴为伪速度谱 PSv（m/s），均为对数坐标。
+        橙色粗线为 5% 阻尼实际反应谱；灰色虚线为三族参考线：
+        斜向右上（斜率 +1）为等加速度线，水平为等速度线，斜向右下（斜率 −1）为等位移线。
+        <br>
+        输入数据量纲：时间 <strong>s</strong>；加速度 <strong>g</strong>。<strong>不含去均值、去趋势处理</strong>。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。核心步骤：
+        读取两列文本 → 单位换算 → Newmark-β 求 SDOF 峰值响应 →
+        由 Sd 换算 PSv → 绘制三联谱 + 三族参考线。
+        <strong>不做去均值、不去线性趋势</strong>。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>tripartite.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 输入数据格式（两列文本，空格 / 制表符 / 逗号分隔）
+#   第 1 列：时间 t   —— 单位 s（秒），等间隔
+#   第 2 列：加速度 a —— 单位 g（重力加速度）
+# -------------------------------------------------------------
+# 如果你的加速度列不是 g，请在下方 DATA_UNIT 处选择：
+#   'g'     → 第 2 列单位 g   （× 9.80665 → m/s²）
+#   'm/s2'  → 第 2 列单位 m/s²（× 1）
+#   'gal'   → 第 2 列单位 cm/s²（× 0.01）
+#   'mm/s2' → 第 2 列单位 mm/s²（× 0.001）
+# -------------------------------------------------------------
+# 说明：本脚本不做去均值、不去线性趋势。
+# =============================================================
+DATA_UNIT = 'g'
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+g = 9.80665
+
+# ---- 1. 读取两列文本 ----
+t, a_raw = np.loadtxt('elcentro_EW.txt', unpack=True)
+dt = t[1] - t[0]
+
+# ---- 2. 单位换算到 m/s² ----
+unit_factor = {'g': g, 'm/s2': 1.0, 'gal': 0.01, 'mm/s2': 0.001}
+factor = unit_factor.get(DATA_UNIT, g)
+ag = a_raw * factor
+
+
+def sdof_response(ag, dt, T, zeta=0.05):
+    """Newmark-β 平均加速度法计算 SDOF 峰值相对位移 Sd。"""
+    if T &lt;= 0:
+        return 0.0
+
+    omega = 2.0 * np.pi / T
+    c = 2.0 * omega * zeta
+    k = omega * omega
+    gamma, beta = 0.5, 0.25
+
+    keff = k + gamma / (beta * dt) * c + 1.0 / (beta * dt * dt)
+
+    u, v = 0.0, 0.0
+    acc = -ag[0]
+    u_max = 0.0
+
+    for j in range(1, len(ag)):
+        p = (-ag[j]
+             + (1.0 / (beta * dt * dt) * u
+                + 1.0 / (beta * dt) * v
+                + (1.0 / (2 * beta) - 1.0) * acc)
+             + c * (gamma / (beta * dt) * u
+                    + (gamma / beta - 1.0) * v
+                    + dt * (gamma / (2 * beta) - 1.0) * acc))
+
+        u_new = p / keff
+        v_new = (gamma / (beta * dt) * (u_new - u)
+                 - (gamma / beta - 1.0) * v
+                 - dt * (gamma / (2 * beta) - 1.0) * acc)
+        acc_new = (1.0 / (beta * dt * dt) * (u_new - u)
+                   - 1.0 / (beta * dt) * v
+                   - (1.0 / (2 * beta) - 1.0) * acc)
+
+        u, v, acc = u_new, v_new, acc_new
+        if abs(u) > u_max:
+            u_max = abs(u)
+
+    return u_max
+
+
+# ---- 3. 反应谱计算 ----
+periods = np.logspace(np.log10(0.02), np.log10(10.0), 100)
+zeta = 0.05
+
+Sd = np.zeros_like(periods)
+for i, T in enumerate(periods):
+    Sd[i] = sdof_response(ag, dt, T, zeta)
+
+# ---- 4. 由 Sd 换算 PSv、PSa ----
+omega = 2.0 * np.pi / periods
+PSv = omega * Sd        # m/s
+PSa = omega ** 2 * Sd   # m/s²
+
+# ---- 5. 绘制三联谱（A4 尺寸 7.2 × 4.0 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 4.0))
+
+# 三族参考线
+pga_list = [0.01, 0.1, 1.0]         # g，等加速度线
+psv_list = [0.01, 0.1, 1.0]         # m/s，等速度线
+psd_list = [0.001, 0.01, 0.1]       # m，等位移线
+
+# 等加速度线（斜率 +1）：PSv = PSa · T / (2π)
+for pga in pga_list:
+    PSa_val = pga * g
+    PSv_line = PSa_val * periods / (2 * np.pi)
+    ax.loglog(periods, PSv_line, lw=0.7, ls='--', color='#888888', alpha=0.7)
+    # 标签放在曲线离开绘图区的位置
+    idx = np.argmin(np.abs(PSv_line - 1.0))  # 靠近纵轴上限 1 m/s
+    ax.text(periods[idx] * 1.08, PSv_line[idx],
+            f'PSa={pga}g', fontsize=8, color='#555555', va='center')
+
+# 等速度线（水平）
+for psv in psv_list:
+    ax.axhline(psv, lw=0.7, ls='--', color='#888888', alpha=0.7)
+    ax.text(periods[-1] * 0.95, psv,
+            f'PSv={psv}', fontsize=8, color='#555555',
+            va='bottom', ha='right')
+
+# 等位移线（斜率 −1）：PSv = 2π · PSd / T
+for psd in psd_list:
+    PSv_line = 2 * np.pi * psd / periods
+    ax.loglog(periods, PSv_line, lw=0.7, ls='--', color='#888888', alpha=0.7)
+    idx = np.argmin(np.abs(PSv_line - 1.0))
+    ax.text(periods[idx] * 0.92, PSv_line[idx],
+            f'PSd={psd}m', fontsize=8, color='#555555',
+            va='center', ha='right')
+
+# PSv 曲线 —— 主线
+ax.loglog(periods, PSv, lw=1.8, color='#b45309', label='PSv(T) — 5% damping')
+
+# 坐标轴
+ax.set_xlabel('Period T (s)')
+ax.set_ylabel('PSv (m/s)')
+ax.set_xlim(0.02, 10)
+ax.set_ylim(0.001, 10)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+# 仅保留 1、2、5 × 10ⁿ 主刻度，避免标签拥挤
+ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0, 2.0, 5.0), numticks=12))
+ax.xaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0, 2.0, 5.0), numticks=12))
+
+ax.legend(loc='upper right', fontsize=9, frameon=False)
+
+fig.tight_layout()
+fig.savefig('tripartite.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>输入量纲</strong>：时间 s，加速度 g（默认）。</li>
+          <li><strong>三族参考线</strong>：
+            <ul style="margin:4px 0 0 16px;">
+              <li>等加速度：<code>PSv = PSa · T / (2π)</code>，斜率 +1</li>
+              <li>等速度：<code>PSv = 常数</code>，水平</li>
+              <li>等位移：<code>PSv = 2π · PSd / T</code>，斜率 −1</li>
+            </ul>
+          </li>
+          <li><strong>PSv 曲线</strong>本身由 Sd 换算：<code>PSv = ω · Sd</code>。</li>
+          <li>纵轴范围固定为 0.001–10 m/s，覆盖常规地震动的谱值。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        脚本末尾定义局部函数 <code>sdof_response</code>（R2016b+）。
+        <strong>不去均值、不去趋势</strong>。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>tripartite.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 输入数据格式（两列文本，空格 / 制表符 / 逗号分隔）
+%   第 1 列：时间 t   —— 单位 s（秒），等间隔
+%   第 2 列：加速度 a —— 单位 g（重力加速度）
+% -------------------------------------------------------------
+%   'g'     → × 9.80665
+%   'm/s2'  → × 1
+%   'gal'   → × 0.01
+%   'mm/s2' → × 0.001
+% -------------------------------------------------------------
+% 说明：本脚本不做去均值、不去线性趋势。
+% =============================================================
+DATA_UNIT = 'g';
+
+g = 9.80665;
+
+% ---- 1. 读取两列文本 ----
+data = readmatrix('elcentro_EW.txt');
+t    = data(:, 1);
+a_raw = data(:, 2);
+dt   = t(2) - t(1);
+
+% ---- 2. 单位换算到 m/s² ----
+switch DATA_UNIT
+    case 'g',     factor = g;
+    case 'm/s2',  factor = 1.0;
+    case 'gal',   factor = 0.01;
+    case 'mm/s2', factor = 0.001;
+    otherwise,    factor = g;
+end
+ag = a_raw * factor;
+
+% ---- 3. 反应谱计算 ----
+periods = logspace(log10(0.02), log10(10.0), 100);
+n = numel(periods);
+zeta = 0.05;
+
+Sd = zeros(size(periods));
+for i = 1:n
+    Sd(i) = sdof_response(ag, dt, periods(i), zeta);
+end
+
+% ---- 4. 由 Sd 换算 PSv、PSa ----
+omega = 2 * pi ./ periods;
+PSv = omega .* Sd;         % m/s
+PSa = omega.^2 .* Sd;      % m/s²
+
+% ---- 5. 绘制三联谱（A4 尺寸 720 × 400 px） ----
+figure('Color', 'w', 'Position', [100 100 720 400]);
+hold on;
+
+% 等加速度线（斜率 +1）
+pga_list = [0.01 0.1 1.0];
+for pga = pga_list
+    PSa_val = pga * g;
+    PSv_line = PSa_val * periods / (2 * pi);
+    loglog(periods, PSv_line, '--', 'Color', [0.53 0.53 0.53], ...
+           'LineWidth', 0.7);
+    [~, idx] = min(abs(PSv_line - 1.0));
+    text(periods(idx) * 1.08, PSv_line(idx), ...
+         sprintf('PSa=%.2fg', pga), 'FontSize', 8, 'Color', [0.33 0.33 0.33]);
+end
+
+% 等速度线（水平）
+psv_list = [0.01 0.1 1.0];
+for psv = psv_list
+    yline(psv, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7);
+    text(periods(end) * 0.95, psv, ...
+         sprintf('PSv=%.2f', psv), 'FontSize', 8, 'Color', [0.33 0.33 0.33], ...
+         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
+end
+
+% 等位移线（斜率 −1）
+psd_list = [0.001 0.01 0.1];
+for psd = psd_list
+    PSv_line = 2 * pi * psd ./ periods;
+    loglog(periods, PSv_line, '--', 'Color', [0.53 0.53 0.53], ...
+           'LineWidth', 0.7);
+    [~, idx] = min(abs(PSv_line - 1.0));
+    text(periods(idx) * 0.92, PSv_line(idx), ...
+         sprintf('PSd=%.3fm', psd), 'FontSize', 8, 'Color', [0.33 0.33 0.33], ...
+         'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right');
+end
+
+% PSv 曲线 —— 主线
+loglog(periods, PSv, 'Color', [0.71 0.33 0.04], 'LineWidth', 1.8);
+
+% 坐标轴
+xlabel('Period T (s)');
+ylabel('PSv (m/s)');
+xlim([0.02 10]);
+ylim([0.001 10]);
+grid on; box on;
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in', ...
+    'XScale', 'log', 'YScale', 'log');
+
+% 只保留 1、2、5 × 10^n 主刻度
+ax = gca;
+set(ax, 'YTick', get_log_ticks(ax.YLim));
+set(ax, 'XTick', get_log_ticks(ax.XLim));
+
+exportgraphics(gcf, 'tripartite.png', 'Resolution', 300);
+
+
+% ===== 辅助函数 =====
+function ticks = get_log_ticks(lim)
+    lo = log10(lim(1));
+    hi = log10(lim(2));
+    ticks = [];
+    for e = floor(lo):ceil(hi)
+        for m = [1 2 5]
+            v = m * 10^e;
+            if v >= lim(1) && v <= lim(2)
+                ticks(end+1) = v; %#ok<AGROW>
+            end
+        end
+    end
+end
+
+
+% ===== 局部函数 =====
+function Sd = sdof_response(ag, dt, T, zeta)
+    if nargin &lt; 4, zeta = 0.05; end
+    if T &lt;= 0
+        Sd = 0; return;
+    end
+
+    omega = 2 * pi / T;
+    c = 2 * omega * zeta;
+    k = omega^2;
+    gamma = 0.5; beta = 0.25;
+
+    keff = k + gamma / (beta * dt) * c + 1 / (beta * dt^2);
+
+    u = 0; v = 0;
+    acc = -ag(1);
+    u_max = 0;
+
+    for j = 2:numel(ag)
+        p = -ag(j) + ...
+            (1/(beta*dt^2)*u + 1/(beta*dt)*v + (1/(2*beta)-1)*acc) + ...
+            c * (gamma/(beta*dt)*u + (gamma/beta-1)*v + ...
+                 dt*(gamma/(2*beta)-1)*acc);
+
+        u_new = p / keff;
+        v_new = gamma/(beta*dt)*(u_new - u) - (gamma/beta-1)*v - ...
+                dt*(gamma/(2*beta)-1)*acc;
+        acc_new = 1/(beta*dt^2)*(u_new - u) - 1/(beta*dt)*v - ...
+                  (1/(2*beta)-1)*acc;
+
+        u = u_new; v = v_new; acc = acc_new;
+        u_max = max(u_max, abs(u));
+    end
+
+    Sd = u_max;
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:140px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 时间</td><td>t</td><td><code>s</code>（秒）</td></tr>
+            <tr><td><strong>输入</strong> · 加速度</td><td>a<sub>g</sub></td><td><code>g</code> / <code>m/s²</code> / <code>gal</code> / <code>mm/s²</code></td></tr>
+            <tr><td><strong>输出</strong> · 纵轴（三联谱）</td><td>PSv</td><td><code>m/s</code></td></tr>
+            <tr><td><strong>输出</strong> · 等加速度线</td><td>PSa</td><td><code>g</code>（标签）</td></tr>
+            <tr><td><strong>输出</strong> · 等位移线</td><td>PSd</td><td><code>m</code>（标签）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>积分方法：</strong>Newmark-β 平均加速度法，γ = 1/2，β = 1/4。</li>
+        <li><strong>周期范围：</strong>0.02–10 s，对数分布 100 个点。</li>
+        <li><strong>阻尼比：</strong>默认 ζ = 0.05。</li>
+        <li><strong>PSv 换算：</strong>PSv = ω·Sd，PSa = ω²·Sd。</li>
+        <li><strong>纵轴范围：</strong>0.001–10 m/s，覆盖常规地震动的谱值范围。</li>
+        <li><strong>三族参考线：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>等加速度：PSv = PSa·T/(2π)，斜率 +1；</li>
+            <li>等速度：PSv = 常数，水平；</li>
+            <li>等位移：PSv = 2π·PSd/T，斜率 −1。</li>
+          </ul>
+        </li>
+        <li><strong>无去趋势：</strong>长周期段谱值可能因原始记录的基线漂移而异常抬高。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>谱值整体偏小或偏大 10⁴ 量级 → 输入加速度单位选错了。</li>
+            <li>长周期段 PSv 曲线明显上翘 → 原始记录含长周期基线漂移。</li>
+            <li>短周期段 PSv 曲线出现尖峰 → 记录中含高频噪声。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../spectral-analysis.html">地震动谱分析入门</a>（三联谱、反应谱、阻尼影响）、
+        <a href="../structural-dynamics.html">结构动力学</a>（SDOF 响应、Newmark-β）、
+        <a href="../strong-motion-observation.html">强震动观测</a>（记录预处理）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 三联谱</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var DATA_UNIT = 'g';
+  var G = 9.80665;
+  var ZETA = 0.05;
+  var N_PERIODS = 100;
+
+  function unitFactor(unit) {
+    if (unit === 'g') return G;
+    if (unit === 'm/s2') return 1.0;
+    if (unit === 'gal') return 0.01;
+    if (unit === 'mm/s2') return 0.001;
+    return G;
+  }
+
+  function unitLabel(unit) {
+    if (unit === 'g') return 'g';
+    if (unit === 'm/s2') return 'm/s²';
+    if (unit === 'gal') return 'gal (cm/s²)';
+    if (unit === 'mm/s2') return 'mm/s²';
+    return unit;
+  }
+
+  function parseTwoCols(text) {
+    var lines = text.split(/\r?\n/);
+    var t = [], a = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      if (line.charAt(0) === '#' || line.charAt(0) === '%') continue;
+      var parts = line.split(/[\s,;\t]+/).filter(Boolean);
+      if (parts.length < 2) continue;
+      var x = parseFloat(parts[0]);
+      var y = parseFloat(parts[1]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      t.push(x); a.push(y);
+    }
+    return { t: t, a: a };
+  }
+
+  /* Newmark-β，返回 Sd(T) */
+  function sdofSd(ag, dt, T, zeta) {
+    var omega = 2 * Math.PI / T;
+    var c = 2 * omega * zeta;
+    var k = omega * omega;
+    var gamma = 0.5, beta = 0.25;
+
+    var keff = k + gamma / (beta * dt) * c + 1 / (beta * dt * dt);
+
+    var u = 0, v = 0, acc = -ag[0];
+    var uMax = 0;
+    var n = ag.length;
+
+    for (var j = 1; j < n; j++) {
+      var p = -ag[j]
+        + (1 / (beta * dt * dt) * u
+           + 1 / (beta * dt) * v
+           + (1 / (2 * beta) - 1) * acc)
+        + c * (gamma / (beta * dt) * u
+               + (gamma / beta - 1) * v
+               + dt * (gamma / (2 * beta) - 1) * acc);
+
+      var uNew = p / keff;
+      var vNew = gamma / (beta * dt) * (uNew - u)
+                 - (gamma / beta - 1) * v
+                 - dt * (gamma / (2 * beta) - 1) * acc;
+      var aNew = 1 / (beta * dt * dt) * (uNew - u)
+                 - 1 / (beta * dt) * v
+                 - (1 / (2 * beta) - 1) * acc;
+
+      u = uNew; v = vNew; acc = aNew;
+      if (Math.abs(u) > uMax) uMax = Math.abs(u);
+    }
+
+    return uMax;
+  }
+
+  /* 对数刻度：只返回 1、2、5 × 10^n */
+  function niceLogTicks(min, max, maxCount) {
+    if (!maxCount) maxCount = 8;
+    var candidates = [];
+    var logMin = Math.log10(min), logMax = Math.log10(max);
+    for (var e = Math.floor(logMin); e <= Math.ceil(logMax); e++) {
+      [1, 2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v >= min * 0.999 && v <= max * 1.001) candidates.push(v);
+      });
+    }
+    if (candidates.length <= maxCount) return candidates;
+    /* 太多 → 只保留 10^n */
+    var decades = [];
+    for (var e2 = Math.floor(logMin); e2 <= Math.ceil(logMax); e2++) {
+      var v = Math.pow(10, e2);
+      if (v >= min * 0.999 && v <= max * 1.001) decades.push(v);
+    }
+    return decades;
+  }
+
+  function formatSci(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.001 && a < 10000) {
+      if (a >= 1) return v.toFixed(a >= 10 ? 0 : 1).replace(/\.0+$/, '');
+      if (a >= 0.1) return v.toFixed(2).replace(/\.?0+$/, '');
+      if (a >= 0.01) return v.toFixed(3).replace(/\.?0+$/, '');
+      return v.toFixed(4).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(Math.log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(1).replace(/\.0$/, '') + 'e' + e;
+  }
+
+  function drawTripartite(canvasId, periods, PSv) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 400);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* 固定范围 */
+    var xMinVal = 0.02, xMaxVal = 10.0;
+    var yMinVal = 0.001, yMaxVal = 10.0;
+
+    var xMin = Math.log10(xMinVal), xMax = Math.log10(xMaxVal);
+    var yMin = Math.log10(yMinVal), yMax = Math.log10(yMaxVal);
+
+    var margin = { top: 14, right: 24, bottom: 46, left: 74 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    function toX(tv) { return margin.left + (Math.log10(tv) - xMin) / (xMax - xMin) * plotW; }
+    function toY(psv) { return margin.top + plotH - (Math.log10(psv) - yMin) / (yMax - yMin) * plotH; }
+
+    /* ---- 网格 ---- */
+    var xGridTicks = niceLogTicks(xMinVal, xMaxVal, 12);
+    var yGridTicks = niceLogTicks(yMinVal, yMaxVal, 12);
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var gx = 0; gx < xGridTicks.length; gx++) {
+      var xx = toX(xGridTicks[gx]);
+      ctx.beginPath();
+      ctx.moveTo(xx, margin.top);
+      ctx.lineTo(xx, margin.top + plotH);
+      ctx.stroke();
+    }
+    for (var gy = 0; gy < yGridTicks.length; gy++) {
+      var yy = toY(yGridTicks[gy]);
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yy);
+      ctx.lineTo(margin.left + plotW, yy);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 三族参考线 ---- */
+    /* 等加速度线：PSv = PSa * T / (2π)，斜率 +1 */
+    var pgaList = [0.01, 0.1, 1.0];
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([5, 4]);
+
+    pgaList.forEach(function (pga) {
+      var PSa_val = pga * G;
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i < periods.length; i++) {
+        var T = periods[i];
+        var psv_val = PSa_val * T / (2 * Math.PI);
+        if (!(psv_val > 0)) continue;
+        if (psv_val < yMinVal * 0.9 || psv_val > yMaxVal * 1.1) {
+          started = false;
+          continue;
+        }
+        var px = toX(T), py = toY(psv_val);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+
+    /* 等速度线：水平 */
+    [0.01, 0.1, 1.0].forEach(function (psv) {
+      ctx.beginPath();
+      ctx.moveTo(margin.left, toY(psv));
+      ctx.lineTo(margin.left + plotW, toY(psv));
+      ctx.stroke();
+    });
+
+    /* 等位移线：PSv = 2π * PSd / T，斜率 −1 */
+    [0.001, 0.01, 0.1].forEach(function (psd) {
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i < periods.length; i++) {
+        var T = periods[i];
+        var psv_val = 2 * Math.PI * psd / T;
+        if (!(psv_val > 0)) continue;
+        if (psv_val < yMinVal * 0.9 || psv_val > yMaxVal * 1.1) {
+          started = false;
+          continue;
+        }
+        var px = toX(T), py = toY(psv_val);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+
+    ctx.setLineDash([]);
+
+    /* ---- 参考线标签 ---- */
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.fillStyle = '#555555';
+
+    /* 等加速度标签：放在每条线离开绘图区上边缘的位置 */
+    pgaList.forEach(function (pga) {
+      var PSa_val = pga * G;
+      /* 求 PSv = yMaxVal 时的 T */
+      var T_top = yMaxVal * 2 * Math.PI / PSa_val;
+      /* 求 PSv = yMinVal 时的 T */
+      var T_bot = yMinVal * 2 * Math.PI / PSa_val;
+
+      var labelT, labelPSv, anchor;
+      if (T_top >= xMinVal && T_top <= xMaxVal) {
+        /* 从上边缘离开 */
+        labelT = T_top;
+        labelPSv = yMaxVal;
+        anchor = 'top-left';
+      } else if (T_bot >= xMinVal && T_bot <= xMaxVal) {
+        /* 从下边缘离开 */
+        labelT = T_bot;
+        labelPSv = yMinVal;
+        anchor = 'bottom-left';
+      } else {
+        /* 从右边缘离开 */
+        labelT = xMaxVal;
+        labelPSv = PSa_val * xMaxVal / (2 * Math.PI);
+        anchor = 'right';
+      }
+
+      var lx = toX(labelT);
+      var ly = toY(labelPSv);
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+
+      if (anchor === 'top-left') {
+        ctx.textBaseline = 'top';
+        ctx.fillText('PSa=' + pga + 'g', lx + 4, ly + 2);
+      } else if (anchor === 'bottom-left') {
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('PSa=' + pga + 'g', lx + 4, ly - 2);
+      } else {
+        ctx.textAlign = 'right';
+        ctx.fillText('PSa=' + pga + 'g', lx - 4, ly - 8);
+      }
+    });
+
+    /* 等速度标签：放在右侧 */
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    [0.01, 0.1, 1.0].forEach(function (psv) {
+      ctx.fillText('PSv=' + psv + ' m/s',
+                   margin.left + plotW - 4, toY(psv) - 2);
+    });
+
+    /* 等位移标签：放在每条线离开绘图区上边缘的位置 */
+    [0.001, 0.01, 0.1].forEach(function (psd) {
+      var T_top = 2 * Math.PI * psd / yMaxVal;
+      var T_bot = 2 * Math.PI * psd / yMinVal;
+
+      var labelT, labelPSv;
+      if (T_top >= xMinVal && T_top <= xMaxVal) {
+        labelT = T_top;
+        labelPSv = yMaxVal;
+      } else if (T_bot >= xMinVal && T_bot <= xMaxVal) {
+        labelT = T_bot;
+        labelPSv = yMinVal;
+      } else {
+        labelT = xMinVal;
+        labelPSv = 2 * Math.PI * psd / xMinVal;
+      }
+
+      var lx = toX(labelT);
+      var ly = toY(labelPSv);
+
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      var s = psd < 0.01 ? psd.toFixed(3) : psd.toFixed(2);
+      ctx.fillText('PSd=' + s + ' m', lx - 4, ly - 6);
+    });
+
+    /* ---- PSv 主曲线 ---- */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 2.0;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    var started = false;
+    for (var k = 0; k < periods.length; k++) {
+      var psv = PSv[k];
+      if (!(psv > 0)) continue;
+      if (psv < yMinVal * 0.5 || psv > yMaxVal * 2) {
+        started = false;
+        continue;
+      }
+      var px2 = toX(periods[k]);
+      var py2 = toY(psv);
+      if (!started) { ctx.moveTo(px2, py2); started = true; }
+      else ctx.lineTo(px2, py2);
+    }
+    ctx.stroke();
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+    /* ---- 四边刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    var xTicks = niceLogTicks(xMinVal, xMaxVal, 12);
+    var yTicks = niceLogTicks(yMinVal, yMaxVal, 12);
+
+    /* y 主刻度 */
+    for (var yk = 0; yk < yTicks.length; yk++) {
+      var yv = yTicks[yk];
+      var yy2 = toY(yv);
+      if (yy2 < margin.top - 0.5 || yy2 > margin.top + plotH + 0.5) continue;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yy2);
+      ctx.lineTo(margin.left + mainTick, yy2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(margin.left + plotW, yy2);
+      ctx.lineTo(margin.left + plotW - mainTick, yy2);
+      ctx.stroke();
+    }
+    /* y 次刻度 */
+    for (var e = Math.floor(yMin); e <= Math.ceil(yMax); e++) {
+      [2, 3, 4, 5, 6, 7, 8, 9].forEach(function (m) {
+        var yv = m * Math.pow(10, e);
+        var lyv = Math.log10(yv);
+        if (lyv <= yMin || lyv >= yMax) return;
+        var isMain = false;
+        for (var t1 = 0; t1 < yTicks.length; t1++) {
+          if (Math.abs(yTicks[t1] - yv) < 1e-12) { isMain = true; break; }
+        }
+        if (isMain) return;
+        var yyj = toY(yv);
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yyj);
+        ctx.lineTo(margin.left + minorTick, yyj);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(margin.left + plotW, yyj);
+        ctx.lineTo(margin.left + plotW - minorTick, yyj);
+        ctx.stroke();
+      });
+    }
+
+    /* x 主刻度 */
+    for (var xk = 0; xk < xTicks.length; xk++) {
+      var xv = xTicks[xk];
+      var xxj = toX(xv);
+      if (xxj < margin.left - 0.5 || xxj > margin.left + plotW + 0.5) continue;
+      ctx.beginPath();
+      ctx.moveTo(xxj, margin.top + plotH);
+      ctx.lineTo(xxj, margin.top + plotH - mainTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xxj, margin.top);
+      ctx.lineTo(xxj, margin.top + mainTick);
+      ctx.stroke();
+    }
+    /* x 次刻度 */
+    for (var e2 = Math.floor(xMin); e2 <= Math.ceil(xMax); e2++) {
+      [2, 3, 4, 6, 7, 8, 9].forEach(function (m) {
+        var xv = m * Math.pow(10, e2);
+        var lxv = Math.log10(xv);
+        if (lxv <= xMin || lxv >= xMax) return;
+        var isMain = false;
+        for (var t2 = 0; t2 < xTicks.length; t2++) {
+          if (Math.abs(xTicks[t2] - xv) < 1e-12) { isMain = true; break; }
+        }
+        if (isMain) return;
+        var xxj = toX(xv);
+        ctx.beginPath();
+        ctx.moveTo(xxj, margin.top + plotH);
+        ctx.lineTo(xxj, margin.top + plotH - minorTick);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(xxj, margin.top);
+        ctx.lineTo(xxj, margin.top + minorTick);
+        ctx.stroke();
+      });
+    }
+
+    /* ---- y 轴刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      var ylv = yTicks[yl];
+      var yly = toY(ylv);
+      if (yly < margin.top - 0.5 || yly > margin.top + plotH + 0.5) continue;
+      ctx.fillText(formatSci(ylv), margin.left - 6, yly);
+    }
+
+    /* ---- x 轴刻度标签 ---- */
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xTicks.length; xl++) {
+      var xlv = xTicks[xl];
+      var xlx = toX(xlv);
+      if (xlx < margin.left - 0.5 || xlx > margin.left + plotW + 0.5) continue;
+      ctx.fillText(formatSci(xlv), xlx, margin.top + plotH + 8);
+    }
+
+    /* ---- y 轴标题 ---- */
+    ctx.save();
+    ctx.translate(16, margin.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.fillText('PSv (m/s)', 0, 0);
+    ctx.restore();
+
+    /* ---- x 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Period T (s)', margin.left + plotW / 2, H - 2);
+
+    /* ---- 图例（右上角） ---- */
+    var legendX = margin.left + plotW - 8;
+    var legendY = margin.top + 8;
+    ctx.font = '10.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(legendX - 130, legendY + 4, 18, 2);
+    ctx.fillStyle = '#222222';
+    ctx.fillText('PSv(T) — 5% damping', legendX - 4, legendY);
+  }
+
+  function process(text) {
+    var parsed = parseTwoCols(text);
+    var n = parsed.t.length;
+    if (n < 10) throw new Error('有效数据点太少');
+
+    var t = parsed.t;
+    var dt = t[1] - t[0];
+
+    /* 单位换算，不做去均值 / 去趋势 */
+    var factor = unitFactor(DATA_UNIT);
+    var ag = new Float64Array(n);
+    for (var i = 0; i < n; i++) ag[i] = parsed.a[i] * factor;
+
+    /* 对数分布周期 */
+    var logMin = Math.log10(0.02);
+    var logMax = Math.log10(10.0);
+    var periods = new Float64Array(N_PERIODS);
+    for (var p = 0; p < N_PERIODS; p++) {
+      periods[p] = Math.pow(10, logMin + (logMax - logMin) * p / (N_PERIODS - 1));
+    }
+
+    /* 计算 Sd，再由 Sd 换算 PSv */
+    var PSv = new Float64Array(N_PERIODS);
+    for (var q = 0; q < N_PERIODS; q++) {
+      var Sd = sdofSd(ag, dt, periods[q], ZETA);
+      var om = 2 * Math.PI / periods[q];
+      PSv[q] = om * Sd;
+    }
+
+    drawTripartite('c-tripartite', periods, PSv);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var pgaMax = 0;
+      for (var m = 0; m < n; m++) if (Math.abs(ag[m]) > pgaMax) pgaMax = Math.abs(ag[m]);
+      status.textContent = n + ' 点 · ' + (1 / dt).toFixed(0) + ' Hz · ' +
+                           '输入单位 ' + unitLabel(DATA_UNIT) + ' · ' +
+                           'PGA ≈ ' + (pgaMax / G).toFixed(3) + ' g · ' +
+                           'ζ = ' + ZETA + ' · 无去趋势';
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    fetch('../assets/elcentro_EW.txt', { cache: 'no-cache' })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.text();
+      })
+      .then(function (text) { process(text); })
+      .catch(function (err) {
+        if (status) {
+          status.textContent = '⚠ 无法加载 assets/elcentro_EW.txt（' +
+            (err && err.message ? err.message : String(err)) + '）';
+        }
+        if (window.console) console.warn('[tripartite] 加载失败：', err);
+      });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

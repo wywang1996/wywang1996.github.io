@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pushover 曲线 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.po-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.po-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.po-canvas-wrap canvas {
+  width: 100%;
+  height: 440px;
+  display: block;
+}
+.po-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.po-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.po-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      Pushover 曲线
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 结构弹塑性响应</div>
+      <h1>Pushover 曲线</h1>
+      <p class="lead">
+        静力弹塑性分析（Pushover）的核心输出：<strong>基底剪力–顶点位移</strong>曲线。
+        图上叠加<strong>等能量法双线性理想化</strong>、<strong>屈服点</strong>与
+        <strong>峰值点</strong>，给出初始刚度 K<sub>e</sub>、屈服承载力 V<sub>y</sub>、
+        屈服位移 d<sub>y</sub>、极限位移 d<sub>u</sub> 与延性比 μ。
+        这是能力谱法、性能化设计与结构抗倒塌评估的起点。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">Pushover</span>
+        <span class="pill">双线性化</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>CSV 输入数据</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/pushover.csv</code> 作为输入。文件是 Pushover
+        分析结果的整理输出：两列，分别为<strong>顶点位移</strong>与
+        <strong>基底剪力</strong>。若文件不存在，页面会使用内置的合成数据演示。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>disp_mm</code></td><td>顶点位移 d</td><td><code>mm</code></td><td>控制节点位移，单调递增</td></tr>
+            <tr><td><code>shear_kN</code></td><td>基底剪力 V</td><td><code>kN</code></td><td>所有底部支座反力之和</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例（前 12 行）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/pushover.csv</code> 不存在，则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>pushover.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># pushover.csv
+# Pushover 分析结果 —— 基底剪力 vs 顶点位移
+# 单位：位移 mm，剪力 kN
+disp_mm,shear_kN
+0.0,0.0
+2.5,60.0
+5.0,120.0
+7.5,180.0
+10.0,240.0
+12.5,300.0
+15.0,360.0
+17.5,420.0
+20.0,480.0
+22.5,540.0
+25.0,600.0
+...
+</code></pre>
+      </div>
+
+      <div class="po-download">
+        <button type="button" id="btn-download-csv">下载 pushover.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>通用有限元程序</strong>——ETABS、SAP2000、Perform-3D、ABAQUS、
+            OpenSees、MIDAS Gen，都提供 Pushover 分析功能。</li>
+          <li><strong>加载模式</strong>——常用倒三角分布、均匀分布、
+            一阶振型分布，不同加载模式的结果略有差别。</li>
+          <li><strong>目标位移</strong>——由能力谱法（ATC-40、FEMA 440）
+            或位移系数法（FEMA 356）确定。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一条典型的 Pushover 曲线：
+          初始弹性段刚度 K<sub>e</sub> ≈ 24 kN/mm，屈服后进入轻微强化段，
+          在顶点位移约 100 mm 处达到峰值 V<sub>max</sub> ≈ 800 kN，
+          随后进入下降段。替换为你自己的分析结果只需修改 <code>pushover.csv</code>。
+        </div>
+      </div>
+
+            <!-- ============================================================
+           计算步骤：用 OpenSees 计算 Pushover 曲线
+           ============================================================ -->
+      <h3 class="sub">计算步骤：用 OpenSees 计算 Pushover 曲线</h3>
+
+      <p>
+        实际工程几乎不会手算 Pushover 曲线，都用有限元程序完成。
+        下面以 <strong>OpenSeesPy</strong> 为例，给出一个单层框架的完整计算流程。
+        SAP2000、ETABS、Perform-3D、ABAQUS、MIDAS 的核心步骤与之一致。
+      </p>
+
+      <div class="io-card">
+        <h4>七步计算流程</h4>
+        <ol>
+          <li><strong>建模</strong>——定义节点坐标、单元、支座约束。</li>
+          <li><strong>本构</strong>——定义材料本构（钢材双线性、混凝土 Kent-Scott-Park 等）。</li>
+          <li><strong>截面</strong>——用<strong>纤维截面</strong>（Fiber Section）描述构件的非线性行为。</li>
+          <li><strong>单元</strong>——用 <code>forceBeamColumn</code> 非线性梁柱单元连接节点，
+            每个单元沿长度布多个积分点。</li>
+          <li><strong>重力荷载</strong>——先施加恒载、活载，让结构进入初始受力状态，
+            然后用 <code>loadConst('-time', 0)</code> 把时间归零。</li>
+          <li><strong>Pushover 工况</strong>——按<strong>倒三角分布</strong>施加侧向力，
+            用<strong>位移控制</strong>（<code>DisplacementControl</code>）逐步加载。</li>
+          <li><strong>记录数据</strong>——每步收敛后记录顶点位移 d 与基底剪力 V，导出为 CSV。</li>
+        </ol>
+
+        <div class="warn-text">
+          <strong>核心思想：</strong>每个位移增量都需要做 Newton-Raphson 迭代求解非线性平衡方程
+          K<sub>t</sub>·Δu = ΔF。构件屈服后切线刚度矩阵 K<sub>t</sub> 不断更新，
+          曲线上每一个 (d, V) 点都是一次收敛迭代的结果。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">
+        OpenSeesPy 完整代码（单层单跨框架）
+      </h4>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>opensees_pushover.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# Pushover 分析 | OpenSeesPy 完整示例
+# -------------------------------------------------------------
+# 结构：单层单跨平面框架
+#   柱高 3000 mm，跨度 5000 mm
+#   柱底固定，梁柱刚接
+#   钢材：Fy = 235 MPa, E = 210 GPa, 强化比 0.02
+#   截面：400 × 400 mm 矩形（简化为纤维截面）
+# -------------------------------------------------------------
+# 输出：pushover.csv
+#   disp_mm,shear_kN
+#   顶点位移（mm），基底剪力（kN）
+# =============================================================
+
+import openseespy.opensees as ops
+import numpy as np
+
+# ---------- 1. 初始化模型 ----------
+ops.wipe()
+ops.model('basic', '-ndm', 2, '-ndf', 3)
+
+# 节点（单位：mm）
+H = 3000.0        # 柱高
+L = 5000.0        # 跨度
+
+ops.node(1, 0.0, 0.0)     # 左柱底
+ops.node(2, 0.0, H)       # 左柱顶
+ops.node(3, L,  0.0)      # 右柱底
+ops.node(4, L,  H)        # 右柱顶
+
+# 约束：柱底固定
+ops.fix(1, 1, 1, 1)
+ops.fix(3, 1, 1, 1)
+
+# ---------- 2. 材料本构 ----------
+# Steel01：双线性随动强化钢材
+Fy = 235.0        # 屈服强度 MPa
+E0 = 210000.0     # 弹性模量 MPa
+b  = 0.02         # 强化比
+
+ops.uniaxialMaterial('Steel01', 1, Fy, E0, b)
+
+# ---------- 3. 纤维截面 ----------
+secTag = 1
+ops.section('Fiber', secTag)
+
+# 矩形截面 400×400，用 10×10 纤维离散
+# patch('rect', matTag, numSubdivY, numSubdivZ, yI, zI, yJ, zJ)
+B = 400.0
+ops.patch('rect', 1, 10, 10, -B/2, -B/2, B/2, B/2)
+
+# ---------- 4. 单元 ----------
+# 几何转换：线性
+ops.geomTransf('Linear', 1)
+
+# 非线性梁柱单元：forceBeamColumn
+# 沿长度方向用 Lobatto 积分，5 个积分点
+integTag = 1
+ops.beamIntegration('Lobatto', integTag, secTag, 5)
+
+ops.element('forceBeamColumn', 1, 1, 2, 1, integTag)  # 左柱
+ops.element('forceBeamColumn', 2, 3, 4, 1, integTag)  # 右柱
+
+# 刚性梁（弹性，刚度放大 100 倍）
+ops.element('elasticBeamColumn', 3, 2, 4,
+            B*B, E0*100, 1e10, 1)
+
+# ---------- 5. 重力荷载 ----------
+ops.timeSeries('Linear', 1)
+ops.pattern('Plain', 1, 1)
+
+# 每个柱顶施加 100 kN 竖向荷载
+ops.load(2, 0.0, -100000.0, 0.0)
+ops.load(4, 0.0, -100000.0, 0.0)
+
+ops.system('BandGeneral')
+ops.numberer('RCM')
+ops.constraints('Plain')
+ops.algorithm('Newton')
+ops.integrator('LoadControl', 0.1)
+ops.analysis('Static')
+
+ok = ops.analyze(10)
+if ok != 0:
+    raise RuntimeError('重力荷载分析不收敛')
+
+# 时间归零，重力荷载保持
+ops.loadConst('-time', 0.0)
+
+# ---------- 6. Pushover 工况 ----------
+# 倒三角分布：单层结构 → 侧向力全部加在柱顶
+V_ref = 10000.0   # 参考侧向力 N
+
+ops.pattern('Plain', 2, 1)
+ops.load(2, V_ref, 0.0, 0.0)
+ops.load(4, V_ref, 0.0, 0.0)
+
+# 位移控制：控制节点 4，自由度 1（X 方向），步长 0.1 mm
+d_incr = 0.1
+ops.integrator('DisplacementControl', 4, 1, d_incr)
+
+ops.system('BandGeneral')
+ops.numberer('RCM')
+ops.constraints('Plain')
+ops.algorithm('Newton')
+ops.test('NormDispIncr', 1e-6, 20, 0)
+ops.analysis('Static')
+
+# ---------- 7. 逐步加载并记录 ----------
+N_steps = 3000
+d_list = []
+V_list = []
+
+for i in range(N_steps):
+    ok = ops.analyze(1)
+    if ok != 0:
+        print(f'不收敛，第 {i} 步，位移 = {ops.nodeDisp(4,1):.2f} mm')
+        break
+
+    d = ops.nodeDisp(4, 1)           # 顶点位移 mm
+    lam = ops.getTime()              # 加载系数
+    V = lam * 2 * V_ref / 1000.0     # 基底剪力 kN（两根柱侧向力之和）
+
+    d_list.append(d)
+    V_list.append(V)
+
+    if i % 200 == 0:
+        print(f'  step {i:5d}  d = {d:8.2f} mm  V = {V:8.2f} kN')
+
+# ---------- 8. 导出 CSV ----------
+d_arr = np.array(d_list)
+V_arr = np.array(V_list)
+out = np.column_stack([d_arr, V_arr])
+
+np.savetxt('pushover.csv', out,
+           delimiter=',',
+           header='disp_mm,shear_kN',
+           comments='',
+           fmt='%.4f')
+
+print(f'\n共 {len(d_arr)} 个点')
+print(f'顶点位移范围：{d_arr.min():.2f} – {d_arr.max():.2f} mm')
+print(f'基底剪力范围：{V_arr.min():.2f} – {V_arr.max():.2f} kN')
+print('已保存 pushover.csv')</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>单元类型</strong>：<code>forceBeamColumn</code>（力插值梁柱单元），
+            配合<strong>纤维截面</strong>自动考虑轴力–弯矩耦合。</li>
+          <li><strong>积分点</strong>：<code>Lobatto</code> 5 点，两端积分点正好落在节点处，
+            能准确捕捉端部塑性铰。</li>
+          <li><strong>加载模式</strong>：倒三角分布要求 F<sub>i</sub> ∝ m<sub>i</sub>·h<sub>i</sub>，
+            单层结构退化为全部加在柱顶。</li>
+          <li><strong>位移控制</strong>：控制节点取屋顶质心，步长 0.1 mm，
+            总步数 3000 对应 300 mm 的顶点位移。</li>
+          <li><strong>基底剪力换算</strong>：V = 加载系数 × 侧向力合力，
+            单位从 N 换算为 kN。</li>
+          <li><strong>重力荷载</strong>：先加载，再用 <code>loadConst('-time', 0)</code>
+            把时间归零，保证 Pushover 从结构自重平衡态开始。</li>
+          <li><strong>收敛判据</strong>：<code>NormDispIncr</code> 容差 1e-6，
+            最大 20 次迭代，超过则判定不收敛（通常已到下降段）。</li>
+        </ul>
+      </div>
+
+      <div class="callout warn">
+        <strong>常见不收敛原因：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>步长太大</strong>——位移增量超过塑性铰的发展速度，减小到 0.05 mm 或更小。</li>
+          <li><strong>算法不稳健</strong>——把 <code>Newton</code> 换成
+            <code>ModifiedNewton</code> 或 <code>KrylovNewton</code>。</li>
+          <li><strong>下降段</strong>——承载力下降超过 20% 后求解困难，
+            改用 <code>ArcLength</code> 弧长法。</li>
+          <li><strong>本构参数不合理</strong>——检查 F<sub>y</sub>、E<sub>0</sub>、b，
+            以及纤维截面的尺寸与配筋。</li>
+          <li><strong>单元划分过粗</strong>——增加积分点数量，或改为
+            <code>dispBeamColumn</code> + 更细的网格。</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <strong>用其他程序时的对应设置：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>SAP2000</strong>：定义<strong>默认塑性铰</strong>（FEMA 356）→
+            新建 Pushover 工况 → 加载模式选“倒三角” → 控制位移 150 mm → 运行 → 导出 Base Reactions。</li>
+          <li><strong>ETABS</strong>：类似，用 <strong>Nonlinear Static</strong> 工况，
+            结果表格里取 Joint Displacements 与 Base Reactions。</li>
+          <li><strong>Perform-3D</strong>：用 <strong>Fiber Section</strong> + 
+            <strong>Inelastic Bar</strong> 单元，Pushover 工况与 OpenSees 思路一致。</li>
+          <li><strong>ABAQUS</strong>：用 <strong>Static, Riks</strong> 分析步，
+            位移控制加载，提取顶部参考点的反力与位移。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        Pushover 曲线描述结构在<strong>单调递增侧向力</strong>作用下的
+        整体非线性行为。横轴为控制节点的顶点位移 d，纵轴为基底剪力 V。
+        曲线一般分为三个阶段：
+      </p>
+
+      <ul class="plain">
+        <li><strong>弹性段</strong>——所有构件保持弹性，V 与 d 近似线性，
+          斜率即<strong>初始刚度 K<sub>e</sub></strong>；</li>
+        <li><strong>强化段</strong>——部分构件屈服，刚度下降，
+          曲线以较小的斜率继续上升；</li>
+        <li><strong>下降段</strong>——构件进入破坏或失稳，承载力开始衰减，
+          峰值点标志着结构的<strong>极限承载力</strong>。</li>
+      </ul>
+
+      <h3 class="sub">双线性理想化的意义</h3>
+
+      <p>
+        真实的 Pushover 曲线是连续光滑的，直接用于计算不方便。
+        工程上通常把它<strong>理想化为双线性</strong>：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        V(d) = K<sub>e</sub> · d &nbsp;&nbsp;(d ≤ d<sub>y</sub>) &nbsp;&nbsp;,&nbsp;&nbsp;
+        V(d) = V<sub>y</sub> &nbsp;&nbsp;(d<sub>y</sub> &lt; d ≤ d<sub>u</sub>)
+      </div>
+
+      <p>
+        最常用的双线性化方法是<strong>等能量法</strong>（equal energy）：
+        让双线性曲线与原曲线包围的面积相等。这样得到的等效体系
+        与原结构在<strong>耗能</strong>上一致，是能力谱法与
+        FEMA 356 系数法的基础。
+      </p>
+
+      <h3 class="sub">从双线性化得到的五个关键量</h3>
+
+      <ul class="plain">
+        <li><strong>初始刚度 K<sub>e</sub></strong>——弹性段斜率，
+          反映结构的初始整体刚度。</li>
+        <li><strong>屈服承载力 V<sub>y</sub></strong>——理想化弹性段的终点剪力，
+          是结构"屈服"的等效标志。</li>
+        <li><strong>屈服位移 d<sub>y</sub></strong>——d<sub>y</sub> = V<sub>y</sub> / K<sub>e</sub>。</li>
+        <li><strong>极限位移 d<sub>u</sub></strong>——分析结束时的位移，
+          通常取峰值承载力下降 15–20% 处，或层间位移角达到规范限值处。</li>
+        <li><strong>延性比 μ = d<sub>u</sub> / d<sub>y</sub></strong>——衡量结构
+          弹塑性变形能力的关键指标。μ 越大，结构抗震性能越好。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与能力谱法的关系：</strong>
+        把 Pushover 曲线的 V–d 关系转换为
+        <strong>能力谱</strong>（S<sub>a</sub>–S<sub>d</sub>）后，
+        与需求谱放在同一张 ADRS 图上，二者的交点即为<strong>性能点</strong>，
+        对应结构在给定地震作用下的位移需求。
+        本页的双线性化结果就是能力谱的输入。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>Pushover 分析本身是一种<strong>静力近似</strong>，
+        不考虑高阶振型、扭矩与循环加载退化。用于高层结构或
+        扭转不规则结构时，需要与动力时程分析结果对照。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由 <code>assets/pushover.csv</code> 实时计算：
+        读取 CSV → 等能量法双线性化 → 绘制原始曲线、双线性理想化、
+        屈服点与峰值点。画布尺寸按 A4 排版（720 × 440 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/pushover.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="po-canvas-wrap">
+        <canvas id="c-pushover"></canvas>
+      </div>
+
+      <div class="po-note" style="margin-top:14px;">
+        横轴为顶点位移 d（mm），纵轴为基底剪力 V（kN）。
+        橙色实线为原始 Pushover 曲线；蓝色虚线为等能量法双线性理想化；
+        两个圆点分别为屈服点与峰值点。
+        图中同时给出 K<sub>e</sub>、V<sub>y</sub>、d<sub>y</sub>、d<sub>u</sub>、μ 五个量。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心函数 <code>bilinear_idealization</code> 用等能量法把
+        原始 Pushover 曲线转换为理想弹塑性双线性。
+        CSV 文件不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>pushover.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# Pushover 曲线 | 基底剪力 - 顶点位移
+# -------------------------------------------------------------
+# 输入数据：pushover.csv
+#   disp_mm,shear_kN
+#   0.0,0.0
+#   2.5,60.0
+#   ...
+#   单位：位移 mm，剪力 kN
+# -------------------------------------------------------------
+# 功能：
+#   1. 读取 CSV（或使用内置合成数据）
+#   2. 等能量法双线性化，得到 Ke、Vy、dy、du、mu
+#   3. 绘制原始曲线 + 双线性化 + 屈服点 + 峰值点
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'pushover.csv'
+
+
+def generate_synthetic():
+    """CSV 缺失时生成合成 Pushover 曲线（三段折线）。"""
+    d = np.arange(0, 151, 2.5)
+    V = np.zeros_like(d)
+    for i, di in enumerate(d):
+        if di &lt;= 25:
+            V[i] = 24.0 * di
+        elif di &lt;= 100:
+            V[i] = 600.0 + (800.0 - 600.0) / (100.0 - 25.0) * (di - 25.0)
+        else:
+            V[i] = 800.0 - 2.0 * (di - 100.0)
+    return d, V
+
+
+def bilinear_idealization(d, V):
+    """等能量法双线性化（理想弹塑性）。
+
+    参数
+    ----
+    d : 顶点位移数组
+    V : 基底剪力数组
+
+    返回
+    ----
+    Ke : 初始刚度
+    Vy : 屈服承载力
+    dy : 屈服位移
+    du : 极限位移（取最后一个点）
+    """
+    d = np.asarray(d, dtype=float)
+    V = np.asarray(V, dtype=float)
+
+    # ---- 初始刚度：用 d &lt;= 10% d_max 的数据点线性拟合 ----
+    mask = d &lt;= 0.1 * d.max()
+    if mask.sum() &gt;= 3:
+        Ke = np.polyfit(d[mask], V[mask], 1)[0]
+    else:
+        Ke = V[1] / d[1]
+
+    # ---- 极限位移取最后一个点 ----
+    du = d[-1]
+
+    # ---- 原始曲线下的面积 ----
+    A_actual = np.trapz(V, d)
+
+    # ---- 解方程 Vy*du - 0.5*Vy^2/Ke = A_actual ----
+    #      等价于 Vy^2 - 2*Ke*du*Vy + 2*Ke*A_actual = 0
+    disc = du ** 2 - 2.0 * A_actual / Ke
+    if disc &lt; 0:
+        Vy = 0.6 * V.max()   # 异常情况：退化为 0.6 Vmax
+    else:
+        Vy = Ke * (du - np.sqrt(disc))
+
+    dy = Vy / Ke
+    return Ke, Vy, dy, du
+
+
+# ---- 1. 读取 CSV ----
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    d = np.asarray(data['disp_mm'], dtype=float)
+    V = np.asarray(data['shear_kN'], dtype=float)
+    print(f'从 {CSV_FILE} 读取 {len(d)} 个点')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    d, V = generate_synthetic()
+
+
+# ---- 2. 双线性化 ----
+Ke, Vy, dy, du = bilinear_idealization(d, V)
+mu = du / dy
+
+print(f'初始刚度   Ke = {Ke:.2f} kN/mm')
+print(f'屈服承载力 Vy = {Vy:.2f} kN')
+print(f'屈服位移   dy = {dy:.2f} mm')
+print(f'极限位移   du = {du:.2f} mm')
+print(f'延性比     mu = {mu:.2f}')
+
+
+# ---- 3. 绘图（A4 尺寸 7.2 × 4.4 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 4.4))
+
+# 原始曲线
+ax.plot(d, V, lw=1.8, color='#b45309', label='Pushover curve')
+
+# 双线性理想化
+ax.plot([0, dy, du], [0, Vy, Vy], lw=1.6, color='#2563eb',
+        ls='--', label='Bilinear idealization')
+
+# 屈服点
+ax.plot(dy, Vy, 'o', color='#2563eb', ms=7, zorder=5)
+ax.annotate(
+    f'Yield  (dy = {dy:.1f} mm, Vy = {Vy:.0f} kN)',
+    xy=(dy, Vy), xytext=(dy + 15, Vy * 0.72),
+    fontsize=9, color='#2563eb',
+    arrowprops=dict(arrowstyle='-', color='#2563eb', lw=0.7))
+
+# 峰值点
+i_peak = int(np.argmax(V))
+ax.plot(d[i_peak], V[i_peak], 'o', color='#b45309', ms=7, zorder=5)
+ax.annotate(
+    f'Peak  ({d[i_peak]:.0f} mm, {V[i_peak]:.0f} kN)',
+    xy=(d[i_peak], V[i_peak]),
+    xytext=(d[i_peak] + 8, V[i_peak] * 0.98),
+    fontsize=9, color='#b45309',
+    arrowprops=dict(arrowstyle='-', color='#b45309', lw=0.7))
+
+# 极限位移竖线
+ax.axvline(du, color='#888888', lw=0.7, ls=':')
+ax.text(du - 3, V.max() * 0.05, f'du = {du:.0f} mm',
+        fontsize=9, color='#555555', ha='right')
+
+ax.set_xlabel('Roof displacement  d (mm)')
+ax.set_ylabel('Base shear  V (kN)')
+ax.set_title('Pushover curve and bilinear idealization', fontsize=11)
+ax.set_xlim(0, d.max() * 1.05)
+ax.set_ylim(0, V.max() * 1.18)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='lower right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('pushover.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>初始刚度</strong>：用前 10% 位移范围内的数据点做<strong>线性拟合</strong>，
+            比直接用第一个点的斜率更稳健。</li>
+          <li><strong>等能量法</strong>：令双线性曲线与原曲线包围的面积相等，
+            解一元二次方程得到 V<sub>y</sub>。</li>
+          <li><strong>极限位移</strong>：本页取最后一个数据点。实际工程中通常取
+            峰值承载力下降 15–20% 处，或层间位移角达到规范限值处。</li>
+          <li><strong>延性比</strong>：μ = d<sub>u</sub>/d<sub>y</sub>，
+            是结构抗震性能的核心指标。</li>
+          <li>替换为真实 Pushover 数据只需修改 <code>pushover.csv</code>。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。<code>local_bilinear</code> 局部函数实现等能量法双线性化，
+        用 <code>trapz</code> 计算曲线下面积。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>pushover.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% Pushover 曲线 | 基底剪力 - 顶点位移
+% -------------------------------------------------------------
+% 输入数据：pushover.csv
+%   disp_mm,shear_kN
+%   0.0,0.0
+%   2.5,60.0
+%   ...
+%   单位：位移 mm，剪力 kN
+% =============================================================
+
+CSV_FILE = 'pushover.csv';
+
+% ---- 1. 读取 CSV ----
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    d = T.disp_mm;
+    V = T.shear_kN;
+    fprintf('从 %s 读取 %d 个点\n', CSV_FILE, numel(d));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    d = (0:2.5:150)';
+    V = zeros(size(d));
+    for i = 1:numel(d)
+        di = d(i);
+        if di &lt;= 25
+            V(i) = 24.0 * di;
+        elseif di &lt;= 100
+            V(i) = 600.0 + (800.0 - 600.0) / (100.0 - 25.0) * (di - 25.0);
+        else
+            V(i) = 800.0 - 2.0 * (di - 100.0);
+        end
+    end
+end
+
+% ---- 2. 双线性化 ----
+[Ke, Vy, dy, du] = bilinear_idealization(d, V);
+mu = du / dy;
+
+fprintf('初始刚度   Ke = %.2f kN/mm\n', Ke);
+fprintf('屈服承载力 Vy = %.2f kN\n', Vy);
+fprintf('屈服位移   dy = %.2f mm\n', dy);
+fprintf('极限位移   du = %.2f mm\n', du);
+fprintf('延性比     mu = %.2f\n', mu);
+
+% ---- 3. 绘图（A4 尺寸 720 × 440 px） ----
+figure('Color', 'w', 'Position', [100 100 720 440]);
+hold on;
+
+% 原始曲线
+plot(d, V, 'Color', [0.71 0.33 0.04], 'LineWidth', 1.8, ...
+     'DisplayName', 'Pushover curve');
+
+% 双线性
+plot([0, dy, du], [0, Vy, Vy], '--', 'Color', [0.15 0.39 0.92], ...
+     'LineWidth', 1.6, 'DisplayName', 'Bilinear idealization');
+
+% 屈服点
+plot(dy, Vy, 'o', 'MarkerFaceColor', [0.15 0.39 0.92], ...
+     'MarkerEdgeColor', 'none', 'MarkerSize', 8, ...
+     'HandleVisibility', 'off');
+
+% 峰值点
+[V_peak, i_peak] = max(V);
+plot(d(i_peak), V_peak, 'o', 'MarkerFaceColor', [0.71 0.33 0.04], ...
+     'MarkerEdgeColor', 'none', 'MarkerSize', 8, ...
+     'HandleVisibility', 'off');
+
+% 标注
+text(dy + 8, Vy * 0.75, ...
+     sprintf('Yield  (dy = %.1f mm, Vy = %.0f kN)', dy, Vy), ...
+     'FontSize', 9, 'Color', [0.15 0.39 0.92]);
+text(d(i_peak) + 5, V_peak * 0.98, ...
+     sprintf('Peak  (%.0f mm, %.0f kN)', d(i_peak), V_peak), ...
+     'FontSize', 9, 'Color', [0.71 0.33 0.04]);
+
+% 极限位移竖线
+xline(du, ':', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7, ...
+      'HandleVisibility', 'off');
+text(du - 2, max(V) * 0.05, sprintf('du = %.0f mm', du), ...
+     'FontSize', 9, 'Color', [0.33 0.33 0.33], ...
+     'HorizontalAlignment', 'right');
+
+% 坐标轴
+xlabel('Roof displacement  d (mm)');
+ylabel('Base shear  V (kN)');
+title('Pushover curve and bilinear idealization', 'FontSize', 11);
+xlim([0, max(d) * 1.05]);
+ylim([0, max(V) * 1.18]);
+grid on; box on;
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in');
+legend('Location', 'southeast', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'pushover.png', 'Resolution', 300);
+
+
+% ===== 局部函数：等能量法双线性化 =====
+function [Ke, Vy, dy, du] = bilinear_idealization(d, V)
+    d = d(:); V = V(:);
+
+    % 初始刚度：d &lt;= 10% * d_max 线性拟合
+    mask = d &lt;= 0.1 * max(d);
+    if sum(mask) &gt;= 2
+        p = polyfit(d(mask), V(mask), 1);
+        Ke = p(1);
+    else
+        Ke = V(2) / d(2);
+    end
+
+    du = d(end);
+    A_actual = trapz(d, V);
+
+    disc = du ^ 2 - 2.0 * A_actual / Ke;
+    if disc &lt; 0
+        Vy = 0.6 * max(V);
+    else
+        Vy = Ke * (du - sqrt(disc));
+    end
+
+    dy = Vy / Ke;
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:160px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 顶点位移</td><td>d</td><td><code>mm</code></td></tr>
+            <tr><td><strong>输入</strong> · 基底剪力</td><td>V</td><td><code>kN</code></td></tr>
+            <tr><td><strong>输出</strong> · 初始刚度</td><td>K<sub>e</sub></td><td><code>kN/mm</code></td></tr>
+            <tr><td><strong>输出</strong> · 屈服承载力</td><td>V<sub>y</sub></td><td><code>kN</code></td></tr>
+            <tr><td><strong>输出</strong> · 屈服位移</td><td>d<sub>y</sub></td><td><code>mm</code></td></tr>
+            <tr><td><strong>输出</strong> · 极限位移</td><td>d<sub>u</sub></td><td><code>mm</code></td></tr>
+            <tr><td><strong>输出</strong> · 延性比</td><td>μ = d<sub>u</sub>/d<sub>y</sub></td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>初始刚度：</strong>用前 10% 位移范围内的数据点线性拟合。
+          这样比用第一个点更稳健，减少初始不平滑的影响。</li>
+        <li><strong>等能量法：</strong>令双线性曲线与原曲线包围面积相等。
+          面积公式 A = V<sub>y</sub>·d<sub>u</sub> − 0.5·V<sub>y</sub>²/K<sub>e</sub>。</li>
+        <li><strong>方程求解：</strong>对 V<sub>y</sub> 解一元二次方程
+          V<sub>y</sub>² − 2K<sub>e</sub>d<sub>u</sub>V<sub>y</sub> + 2K<sub>e</sub>A = 0，
+          取较小的根（理想弹塑性双线性的屈服点在下降段之前）。</li>
+        <li><strong>极限位移选取：</strong>本页取最后一个数据点。工程上通常取
+          峰值承载力下降 15–20% 处，或层间位移角达到规范限值处。</li>
+        <li><strong>延性比：</strong>μ = d<sub>u</sub>/d<sub>y</sub>，是结构
+          抗震性能的核心指标。混凝土框架 μ ≈ 3–5，钢结构 μ ≈ 5–8。</li>
+        <li><strong>与能力谱的关系：</strong>双线性化后，把 V–d 转成
+          S<sub>a</sub>–S<sub>d</sub> 即得能力谱，与需求谱求交得到性能点。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>双线性曲线与原曲线偏差很大 → 检查初始刚度拟合范围，
+              可改用 0.6·V<sub>max</sub> 经验法。</li>
+            <li>V<sub>y</sub> 明显偏大或偏小 → 检查极限位移 d<sub>u</sub>
+              的选取是否合理。</li>
+            <li>μ 值异常大（&gt; 10）→ 可能包含了非结构位移或数值发散段，
+              需检查原始 Pushover 分析。</li>
+            <li>CSV 编码乱码 → 保存为 UTF-8，列名严格按示例。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（Pushover、能力谱法、性能化设计）、
+        <a href="../structural-dynamics.html">结构动力学</a>（SDOF 弹塑性响应、延性）、
+        <a href="../plasticity.html">塑性力学</a>（屈服准则、本构关系）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · Pushover 曲线</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# pushover.csv',
+    '# Pushover 分析结果 —— 基底剪力 vs 顶点位移',
+    '# 单位：位移 mm，剪力 kN',
+    'disp_mm,shear_kN',
+    '0.0,0.0',
+    '2.5,60.0',
+    '5.0,120.0',
+    '7.5,180.0',
+    '10.0,240.0',
+    '12.5,300.0',
+    '15.0,360.0',
+    '17.5,420.0',
+    '20.0,480.0',
+    '22.5,540.0',
+    '25.0,600.0',
+    '30.0,613.3',
+    '35.0,626.7',
+    '40.0,640.0',
+    '45.0,653.3',
+    '50.0,666.7',
+    '55.0,680.0',
+    '60.0,693.3',
+    '65.0,706.7',
+    '70.0,720.0',
+    '75.0,733.3',
+    '80.0,746.7',
+    '85.0,760.0',
+    '90.0,773.3',
+    '95.0,786.7',
+    '100.0,800.0',
+    '105.0,790.0',
+    '110.0,780.0',
+    '115.0,770.0',
+    '120.0,760.0',
+    '125.0,750.0',
+    '130.0,740.0',
+    '135.0,730.0',
+    '140.0,720.0',
+    '145.0,710.0',
+    '150.0,700.0'
+  ].join('\n') + '\n';
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var d = [], V = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (line.toLowerCase().indexOf('disp') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 2) continue;
+      var x = parseFloat(parts[0]);
+      var y = parseFloat(parts[1]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      d.push(x); V.push(y);
+    }
+    return { d: d, V: V };
+  }
+
+  /* ============================================================
+     等能量法双线性化
+     ============================================================ */
+  function bilinearIdealization(d, V) {
+    var n = d.length;
+
+    /* 初始刚度：d <= 10% * dmax 线性拟合 */
+    var dmax = 0;
+    for (var i = 0; i < n; i++) if (d[i] > dmax) dmax = d[i];
+    var threshold = 0.1 * dmax;
+
+    var sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, cnt = 0;
+    for (var j = 0; j < n; j++) {
+      if (d[j] <= threshold) {
+        sumX += d[j];
+        sumY += V[j];
+        sumXY += d[j] * V[j];
+        sumX2 += d[j] * d[j];
+        cnt++;
+      }
+    }
+
+    var Ke;
+    if (cnt >= 2) {
+      var denom = cnt * sumX2 - sumX * sumX;
+      if (Math.abs(denom) > 1e-12) {
+        Ke = (cnt * sumXY - sumX * sumY) / denom;
+      } else {
+        Ke = V[1] / d[1];
+      }
+    } else {
+      Ke = V[1] / d[1];
+    }
+
+    var du = d[n - 1];
+
+    /* 原始曲线下的面积（梯形法） */
+    var A = 0;
+    for (var k = 1; k < n; k++) {
+      A += 0.5 * (V[k - 1] + V[k]) * (d[k] - d[k - 1]);
+    }
+
+    /* 解方程 Vy*du - 0.5*Vy^2/Ke = A */
+    var disc = du * du - 2.0 * A / Ke;
+    var Vy;
+    if (disc < 0) {
+      var vmax = 0;
+      for (var m = 0; m < n; m++) if (V[m] > vmax) vmax = V[m];
+      Vy = 0.6 * vmax;
+    } else {
+      Vy = Ke * (du - Math.sqrt(disc));
+    }
+
+    var dy = Vy / Ke;
+    return { Ke: Ke, Vy: Vy, dy: dy, du: du };
+  }
+
+  /* ============================================================
+     绘图工具
+     ============================================================ */
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.floor(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      if (v >= min - step * 1e-6) ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtAxis(v, step) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 1000) return v.toFixed(0);
+    if (step < 0.5) return v.toFixed(2);
+    if (step < 5) return v.toFixed(1);
+    return v.toFixed(0);
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawPushover(canvasId, d, V, result) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 440);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* ---- 范围 ---- */
+    var dMax = 0, vMax = 0;
+    for (var i = 0; i < d.length; i++) {
+      if (d[i] > dMax) dMax = d[i];
+      if (V[i] > vMax) vMax = V[i];
+    }
+    var xMin = 0, xMax = dMax * 1.05;
+    var yMin = 0, yMax = vMax * 1.18;
+
+    var margin = { top: 16, right: 26, bottom: 46, left: 74 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + (v - xMin) / (xMax - xMin) * pw; }
+    function toY(v) { return py + ph - (v - yMin) / (yMax - yMin) * ph; }
+
+    var xTicks = niceLinearTicks(xMin, xMax, 5);
+    var yTicks = niceLinearTicks(yMin, yMax, 5);
+
+    /* ---- 网格 ---- */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var yy = toY(yTicks[yi]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xTicks.length; xi++) {
+      var xx = toX(xTicks[xi]);
+      ctx.beginPath();
+      ctx.moveTo(xx, py);
+      ctx.lineTo(xx, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 原始 Pushover 曲线 ---- */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.8;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var k = 0; k < d.length; k++) {
+      var cxp = toX(d[k]);
+      var cyp = toY(V[k]);
+      if (k === 0) ctx.moveTo(cxp, cyp);
+      else ctx.lineTo(cxp, cyp);
+    }
+    ctx.stroke();
+
+    /* ---- 双线性理想化 ---- */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(0));
+    ctx.lineTo(toX(result.dy), toY(result.Vy));
+    ctx.lineTo(toX(result.du), toY(result.Vy));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 屈服点 ---- */
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.arc(toX(result.dy), toY(result.Vy), 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* ---- 峰值点 ---- */
+    var iPeak = 0;
+    for (var p = 1; p < V.length; p++) if (V[p] > V[iPeak]) iPeak = p;
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.arc(toX(d[iPeak]), toY(V[iPeak]), 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* ---- 极限位移虚线 ---- */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(toX(result.du), py);
+    ctx.lineTo(toX(result.du), py + ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 标注：屈服点 ---- */
+    ctx.fillStyle = '#2563eb';
+    ctx.font = '10.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var yldX = toX(result.dy) + 10;
+    var yldY = toY(result.Vy) - 22;
+    if (yldX + 170 > px + pw) yldX = toX(result.dy) - 180;
+    ctx.fillText('Yield  (dy = ' + result.dy.toFixed(1) + ' mm,',
+                 yldX, yldY);
+    ctx.fillText('Vy = ' + result.Vy.toFixed(0) + ' kN)',
+                 yldX, yldY + 13);
+
+    /* ---- 标注：峰值点 ---- */
+    ctx.fillStyle = '#b45309';
+    var pkX = toX(d[iPeak]) + 10;
+    var pkY = toY(V[iPeak]) - 22;
+    if (pkX + 160 > px + pw) pkX = toX(d[iPeak]) - 170;
+    ctx.fillText('Peak  (' + d[iPeak].toFixed(0) + ' mm,',
+                 pkX, pkY);
+    ctx.fillText(V[iPeak].toFixed(0) + ' kN)',
+                 pkX, pkY + 13);
+
+    /* ---- 标注：极限位移 ---- */
+    ctx.fillStyle = '#555555';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('du = ' + result.du.toFixed(0) + ' mm',
+                 toX(result.du) - 4, py + ph - 4);
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    for (var yk = 0; yk < yTicks.length; yk++) {
+      var yky = toY(yTicks[yk]);
+      ctx.beginPath();
+      ctx.moveTo(px, yky);
+      ctx.lineTo(px + mainTick, yky);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px + pw, yky);
+      ctx.lineTo(px + pw - mainTick, yky);
+      ctx.stroke();
+    }
+    for (var xk = 0; xk < xTicks.length; xk++) {
+      var xkx = toX(xTicks[xk]);
+      ctx.beginPath();
+      ctx.moveTo(xkx, py + ph);
+      ctx.lineTo(xkx, py + ph - mainTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xkx, py);
+      ctx.lineTo(xkx, py + mainTick);
+      ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    var xStep = xTicks.length > 1 ? xTicks[1] - xTicks[0] : 1;
+    var yStep = yTicks.length > 1 ? yTicks[1] - yTicks[0] : 1;
+
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      ctx.fillText(fmtAxis(yTicks[yl], yStep),
+                   px - 6, toY(yTicks[yl]));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xTicks.length; xl++) {
+      ctx.fillText(fmtAxis(xTicks[xl], xStep),
+                   toX(xTicks[xl]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 56, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Base shear  V (kN)', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Roof displacement  d (mm)', px + pw / 2, H - 4);
+
+    /* ---- 图例（左上角） ---- */
+    var lgW = 168;
+    var lgH = 50;
+    var lgx = px + 8;
+    var lgy = py + 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.font = '10.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    /* Pushover curve */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(lgx + 8, lgy + 14);
+    ctx.lineTo(lgx + 24, lgy + 14);
+    ctx.stroke();
+    ctx.fillStyle = '#222222';
+    ctx.fillText('Pushover curve', lgx + 30, lgy + 14);
+
+    /* Bilinear */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(lgx + 8, lgy + 34);
+    ctx.lineTo(lgx + 24, lgy + 34);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#222222';
+    ctx.fillText('Bilinear idealization', lgx + 30, lgy + 34);
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render(d, V) {
+    var result = bilinearIdealization(d, V);
+    drawPushover('c-pushover', d, V, result);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var iPeak = 0;
+      for (var p = 1; p < V.length; p++) if (V[p] > V[iPeak]) iPeak = p;
+
+      status.textContent = d.length + ' 个数据点 · ' +
+                           'Ke = ' + result.Ke.toFixed(1) + ' kN/mm · ' +
+                           'Vy = ' + result.Vy.toFixed(0) + ' kN · ' +
+                           'dy = ' + result.dy.toFixed(1) + ' mm · ' +
+                           'du = ' + result.du.toFixed(0) + ' mm · ' +
+                           'μ = ' + (result.du / result.dy).toFixed(1) + ' · ' +
+                           '峰值 ' + V[iPeak].toFixed(0) + ' kN @ ' +
+                           d[iPeak].toFixed(0) + ' mm';
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/pushover.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var parsed = parseCSV(text);
+        if (parsed.d.length < 4) throw new Error('有效数据点不足');
+        render(parsed.d, parsed.V);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[pushover] 读取 assets/pushover.csv 失败，使用内联 CSV：', err);
+        }
+        var parsed = parseCSV(DEFAULT_CSV);
+        render(parsed.d, parsed.V);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV
+     ============================================================ */
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'pushover.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

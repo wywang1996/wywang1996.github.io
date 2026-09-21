@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>傅里叶幅值谱 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.fs-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.fs-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.fs-canvas-wrap canvas {
+  width: 100%;
+  height: 380px;
+  display: block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      傅里叶幅值谱
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 地震动特性</div>
+      <h1>傅里叶幅值谱</h1>
+      <p class="lead">
+        对 <code>assets/elcentro_EW.txt</code> 的加速度记录做 FFT，
+        加 Hann 窗抑制频谱泄漏，双对数坐标显示频域能量分布与卓越频率。
+        这是《数字信号处理》与《地震动谱分析入门》的交叉应用。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">FFT</span>
+        <span class="pill">Hann 窗</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">Input Format</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本模板读取<strong>两列文本文件</strong>（空格、制表符或逗号分隔），
+        与 El Centro、SAC ASCII 等地震记录格式一致。<strong>量纲必须明确</strong>，
+        否则得到的傅里叶幅值会差若干量级。
+      </p>
+
+      <div class="io-card">
+        <h4>输入文件要求</h4>
+        <table>
+          <thead><tr>
+            <th style="width:80px;">列号</th><th style="width:120px;">物理量</th>
+            <th style="width:160px;">推荐单位</th><th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>第 1 列</td><td>时间 t</td><td><code>s</code>（秒）</td><td>等间隔。程序用相邻两点之差推算采样步长 dt。</td></tr>
+            <tr><td>第 2 列</td><td>地面加速度 a<sub>g</sub></td><td><code>g</code>（重力加速度）</td><td>也可为 <code>m/s²</code> 或 <code>gal</code>（cm/s²）。</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">常用量纲的换算</h4>
+        <table>
+          <thead><tr>
+            <th style="width:160px;">你的数据单位</th>
+            <th style="width:200px;">换算到 m/s²</th>
+            <th>代码里怎么写</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>g</code></td><td>× 9.80665</td><td><code>a = a * 9.80665</code></td></tr>
+            <tr><td><code>m/s²</code></td><td>× 1</td><td><code>a = a</code></td></tr>
+            <tr><td><code>gal</code>（cm/s²）</td><td>× 0.01</td><td><code>a = a * 0.01</code></td></tr>
+            <tr><td><code>mm/s²</code></td><td>× 0.001</td><td><code>a = a * 0.001</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>本页示例</strong> <code>assets/elcentro_EW.txt</code> 的第 2 列单位是 <strong>g</strong>，
+          绘图时幅值单位为 <strong>g·s</strong>。代码<strong>不做去均值、不去线性趋势</strong>，
+          直接对原始记录做 FFT。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">输入文件示例（前 5 行）</h4>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>elcentro_EW.txt</span><span class="lang">TXT</span></div>
+        </div>
+<pre><code>0.0000000e+000 3.0591000e-004
+2.0000000e-002 1.9374299e-003
+4.0000000e-002 6.9339600e-003
+6.0000000e-002 2.9571300e-003
+8.0000000e-002 2.9571300e-003
+...
+</code></pre>
+      </div>
+      <p style="font-size:12.5px; color:var(--dim); margin-top:8px;">
+        第 1 列：时间，单位 s；第 2 列：加速度，单位 g。采样率 50 Hz，记录长度约 54 s。
+      </p>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        傅里叶幅值谱把时域加速度记录变换到<strong>频域</strong>，
+        回答"地震动能量主要分布在哪些频率上"。横轴为频率 f（Hz），
+        纵轴为对应频率成分的幅值。
+      </p>
+
+      <p>
+        从物理上看，一条地震记录可以分解为无数个不同频率的正弦波叠加：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        a(t) = Σ A<sub>k</sub> · cos(2π f<sub>k</sub> t + φ<sub>k</sub>)
+      </div>
+
+      <p>傅里叶谱的几个关键特征：</p>
+
+      <ul class="plain">
+        <li><strong>卓越频率：</strong>幅值谱最高峰对应的频率，反映场地或震源的主要振动频率。El Centro 记录的卓越频率一般在 1–2 Hz 左右。</li>
+        <li><strong>高频衰减：</strong>超过某个频率后幅值迅速下降，反映地震波在传播路径上的高频衰减、场地的滤波作用以及震源的高频截止。</li>
+        <li><strong>低频平台：</strong>0.1–1 Hz 之间通常有一段相对平坦的区域。</li>
+        <li><strong>频率分辨率：</strong>Δf = 1/T。54 s 的记录分辨率约 0.019 Hz。</li>
+        <li><strong>Nyquist 频率：</strong>f<sub>N</sub> = 1/(2·dt)，50 Hz 采样对应 25 Hz。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>为什么用双对数坐标？</strong>
+        地震动的频率成分跨越 2–3 个数量级，幅值也跨越几个数量级。
+        双对数坐标能同时展示低频和高频特征，也让幂律衰减在高频段表现为直线。
+      </div>
+
+      <div class="callout warn">
+        <strong>重要提示：</strong>不加窗直接做 FFT 会因为"截断效应"产生频谱泄漏，
+        使谱值失真。工程上通常加 Hann 窗、Hamming 窗或 Kaiser 窗抑制泄漏。
+        <br>
+        本页<strong>不做去均值处理</strong>，DC 分量（f = 0）中会保留原始记录的基线偏置，
+        因此绘图时跳过 DC 点。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面的曲线由 <code>assets/elcentro_EW.txt</code> 实时计算得到：
+        读取两列文本（时间 s / 加速度 g）→ 单位换算 → 加 Hann 窗 → FFT →
+        单边幅值谱归一化 → 双对数坐标绘制。<strong>不做去均值</strong>。
+        画布尺寸按 A4 排版（720 × 380 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">示例数据</span>
+        <span class="fname">elcentro_EW.txt</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="fs-canvas-wrap">
+        <canvas id="c-fourier"></canvas>
+      </div>
+
+      <div class="fs-note" style="margin-top:14px;">
+        横轴为频率 f（Hz），纵轴为单边幅值（输入单位 · s，即 g·s）。双对数坐标。
+        Hann 窗归一化系数 2/(n·mean(win)) 已考虑，使得单一正弦分量的幅值可以被正确还原。
+        <br>
+        输入数据量纲：时间 <strong>s</strong>；加速度 <strong>g</strong>。<strong>不含去均值、去趋势处理</strong>。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。核心步骤：
+        读取两列文本 → 单位换算 → 加 Hann 窗 → FFT → 单边谱归一化 → 双对数绘制。
+        <strong>不做去均值、不去线性趋势</strong>。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>fourier-spectrum.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 输入数据格式（两列文本，空格 / 制表符 / 逗号分隔）
+#   第 1 列：时间 t   —— 单位 s（秒），等间隔
+#   第 2 列：加速度 a —— 单位 g（重力加速度）
+# -------------------------------------------------------------
+# 如果你的加速度列不是 g，请在下方 DATA_UNIT 处选择：
+#   'g'     → 第 2 列单位 g   （× 9.80665 → m/s²）
+#   'm/s2'  → 第 2 列单位 m/s²（× 1）
+#   'gal'   → 第 2 列单位 cm/s²（× 0.01）
+#   'mm/s2' → 第 2 列单位 mm/s²（× 0.001）
+# -------------------------------------------------------------
+# 说明：本脚本不做去均值、不去线性趋势，直接对原始记录做 FFT。
+# =============================================================
+DATA_UNIT = 'g'
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+# ---- 1. 读取两列文本 ----
+t, a_raw = np.loadtxt('elcentro_EW.txt', unpack=True)
+dt = t[1] - t[0]
+n = len(a_raw)
+
+# ---- 2. 单位换算（不去均值） ----
+unit_factor = {'g': 9.80665, 'm/s2': 1.0, 'gal': 0.01, 'mm/s2': 0.001}
+factor = unit_factor.get(DATA_UNIT, 9.80665)
+a = a_raw * factor
+
+# ---- 3. 加 Hann 窗 ----
+win = np.hanning(n)
+a_win = a * win
+
+# ---- 4. FFT ----
+af = np.fft.rfft(a_win)
+freq = np.fft.rfftfreq(n, dt)
+
+# ---- 5. 幅值归一化 ----
+#   系数 2 是单边谱系数，1/mean(win) 补偿窗函数引起的幅值损失。
+amp = np.abs(af) * 2.0 / (n * win.mean())
+amp[0] /= 2.0   # DC 分量不乘 2
+
+# ---- 6. 绘图（A4 尺寸 7.2 × 3.8 in，双对数） ----
+fig, ax = plt.subplots(figsize=(7.2, 3.8))
+ax.loglog(freq[1:], amp[1:], lw=1.0, color='#b45309')
+ax.set_xlabel('Frequency f (Hz)')
+ax.set_ylabel('Fourier amplitude (g·s)')
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.set_title('Fourier amplitude spectrum — El Centro 1940, EW', fontsize=11)
+ax.set_xlim(freq[1], freq[-1])
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+# 纵轴只保留 1、2、5 × 10ⁿ 主刻度
+ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0, 2.0, 5.0), numticks=15))
+ax.yaxis.set_minor_locator(LogLocator(base=10.0, subs=tuple(np.arange(2, 10) * 0.1), numticks=100))
+ax.tick_params(axis='y', which='minor', length=2)
+
+fig.tight_layout()
+fig.savefig('fourier-spectrum.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# ---- 7. 打印卓越频率 ----
+idx = np.argmax(amp[1:]) + 1
+print(f'卓越频率 Tp ≈ {freq[idx]:.4f} Hz (周期 {1/freq[idx]:.3f} s)')
+print(f'频率分辨率 Δf = {freq[1]:.4f} Hz')
+print(f'Nyquist 频率  = {freq[-1]:.2f} Hz')</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>输入量纲</strong>：时间 s，加速度 g（默认）。改 <code>DATA_UNIT</code> 一个变量即可切换单位。</li>
+          <li><code>np.fft.rfft</code> 返回单边复数谱，只包含 0 到 Nyquist 频率。</li>
+          <li><strong>归一化系数</strong> <code>2/(n·mean(win))</code>：2 是单边谱系数，<code>1/mean(win)</code> 补偿窗函数引起的幅值损失。</li>
+          <li>DC 分量（freq=0）不乘 2，因为它在单边谱里本来就只算一次。</li>
+          <li>绘图时跳过第一个点（DC），避免对数坐标下 log(0) 报错。</li>
+          <li><strong>纵轴刻度</strong>：<code>LogLocator(subs=(1, 2, 5))</code> 只保留 1、2、5 × 10ⁿ 主刻度，避免标签拥挤。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        用 <code>fft</code> 做变换，<code>hann</code> 生成 Hann 窗，
+        <code>loglog</code> 绘制双对数曲线。
+        <strong>不做去均值、不去趋势</strong>。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>fourier-spectrum.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 输入数据格式（两列文本，空格 / 制表符 / 逗号分隔）
+%   第 1 列：时间 t   —— 单位 s（秒），等间隔
+%   第 2 列：加速度 a —— 单位 g（重力加速度）
+% -------------------------------------------------------------
+% 如果你的加速度列不是 g，请在下方 DATA_UNIT 处选择：
+%   'g'     → 第 2 列单位 g      （× 9.80665 → m/s²）
+%   'm/s2'  → 第 2 列单位 m/s²   （× 1）
+%   'gal'   → 第 2 列单位 cm/s²  （× 0.01）
+%   'mm/s2' → 第 2 列单位 mm/s²  （× 0.001）
+% -------------------------------------------------------------
+% 说明：本脚本不做去均值、不去线性趋势，直接对原始记录做 FFT。
+% =============================================================
+DATA_UNIT = 'g';
+
+% ---- 1. 读取两列文本 ----
+data = readmatrix('elcentro_EW.txt');
+t    = data(:, 1);
+a_raw = data(:, 2);
+dt   = t(2) - t(1);
+n    = numel(a_raw);
+
+% ---- 2. 单位换算（不去均值） ----
+switch DATA_UNIT
+    case 'g',     factor = 9.80665;
+    case 'm/s2',  factor = 1.0;
+    case 'gal',   factor = 0.01;
+    case 'mm/s2', factor = 0.001;
+    otherwise,    factor = 9.80665;
+end
+a = a_raw * factor;
+
+% ---- 3. 加 Hann 窗 ----
+win   = hann(n);
+a_win = a .* win;
+
+% ---- 4. FFT 与单边幅值谱 ----
+af   = fft(a_win);
+half = 1:floor(n/2) + 1;
+
+freq = (0:n-1)' / (n * dt);
+freq = freq(half);
+
+amp = abs(af(half)) * 2 / (n * mean(win));
+amp(1) = amp(1) / 2;   % DC 不乘 2
+
+% ---- 5. 绘图（A4 尺寸 720 × 380 px，双对数） ----
+figure('Color', 'w', 'Position', [100 100 720 380]);
+loglog(freq(2:end), amp(2:end), 'Color', [0.71 0.33 0.04], 'LineWidth', 1.0);
+xlabel('Frequency f (Hz)');
+ylabel('Fourier amplitude (g\cdot s)');
+grid on; box on;
+title('Fourier amplitude spectrum — El Centro 1940, EW');
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in', ...
+    'XScale', 'log', 'YScale', 'log');
+xlim([freq(2), freq(end)]);
+
+% 纵轴只保留 1、2、5 × 10^n 主刻度
+ax = gca;
+yt = get_log_ticks(ax.YLim);
+set(ax, 'YTick', yt);
+
+exportgraphics(gcf, 'fourier-spectrum.png', 'Resolution', 300);
+
+% ---- 6. 打印卓越频率 ----
+[~, idx] = max(amp(2:end));
+idx = idx + 1;
+fprintf('卓越频率 Tp ≈ %.4f Hz (周期 %.3f s)\n', freq(idx), 1/freq(idx));
+fprintf('频率分辨率 Δf = %.4f Hz\n', freq(2));
+fprintf('Nyquist 频率  = %.2f Hz\n', freq(end));
+
+
+% ===== 辅助函数：1、2、5 × 10^n 刻度，标签太多时退化为 10^n =====
+function ticks = get_log_ticks(ylim)
+    lo = log10(ylim(1));
+    hi = log10(ylim(2));
+    ticks = [];
+    for e = floor(lo):ceil(hi)
+        for m = [1 2 5]
+            v = m * 10^e;
+            if v >= ylim(1) && v <= ylim(2)
+                ticks(end+1) = v; %#ok<AGROW>
+            end
+        end
+    end
+    if numel(ticks) > 8
+        ticks = [];
+        for e = floor(lo):ceil(hi)
+            v = 10^e;
+            if v >= ylim(1) && v <= ylim(2)
+                ticks(end+1) = v; %#ok<AGROW>
+            end
+        end
+    end
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:140px;">项</th><th style="width:160px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 时间</td><td>t</td><td><code>s</code>（秒）</td></tr>
+            <tr><td><strong>输入</strong> · 加速度</td><td>a<sub>g</sub></td><td><code>g</code>（默认）/ <code>m/s²</code> / <code>gal</code> / <code>mm/s²</code></td></tr>
+            <tr><td><strong>输出</strong> · 频率</td><td>f</td><td><code>Hz</code></td></tr>
+            <tr><td><strong>输出</strong> · 傅里叶幅值</td><td>|A(f)|</td><td>输入单位 · s（示例为 <code>g·s</code>）</td></tr>
+            <tr><td><strong>输出</strong> · 卓越频率</td><td>f<sub>p</sub></td><td><code>Hz</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>FFT 与单边谱：</strong>原始 FFT 输出对称的双边谱，物理上只有非负频率有意义。单边谱取前 n/2+1 个点，把负频能量折算到正频（系数 2）。</li>
+        <li><strong>窗函数归一化：</strong>加窗后信号总能量降低，需除以窗函数的均值 <code>mean(win)</code> 补偿。这样单一正弦分量的幅值才能被正确还原。</li>
+        <li><strong>频率分辨率：</strong>Δf = 1/(n·dt) = 1/T。50 Hz、2700 点的记录 Δf ≈ 0.0185 Hz。</li>
+        <li><strong>Nyquist 频率：</strong>f<sub>N</sub> = 1/(2·dt)。50 Hz 采样对应 25 Hz，这是能识别的最高频率。</li>
+        <li><strong>窗函数选择：</strong>Hann 窗主瓣宽、旁瓣低，通用性最好。若关心窄带峰值，可用矩形窗或 Hamming 窗；若关心宽频响应，可用 Kaiser 窗。</li>
+        <li><strong>纵轴刻度：</strong>只保留 1、2、5 × 10ⁿ 主刻度，避免标签拥挤。</li>
+        <li><strong>无去均值：</strong>本模板不去均值，所以 DC 分量（f = 0）会保留原始记录的基线偏置。
+            为避免对数坐标下 log(0) 问题，绘图时跳过 DC 点。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>谱值整体偏小或偏大 10³ 量级 → 输入加速度单位选错了，检查 <code>DATA_UNIT</code>。</li>
+            <li>低频段出现异常高值 → 原始记录含有长周期基线漂移（不做去均值的直接结果）。</li>
+            <li>高频段出现等间距尖峰 → 记录中可能有周期性的电力干扰或仪器噪声。</li>
+            <li>谱值随频率单调上升 → 单位换算错误。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../spectral-analysis.html">地震动谱分析入门</a>（傅里叶谱、反应谱、阻尼影响）、
+        <a href="../dsp.html">数字信号处理</a>（FFT、窗函数、频谱泄漏）、
+        <a href="../strong-motion-observation.html">强震动观测</a>（记录预处理）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 傅里叶幅值谱</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var DATA_UNIT = 'g';
+  var G = 9.80665;
+
+  function unitFactor(unit) {
+    if (unit === 'g') return G;
+    if (unit === 'm/s2') return 1.0;
+    if (unit === 'gal') return 0.01;
+    if (unit === 'mm/s2') return 0.001;
+    return G;
+  }
+
+  function unitLabel(unit) {
+    if (unit === 'g') return 'g';
+    if (unit === 'm/s2') return 'm/s²';
+    if (unit === 'gal') return 'gal (cm/s²)';
+    if (unit === 'mm/s2') return 'mm/s²';
+    return unit;
+  }
+
+  function parseTwoCols(text) {
+    var lines = text.split(/\r?\n/);
+    var t = [], a = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      if (line.charAt(0) === '#' || line.charAt(0) === '%') continue;
+      var parts = line.split(/[\s,;\t]+/).filter(Boolean);
+      if (parts.length < 2) continue;
+      var x = parseFloat(parts[0]);
+      var y = parseFloat(parts[1]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      t.push(x); a.push(y);
+    }
+    return { t: t, a: a };
+  }
+
+  function hann(n) {
+    var w = new Float64Array(n);
+    if (n === 1) { w[0] = 1; return w; }
+    for (var i = 0; i < n; i++) {
+      w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)));
+    }
+    return w;
+  }
+
+  function mean(arr) {
+    var s = 0;
+    for (var i = 0; i < arr.length; i++) s += arr[i];
+    return s / arr.length;
+  }
+
+  function nextPow2(n) {
+    var p = 1;
+    while (p < n) p <<= 1;
+    return p;
+  }
+
+  function rfftFull(re, im) {
+    var n = re.length;
+    for (var i = 1, j = 0; i < n; i++) {
+      var bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        var tr = re[i]; re[i] = re[j]; re[j] = tr;
+        var ti = im[i]; im[i] = im[j]; im[j] = ti;
+      }
+    }
+    for (var len = 2; len <= n; len <<= 1) {
+      var ang = -2 * Math.PI / len;
+      var wRe = Math.cos(ang), wIm = Math.sin(ang);
+      for (var s = 0; s < n; s += len) {
+        var cRe = 1, cIm = 0;
+        for (var k = 0; k < len / 2; k++) {
+          var pRe = re[s + k], pIm = im[s + k];
+          var qRe = re[s + k + len / 2] * cRe - im[s + k + len / 2] * cIm;
+          var qIm = re[s + k + len / 2] * cIm + im[s + k + len / 2] * cRe;
+          re[s + k] = pRe + qRe;
+          im[s + k] = pIm + qIm;
+          re[s + k + len / 2] = pRe - qRe;
+          im[s + k + len / 2] = pIm - qIm;
+          var tmpRe = cRe * wRe - cIm * wIm;
+          cIm = cRe * wIm + cIm * wRe;
+          cRe = tmpRe;
+        }
+      }
+    }
+  }
+
+  /* 对数纵轴刻度：只保留 1、2、5 × 10^n；超过 8 个则退化为 10^n */
+  function niceLogTicks(min, max, maxCount) {
+    if (!maxCount) maxCount = 8;
+    var candidates = [];
+    var logMin = Math.log10(min), logMax = Math.log10(max);
+    for (var e = Math.floor(logMin); e <= Math.ceil(logMax); e++) {
+      [1, 2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v >= min && v <= max) candidates.push(v);
+      });
+    }
+    if (candidates.length <= maxCount) return candidates;
+    var decades = [];
+    for (var e2 = Math.floor(logMin); e2 <= Math.ceil(logMax); e2++) {
+      var v = Math.pow(10, e2);
+      if (v >= min && v <= max) decades.push(v);
+    }
+    return decades;
+  }
+
+  function formatSci(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.01 && a < 1000) {
+      if (a >= 1) return v.toFixed(a >= 10 ? 0 : 1).replace(/\.0+$/, '');
+      if (a >= 0.1) return v.toFixed(2).replace(/\.?0+$/, '');
+      return v.toFixed(3).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(Math.log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(1).replace(/\.0$/, '') + 'e' + e;
+  }
+
+  function drawFourier(canvasId, freq, amp) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(200, Math.round(rect.height) || 380);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    /* 白底 */
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* 数据范围 */
+    var fMinVal = Infinity, fMaxVal = -Infinity;
+    var aMinVal = Infinity, aMaxVal = -Infinity;
+    for (var i = 0; i < freq.length; i++) {
+      var fv = freq[i], av = amp[i];
+      if (fv > 0 && av > 0) {
+        if (fv < fMinVal) fMinVal = fv;
+        if (fv > fMaxVal) fMaxVal = fv;
+        if (av < aMinVal) aMinVal = av;
+        if (av > aMaxVal) aMaxVal = av;
+      }
+    }
+    if (!isFinite(fMinVal)) return;
+
+    aMinVal *= 0.3;
+    aMaxVal *= 3.0;
+
+    var xMin = Math.log10(fMinVal);
+    var xMax = Math.log10(fMaxVal);
+    var yMin = Math.log10(aMinVal);
+    var yMax = Math.log10(aMaxVal);
+
+    var margin = { top: 12, right: 20, bottom: 42, left: 68 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    function toX(lx) { return margin.left + (lx - xMin) / (xMax - xMin) * plotW; }
+    function toY(ly) { return margin.top + plotH - (ly - yMin) / (yMax - yMin) * plotH; }
+
+    var xTicks = niceLogTicks(fMinVal, fMaxVal, 12);
+    var yTicks = niceLogTicks(aMinVal, aMaxVal, 6);
+
+    /* 浅灰网格（主刻度处，虚线） */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var ti = 0; ti < xTicks.length; ti++) {
+      var lx = Math.log10(xTicks[ti]);
+      if (lx < xMin || lx > xMax) continue;
+      var xx = toX(lx);
+      ctx.beginPath();
+      ctx.moveTo(xx, margin.top);
+      ctx.lineTo(xx, margin.top + plotH);
+      ctx.stroke();
+    }
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var ly = Math.log10(yTicks[yi]);
+      if (ly < yMin || ly > yMax) continue;
+      var yy = toY(ly);
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yy);
+      ctx.lineTo(margin.left + plotW, yy);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* 曲线 —— 线宽 1.2 */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    var started = false;
+    for (var k = 0; k < freq.length; k++) {
+      if (!(freq[k] > 0 && amp[k] > 0)) continue;
+      var px = toX(Math.log10(freq[k]));
+      var py = toY(Math.log10(amp[k]));
+      if (!started) { ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    /* 四边框 */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+    /* 刻度朝内 */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    /* x 主刻度 */
+    for (var xj = 0; xj < xTicks.length; xj++) {
+      var xv = xTicks[xj];
+      var lxv = Math.log10(xv);
+      if (lxv < xMin || lxv > xMax) continue;
+      var xxj = toX(lxv);
+      ctx.beginPath();
+      ctx.moveTo(xxj, margin.top + plotH);
+      ctx.lineTo(xxj, margin.top + plotH - mainTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xxj, margin.top);
+      ctx.lineTo(xxj, margin.top + mainTick);
+      ctx.stroke();
+    }
+    /* x 次刻度 */
+    for (var e = Math.floor(xMin); e <= Math.ceil(xMax); e++) {
+      [2, 3, 4, 5, 6, 7, 8, 9].forEach(function (m) {
+        var xv = m * Math.pow(10, e);
+        var lxv = Math.log10(xv);
+        if (lxv <= xMin || lxv >= xMax) return;
+        var isMain = false;
+        for (var t1 = 0; t1 < xTicks.length; t1++) {
+          if (Math.abs(xTicks[t1] - xv) < 1e-12) { isMain = true; break; }
+        }
+        if (isMain) return;
+        var xxj = toX(lxv);
+        ctx.beginPath();
+        ctx.moveTo(xxj, margin.top + plotH);
+        ctx.lineTo(xxj, margin.top + plotH - minorTick);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(xxj, margin.top);
+        ctx.lineTo(xxj, margin.top + minorTick);
+        ctx.stroke();
+      });
+    }
+
+    /* y 主刻度 */
+    for (var yj = 0; yj < yTicks.length; yj++) {
+      var yv2 = yTicks[yj];
+      var lyv2 = Math.log10(yv2);
+      if (lyv2 < yMin || lyv2 > yMax) continue;
+      var yyj = toY(lyv2);
+      ctx.beginPath();
+      ctx.moveTo(margin.left, yyj);
+      ctx.lineTo(margin.left + mainTick, yyj);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(margin.left + plotW, yyj);
+      ctx.lineTo(margin.left + plotW - mainTick, yyj);
+      ctx.stroke();
+    }
+    /* y 次刻度：仅在 3、7 × decade 处画，减少密集感 */
+    for (var e2 = Math.floor(yMin); e2 <= Math.ceil(yMax); e2++) {
+      [3, 7].forEach(function (m) {
+        var yv = m * Math.pow(10, e2);
+        var lyv = Math.log10(yv);
+        if (lyv <= yMin || lyv >= yMax) return;
+        var yyj = toY(lyv);
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yyj);
+        ctx.lineTo(margin.left + minorTick, yyj);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(margin.left + plotW, yyj);
+        ctx.lineTo(margin.left + plotW - minorTick, yyj);
+        ctx.stroke();
+      });
+    }
+
+    /* y 轴刻度标签 */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      var lyv3 = Math.log10(yTicks[yl]);
+      if (lyv3 < yMin || lyv3 > yMax) continue;
+      var yyl = toY(lyv3);
+      ctx.fillText(formatSci(yTicks[yl]), margin.left - 5, yyl);
+    }
+
+    /* x 轴刻度标签 */
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xTicks.length; xl++) {
+      var xlv = xTicks[xl];
+      var lxvl = Math.log10(xlv);
+      if (lxvl < xMin || lxvl > xMax) continue;
+      var xxl = toX(lxvl);
+      ctx.fillText(formatSci(xlv), xxl, margin.top + plotH + 7);
+    }
+
+    /* y 轴标题 */
+    ctx.save();
+    ctx.translate(15, margin.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12px "Times New Roman", serif';
+    ctx.fillText('Fourier amplitude (g·s)', 0, 0);
+    ctx.restore();
+
+    /* x 轴标题 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12px "Times New Roman", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Frequency f (Hz)', margin.left + plotW / 2, H - 2);
+  }
+
+  function process(text) {
+    var parsed = parseTwoCols(text);
+    var n = parsed.t.length;
+    if (n < 32) throw new Error('有效数据点太少');
+
+    var t = parsed.t;
+    var dt = t[1] - t[0];
+
+    /* 单位换算到 m/s²（不做去均值 / 去趋势） */
+    var factor = unitFactor(DATA_UNIT);
+    var aSI = new Float64Array(n);
+    for (var i = 0; i < n; i++) aSI[i] = parsed.a[i] * factor;
+
+    /* 为绘图方便，转回 g 单位 */
+    for (var k3 = 0; k3 < n; k3++) aSI[k3] /= G;
+
+    /* 加 Hann 窗 */
+    var win = hann(n);
+    var wMean = mean(win);
+
+    /* 补齐到 2 的幂 */
+    var nfft = nextPow2(n);
+    var re = new Float64Array(nfft);
+    var im = new Float64Array(nfft);
+    for (var j = 0; j < n; j++) re[j] = aSI[j] * win[j];
+
+    /* FFT */
+    rfftFull(re, im);
+
+    /* 单边谱 */
+    var nHalf = Math.floor(nfft / 2) + 1;
+    var freq = new Float64Array(nHalf);
+    var amp = new Float64Array(nHalf);
+
+    for (var p = 0; p < nHalf; p++) {
+      freq[p] = p / (nfft * dt);
+      var mag = Math.sqrt(re[p] * re[p] + im[p] * im[p]);
+      amp[p] = mag * 2 / (n * wMean);
+    }
+    amp[0] /= 2;
+
+    /* 跳过 DC 点 */
+    var freqPlot = new Float64Array(nHalf - 1);
+    var ampPlot = new Float64Array(nHalf - 1);
+    for (var q = 1; q < nHalf; q++) {
+      freqPlot[q - 1] = freq[q];
+      ampPlot[q - 1] = amp[q];
+    }
+
+    /* 绘制 */
+    drawFourier('c-fourier', freqPlot, ampPlot);
+
+    /* 卓越频率 */
+    var maxIdx = 1;
+    for (var s = 2; s < nHalf; s++) {
+      if (amp[s] > amp[maxIdx]) maxIdx = s;
+    }
+    var fp = freq[maxIdx];
+
+    /* 状态信息 */
+    var status = document.getElementById('info-stats');
+    if (status) {
+      status.textContent = n + ' 点 · ' + (1 / dt).toFixed(0) + ' Hz · ' +
+                           '输入单位 ' + unitLabel(DATA_UNIT) + ' · ' +
+                           'Δf = ' + freq[1].toFixed(4) + ' Hz · ' +
+                           'f_nyq = ' + freq[freq.length - 1].toFixed(1) + ' Hz · ' +
+                           '卓越频率 ≈ ' + fp.toFixed(3) + ' Hz · 无去趋势';
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    fetch('../assets/elcentro_EW.txt', { cache: 'no-cache' })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.text();
+      })
+      .then(function (text) { process(text); })
+      .catch(function (err) {
+        if (status) {
+          status.textContent = '⚠ 无法加载 assets/elcentro_EW.txt（' +
+            (err && err.message ? err.message : String(err)) + '）';
+        }
+        if (window.console) console.warn('[fourier-spectrum] 加载失败：', err);
+      });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

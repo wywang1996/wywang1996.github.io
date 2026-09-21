@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H/V 谱比曲线 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.hv-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.hv-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.hv-canvas-wrap canvas {
+  width: 100%;
+  height: 780px;
+  display: block;
+}
+.hv-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.hv-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.hv-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      H/V 谱比曲线
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 场地效应</div>
+      <h1>H/V 谱比曲线</h1>
+      <p class="lead">
+        Nakamura 提出的水平/竖向谱比（HVSR）方法：用单台三分量记录
+        同时计算水平分量与竖向分量的 Fourier 幅值谱之比，
+        识别场地的卓越频率 f<sub>0</sub> 与放大因子 A<sub>0</sub>。
+        这是《场地地震安全性评价》《土动力学》中应用最广的经验方法之一。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">HVSR</span>
+        <span class="pill">场地效应</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">Input Format</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本模板<strong>读取三个分量文件</strong>（EW / NS / UP），每个文件均为两列文本
+        （空格、制表符或逗号分隔），与 El Centro、SAC ASCII 等地震记录格式一致。
+        三个文件的<strong>采样率与量纲必须一致</strong>——HVSR 是频谱比，
+        只要三个分量一致，量纲会自动消去。
+      </p>
+
+      <div class="io-card">
+        <h4>输入文件要求（每个文件格式相同）</h4>
+        <table>
+          <thead><tr>
+            <th style="width:80px;">列号</th><th style="width:120px;">物理量</th>
+            <th style="width:160px;">推荐单位</th><th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>第 1 列</td><td>时间 t</td><td><code>s</code>（秒）</td><td>等间隔。三个文件需完全同步。</td></tr>
+            <tr><td>第 2 列</td><td>地面加速度 a</td><td><code>g</code> 或 <code>m/s²</code></td><td>三个文件使用<strong>同一单位</strong>。</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">三个文件命名约定</h4>
+        <table>
+          <thead><tr>
+            <th style="width:120px;">分量</th>
+            <th style="width:280px;">文件名</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>EW（水平 1）</td><td><code>elcentro_EW.txt</code></td><td>东西向加速度</td></tr>
+            <tr><td>NS（水平 2）</td><td><code>elcentro_NS.txt</code></td><td>南北向加速度</td></tr>
+            <tr><td>UP（竖向）</td><td><code>elcentro_UP.txt</code></td><td>竖向加速度</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 单文件替代方案</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          如果只有一个 CSV 文件，可以合并为四列：
+        </p>
+        <table>
+          <thead><tr>
+            <th style="width:100px;">列名</th><th style="width:200px;">物理量</th><th>单位</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>t</code></td><td>时间</td><td><code>s</code></td></tr>
+            <tr><td><code>EW</code></td><td>东西向加速度</td><td><code>g</code> 或 <code>m/s²</code></td></tr>
+            <tr><td><code>NS</code></td><td>南北向加速度</td><td>同上</td></tr>
+            <tr><td><code>UP</code></td><td>竖向加速度</td><td>同上</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>本页示例</strong> 三个文件均位于 <code>assets/</code> 目录下，第 2 列单位是 <strong>g</strong>。
+          代码<strong>不做去均值、不去线性趋势</strong>，直接对原始记录计算 H/V 谱比。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">单个文件示例（前 5 行）</h4>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>elcentro_EW.txt</span><span class="lang">TXT</span></div>
+        </div>
+<pre><code>0.0000000e+000 3.0591000e-004
+2.0000000e-002 1.9374299e-003
+4.0000000e-002 6.9339600e-003
+6.0000000e-002 2.9571300e-003
+8.0000000e-002 2.9571300e-003
+...
+</code></pre>
+      </div>
+      <p style="font-size:12.5px; color:var(--dim); margin-top:8px;">
+        第 1 列：时间，单位 s；第 2 列：加速度，单位 g。采样率 50 Hz，记录长度约 54 s。
+      </p>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        H/V 谱比（HVSR）是 Nakamura（1989）提出的经验方法：
+        用同一台站的<strong>三分量记录</strong>，计算水平分量 Fourier 幅值谱
+        与竖向分量 Fourier 幅值谱的比值：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        HVSR(f) = √[ EW(f)² + NS(f)² ] / UP(f)
+      </div>
+
+      <p>
+        物理直觉是：竖向分量几乎不受场地松软土层放大（土层对竖向振动
+        影响很小），而水平分量会被土层显著放大。因此二者的比值
+        近似反映了场地传递函数的形状。
+      </p>
+
+      <h3 class="sub">H/V 曲线上的两个关键点</h3>
+
+      <ul class="plain">
+        <li><strong>卓越频率 f<sub>0</sub></strong>——H/V 曲线峰值对应的频率。
+          经验关系式：<strong>f<sub>0</sub> ≈ Vs / (4H)</strong>，
+          Vs 为土层平均剪切波速，H 为覆盖层厚度。
+          这是场地分类与土层厚度估计的直接依据。</li>
+        <li><strong>放大因子 A<sub>0</sub></strong>——H/V 峰值的高度。
+          反映场地对水平地震动的放大能力。经验上：
+          <ul style="margin:4px 0 0 16px;">
+            <li>A<sub>0</sub> &lt; 2：无明显放大，岩石场地；</li>
+            <li>A<sub>0</sub> = 2–4：中等放大，覆盖层较薄或 Vs 较高；</li>
+            <li>A<sub>0</sub> &gt; 4：强放大，厚软土场地。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3 class="sub">H/V 曲线的三种典型形态</h3>
+
+      <ul class="plain">
+        <li><strong>单峰型</strong>——一个明显的卓越频率，对应单一土层界面。
+          最常见，可以直接估计覆盖层厚度。</li>
+        <li><strong>双峰型</strong>——两个峰值，对应两层或多层主要阻抗界面。
+          需要结合钻孔数据解释。</li>
+        <li><strong>平坦型</strong>——无明显峰值，场地无明显放大，
+          或记录的频率成分不足以揭示场地响应。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与场地分类的关系：</strong>
+        中国规范 GB 50011-2010 中，场地类别由覆盖层厚度与等效剪切波速共同确定。
+        H/V 谱比作为一种<strong>快速无损</strong>方法，可以在钻孔数据不足时
+        先给出卓越频率估计，与 Vs30 存在经验相关：
+        <br>
+        <span style="font-family:var(--mono);">Vs30 ≈ 100 · f<sub>0</sub></span>
+        （粗略经验式，仅作参考）
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>HVSR 是一种<strong>经验方法</strong>，
+        不是严格的场地传递函数。它的假设（竖向分量不受场地放大）
+        在某些情况下（深厚软土、强非线性、特殊震源）会失效。
+        规范要求最终场地评价仍应由钻孔与波速测试确定，
+        HVSR 作为辅助手段。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面三张子图由 <code>assets/elcentro_EW.txt</code>、<code>elcentro_NS.txt</code>、
+        <code>elcentro_UP.txt</code> 三个文件实时计算得到：
+        读取两列文本 → 单位换算 → 分窗加 Hann 窗 → FFT →
+        计算 H/V 谱比 → 分窗平均。
+        <strong>不做去均值、去趋势</strong>。
+        画布尺寸按 A4 排版（720 × 780 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">示例数据</span>
+        <span class="fname">elcentro_EW.txt · elcentro_NS.txt · elcentro_UP.txt</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="hv-canvas-wrap">
+        <canvas id="c-hvsr"></canvas>
+      </div>
+
+      <div class="hv-legend">
+        <span><span class="line" style="background:#b45309"></span>EW</span>
+        <span><span class="line" style="background:#2563eb"></span>NS</span>
+        <span><span class="line" style="background:#15803d"></span>UP</span>
+        <span style="margin-left:12px;"><span class="line" style="background:#9333ea"></span>H/V 均值</span>
+        <span><span class="line" style="background:#cbd5e1"></span>各窗口</span>
+      </div>
+
+      <div class="hv-note" style="margin-top:14px;">
+        <strong>(a)</strong> 三分量加速度时程（EW / NS / UP）；
+        <strong>(b)</strong> 三分量 Fourier 幅值谱，双对数坐标，
+        均值来自所有分窗；<strong>(c)</strong> H/V 谱比曲线，
+        淡色细线为各窗口单独计算的 H/V，粗线为所有窗口均值，
+        浅紫色带为 ±1 标准差，圆点标注峰值 (f<sub>0</sub>, A<sub>0</sub>)。
+        <br>
+        输入数据量纲：时间 <strong>s</strong>；加速度 <strong>g</strong>。<strong>不含去均值、去趋势处理</strong>。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心步骤：读取三个分量 → 分窗加 Hann 窗 → FFT →
+        计算每个窗口的 H/V → 所有窗口平均 → 绘制三张子图。
+        <strong>不做去均值、不去线性趋势</strong>。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hvsr.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 输入数据格式（三个分量文件，每个文件两列文本）
+#   第 1 列：时间 t   —— 单位 s（秒），等间隔
+#   第 2 列：加速度 a —— 单位 g（或 m/s²，三个文件必须一致）
+# -------------------------------------------------------------
+# 文件名约定：
+#   elcentro_EW.txt   东西向
+#   elcentro_NS.txt   南北向
+#   elcentro_UP.txt   竖向
+# -------------------------------------------------------------
+# 说明：本脚本不做去均值、不去线性趋势。
+#       三个文件必须时间同步（采样率与起始时刻一致）。
+# =============================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 9,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+# ---- 处理参数 ----
+WINDOW_SEC = 20.0    # 分窗长度（秒）
+OVERLAP    = 0.5     # 窗口重叠比例
+FMIN, FMAX = 0.2, 15.0   # H/V 曲线有效频率范围（Hz）
+KO_B       = 40.0    # Konno-Ohmachi 平滑带宽参数
+
+
+# ---------- 1. 读取三个分量 ----------
+def read_two_cols(fname):
+    t, a = np.loadtxt(fname, unpack=True)
+    return t, a
+
+t, ew = read_two_cols('elcentro_EW.txt')
+_, ns = read_two_cols('elcentro_NS.txt')
+_, up = read_two_cols('elcentro_UP.txt')
+
+fs = 1.0 / (t[1] - t[0])
+n  = len(ew)
+print(f'采样率 fs = {fs:.1f} Hz，长度 n = {n} 点，时长 {t[-1]:.1f} s')
+
+
+# ---------- 2. Konno-Ohmachi 平滑（对数间隔移动加权） ----------
+def konno_ohmachi(freqs, spec, b=KO_B):
+    """对谱做 Konno-Ohmachi 平滑（对数频率域）。"""
+    n = len(freqs)
+    out = np.zeros(n)
+    for i in range(n):
+        fi = freqs[i]
+        if fi <= 0:
+            out[i] = spec[i]
+            continue
+        x = b * np.log10(freqs / fi)
+        w = np.where(np.abs(x) < 1e-10, 1.0, np.sin(x) / x)
+        w = np.where(np.isfinite(w), w, 0.0)
+        num = np.sum(w * spec)
+        den = np.sum(w)
+        out[i] = num / den if den > 0 else spec[i]
+    return out
+
+
+# ---------- 3. 分窗计算 H/V ----------
+def compute_hvsr(ew, ns, up, fs, window_sec, overlap):
+    """返回 (freqs, hvsr_all, hvsr_mean, hvsr_std)。"""
+    n_win = int(window_sec * fs)
+    step  = int(n_win * (1 - overlap))
+    win   = np.hanning(n_win)
+    n_total = len(ew)
+    n_windows = (n_total - n_win) // step + 1
+    freqs = np.fft.rfftfreq(n_win, 1 / fs)
+
+    hvsr_all = []
+    for k in range(n_windows):
+        i0 = k * step
+        i1 = i0 + n_win
+        if i1 > n_total:
+            break
+
+        EW_f = np.fft.rfft(ew[i0:i1] * win)
+        NS_f = np.fft.rfft(ns[i0:i1] * win)
+        UP_f = np.fft.rfft(up[i0:i1] * win)
+
+        # 水平分量：两个水平分量的平方和开根号
+        H_f = np.sqrt(np.abs(EW_f) ** 2 + np.abs(NS_f) ** 2)
+        V_f = np.abs(UP_f)
+
+        # Konno-Ohmachi 平滑
+        H_f = konno_ohmachi(freqs, H_f)
+        V_f = konno_ohmachi(freqs, V_f)
+
+        # 避免除零
+        V_f = np.where(V_f < 1e-20, 1e-20, V_f)
+        hvsr_all.append(H_f / V_f)
+
+    hvsr_all = np.array(hvsr_all)
+    hvsr_mean = hvsr_all.mean(axis=0)
+    hvsr_std  = hvsr_all.std(axis=0)
+    return freqs, hvsr_all, hvsr_mean, hvsr_std
+
+
+freqs, hvsr_all, hvsr_mean, hvsr_std = compute_hvsr(
+    ew, ns, up, fs, WINDOW_SEC, OVERLAP)
+
+# 限制到有效频率范围
+mask = (freqs >= FMIN) & (freqs <= FMAX)
+f_plot = freqs[mask]
+H_plot = hvsr_mean[mask]
+
+# ---- 找峰值 (f0, A0) ----
+i0 = np.argmax(H_plot)
+f0 = f_plot[i0]
+A0 = H_plot[i0]
+print(f'卓越频率 f0 ≈ {f0:.3f} Hz，放大因子 A0 ≈ {A0:.2f}')
+
+
+# ---------- 4. 绘制三张子图 ----------
+fig, axes = plt.subplots(3, 1, figsize=(7.2, 8.0))
+
+# ===== (a) 三分量时程 =====
+ax = axes[0]
+ax.plot(t, ew, lw=0.5, color='#b45309', label='EW', alpha=0.85)
+ax.plot(t, ns, lw=0.5, color='#2563eb', label='NS', alpha=0.85)
+ax.plot(t, up, lw=0.5, color='#15803d', label='UP', alpha=0.85)
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('Acc. (g)')
+ax.set_title('(a) Three-component acceleration', fontsize=10)
+ax.legend(loc='upper right', fontsize=8, frameon=False, ncol=3)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+
+# ===== (b) 三分量 Fourier 幅值谱 =====
+ax = axes[1]
+n_win = int(WINDOW_SEC * fs)
+win = np.hanning(n_win)
+EW_f = np.abs(np.fft.rfft(ew[:n_win] * win))
+NS_f = np.abs(np.fft.rfft(ns[:n_win] * win))
+UP_f = np.abs(np.fft.rfft(up[:n_win] * win))
+f_full = np.fft.rfftfreq(n_win, 1 / fs)
+m2 = (f_full >= FMIN) & (f_full <= FMAX)
+ax.loglog(f_full[m2], EW_f[m2], lw=0.9, color='#b45309', label='EW')
+ax.loglog(f_full[m2], NS_f[m2], lw=0.9, color='#2563eb', label='NS')
+ax.loglog(f_full[m2], UP_f[m2], lw=0.9, color='#15803d', label='UP')
+ax.set_xlabel('Frequency f (Hz)')
+ax.set_ylabel('Fourier amplitude')
+ax.set_title('(b) Fourier amplitude spectra', fontsize=10)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+
+# ===== (c) H/V 谱比曲线 =====
+ax = axes[2]
+# 各窗口淡色曲线
+for k in range(hvsr_all.shape[0]):
+    ax.plot(freqs[mask], hvsr_all[k][mask],
+            color='#cbd5e1', lw=0.5, alpha=0.5, zorder=1)
+# ±1σ 带
+ax.fill_between(f_plot,
+                (hvsr_mean - hvsr_std)[mask],
+                (hvsr_mean + hvsr_std)[mask],
+                color='#c4b5fd', alpha=0.4, zorder=2)
+# 均值曲线
+ax.plot(f_plot, H_plot, color='#9333ea', lw=1.8, label='Mean H/V', zorder=3)
+# 参考线
+ax.axhline(1.0, color='#888888', lw=0.6, ls='--', zorder=1)
+# 峰值标记
+ax.plot(f0, A0, 'o', color='#9333ea', ms=6, zorder=4)
+ax.axvline(f0, color='#9333ea', lw=0.7, ls=':', zorder=1)
+ax.annotate(f'f$_0$ = {f0:.2f} Hz\nA$_0$ = {A0:.2f}',
+            xy=(f0, A0), xytext=(f0 * 2.2, A0 * 0.9),
+            fontsize=9, color='#222222',
+            arrowprops=dict(arrowstyle='-', color='#888888', lw=0.6))
+
+ax.set_xscale('log')
+ax.set_xlabel('Frequency f (Hz)')
+ax.set_ylabel('H/V spectral ratio')
+ax.set_title('(c) H/V spectral ratio', fontsize=10)
+ax.set_xlim(FMIN, FMAX)
+ax.set_ylim(0, max(A0 * 1.35, 4))
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+
+# ---------- 5. 统一格式 ----------
+for ax in axes:
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('hvsr.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>分窗</strong>：默认 20 s 窗口、50% 重叠。窗口数 = 5（54 s 记录）。</li>
+          <li><strong>Hann 窗</strong>：抑制频谱泄漏。</li>
+          <li><strong>Konno-Ohmachi 平滑</strong>：对数频率域平滑，避免高频段样本过密、低频段样本过稀。</li>
+          <li><strong>水平分量</strong>：H = √(EW² + NS²)，而不是简单平均。</li>
+          <li><strong>峰值识别</strong>：在 0.2–15 Hz 范围内找 H/V 最大值。</li>
+          <li><strong>不做去均值、不去线性趋势</strong>。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        用 <code>readmatrix</code> 读取三个分量，<code>hann</code> 加窗，
+        <code>fft</code> 变换。Konno-Ohmachi 平滑用局部函数实现。
+        <strong>不去均值、不去趋势</strong>。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hvsr.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 输入数据格式（三个分量文件，每个文件两列文本）
+%   第 1 列：时间 t   —— 单位 s（秒），等间隔
+%   第 2 列：加速度 a —— 单位 g（或 m/s²，三个文件必须一致）
+% -------------------------------------------------------------
+% 文件名约定：
+%   elcentro_EW.txt   东西向
+%   elcentro_NS.txt   南北向
+%   elcentro_UP.txt   竖向
+% -------------------------------------------------------------
+% 说明：本脚本不做去均值、不去线性趋势。
+% =============================================================
+
+WINDOW_SEC = 20.0;
+OVERLAP    = 0.5;
+FMIN = 0.2; FMAX = 15.0;
+KO_B = 40.0;
+
+% ---------- 1. 读取三个分量 ----------
+EW = readmatrix('elcentro_EW.txt');
+NS = readmatrix('elcentro_NS.txt');
+UP = readmatrix('elcentro_UP.txt');
+
+t  = EW(:, 1);
+ew = EW(:, 2);
+ns = NS(:, 2);
+up = UP(:, 2);
+
+fs = 1 / (t(2) - t(1));
+n  = numel(ew);
+fprintf('采样率 fs = %.1f Hz，长度 n = %d 点，时长 %.1f s\n', ...
+        fs, n, t(end));
+
+% ---------- 2. 分窗计算 H/V ----------
+n_win = round(WINDOW_SEC * fs);
+step  = round(n_win * (1 - OVERLAP));
+win   = hann(n_win);
+n_windows = floor((n - n_win) / step) + 1;
+
+freqs = (0:n_win/2)' * fs / n_win;
+n_freq = numel(freqs);
+
+hvsr_all = zeros(n_windows, n_freq);
+
+for k = 1:n_windows
+    i0 = (k - 1) * step + 1;
+    i1 = i0 + n_win - 1;
+    if i1 > n
+        break;
+    end
+
+    EW_f = fft(ew(i0:i1) .* win);
+    NS_f = fft(ns(i0:i1) .* win);
+    UP_f = fft(up(i0:i1) .* win);
+
+    half = 1:n_freq;
+    EW_a = abs(EW_f(half));
+    NS_a = abs(NS_f(half));
+    UP_a = abs(UP_f(half));
+
+    H_a = sqrt(EW_a .^ 2 + NS_a .^ 2);
+    V_a = UP_a;
+
+    % Konno-Ohmachi 平滑
+    H_s = konno_ohmachi(freqs, H_a, KO_B);
+    V_s = konno_ohmachi(freqs, V_a, KO_B);
+
+    V_s = max(V_s, 1e-20);
+    hvsr_all(k, :) = (H_s ./ V_s)';
+end
+
+hvsr_mean = mean(hvsr_all, 1);
+hvsr_std  = std(hvsr_all, 0, 1);
+
+% ---------- 3. 找峰值 (f0, A0) ----------
+mask = freqs >= FMIN & freqs <= FMAX;
+f_plot = freqs(mask);
+H_plot = hvsr_mean(mask);
+
+[A0, i0] = max(H_plot);
+f0 = f_plot(i0);
+
+fprintf('卓越频率 f0 ≈ %.3f Hz，放大因子 A0 ≈ %.2f\n', f0, A0);
+
+% ---------- 4. 绘制三张子图 ----------
+figure('Color', 'w', 'Position', [100 100 720 800]);
+
+% ===== (a) 三分量时程 =====
+subplot(3, 1, 1);
+plot(t, ew, 'Color', [0.71 0.33 0.04], 'LineWidth', 0.5); hold on;
+plot(t, ns, 'Color', [0.15 0.39 0.92], 'LineWidth', 0.5);
+plot(t, up, 'Color', [0.08 0.50 0.24], 'LineWidth', 0.5);
+xlabel('Time (s)'); ylabel('Acc. (g)');
+title('(a) Three-component acceleration', 'FontSize', 10);
+legend({'EW', 'NS', 'UP'}, 'Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+grid on; box on;
+
+% ===== (b) 三分量 Fourier 幅值谱 =====
+subplot(3, 1, 2);
+EW_f = abs(fft(ew(1:n_win) .* win));
+NS_f = abs(fft(ns(1:n_win) .* win));
+UP_f = abs(fft(up(1:n_win) .* win));
+loglog(freqs(mask), EW_f(mask), 'Color', [0.71 0.33 0.04], 'LineWidth', 0.9); hold on;
+loglog(freqs(mask), NS_f(mask), 'Color', [0.15 0.39 0.92], 'LineWidth', 0.9);
+loglog(freqs(mask), UP_f(mask), 'Color', [0.08 0.50 0.24], 'LineWidth', 0.9);
+xlabel('Frequency f (Hz)'); ylabel('Fourier amplitude');
+title('(b) Fourier amplitude spectra', 'FontSize', 10);
+legend({'EW', 'NS', 'UP'}, 'Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+grid on; box on;
+
+% ===== (c) H/V 谱比曲线 =====
+subplot(3, 1, 3);
+% 各窗口
+for k = 1:n_windows
+    semilogx(freqs(mask), hvsr_all(k, mask), 'Color', [0.8 0.84 0.88], ...
+             'LineWidth', 0.5); hold on;
+end
+% ±1σ 带
+fill([f_plot; flipud(f_plot)], ...
+     [hvsr_mean(mask) - hvsr_std(mask); flipud(hvsr_mean(mask) + hvsr_std(mask))]', ...
+     [0.77 0.71 0.99], 'FaceAlpha', 0.4, 'EdgeColor', 'none');
+% 均值曲线
+semilogx(f_plot, H_plot, 'Color', [0.58 0.20 0.92], 'LineWidth', 1.8);
+% 参考线
+yline(1.0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.6);
+% 峰值标记
+plot(f0, A0, 'o', 'MarkerFaceColor', [0.58 0.20 0.92], ...
+     'MarkerEdgeColor', 'none', 'MarkerSize', 7);
+xline(f0, ':', 'Color', [0.58 0.20 0.92], 'LineWidth', 0.7);
+text(f0 * 2.2, A0 * 0.9, sprintf('f_0 = %.2f Hz\nA_0 = %.2f', f0, A0), ...
+     'FontSize', 9);
+
+xlabel('Frequency f (Hz)'); ylabel('H/V spectral ratio');
+title('(c) H/V spectral ratio', 'FontSize', 10);
+xlim([FMIN FMAX]);
+ylim([0 max(A0 * 1.35, 4)]);
+grid on; box on;
+
+% 统一格式
+for k = 1:3
+    subplot(3, 1, k);
+    set(gca, 'FontName', 'Times New Roman', 'FontSize', 9, 'TickDir', 'in');
+end
+
+exportgraphics(gcf, 'hvsr.png', 'Resolution', 300);
+
+
+% ===== 局部函数：Konno-Ohmachi 平滑 =====
+function out = konno_ohmachi(freqs, spec, b)
+    n = numel(freqs);
+    out = zeros(size(spec));
+    for i = 1:n
+        fi = freqs(i);
+        if fi <= 0
+            out(i) = spec(i);
+            continue;
+        end
+        x = b * log10(freqs / fi);
+        w = ones(size(x));
+        idx = abs(x) > 1e-10;
+        w(idx) = sin(x(idx)) ./ x(idx);
+        w = w(:);
+        num = sum(w .* spec(:));
+        den = sum(w);
+        out(i) = num / den;
+    end
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:140px;">项</th><th style="width:160px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 时间</td><td>t</td><td><code>s</code>（秒）</td></tr>
+            <tr><td><strong>输入</strong> · 加速度</td><td>a</td><td><code>g</code> / <code>m/s²</code>（三分量一致）</td></tr>
+            <tr><td><strong>中间</strong> · 频率</td><td>f</td><td><code>Hz</code></td></tr>
+            <tr><td><strong>输出</strong> · 水平幅值谱</td><td>H(f)</td><td>与输入加速度同单位</td></tr>
+            <tr><td><strong>输出</strong> · 竖向幅值谱</td><td>V(f)</td><td>与输入加速度同单位</td></tr>
+            <tr><td><strong>输出</strong> · H/V 谱比</td><td>HVSR(f)</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 卓越频率</td><td>f<sub>0</sub></td><td><code>Hz</code></td></tr>
+            <tr><td><strong>输出</strong> · 放大因子</td><td>A<sub>0</sub></td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>方法：</strong>Nakamura (1989) 单台三分量 HVSR 方法。</li>
+        <li><strong>分窗：</strong>默认 20 s 窗口、50% 重叠。窗口数 = floor((n − n_win) / step) + 1。</li>
+        <li><strong>Hann 窗：</strong>抑制频谱泄漏，代价是频率分辨率略微降低。</li>
+        <li><strong>Konno-Ohmachi 平滑：</strong>对数频率域加权平滑，参数 b = 40 是常用值。
+          b 越大平滑越强。等价于带宽 ≈ f / b。</li>
+        <li><strong>水平分量：</strong>H = √(EW² + NS²)，两个水平分量独立参与。</li>
+        <li><strong>峰值识别：</strong>在 0.2–15 Hz 有效频率范围内找 H/V 最大值。</li>
+        <li><strong>无去趋势：</strong>不做去均值、不去线性趋势，直接使用原始记录。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>HVSR 曲线高频段异常抬升 → 竖向记录含较多噪声，需检查 UP 分量的信噪比。</li>
+            <li>峰值不明显 → 记录的频率成分不足，或场地本身无明显放大。</li>
+            <li>三个窗口的 H/V 差异过大 → 记录的 S 波段到达时间过晚，可用窗口数不足。</li>
+            <li>峰值频率随时间漂移 → 可能记录了非线性场地响应（强震下土层软化）。</li>
+            <li>f0 与实际钻孔不符 → 检查三分量是否时间同步，或检查峰值是否误识别为噪声峰。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../soil-dynamics.html">土动力学</a>（场地效应、动剪切模量、液化）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>
+        （场地分类、卓越周期）、
+        <a href="../spectral-analysis.html">地震动谱分析入门</a>（傅里叶谱、场地响应）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · H/V 谱比曲线</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var WINDOW_SEC = 20.0;
+  var OVERLAP    = 0.5;
+  var FMIN = 0.2, FMAX = 15.0;
+  var KO_B = 40.0;
+
+  /* ============================================================
+     数据解析
+     ============================================================ */
+
+  function parseTwoCols(text) {
+    var lines = text.split(/\r?\n/);
+    var t = [], a = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      if (line.charAt(0) === '#' || line.charAt(0) === '%') continue;
+      var parts = line.split(/[\s,;\t]+/).filter(Boolean);
+      if (parts.length < 2) continue;
+      var x = parseFloat(parts[0]);
+      var y = parseFloat(parts[1]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      t.push(x); a.push(y);
+    }
+    return { t: t, a: a };
+  }
+
+  /* ============================================================
+     FFT（Cooley-Tukey，n 为 2 的幂）
+     ============================================================ */
+
+  function nextPow2(n) {
+    var p = 1;
+    while (p < n) p <<= 1;
+    return p;
+  }
+
+  function rfftInPlace(re, im) {
+    var n = re.length;
+    for (var i = 1, j = 0; i < n; i++) {
+      var bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        var tr = re[i]; re[i] = re[j]; re[j] = tr;
+        var ti = im[i]; im[i] = im[j]; im[j] = ti;
+      }
+    }
+    for (var len = 2; len <= n; len <<= 1) {
+      var ang = -2 * Math.PI / len;
+      var wRe = Math.cos(ang), wIm = Math.sin(ang);
+      for (var s = 0; s < n; s += len) {
+        var cRe = 1, cIm = 0;
+        for (var k = 0; k < len / 2; k++) {
+          var pRe = re[s + k], pIm = im[s + k];
+          var qRe = re[s + k + len / 2] * cRe - im[s + k + len / 2] * cIm;
+          var qIm = re[s + k + len / 2] * cIm + im[s + k + len / 2] * cRe;
+          re[s + k] = pRe + qRe;
+          im[s + k] = pIm + qIm;
+          re[s + k + len / 2] = pRe - qRe;
+          im[s + k + len / 2] = pIm - qIm;
+          var tmpRe = cRe * wRe - cIm * wIm;
+          cIm = cRe * wIm + cIm * wRe;
+          cRe = tmpRe;
+        }
+      }
+    }
+  }
+
+  /* 计算单边幅值谱（返回前 n/2+1 个频点的幅值） */
+  function fftAmplitude(sig) {
+    var n = nextPow2(sig.length);
+    var re = new Float64Array(n);
+    var im = new Float64Array(n);
+    for (var i = 0; i < sig.length; i++) re[i] = sig[i];
+    rfftInPlace(re, im);
+    var half = Math.floor(n / 2) + 1;
+    var amp = new Float64Array(half);
+    for (var k = 0; k < half; k++) {
+      amp[k] = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+    }
+    return amp;
+  }
+
+  /* ============================================================
+     Konno-Ohmachi 平滑
+     ============================================================ */
+
+  function konnoOhmachi(freqs, spec, b) {
+    var n = freqs.length;
+    var out = new Float64Array(n);
+    for (var i = 0; i < n; i++) {
+      var fi = freqs[i];
+      if (fi <= 0) { out[i] = spec[i]; continue; }
+      var num = 0, den = 0;
+      for (var j = 0; j < n; j++) {
+        var fj = freqs[j];
+        if (fj <= 0) continue;
+        var x = b * Math.log10(fj / fi);
+        var w;
+        if (Math.abs(x) < 1e-10) w = 1;
+        else w = Math.sin(x) / x;
+        if (!isFinite(w)) w = 0;
+        num += w * spec[j];
+        den += w;
+      }
+      out[i] = den > 0 ? num / den : spec[i];
+    }
+    return out;
+  }
+
+  /* ============================================================
+     分窗计算 H/V
+     ============================================================ */
+
+  function hann(n) {
+    var w = new Float64Array(n);
+    if (n === 1) { w[0] = 1; return w; }
+    for (var i = 0; i < n; i++) {
+      w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)));
+    }
+    return w;
+  }
+
+  function computeHVSR(ew, ns, up, fs) {
+    var n = ew.length;
+    var nWin = Math.round(WINDOW_SEC * fs);
+    var step = Math.round(nWin * (1 - OVERLAP));
+    var win = hann(nWin);
+    var nWindows = Math.max(1, Math.floor((n - nWin) / step) + 1);
+
+    /* 频率轴（nWin 采样） */
+    var nfft = nextPow2(nWin);
+    var half = Math.floor(nfft / 2) + 1;
+    var freqs = new Float64Array(half);
+    for (var k = 0; k < half; k++) freqs[k] = k * fs / nfft;
+
+    var hvsrAll = [];
+    for (var w = 0; w < nWindows; w++) {
+      var i0 = w * step;
+      var i1 = i0 + nWin;
+      if (i1 > n) break;
+
+      /* 加窗 */
+      var segEW = new Float64Array(nWin);
+      var segNS = new Float64Array(nWin);
+      var segUP = new Float64Array(nWin);
+      for (var i = 0; i < nWin; i++) {
+        segEW[i] = ew[i0 + i] * win[i];
+        segNS[i] = ns[i0 + i] * win[i];
+        segUP[i] = up[i0 + i] * win[i];
+      }
+
+      var ampEW = fftAmplitude(segEW);
+      var ampNS = fftAmplitude(segNS);
+      var ampUP = fftAmplitude(segUP);
+
+      /* 水平分量幅值 */
+      var ampH = new Float64Array(half);
+      for (var j = 0; j < half; j++) {
+        ampH[j] = Math.sqrt(ampEW[j] * ampEW[j] + ampNS[j] * ampNS[j]);
+      }
+
+      /* Konno-Ohmachi 平滑 */
+      var H_s = konnoOhmachi(freqs, ampH, KO_B);
+      var V_s = konnoOhmachi(freqs, ampUP, KO_B);
+
+      /* H/V */
+      var hv = new Float64Array(half);
+      for (var m = 0; m < half; m++) {
+        var vv = V_s[m] > 1e-20 ? V_s[m] : 1e-20;
+        hv[m] = H_s[m] / vv;
+      }
+      hvsrAll.push(hv);
+    }
+
+    /* 均值与标准差 */
+    var mean = new Float64Array(half);
+    var std = new Float64Array(half);
+    var cnt = hvsrAll.length;
+    for (var p = 0; p < half; p++) {
+      var s = 0;
+      for (var q = 0; q < cnt; q++) s += hvsrAll[q][p];
+      mean[p] = s / cnt;
+      var s2 = 0;
+      for (var r = 0; r < cnt; r++) {
+        var d = hvsrAll[r][p] - mean[p];
+        s2 += d * d;
+      }
+      std[p] = Math.sqrt(s2 / cnt);
+    }
+
+    return { freqs: freqs, all: hvsrAll, mean: mean, std: std, half: half };
+  }
+
+  /* ============================================================
+     绘图工具
+     ============================================================ */
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function fmtLogLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.001 && a < 10000) {
+      if (a >= 1) return v.toFixed(0);
+      if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+      return v.toFixed(2).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(Math.log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(0) + 'e' + e;
+  }
+
+  function hexToRgb(hex) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16)
+    };
+  }
+
+  /* ============================================================
+     通用坐标框工具
+     ============================================================ */
+
+  function makeFrame(ctx, box, xLog, yLog, xRange, yRange, xLabel, yLabel, title) {
+    var margin = { top: 24, right: 14, bottom: 42, left: 62 };
+    var px = box.x + margin.left;
+    var py = box.y + margin.top;
+    var pw = box.w - margin.left - margin.right;
+    var ph = box.h - margin.top - margin.bottom;
+
+    var xMinV = xRange[0], xMaxV = xRange[1];
+    var yMinV = yRange[0], yMaxV = yRange[1];
+
+    var xMin = xLog ? Math.log10(xMinV) : xMinV;
+    var xMax = xLog ? Math.log10(xMaxV) : xMaxV;
+    var yMin = yLog ? Math.log10(yMinV) : yMinV;
+    var yMax = yLog ? Math.log10(yMaxV) : yMaxV;
+
+    function toX(v) {
+      var xv = xLog ? Math.log10(v) : v;
+      return px + (xv - xMin) / (xMax - xMin) * pw;
+    }
+    function toY(v) {
+      var yv = yLog ? Math.log10(v) : v;
+      return py + ph - (yv - yMin) / (yMax - yMin) * ph;
+    }
+
+    /* 标题 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, box.x + box.w / 2, box.y + 4);
+
+    /* 网格 */
+    var xTicksMajor, yTicksMajor, xTicksMinor, yTicksMinor;
+    if (xLog) {
+      xTicksMajor = niceDecades(xMinV, xMaxV);
+      xTicksMinor = niceMinorTicks(xMinV, xMaxV);
+    } else {
+      var xStep = (xMaxV - xMinV) / 4;
+      xTicksMajor = [];
+      for (var i = 0; i <= 4; i++) xTicksMajor.push(xMinV + i * xStep);
+      xTicksMinor = [];
+    }
+    if (yLog) {
+      yTicksMajor = niceDecades(yMinV, yMaxV);
+      yTicksMinor = niceMinorTicks(yMinV, yMaxV);
+    } else {
+      var yStep = (yMaxV - yMinV) / 4;
+      yTicksMajor = [];
+      for (var k = 0; k <= 4; k++) yTicksMajor.push(yMinV + k * yStep);
+      yTicksMinor = [];
+    }
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py); ctx.lineTo(x, py + ph); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    /* 外框 */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* 刻度朝内 */
+    var mainTick = 5, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + mainTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - mainTick, y); ctx.stroke();
+    });
+    yTicksMinor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + minorTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - minorTick, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + mainTick);      ctx.stroke();
+    });
+    xTicksMinor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + minorTick);      ctx.stroke();
+    });
+
+    /* 标签 */
+    ctx.fillStyle = '#222222';
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      var s = yLog ? fmtLogLabel(v) : v.toFixed(2);
+      ctx.fillText(s, px - 5, y);
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      var s = xLog ? fmtLogLabel(v) : v.toFixed(1);
+      ctx.fillText(s, x, py + ph + 6);
+    });
+
+    /* 轴标题 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 11px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(box.x + 12, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, px + pw / 2, box.y + box.h - 2);
+
+    return { toX: toX, toY: toY, px: px, py: py, pw: pw, ph: ph };
+  }
+
+  /* ============================================================
+     绘制三张子图
+     ============================================================ */
+
+  var COLORS = { EW: '#b45309', NS: '#2563eb', UP: '#15803d', HV: '#9333ea' };
+
+  function drawAll(canvasId, t, ew, ns, up, fs, hvsr) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(400, Math.round(rect.height) || 780);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var padX = 8, padY = 8, gapY = 8;
+    var usableH = H - padY * 2 - gapY * 2;
+    var hA = usableH * 0.24;
+    var hB = usableH * 0.32;
+    var hC = usableH * 0.44;
+
+    var boxA = { x: padX, y: padY,                      w: W - padX * 2, h: hA };
+    var boxB = { x: padX, y: boxA.y + boxA.h + gapY,   w: W - padX * 2, h: hB };
+    var boxC = { x: padX, y: boxB.y + boxB.h + gapY,   w: W - padX * 2, h: hC };
+
+    drawPanelA(ctx, boxA, t, ew, ns, up);
+    drawPanelB(ctx, boxB, ew, ns, up, fs);
+    drawPanelC(ctx, boxC, hvsr);
+  }
+
+  /* ---------- (a) 三分量时程 ---------- */
+  function drawPanelA(ctx, box, t, ew, ns, up) {
+    /* 计算 y 范围 */
+    var yMax = 0;
+    for (var i = 0; i < ew.length; i++) {
+      if (Math.abs(ew[i]) > yMax) yMax = Math.abs(ew[i]);
+      if (Math.abs(ns[i]) > yMax) yMax = Math.abs(ns[i]);
+      if (Math.abs(up[i]) > yMax) yMax = Math.abs(up[i]);
+    }
+    yMax *= 1.08;
+    if (yMax === 0) yMax = 1;
+    var yMin = -yMax;
+
+    var frame = makeFrame(ctx, box,
+      false, false,
+      [t[0], t[t.length - 1]], [yMin, yMax],
+      'Time (s)', 'Acc. (g)',
+      '(a) Three-component acceleration');
+
+    /* 零线 */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.4;
+    ctx.setLineDash([3, 3]);
+    var y0 = frame.toY(0);
+    ctx.beginPath();
+    ctx.moveTo(frame.px, y0);
+    ctx.lineTo(frame.px + frame.pw, y0);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 三条曲线 */
+    var series = [
+      { data: ew, color: COLORS.EW },
+      { data: ns, color: COLORS.NS },
+      { data: up, color: COLORS.UP }
+    ];
+    for (var s = 0; s < series.length; s++) {
+      var rgb = hexToRgb(series[s].color);
+      ctx.strokeStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.85)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      var n = series[s].data.length;
+      var pxCount = Math.max(1, Math.floor(frame.pw));
+      var step = n / pxCount;
+      for (var px = 0; px < pxCount; px++) {
+        var i0 = Math.floor(px * step);
+        var i1 = Math.min(n, Math.floor((px + 1) * step) + 1);
+        var lo = Infinity, hi = -Infinity;
+        for (var j = i0; j < i1; j++) {
+          var vv = series[s].data[j];
+          if (vv < lo) lo = vv;
+          if (vv > hi) hi = vv;
+        }
+        if (lo === Infinity) continue;
+        var y1 = frame.toY(hi), y2 = frame.toY(lo);
+        var x = frame.px + px + 0.5;
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+      }
+      ctx.stroke();
+    }
+
+    /* 图例 */
+    var lx = frame.px + frame.pw - 130;
+    var ly = frame.py + 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillRect(lx, ly, 122, 18);
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var items = [['EW', COLORS.EW], ['NS', COLORS.NS], ['UP', COLORS.UP]];
+    var xOff = lx + 6;
+    for (var ii = 0; ii < items.length; ii++) {
+      ctx.strokeStyle = items[ii][1];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xOff, ly + 9);
+      ctx.lineTo(xOff + 12, ly + 9);
+      ctx.stroke();
+      ctx.fillStyle = '#222222';
+      ctx.fillText(items[ii][0], xOff + 15, ly + 9);
+      xOff += 38;
+    }
+  }
+
+  /* ---------- (b) 三分量 Fourier 幅值谱 ---------- */
+  function drawPanelB(ctx, box, ew, ns, up, fs) {
+    var nWin = Math.round(WINDOW_SEC * fs);
+    if (nWin > ew.length) nWin = ew.length;
+    var win = hann(nWin);
+
+    var segEW = new Float64Array(nWin);
+    var segNS = new Float64Array(nWin);
+    var segUP = new Float64Array(nWin);
+    for (var i = 0; i < nWin; i++) {
+      segEW[i] = ew[i] * win[i];
+      segNS[i] = ns[i] * win[i];
+      segUP[i] = up[i] * win[i];
+    }
+
+    var ampEW = fftAmplitude(segEW);
+    var ampNS = fftAmplitude(segNS);
+    var ampUP = fftAmplitude(segUP);
+
+    var nfft = nextPow2(nWin);
+    var half = ampEW.length;
+    var freqs = new Float64Array(half);
+    for (var k = 0; k < half; k++) freqs[k] = k * fs / nfft;
+
+    /* 平滑 */
+    var EW_s = konnoOhmachi(freqs, ampEW, KO_B);
+    var NS_s = konnoOhmachi(freqs, ampNS, KO_B);
+    var UP_s = konnoOhmachi(freqs, ampUP, KO_B);
+
+    /* 范围 */
+    var yMin = Infinity, yMax = -Infinity;
+    for (var m = 1; m < half; m++) {
+      if (freqs[m] < FMIN || freqs[m] > FMAX) continue;
+      var vals = [EW_s[m], NS_s[m], UP_s[m]];
+      for (var v = 0; v < vals.length; v++) {
+        if (vals[v] > 1e-12) {
+          if (vals[v] < yMin) yMin = vals[v];
+          if (vals[v] > yMax) yMax = vals[v];
+        }
+      }
+    }
+    if (!isFinite(yMin)) { yMin = 1e-6; yMax = 1; }
+    yMin *= 0.4; yMax *= 3;
+
+    var frame = makeFrame(ctx, box,
+      true, true,
+      [FMIN, FMAX], [yMin, yMax],
+      'Frequency f (Hz)', 'Fourier amplitude',
+      '(b) Fourier amplitude spectra');
+
+    var series = [
+      { data: EW_s, color: COLORS.EW },
+      { data: NS_s, color: COLORS.NS },
+      { data: UP_s, color: COLORS.UP }
+    ];
+    for (var s = 0; s < series.length; s++) {
+      ctx.strokeStyle = series[s].color;
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      var started = false;
+      for (var p = 1; p < half; p++) {
+        if (freqs[p] < FMIN || freqs[p] > FMAX) continue;
+        var vv = series[s].data[p];
+        if (!(vv > 0)) continue;
+        var px = frame.toX(freqs[p]);
+        var py = frame.toY(vv);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* 图例 */
+    var lx = frame.px + frame.pw - 130;
+    var ly = frame.py + 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillRect(lx, ly, 122, 18);
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var items = [['EW', COLORS.EW], ['NS', COLORS.NS], ['UP', COLORS.UP]];
+    var xOff = lx + 6;
+    for (var ii = 0; ii < items.length; ii++) {
+      ctx.strokeStyle = items[ii][1];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xOff, ly + 9);
+      ctx.lineTo(xOff + 12, ly + 9);
+      ctx.stroke();
+      ctx.fillStyle = '#222222';
+      ctx.fillText(items[ii][0], xOff + 15, ly + 9);
+      xOff += 38;
+    }
+  }
+
+  /* ---------- (c) H/V 谱比曲线 ---------- */
+  function drawPanelC(ctx, box, hvsr) {
+    /* 在有效频段内找峰值 */
+    var freqs = hvsr.freqs;
+    var half = hvsr.half;
+    var mean = hvsr.mean;
+    var std = hvsr.std;
+    var all = hvsr.all;
+
+    /* 找峰值 */
+    var f0 = 1, A0 = 1, maxVal = 0;
+    for (var k = 1; k < half; k++) {
+      if (freqs[k] < FMIN || freqs[k] > FMAX) continue;
+      if (mean[k] > maxVal) {
+        maxVal = mean[k];
+        f0 = freqs[k];
+        A0 = mean[k];
+      }
+    }
+
+    var yMax = Math.max(A0 * 1.35, 4);
+
+    var frame = makeFrame(ctx, box,
+      true, false,
+      [FMIN, FMAX], [0, yMax],
+      'Frequency f (Hz)', 'H/V spectral ratio',
+      '(c) H/V spectral ratio');
+
+    /* 各窗口淡色曲线 */
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 0.5;
+    for (var w = 0; w < all.length; w++) {
+      ctx.beginPath();
+      var started = false;
+      for (var i = 1; i < half; i++) {
+        if (freqs[i] < FMIN || freqs[i] > FMAX) continue;
+        var vv = all[w][i];
+        if (!isFinite(vv)) continue;
+        var px = frame.toX(freqs[i]);
+        var py = frame.toY(vv);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* ±1σ 带 */
+    ctx.fillStyle = 'rgba(196, 181, 253, 0.45)';
+    ctx.beginPath();
+    var started = false;
+    for (var s1 = 1; s1 < half; s1++) {
+      if (freqs[s1] < FMIN || freqs[s1] > FMAX) continue;
+      var upper = mean[s1] + std[s1];
+      var px1 = frame.toX(freqs[s1]);
+      var py1 = frame.toY(upper);
+      if (!started) { ctx.moveTo(px1, py1); started = true; }
+      else ctx.lineTo(px1, py1);
+    }
+    for (var s2 = half - 1; s2 >= 1; s2--) {
+      if (freqs[s2] < FMIN || freqs[s2] > FMAX) continue;
+      var lower = Math.max(0, mean[s2] - std[s2]);
+      var px2 = frame.toX(freqs[s2]);
+      var py2 = frame.toY(lower);
+      ctx.lineTo(px2, py2);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    /* 均值曲线 */
+    ctx.strokeStyle = COLORS.HV;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    var startedM = false;
+    for (var m = 1; m < half; m++) {
+      if (freqs[m] < FMIN || freqs[m] > FMAX) continue;
+      var vvM = mean[m];
+      if (!isFinite(vvM)) continue;
+      var pxM = frame.toX(freqs[m]);
+      var pyM = frame.toY(vvM);
+      if (!startedM) { ctx.moveTo(pxM, pyM); startedM = true; }
+      else ctx.lineTo(pxM, pyM);
+    }
+    ctx.stroke();
+
+    /* 参考线 H/V = 1 */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.6;
+    ctx.setLineDash([4, 4]);
+    var y1 = frame.toY(1);
+    ctx.beginPath();
+    ctx.moveTo(frame.px, y1);
+    ctx.lineTo(frame.px + frame.pw, y1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 峰值标记 */
+    var peakX = frame.toX(f0);
+    var peakY = frame.toY(A0);
+    ctx.strokeStyle = COLORS.HV;
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(peakX, frame.py);
+    ctx.lineTo(peakX, frame.py + frame.ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = COLORS.HV;
+    ctx.beginPath();
+    ctx.arc(peakX, peakY, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* 峰值标注 */
+    var labelX = peakX + 12;
+    var labelY = peakY - 4;
+    if (labelX + 130 > frame.px + frame.pw) labelX = peakX - 130;
+    ctx.fillStyle = '#222222';
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('f\u2080 = ' + f0.toFixed(2) + ' Hz', labelX, labelY - 7);
+    ctx.fillText('A\u2080 = ' + A0.toFixed(2), labelX, labelY + 7);
+
+    /* 图例 */
+    var lgx = frame.px + frame.pw - 148;
+    var lgy = frame.py + 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillRect(lgx, lgy, 140, 18);
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    /* Mean */
+    ctx.strokeStyle = COLORS.HV;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(lgx + 6, lgy + 9);
+    ctx.lineTo(lgx + 22, lgy + 9);
+    ctx.stroke();
+    ctx.fillStyle = '#222222';
+    ctx.fillText('Mean H/V', lgx + 26, lgy + 9);
+
+    /* Windows */
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(lgx + 76, lgy + 9);
+    ctx.lineTo(lgx + 92, lgy + 9);
+    ctx.stroke();
+    ctx.fillStyle = '#222222';
+    ctx.fillText('Windows', lgx + 96, lgy + 9);
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+
+  var FILES = [
+    { key: 'ew', url: '../assets/elcentro_EW.txt' },
+    { key: 'ns', url: '../assets/elcentro_NS.txt' },
+    { key: 'up', url: '../assets/elcentro_UP.txt' }
+  ];
+
+  function loadAll() {
+    return Promise.all(FILES.map(function (f) {
+      return fetch(f.url, { cache: 'no-cache' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(function (text) {
+          return { key: f.key, parsed: parseTwoCols(text), ok: true };
+        })
+        .catch(function (err) {
+          if (window.console) console.warn('[hvsr] ' + f.key + ' 加载失败：', err);
+          return { key: f.key, ok: false };
+        });
+    }));
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    loadAll().then(function (results) {
+      var byKey = {};
+      results.forEach(function (r) { if (r.ok) byKey[r.key] = r.parsed; });
+
+      var haveEW = !!byKey.ew, haveNS = !!byKey.ns, haveUP = !!byKey.up;
+
+      /* 若三个文件都缺，则用合成数据 */
+      var t, ew, ns, up, srcLabel;
+      if (haveEW && haveNS && haveUP) {
+        t = byKey.ew.t;
+        ew = byKey.ew.a;
+        ns = byKey.ns.a;
+        up = byKey.up.a;
+        srcLabel = 'EW+NS+UP';
+      } else {
+        /* 合成数据 fallback：卓越频率 f0 = 1.2 Hz，A0 = 4.0 */
+        var synth = synthThreeComponent();
+        t = synth.t; ew = synth.ew; ns = synth.ns; up = synth.up;
+        srcLabel = '合成数据 (f0=1.2 Hz, A0=4.0)';
+      }
+
+      var fs = 1 / (t[1] - t[0]);
+
+      /* 计算 H/V */
+      var hvsr = computeHVSR(ew, ns, up, fs);
+
+      /* 绘制三张子图 */
+      drawAll('c-hvsr', t, ew, ns, up, fs, hvsr);
+
+      /* 找峰值 */
+      var f0 = 1, A0 = 1, maxV = 0;
+      for (var k = 1; k < hvsr.half; k++) {
+        if (hvsr.freqs[k] < FMIN || hvsr.freqs[k] > FMAX) continue;
+        if (hvsr.mean[k] > maxV) { maxV = hvsr.mean[k]; f0 = hvsr.freqs[k]; A0 = hvsr.mean[k]; }
+      }
+
+      if (status) {
+        status.textContent = srcLabel + ' · ' + t.length + ' 点 · ' +
+                             fs.toFixed(0) + ' Hz · ' + t[t.length - 1].toFixed(1) + ' s · ' +
+                             'f\u2080 ≈ ' + f0.toFixed(2) + ' Hz · ' +
+                             'A\u2080 ≈ ' + A0.toFixed(2);
+      }
+    });
+  }
+
+  /* ============================================================
+     合成三分量数据（当示例文件缺失时使用）
+     - 卓越频率 f0 = 1.2 Hz
+     - 放大因子 A0 = 4.0
+     ============================================================ */
+
+  function synthThreeComponent() {
+    var fs = 100;
+    var dur = 60;
+    var n = fs * dur;
+    var t = new Float64Array(n);
+    for (var i = 0; i < n; i++) t[i] = i / fs;
+
+    var f0 = 1.2;
+    var A0 = 4.0;
+
+    var rng = (function (seed) {
+      var s = seed >>> 0;
+      return function () {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    })(12345);
+
+    function standardNormal() {
+      var u1 = rng() || 1e-12;
+      var u2 = rng();
+      return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    }
+
+    /* 用简化的单自由度响应构造场地放大 */
+    function siteAmp(f) {
+      /* 简化的共振放大：A0 峰，Q 决定带宽 */
+      var Q = 3.0;
+      var ratio = f / f0;
+      var re = 1 - ratio * ratio;
+      var im = ratio / Q;
+      var denom = re * re + im * im;
+      var mag = A0 / Math.sqrt(denom + 1e-10);
+      return mag;
+    }
+
+    /* 生成频率域样本 */
+    var nfft = nextPow2(n);
+    function makeComponent(scaleSite) {
+      var re = new Float64Array(nfft);
+      var im = new Float64Array(nfft);
+      for (var k = 1; k < nfft / 2; k++) {
+        var f = k * fs / nfft;
+        /* 宽带包络：低频平台，高频衰减 */
+        var env = 1.0 / (1 + Math.pow(f / 6.0, 2));
+        var site = scaleSite ? siteAmp(f) : 1.0;
+        var mag = env * site;
+        var phase = rng() * 2 * Math.PI;
+        re[k] = mag * Math.cos(phase);
+        im[k] = mag * Math.sin(phase);
+        /* 共轭对称 */
+        re[nfft - k] = re[k];
+        im[nfft - k] = -im[k];
+      }
+      /* 反 FFT */
+      var cre = new Float64Array(re);
+      var cim = new Float64Array(im);
+      rfftInPlace(cim, cre);   /* 不用，改用直接累加 */
+      /* 简化：直接做逆变换 */
+      var sig = new Float64Array(n);
+      for (var i = 0; i < n; i++) {
+        var s = 0;
+        for (var kk = 0; kk < nfft; kk++) {
+          var ang = 2 * Math.PI * kk * i / nfft;
+          s += re[kk] * Math.cos(ang) - im[kk] * Math.sin(ang);
+        }
+        sig[i] = s;
+      }
+      /* 归一化 */
+      var maxV = 0;
+      for (var m = 0; m < n; m++) {
+        if (Math.abs(sig[m]) > maxV) maxV = Math.abs(sig[m]);
+      }
+      if (maxV > 0) {
+        for (var p = 0; p < n; p++) sig[p] *= 0.05 / maxV;
+      }
+      return Array.from(sig);
+    }
+
+    var ew = makeComponent(true);
+    var ns = makeComponent(true);
+    var up = makeComponent(false);
+    return { t: Array.from(t), ew: ew, ns: ns, up: up };
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

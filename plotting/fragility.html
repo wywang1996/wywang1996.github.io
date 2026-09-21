@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>易损性曲线 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.fr-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.fr-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.fr-canvas-wrap canvas {
+  width: 100%;
+  height: 560px;
+  display: block;
+}
+.fr-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.fr-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.fr-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+.fr-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.fr-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.fr-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      易损性曲线
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 结构损伤与评估</div>
+      <h1>易损性曲线</h1>
+      <p class="lead">
+        结构<strong>易损性曲线</strong>（Seismic Fragility Curve）：
+        在不同地震动强度下，结构超越某一<strong>损伤状态</strong>
+        的条件概率曲线 P(DS ≥ ds | IM)。
+        通常有四条曲线分别对应<strong>轻微、中等、严重、完全</strong>
+        四个损伤状态。它是区域抗震风险评估、防灾决策、
+        保险定价与韧性城市分析的核心工具。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">易损性</span>
+        <span class="pill">对数正态</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/fragility.csv</code> 作为输入。
+        文件是 IDA 或云图法分析结果的整理输出：
+        <strong>宽格式表格</strong>，第一列为地震动强度指标 IM，
+        后续每列对应一个损伤状态的超越概率。
+        若文件不存在，页面会使用内置的合成数据演示。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:200px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>Sa_g</code></td><td>强度指标 IM = S<sub>a</sub>(T<sub>1</sub>)</td><td><code>g</code></td><td>单调递增</td></tr>
+            <tr><td><code>DS1</code></td><td>轻微损伤超越概率</td><td>0–1</td><td>Slight</td></tr>
+            <tr><td><code>DS2</code></td><td>中等损伤超越概率</td><td>0–1</td><td>Moderate</td></tr>
+            <tr><td><code>DS3</code></td><td>严重损伤超越概率</td><td>0–1</td><td>Extensive</td></tr>
+            <tr><td><code>DS4</code></td><td>完全损伤超越概率</td><td>0–1</td><td>Complete</td></tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:12.5px; color:var(--text-muted); margin:10px 0 0;">
+          列数可以任意扩展——增删损伤状态只需调整列数。
+          程序会按列名自动排序：DS1 &lt; DS2 &lt; DS3 &lt; DS4。
+        </p>
+
+        <h4 style="margin-top:16px;">CSV 示例（4 个损伤状态，11 个 IM 水平）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/fragility.csv</code> 不存在，
+          则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>fragility.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># fragility.csv
+# 易损性曲线 —— 4 个损伤状态
+# 单位：Sa_g (g)，概率 0–1
+Sa_g,DS1,DS2,DS3,DS4
+0.05,0.02,0.00,0.00,0.00
+0.10,0.08,0.01,0.00,0.00
+0.15,0.18,0.04,0.00,0.00
+0.20,0.32,0.09,0.01,0.00
+0.30,0.55,0.22,0.05,0.01
+0.40,0.73,0.38,0.12,0.02
+0.50,0.85,0.54,0.22,0.05
+0.70,0.95,0.76,0.42,0.13
+0.90,0.98,0.87,0.58,0.24
+1.20,1.00,0.95,0.75,0.40
+1.50,1.00,0.99,0.86,0.55
+</code></pre>
+      </div>
+
+      <div class="fr-download">
+        <button type="button" id="btn-download-csv">下载 fragility.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>IDA 分析</strong>——用 IDA 曲线与各损伤状态阈值比较，
+            统计每个 IM 水平下超越阈值的波数占比，即得超越概率。</li>
+          <li><strong>云图法</strong>——不调幅，用大量地震波随机 IM 做时程分析，
+            用回归或极大似然估计拟合易损性函数。</li>
+          <li><strong>专家判断</strong>——基于经验或历史震害数据，
+            直接给出损伤状态阈值的中位值与对数标准差（HAZUS 方法）。</li>
+          <li><strong>经验易损性</strong>——基于历史地震震害调查统计，
+            如日本、美国、意大利的震害数据库。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一栋中层钢筋混凝土框架的易损性曲线：
+          四个损伤状态的中位值（50% 超越概率对应的 Sa）分别约为
+          0.26 / 0.46 / 0.74 / 1.30 g，
+          对数标准差分别约为 0.40 / 0.42 / 0.44 / 0.46。
+          替换为你自己的分析结果只需修改 <code>fragility.csv</code>。
+        </div>
+      </div>
+
+      <!-- ============================================================
+           计算步骤：从 IDA 曲线到易损性曲线
+           ============================================================ -->
+      <h3 class="sub">计算步骤：从 IDA 曲线到易损性曲线</h3>
+
+      <p>
+        易损性曲线可以由 IDA 结果统计得到，也可以用对数正态分布拟合。
+        主流做法是<strong>先统计超越概率，再用极大似然估计拟合对数正态参数</strong>。
+      </p>
+
+      <div class="flow">
+        IDA 曲线 → 定义损伤状态阈值 LS<sub>i</sub>
+        → 对每个 IM 水平统计 P(DS ≥ LS<sub>i</sub> | IM) = n<sub>exceed</sub>/n<sub>total</sub>
+        → 用极大似然估计拟合对数正态分布
+        P(DS ≥ LS<sub>i</sub> | IM) = Φ[ ln(IM/θ<sub>i</sub>) / β<sub>i</sub> ]
+        → 得到中位值 θ<sub>i</sub> 与对数标准差 β<sub>i</sub>
+        → 绘制四条易损性曲线
+      </div>
+
+      <div class="io-card">
+        <h4>四个损伤状态的阈值（GB / HAZUS 参考）</h4>
+        <table>
+          <thead><tr>
+            <th style="width:180px;">损伤状态</th>
+            <th style="width:160px;">层间位移角阈值</th>
+            <th>典型描述</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><strong>轻微（Slight）</strong></td><td><code>0.005</code></td><td>非结构构件轻微损伤，结构完好</td></tr>
+            <tr><td><strong>中等（Moderate）</strong></td><td><code>0.010</code></td><td>部分构件轻微开裂，可修复</td></tr>
+            <tr><td><strong>严重（Extensive）</strong></td><td><code>0.020</code></td><td>构件明显破坏，修复困难</td></tr>
+            <tr><td><strong>完全（Complete）</strong></td><td><code>0.040</code></td><td>结构濒临倒塌，不可修复</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>阈值不是固定的</strong>——不同结构类型、不同规范、
+          不同性能目标对应不同阈值。这里给出的是钢筋混凝土框架的常用值。
+          钢结构、砌体结构、桥梁等需查阅相应规范或文献。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">
+        Python 代码：从 IDA 曲线统计易损性曲线
+      </h4>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>fragility.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 易损性曲线 | 从 IDA 结果统计
+# -------------------------------------------------------------
+# 输入：
+#   ida_curves.csv     Sa_g, wave1, ..., waveN
+# -------------------------------------------------------------
+# 输出：
+#   fragility.csv      Sa_g, DS1, DS2, DS3, DS4
+#   fragility.png      易损性曲线
+# =============================================================
+
+import os
+import numpy as np
+from scipy.stats import norm
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+IDA_FILE = 'ida_curves.csv'
+
+# 损伤状态阈值（最大层间位移角）
+THRESHOLDS = {
+    'DS1 Slight':    0.005,
+    'DS2 Moderate':  0.010,
+    'DS3 Extensive': 0.020,
+    'DS4 Complete':  0.040,
+}
+
+COLORS = {
+    'DS1 Slight':    '#0891b2',
+    'DS2 Moderate':  '#2563eb',
+    'DS3 Extensive': '#b45309',
+    'DS4 Complete':  '#dc2626',
+}
+
+
+# ---------- 1. 读取 IDA 曲线 ----------
+if os.path.exists(IDA_FILE):
+    data = np.genfromtxt(IDA_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    Sa = np.asarray(data['Sa_g'], dtype=float)
+    wave_cols = [n for n in data.dtype.names if n != 'Sa_g']
+    DM = np.column_stack([np.asarray(data[n], dtype=float)
+                          for n in wave_cols])
+    print(f'从 {IDA_FILE} 读取 {len(Sa)} 个 IM、{DM.shape[1]} 条波')
+else:
+    raise FileNotFoundError(f'缺少文件：{IDA_FILE}')
+
+
+# ---------- 2. 统计各损伤状态的超越概率 ----------
+n_waves = DM.shape[1]
+probs = {}
+
+for name, threshold in THRESHOLDS.items():
+    p = np.zeros(len(Sa))
+    for i in range(len(Sa)):
+        n_exceed = np.sum(DM[i, :] >= threshold)
+        p[i] = n_exceed / n_waves
+    probs[name] = p
+    print(f'{name}（阈值 {threshold:.4f}）:')
+    for i in range(len(Sa)):
+        print(f'  Sa = {Sa[i]:.2f} g → P = {p[i]:.3f}')
+
+
+# ---------- 3. 极大似然估计拟合对数正态分布 ----------
+def neg_log_likelihood(params, Sa, p):
+    """对数正态易损性的负对数似然。
+
+    模型: P(IM) = Φ[ ln(IM/θ) / β ]
+    用二项分布似然: L = Π p^k (1-p)^(n-k)
+    """
+    ln_theta, ln_beta = params
+    theta = np.exp(ln_theta)
+    beta = np.exp(ln_beta)
+    if beta <= 0:
+        return 1e10
+
+    p_model = norm.cdf(np.log(Sa / theta) / beta)
+    p_model = np.clip(p_model, 1e-10, 1 - 1e-10)
+
+    # 假设每条波为一个样本（二项似然）
+    n = 20  # 每个 IM 水平的波数估计
+    log_L = np.sum(p * n * np.log(p_model) +
+                   (1 - p) * n * np.log(1 - p_model))
+    return -log_L
+
+
+fits = {}
+for name, p in probs.items():
+    # 去掉 p = 0 或 1 的点（无法拟合）
+    mask = (p > 0.02) & (p < 0.98)
+    if mask.sum() < 3:
+        mask = p > 0
+
+    Sa_fit = Sa[mask]
+    p_fit = p[mask]
+
+    # 初值：用第一个超越点做中位值估计
+    i50 = np.argmin(np.abs(p_fit - 0.5)) if len(p_fit) > 0 else 0
+    theta0 = Sa_fit[i50] if len(Sa_fit) > 0 else 0.5
+
+    res = minimize(neg_log_likelihood,
+                   [np.log(theta0), np.log(0.4)],
+                   args=(Sa_fit, p_fit),
+                   method='Nelder-Mead')
+
+    theta = np.exp(res.x[0])
+    beta = np.exp(res.x[1])
+    fits[name] = (theta, beta)
+    print(f'{name}: θ = {theta:.4f} g, β = {beta:.4f}')
+
+
+# ---------- 4. 输出 CSV ----------
+header = 'Sa_g,' + ','.join([n.split()[0] for n in THRESHOLDS.keys()])
+out = np.column_stack([Sa] + [probs[n] for n in THRESHOLDS.keys()])
+np.savetxt('fragility.csv', out, delimiter=',',
+           header=header, comments='', fmt='%.4f')
+print('\n已保存 fragility.csv')
+
+
+# ---------- 5. 绘图 ----------
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+# 光滑曲线
+Sa_plot = np.logspace(np.log10(Sa.min() * 0.8),
+                      np.log10(Sa.max() * 1.2), 200)
+
+for name in THRESHOLDS.keys():
+    theta, beta = fits[name]
+    p_curve = norm.cdf(np.log(Sa_plot / theta) / beta)
+    ax.plot(Sa_plot, p_curve, lw=1.8, color=COLORS[name],
+            label=f'{name}  (θ={theta:.2f} g, β={beta:.2f})')
+
+    # 数据点
+    ax.plot(Sa, probs[name], 'o', color=COLORS[name],
+            ms=5, mfc=COLORS[name], mec='none',
+            alpha=0.7, zorder=5)
+
+    # 中位值竖线
+    ax.axvline(theta, color=COLORS[name], lw=0.6, ls=':', alpha=0.6)
+
+# 0.5 水平线
+ax.axhline(0.5, color='#888888', lw=0.6, ls='--')
+
+# 坐标轴
+ax.set_xscale('log')
+ax.set_xlabel('Intensity measure  Sa(T$_1$)  (g)')
+ax.set_ylabel('Exceedance probability  P(DS ≥ ds | IM)')
+ax.set_title('Seismic fragility curves', fontsize=11)
+ax.set_xlim(Sa.min() * 0.8, Sa.max() * 1.2)
+ax.set_ylim(-0.02, 1.02)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper left', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('fragility.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>超越概率统计</strong>：对每个 IM 水平，
+            统计 DM ≥ 阈值的波数除以总波数。</li>
+          <li><strong>对数正态模型</strong>：P(IM) = Φ[ln(IM/θ)/β]，
+            其中 θ 是中位值，β 是对数标准差。</li>
+          <li><strong>极大似然估计</strong>：用二项分布似然拟合，
+            比最小二乘更稳健，特别是概率接近 0 或 1 时。</li>
+          <li><strong>光滑曲线</strong>：用拟合得到的 θ 与 β，
+            在对数 IM 网格上绘制光滑曲线。</li>
+          <li><strong>中位值竖线</strong>：θ 即曲线与 P = 0.5 的交点，
+            是易损性曲线的关键特征。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        易损性曲线描述<strong>结构在不同地震动强度下发生损坏的概率</strong>。
+        它是结构抗震性能的统计描述，与 IDA 曲线的关系是：
+        <strong>IDA 是确定性的</strong>（一条波一条曲线），
+        <strong>易损性是统计性的</strong>（所有波的综合）。
+      </p>
+
+      <h3 class="sub">对数正态模型</h3>
+
+      <p>
+        易损性曲线通常用<strong>对数正态累积分布函数</strong>描述：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        P(DS ≥ ds | IM) = Φ [ ln(IM/θ) / β ]
+      </div>
+
+      <p>其中：</p>
+
+      <ul class="plain">
+        <li><strong>Φ</strong>——标准正态累积分布函数；</li>
+        <li><strong>θ</strong>——中位值（IM 的 50% 超越水平），
+          反映结构的<strong>平均抵抗能力</strong>；</li>
+        <li><strong>β</strong>——对数标准差，
+          反映<strong>能力的不确定性</strong>。β 越大，曲线越"平缓"。</li>
+      </ul>
+
+      <h3 class="sub">四个损伤状态的解读</h3>
+
+      <ul class="plain">
+        <li><strong>DS1 轻微</strong>——最早超越的曲线，
+          在较低 IM 下就开始上升。对应非结构构件损伤。</li>
+        <li><strong>DS2 中等</strong>——结构构件开始出现明显损伤，
+          可修复但成本较高。</li>
+        <li><strong>DS3 严重</strong>——结构损伤严重，
+          修复困难，可能需加固。</li>
+        <li><strong>DS4 完全</strong>——结构濒临或达到倒塌，
+          不可修复。</li>
+      </ul>
+
+      <p>
+        四条曲线的中位值 θ<sub>1</sub> &lt; θ<sub>2</sub> &lt;
+        θ<sub>3</sub> &lt; θ<sub>4</sub>，间距反映不同损伤状态
+        之间的<strong>安全裕度</strong>。
+      </p>
+
+      <h3 class="sub">从易损性曲线能读出什么</h3>
+
+      <ul class="plain">
+        <li><strong>中位值</strong>——曲线与 P = 0.5 的交点，
+          是该损伤状态的<strong>特征强度</strong>。</li>
+        <li><strong>曲线斜率</strong>——β 越小，曲线越陡，
+          说明能力不确定性越小。</li>
+        <li><strong>曲线位置</strong>——曲线越靠右，
+          结构抵抗该损伤状态的能力越强。</li>
+        <li><strong>曲线间距</strong>——反映不同损伤状态
+          之间的<strong>渐进性</strong>，间距均匀说明损伤渐进，
+          间距突变说明存在薄弱环节。</li>
+        <li><strong>设计地震动水平下的超越概率</strong>——
+          在设防地震动 Sa 处垂直向上读，即得该损伤状态的超越概率。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>区域风险评估中的应用：</strong>
+        易损性曲线是<strong>区域地震风险评估</strong>的核心工具。
+        把区域内每栋建筑的易损性曲线与该场地的地震危险性曲线
+        卷积，得到每栋建筑的损伤概率，再乘以损失比与建筑价值，
+        得到<strong>期望经济损失</strong>。
+        这是灾害保险定价、韧性城市分析的基础。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>易损性曲线是<strong>统计描述</strong>，
+        不代表单栋具体建筑在给定地震下的结果。
+        它给出的是"在相同条件下的建筑物"中预期有多少比例
+        会达到某损伤状态。<strong>不能用来预测单栋建筑的损伤</strong>，
+        只能用于群体评估。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由 <code>assets/fragility.csv</code> 实时计算：
+        读取 CSV → 拟合对数正态参数 → 绘制四条光滑易损性曲线。
+        画布尺寸按 A4 排版（720 × 560 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/fragility.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="fr-canvas-wrap">
+        <canvas id="c-fragility"></canvas>
+      </div>
+
+      <div class="fr-legend">
+        <span><span class="line" style="background:#0891b2"></span>DS1 轻微</span>
+        <span><span class="line" style="background:#2563eb"></span>DS2 中等</span>
+        <span><span class="line" style="background:#b45309"></span>DS3 严重</span>
+        <span><span class="line" style="background:#dc2626"></span>DS4 完全</span>
+      </div>
+
+      <div class="fr-note" style="margin-top:14px;">
+        横轴为强度指标 S<sub>a</sub>(T<sub>1</sub>)（g，对数），
+        纵轴为超越概率 P(DS ≥ ds | IM)。四条实线为拟合的对数正态曲线，
+        圆点为 CSV 中的原始数据点，竖虚线为中位值 θ。
+        水平虚线 P = 0.5 与各曲线的交点即为各损伤状态的中位值。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code>、<code>scipy</code> 与 <code>matplotlib</code>。
+        核心步骤：读取 CSV → 拟合对数正态参数（极大似然）→ 绘制四条曲线。
+        CSV 文件不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>fragility.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 易损性曲线 | 对数正态拟合
+# -------------------------------------------------------------
+# 输入数据：fragility.csv
+#   Sa_g,DS1,DS2,DS3,DS4
+#   0.05,0.02,0.00,0.00,0.00
+#   ...
+#   单位：Sa_g (g)，概率 0–1
+# -------------------------------------------------------------
+# 功能：
+#   1. 读取 CSV（自动识别损伤状态列数）
+#   2. 用极大似然估计拟合对数正态参数 (θ, β)
+#   3. 绘制四条光滑易损性曲线
+# =============================================================
+
+import os
+import numpy as np
+from scipy.stats import norm
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'fragility.csv'
+
+COLORS = ['#0891b2', '#2563eb', '#b45309', '#dc2626']
+LABELS = ['DS1 Slight', 'DS2 Moderate', 'DS3 Extensive', 'DS4 Complete']
+
+
+def generate_synthetic():
+    """CSV 缺失时生成合成易损性数据。"""
+    Sa = np.array([0.05, 0.10, 0.15, 0.20, 0.30, 0.40,
+                   0.50, 0.70, 0.90, 1.20, 1.50])
+    # 四个损伤状态的超越概率（平滑单调）
+    probs = {
+        'DS1': np.array([0.02, 0.08, 0.18, 0.32, 0.55,
+                         0.73, 0.85, 0.95, 0.98, 1.00, 1.00]),
+        'DS2': np.array([0.00, 0.01, 0.04, 0.09, 0.22,
+                         0.38, 0.54, 0.76, 0.87, 0.95, 0.99]),
+        'DS3': np.array([0.00, 0.00, 0.00, 0.01, 0.05,
+                         0.12, 0.22, 0.42, 0.58, 0.75, 0.86]),
+        'DS4': np.array([0.00, 0.00, 0.00, 0.00, 0.01,
+                         0.02, 0.05, 0.13, 0.24, 0.40, 0.55]),
+    }
+    return Sa, probs
+
+
+# ---- 1. 读取数据 ----
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    Sa = np.asarray(data['Sa_g'], dtype=float)
+    ds_names = [n for n in data.dtype.names if n != 'Sa_g']
+    probs = {n: np.asarray(data[n], dtype=float) for n in ds_names}
+    print(f'从 {CSV_FILE} 读取 {len(Sa)} 个 IM、{len(ds_names)} 个损伤状态')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    Sa, probs = generate_synthetic()
+    ds_names = list(probs.keys())
+
+
+# ---- 2. 极大似然估计拟合对数正态 ----
+def neg_log_likelihood(params, Sa, p, n=20):
+    """对数正态易损性的负对数似然。"""
+    ln_theta, ln_beta = params
+    theta = np.exp(ln_theta)
+    beta = np.exp(ln_beta)
+    if beta &lt;= 0:
+        return 1e10
+    p_model = norm.cdf(np.log(Sa / theta) / beta)
+    p_model = np.clip(p_model, 1e-10, 1 - 1e-10)
+    log_L = np.sum(p * n * np.log(p_model) +
+                   (1 - p) * n * np.log(1 - p_model))
+    return -log_L
+
+
+fits = {}
+for name in ds_names:
+    p = probs[name]
+    # 去掉 p = 0 或 1 的极端点
+    mask = (p > 0.01) & (p < 0.99)
+    if mask.sum() &lt; 3:
+        mask = p > 0
+
+    Sa_fit = Sa[mask]
+    p_fit = p[mask]
+
+    # 初值
+    i50 = np.argmin(np.abs(p_fit - 0.5)) if len(p_fit) > 0 else 0
+    theta0 = Sa_fit[i50] if len(Sa_fit) > 0 else 0.5
+
+    res = minimize(neg_log_likelihood,
+                   [np.log(theta0), np.log(0.4)],
+                   args=(Sa_fit, p_fit),
+                   method='Nelder-Mead')
+
+    theta = np.exp(res.x[0])
+    beta = np.exp(res.x[1])
+    fits[name] = (theta, beta)
+    print(f'{name}: θ = {theta:.4f} g, β = {beta:.4f}')
+
+
+# ---- 3. 绘图（A4 尺寸 7.2 × 5.6 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+# 光滑曲线
+Sa_plot = np.logspace(np.log10(Sa.min() * 0.8),
+                      np.log10(Sa.max() * 1.2), 200)
+
+for i, name in enumerate(ds_names):
+    theta, beta = fits[name]
+    p_curve = norm.cdf(np.log(Sa_plot / theta) / beta)
+    label = LABELS[i] if i &lt; len(LABELS) else name
+    ax.plot(Sa_plot, p_curve, lw=1.8, color=COLORS[i % len(COLORS)],
+            label=f'{label}  (θ={theta:.2f} g, β={beta:.2f})')
+
+    # 数据点
+    ax.plot(Sa, probs[name], 'o', color=COLORS[i % len(COLORS)],
+            ms=5, mfc=COLORS[i % len(COLORS)], mec='none',
+            alpha=0.7, zorder=5)
+
+    # 中位值竖线
+    ax.axvline(theta, color=COLORS[i % len(COLORS)],
+               lw=0.6, ls=':', alpha=0.6)
+
+# 0.5 水平线
+ax.axhline(0.5, color='#888888', lw=0.6, ls='--')
+
+# 坐标轴
+ax.set_xscale('log')
+ax.set_xlabel('Intensity measure  Sa(T$_1$)  (g)')
+ax.set_ylabel('Exceedance probability  P(DS ≥ ds | IM)')
+ax.set_title('Seismic fragility curves', fontsize=11)
+ax.set_xlim(Sa.min() * 0.8, Sa.max() * 1.2)
+ax.set_ylim(-0.02, 1.02)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper left', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('fragility.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>自动识别列数</strong>：<code>data.dtype.names</code> 读取所有损伤状态列。</li>
+          <li><strong>对数正态 CDF</strong>：<code>norm.cdf(np.log(Sa/theta)/beta)</code>。</li>
+          <li><strong>极大似然估计</strong>：用 <code>scipy.optimize.minimize</code>，
+            参数用对数值 <code>ln θ</code>、<code>ln β</code> 保证正值。</li>
+          <li><strong>极端点处理</strong>：概率接近 0 或 1 的点会被剔除，
+            避免似然函数出现 log(0)。</li>
+          <li><strong>中位值竖线</strong>：<code>axvline(theta)</code> 标出曲线与 P = 0.5 的交点。</li>
+          <li><strong>数据点叠加</strong>：光滑曲线之外叠加原始数据点，
+            直观对照拟合质量。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。用 <code>readtable</code> 读取 CSV，
+        <code>fminsearch</code> 做极大似然估计，
+        <code>normcdf</code> 计算对数正态概率。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>fragility.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 易损性曲线 | 对数正态拟合
+% -------------------------------------------------------------
+% 输入数据：fragility.csv
+%   Sa_g,DS1,DS2,DS3,DS4
+%   单位：Sa_g (g)，概率 0–1
+% =============================================================
+
+CSV_FILE = 'fragility.csv';
+
+COLORS = [0.03 0.57 0.70; 0.15 0.39 0.92;
+          0.71 0.33 0.04; 0.86 0.15 0.15];
+LABELS = {'DS1 Slight', 'DS2 Moderate',
+          'DS3 Extensive', 'DS4 Complete'};
+
+% ---- 1. 读取数据 ----
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    Sa = T.Sa_g;
+    ds_names = T.Properties.VariableNames(2:end);
+    probs = table2array(T(:, 2:end));
+    fprintf('从 %s 读取 %d 个 IM、%d 个损伤状态\n', ...
+            CSV_FILE, numel(Sa), numel(ds_names));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    Sa = [0.05 0.10 0.15 0.20 0.30 0.40 ...
+          0.50 0.70 0.90 1.20 1.50]';
+    probs = [0.02 0.08 0.18 0.32 0.55 0.73 0.85 0.95 0.98 1.00 1.00;
+             0.00 0.01 0.04 0.09 0.22 0.38 0.54 0.76 0.87 0.95 0.99;
+             0.00 0.00 0.00 0.01 0.05 0.12 0.22 0.42 0.58 0.75 0.86;
+             0.00 0.00 0.00 0.00 0.01 0.02 0.05 0.13 0.24 0.40 0.55]';
+    ds_names = {'DS1', 'DS2', 'DS3', 'DS4'};
+end
+
+n_ds = numel(ds_names);
+
+% ---- 2. 极大似然估计 ----
+fits = zeros(n_ds, 2);   % 每行 [θ, β]
+for k = 1:n_ds
+    p = probs(:, k);
+    mask = p > 0.01 & p < 0.99;
+    if sum(mask) < 3
+        mask = p > 0;
+    end
+    Sa_fit = Sa(mask);
+    p_fit = p(mask);
+
+    % 初值
+    [~, i50] = min(abs(p_fit - 0.5));
+    theta0 = Sa_fit(i50);
+    beta0 = 0.4;
+
+    % 优化（对数参数）
+    obj = @(x) local_nll(x, Sa_fit, p_fit);
+    x_opt = fminsearch(obj, [log(theta0), log(beta0)]);
+
+    theta = exp(x_opt(1));
+    beta = exp(x_opt(2));
+    fits(k, :) = [theta, beta];
+    fprintf('%s: θ = %.4f g, β = %.4f\n', ds_names{k}, theta, beta);
+end
+
+% ---- 3. 绘图（A4 尺寸 720 × 560 px） ----
+figure('Color', 'w', 'Position', [100 100 720 560]);
+hold on;
+
+Sa_plot = logspace(log10(min(Sa) * 0.8),
+                   log10(max(Sa) * 1.2), 200);
+
+for k = 1:n_ds
+    theta = fits(k, 1);
+    beta = fits(k, 2);
+    p_curve = normcdf(log(Sa_plot / theta) / beta);
+
+    label = LABELS{k};
+    semilogx(Sa_plot, p_curve, 'Color', COLORS(k, :), ...
+             'LineWidth', 1.8, ...
+             'DisplayName', sprintf('%s (θ=%.2f, β=%.2f)', ...
+                                    label, theta, beta));
+
+    % 数据点
+    semilogx(Sa, probs(:, k), 'o', 'Color', COLORS(k, :), ...
+             'MarkerSize', 5, 'MarkerFaceColor', COLORS(k, :), ...
+             'MarkerEdgeColor', 'none', 'HandleVisibility', 'off');
+
+    % 中位值竖线
+    xline(theta, ':', 'Color', COLORS(k, :), ...
+          'LineWidth', 0.6, 'HandleVisibility', 'off');
+end
+
+yline(0.5, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.6);
+
+xlabel('Intensity measure  Sa(T_1)  (g)');
+ylabel('Exceedance probability  P(DS ≥ ds | IM)');
+title('Seismic fragility curves', 'FontSize', 11);
+xlim([min(Sa) * 0.8, max(Sa) * 1.2]);
+ylim([-0.02, 1.02]);
+grid on; box on;
+set(gca, 'XScale', 'log', 'FontName', 'Times New Roman', ...
+    'FontSize', 10, 'TickDir', 'in');
+legend('Location', 'northwest', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'fragility.png', 'Resolution', 300);
+
+
+% ===== 局部函数：负对数似然 =====
+function nll = local_nll(x, Sa, p)
+    theta = exp(x(1));
+    beta  = exp(x(2));
+    if beta <= 0
+        nll = 1e10;
+        return;
+    end
+    p_model = normcdf(log(Sa / theta) / beta);
+    p_model = min(max(p_model, 1e-10), 1 - 1e-10);
+    n = 20;   % 每个 IM 水平的波数
+    log_L = sum(p * n .* log(p_model) + ...
+                (1 - p) * n .* log(1 - p_model));
+    nll = -log_L;
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:180px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 强度指标</td><td>S<sub>a</sub>(T<sub>1</sub>)</td><td><code>g</code></td></tr>
+            <tr><td><strong>输入</strong> · 超越概率</td><td>P(DS ≥ ds | IM)</td><td>0–1</td></tr>
+            <tr><td><strong>输出</strong> · 中位值</td><td>θ</td><td><code>g</code></td></tr>
+            <tr><td><strong>输出</strong> · 对数标准差</td><td>β</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 光滑曲线</td><td>P(IM)</td><td>0–1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>对数正态模型：</strong>P(IM) = Φ[ln(IM/θ)/β]，
+          是易损性曲线的标准形式。</li>
+        <li><strong>中位值 θ：</strong>曲线与 P = 0.5 的交点，
+          反映该损伤状态的<strong>平均抵抗能力</strong>。</li>
+        <li><strong>对数标准差 β：</strong>反映能力的<strong>不确定性</strong>。
+          β 通常在 0.3–0.6 之间，包含地震动、结构、损伤状态定义等多重不确定性。</li>
+        <li><strong>数据统计：</strong>对每个 IM 水平统计 DM ≥ 阈值的波数占比。</li>
+        <li><strong>极大似然估计：</strong>用二项分布似然拟合，
+          比最小二乘更稳健。</li>
+        <li><strong>四种损伤状态：</strong>轻微、中等、严重、完全，
+          对应的层间位移角阈值通常为 0.005 / 0.010 / 0.020 / 0.040。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>拟合曲线不单调 → 检查 CSV 数据是否单调，
+              或剔除极端点后重新拟合。</li>
+            <li>曲线间距过小 → 损伤状态阈值设置过密，
+              需按规范或经验重新取值。</li>
+            <li>β &gt; 1.0 → 数据离散度过大，可能混用了不同结构类型，
+              或地震波数量太少。</li>
+            <li>θ 与预期差别大 → 检查 IM 单位是否一致（g 还是 m/s²），
+              或阈值是否有误。</li>
+            <li>数据点数太少 → 至少 5 个 IM 水平才能稳定拟合，
+              建议 8 个以上。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（易损性、风险评估、韧性）、
+        <a href="../probability-statistics.html">概率论与数理统计</a>
+        （对数正态分布、极大似然估计、置信区间）、
+        <a href="../disaster-prevention.html">防灾减灾</a>
+        （区域风险评估、保险定价、应急决策）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 易损性曲线</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# fragility.csv',
+    '# 易损性曲线 —— 4 个损伤状态',
+    '# 单位：Sa_g (g)，概率 0–1',
+    'Sa_g,DS1,DS2,DS3,DS4',
+    '0.05,0.02,0.00,0.00,0.00',
+    '0.10,0.08,0.01,0.00,0.00',
+    '0.15,0.18,0.04,0.00,0.00',
+    '0.20,0.32,0.09,0.01,0.00',
+    '0.30,0.55,0.22,0.05,0.01',
+    '0.40,0.73,0.38,0.12,0.02',
+    '0.50,0.85,0.54,0.22,0.05',
+    '0.70,0.95,0.76,0.42,0.13',
+    '0.90,0.98,0.87,0.58,0.24',
+    '1.20,1.00,0.95,0.75,0.40',
+    '1.50,1.00,0.99,0.86,0.55'
+  ].join('\n') + '\n';
+
+  var COLORS = ['#0891b2', '#2563eb', '#b45309', '#dc2626'];
+  var LABELS = ['DS1 Slight', 'DS2 Moderate', 'DS3 Extensive', 'DS4 Complete'];
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var Sa = [], dsNames = [], probs = [];
+    var header = null;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      var parts = line.split(',').map(function (s) { return s.trim(); });
+      if (!header) {
+        header = parts;
+        for (var k = 1; k < header.length; k++) {
+          dsNames.push(header[k]);
+          probs.push([]);
+        }
+        continue;
+      }
+      if (parts.length < 2) continue;
+      var sa = parseFloat(parts[0]);
+      if (!isFinite(sa)) continue;
+      Sa.push(sa);
+      for (var j = 0; j < dsNames.length; j++) {
+        var v = parseFloat(parts[j + 1]);
+        probs[j].push(isFinite(v) ? v : 0);
+      }
+    }
+    return { Sa: Sa, dsNames: dsNames, probs: probs };
+  }
+
+  /* ============================================================
+     标准正态 CDF（Abramowitz & Stegun 近似）
+     ============================================================ */
+  function normCdf(x) {
+    var a1 =  0.254829592;
+    var a2 = -0.284496736;
+    var a3 =  1.421413741;
+    var a4 = -1.453152027;
+    var a5 =  1.061405429;
+    var p  =  0.3275911;
+
+    var sign = x < 0 ? -1 : 1;
+    x = Math.abs(x) / Math.SQRT2;
+    var t = 1.0 / (1.0 + p * x);
+    var y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t *
+            Math.exp(-x * x);
+    return 0.5 * (1.0 + sign * y);
+  }
+
+  /* ============================================================
+     Nelder-Mead 最小化（简单实现）
+     ============================================================ */
+  function nelderMead(f, x0, opts) {
+    opts = opts || {};
+    var maxIter = opts.maxIter || 500;
+    var tol = opts.tol || 1e-6;
+    var n = x0.length;
+
+    /* 构造初始单纯形 */
+    var simplex = [x0.slice()];
+    for (var i = 0; i < n; i++) {
+      var p = x0.slice();
+      p[i] += (p[i] !== 0 ? 0.05 * p[i] : 0.05);
+      simplex.push(p);
+    }
+
+    var alpha = 1, gamma = 2, rho = 0.5, sigma = 0.5;
+    var fvals = simplex.map(function (p) { return f(p); });
+
+    for (var it = 0; it < maxIter; it++) {
+      /* 排序 */
+      var order = fvals.map(function (_, idx) { return idx; });
+      order.sort(function (a, b) { return fvals[a] - fvals[b]; });
+      simplex = order.map(function (idx) { return simplex[idx]; });
+      fvals = order.map(function (idx) { return fvals[idx]; });
+
+      /* 收敛判定 */
+      var spread = 0;
+      for (var k = 1; k <= n; k++) {
+        for (var j = 0; j < n; j++) {
+          spread = Math.max(spread, Math.abs(simplex[k][j] - simplex[0][j]));
+        }
+      }
+      if (spread < tol) break;
+
+      /* 质心 */
+      var centroid = new Array(n).fill(0);
+      for (var m = 0; m < n; m++) {
+        for (var j2 = 0; j2 < n; j2++) {
+          centroid[j2] += simplex[m][j2] / n;
+        }
+      }
+
+      /* 反射 */
+      var xr = centroid.map(function (c, idx) {
+        return c + alpha * (c - simplex[n][idx]);
+      });
+      var fr = f(xr);
+
+      if (fr < fvals[0]) {
+        /* 扩展 */
+        var xe = centroid.map(function (c, idx) {
+          return c + gamma * (xr[idx] - c);
+        });
+        var fe = f(xe);
+        if (fe < fr) { simplex[n] = xe; fvals[n] = fe; }
+        else { simplex[n] = xr; fvals[n] = fr; }
+      } else if (fr < fvals[n - 1]) {
+        simplex[n] = xr; fvals[n] = fr;
+      } else {
+        /* 收缩 */
+        var xc = centroid.map(function (c, idx) {
+          return c + rho * (simplex[n][idx] - c);
+        });
+        var fc = f(xc);
+        if (fc < fvals[n]) {
+          simplex[n] = xc; fvals[n] = fc;
+        } else {
+          /* 收缩全部 */
+          for (var s = 1; s <= n; s++) {
+            simplex[s] = simplex[s].map(function (v, idx) {
+              return simplex[0][idx] + sigma * (v - simplex[0][idx]);
+            });
+            fvals[s] = f(simplex[s]);
+          }
+        }
+      }
+    }
+
+    /* 返回最优解 */
+    var best = 0;
+    for (var b = 1; b <= n; b++) {
+      if (fvals[b] < fvals[best]) best = b;
+    }
+    return simplex[best];
+  }
+
+  /* ============================================================
+     极大似然估计
+     ============================================================ */
+  function fitLognormal(Sa, p) {
+    /* 剔除极端点 */
+    var SaFit = [], pFit = [];
+    for (var i = 0; i < p.length; i++) {
+      if (p[i] > 0.01 && p[i] < 0.99) {
+        SaFit.push(Sa[i]);
+        pFit.push(p[i]);
+      }
+    }
+    if (SaFit.length < 3) {
+      for (var i2 = 0; i2 < p.length; i2++) {
+        if (p[i2] > 0) {
+          SaFit.push(Sa[i2]);
+          pFit.push(p[i2]);
+        }
+      }
+    }
+
+    /* 初值 */
+    var i50 = 0;
+    for (var j = 1; j < pFit.length; j++) {
+      if (Math.abs(pFit[j] - 0.5) < Math.abs(pFit[i50] - 0.5)) i50 = j;
+    }
+    var theta0 = SaFit.length > 0 ? SaFit[i50] : 0.5;
+    var beta0 = 0.4;
+
+    var n = 20;   // 假设每个 IM 有 20 条波
+    var nll = function (params) {
+      var theta = Math.exp(params[0]);
+      var beta = Math.exp(params[1]);
+      if (beta <= 0) return 1e10;
+      var sum = 0;
+      for (var i3 = 0; i3 < SaFit.length; i3++) {
+        var pM = normCdf(Math.log(SaFit[i3] / theta) / beta);
+        pM = Math.max(1e-10, Math.min(1 - 1e-10, pM));
+        sum += pFit[i3] * n * Math.log(pM) +
+               (1 - pFit[i3]) * n * Math.log(1 - pM);
+      }
+      return -sum;
+    };
+
+    var opt = nelderMead(nll, [Math.log(theta0), Math.log(beta0)],
+                         { maxIter: 500, tol: 1e-6 });
+    return {
+      theta: Math.exp(opt[0]),
+      beta: Math.exp(opt[1])
+    };
+  }
+
+  /* ============================================================
+     工具
+     ============================================================ */
+  function log10(v) { return Math.log(v) / Math.LN10; }
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtLogTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 1) return v.toFixed(0);
+    if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+    return v.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function fmtLinTick(v) {
+    if (v === 0) return '0';
+    if (Math.abs(v - 1) < 1e-9) return '1';
+    return v.toFixed(1);
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawFragility(canvasId, data, fits) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 560);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var Sa = data.Sa;
+    var probs = data.probs;
+    var dsNames = data.dsNames;
+
+    /* ---- 范围 ---- */
+    var saMin = Sa[0], saMax = Sa[Sa.length - 1];
+    var xMinV = saMin * 0.8;
+    var xMaxV = saMax * 1.2;
+    var xMin = log10(xMinV), xMax = log10(xMaxV);
+    var yMin = -0.02, yMax = 1.02;
+
+    var margin = { top: 20, right: 26, bottom: 54, left: 82 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + (log10(v) - xMin) / (xMax - xMin) * pw; }
+    function toY(v) { return py + ph - (v - yMin) / (yMax - yMin) * ph; }
+
+    /* ---- 网格 ---- */
+    var xMajor = niceDecades(xMinV, xMaxV);
+    var xMinor = niceMinorTicks(xMinV, xMaxV);
+    var yMajor = niceLinearTicks(yMin, yMax, 5);
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yi = 0; yi < yMajor.length; yi++) {
+      var yy = toY(yMajor[yi]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xMajor.length; xi++) {
+      var xx = toX(xMajor[xi]);
+      ctx.beginPath();
+      ctx.moveTo(xx, py);
+      ctx.lineTo(xx, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- P = 0.5 参考线 ---- */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.6;
+    ctx.setLineDash([5, 4]);
+    var y50 = toY(0.5);
+    ctx.beginPath();
+    ctx.moveTo(px, y50);
+    ctx.lineTo(px + pw, y50);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 中位值竖线 ---- */
+    for (var d = 0; d < dsNames.length; d++) {
+      var theta = fits[d].theta;
+      if (theta < xMinV || theta > xMaxV) continue;
+      ctx.strokeStyle = COLORS[d % COLORS.length];
+      ctx.lineWidth = 0.6;
+      ctx.globalAlpha = 0.6;
+      ctx.setLineDash([2, 3]);
+      var xTh = toX(theta);
+      ctx.beginPath();
+      ctx.moveTo(xTh, py);
+      ctx.lineTo(xTh, py + ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1.0;
+    }
+
+    /* ---- 四条光滑曲线 ---- */
+    for (var c = 0; c < dsNames.length; c++) {
+      var fit = fits[c];
+      var color = COLORS[c % COLORS.length];
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.8;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i <= 300; i++) {
+        var lSa = log10(xMinV) + (log10(xMaxV) - log10(xMinV)) * i / 300;
+        var sa = Math.pow(10, lSa);
+        var pv = normCdf(Math.log(sa / fit.theta) / fit.beta);
+        var cx = toX(sa);
+        var cy = toY(pv);
+        if (!started) { ctx.moveTo(cx, cy); started = true; }
+        else ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      /* 数据点 */
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.7;
+      for (var p = 0; p < Sa.length; p++) {
+        var xp = toX(Sa[p]);
+        var yp = toY(probs[c][p]);
+        ctx.beginPath();
+        ctx.arc(xp, yp, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    for (var yk = 0; yk < yMajor.length; yk++) {
+      var yky = toY(yMajor[yk]);
+      ctx.beginPath(); ctx.moveTo(px, yky); ctx.lineTo(px + mainTick, yky); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, yky); ctx.lineTo(px + pw - mainTick, yky); ctx.stroke();
+    }
+    for (var xk = 0; xk < xMajor.length; xk++) {
+      var xkx = toX(xMajor[xk]);
+      ctx.beginPath(); ctx.moveTo(xkx, py + ph); ctx.lineTo(xkx, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xkx, py); ctx.lineTo(xkx, py + mainTick); ctx.stroke();
+    }
+    for (var xmk = 0; xmk < xMinor.length; xmk++) {
+      var xmkx = toX(xMinor[xmk]);
+      ctx.beginPath(); ctx.moveTo(xmkx, py + ph); ctx.lineTo(xmkx, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xmkx, py); ctx.lineTo(xmkx, py + minorTick); ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yMajor.length; yl++) {
+      ctx.fillText(fmtLinTick(yMajor[yl]), px - 6, toY(yMajor[yl]));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xMajor.length; xl++) {
+      ctx.fillText(fmtLogTick(xMajor[xl]), toX(xMajor[xl]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 60, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Exceedance probability  P(DS \u2265 ds | IM)', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Intensity measure  Sa(T\u2081)  (g)', px + pw / 2, H - 4);
+
+    /* ---- 图例 ---- */
+    var legendItems = [];
+    for (var li = 0; li < dsNames.length; li++) {
+      var fit2 = fits[li];
+      var label = LABELS[li] || dsNames[li];
+      legendItems.push({
+        name: label + '  (\u03b8=' + fit2.theta.toFixed(2) +
+              ', \u03b2=' + fit2.beta.toFixed(2) + ')',
+        color: COLORS[li % COLORS.length],
+        lw: 1.8
+      });
+    }
+
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    var lgW = 0;
+    for (var lj = 0; lj < legendItems.length; lj++) {
+      var w2 = ctx.measureText(legendItems[lj].name).width + 34;
+      if (w2 > lgW) lgW = w2;
+    }
+    var lgH = 16 * legendItems.length + 10;
+    var lgx = px + 8;
+    var lgy = py + 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var lk = 0; lk < legendItems.length; lk++) {
+      var ly = lgy + 8 + lk * 16;
+      var it = legendItems[lk];
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = it.lw;
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly);
+      ctx.lineTo(lgx + 22, ly);
+      ctx.stroke();
+      ctx.fillStyle = '#222222';
+      ctx.fillText(it.name, lgx + 26, ly);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render(data) {
+    var fits = [];
+    for (var i = 0; i < data.dsNames.length; i++) {
+      var fit = fitLognormal(data.Sa, data.probs[i]);
+      fits.push(fit);
+    }
+
+    drawFragility('c-fragility', data, fits);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var fitStr = fits.map(function (f, i) {
+        var lab = (LABELS[i] || 'DS' + (i + 1)).split(' ')[0];
+        return lab + ':' + f.theta.toFixed(2) + 'g';
+      }).join(' / ');
+      status.textContent = data.Sa.length + ' 个 IM · ' +
+                           data.dsNames.length + ' 个损伤状态 · ' +
+                           '中位值 ' + fitStr;
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/fragility.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var data = parseCSV(text);
+        if (data.Sa.length < 3 || data.dsNames.length < 1) {
+          throw new Error('数据不足');
+        }
+        render(data);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[fragility] 读取 assets/fragility.csv 失败，使用内联 CSV：', err);
+        }
+        var data = parseCSV(DEFAULT_CSV);
+        render(data);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV
+     ============================================================ */
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'fragility.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

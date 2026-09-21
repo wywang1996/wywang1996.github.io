@@ -19,9 +19,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>波形格式转换器 · wayione</title>
-<link rel="stylesheet" href="assets/pages.css">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/tools.css">
 </head>
-<body>
+<body data-nav="waveform">
 
 <nav class="nav">
   <div class="nav-inner">
@@ -29,7 +30,7 @@
       <span class="dot"></span><span>wayione</span>
     </a>
     <div class="nav-right">
-      <a href="index.html">← 返回主页</a>
+      <a href="index.html" class="nav-back">← 返回主页</a>
       <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="4"/>
@@ -306,7 +307,6 @@
     return name.replace(/\.[^.]+$/, '');
   }
 
-  /* 十六进制 dump */
   function hexDump(dv, start, len) {
     var out = [];
     for (var i = 0; i < len; i++) {
@@ -633,27 +633,19 @@
 
   /* ============================================================
      解析器：MiniSEED
-
-     使用定位 blockette 1000 的多种策略，兼容更多实际文件。
      ============================================================ */
 
-  /* 尝试读取一个 blockette 1000（给定其起始位置） */
   function tryReadBlockette1000(dv, pos, bufferLen) {
     if (pos + 8 > bufferLen) return null;
 
-    /* 块头类型：先试大端，再试小端 */
     var bTypeBE = dv.getUint16(pos, false);
     var bTypeLE = dv.getUint16(pos, true);
-    var bType = -1;
-    if (bTypeBE === 1000) bType = 1000;
-    else if (bTypeLE === 1000) bType = 1000;
-    else return null;
+    if (bTypeBE !== 1000 && bTypeLE !== 1000) return null;
 
     var encoding = dv.getUint8(pos + 4);
     var wordOrder = dv.getUint8(pos + 5);
     var recLenIdx = dv.getUint8(pos + 6);
 
-    /* 合理性检查 */
     if (encoding < 0 || encoding > 5) return null;
     if (wordOrder !== 0 && wordOrder !== 1) return null;
 
@@ -670,11 +662,9 @@
     };
   }
 
-  /* 定位 blockette 1000：多策略 */
   function locateBlockette1000(dv, offset, bufferLen, firstBlockette) {
     var i, pos, result;
 
-    /* 策略 1：按 firstBlockette 遍历 blockette 链 */
     if (firstBlockette >= 48 && firstBlockette + 8 <= bufferLen) {
       pos = offset + firstBlockette;
       var iter = 0;
@@ -683,7 +673,6 @@
         result = tryReadBlockette1000(dv, pos, bufferLen);
         if (result) return result;
 
-        /* 下一块偏移：先试大端 */
         var bNext = dv.getUint16(pos + 2, false);
         if (bNext === 0) break;
         var nextAbs = offset + bNext;
@@ -692,14 +681,12 @@
       }
     }
 
-    /* 策略 2：从 48 字节开始扫描前 256 字节 */
     var scanEnd = Math.min(offset + 256, bufferLen - 8);
     for (pos = offset + 48; pos <= scanEnd; pos += 2) {
       result = tryReadBlockette1000(dv, pos, bufferLen);
       if (result) return result;
     }
 
-    /* 策略 3：从 56 开始扫描（跳过一个块头） */
     scanEnd = Math.min(offset + 256, bufferLen - 8);
     for (pos = offset + 56; pos <= scanEnd; pos += 2) {
       result = tryReadBlockette1000(dv, pos, bufferLen);
@@ -709,7 +696,6 @@
     return null;
   }
 
-  /* 根据文件大小推断记录长度 */
   function inferRecordLength(fileSize) {
     if (fileSize >= 4096 && fileSize % 4096 === 0) return 4096;
     if (fileSize >= 512 && fileSize % 512 === 0) return 512;
@@ -728,7 +714,6 @@
     while (offset + 48 <= buffer.byteLength && iterations < 100000) {
       iterations++;
 
-      /* 全零数据：跳过 */
       if (dv.getUint8(offset) === 0 && dv.getUint8(offset + 1) === 0 &&
           dv.getUint8(offset + 2) === 0 && dv.getUint8(offset + 3) === 0) {
         offset += 4;
@@ -754,7 +739,6 @@
       var dataOffset     = dv.getUint16(offset + 41, false);
       var firstBlockette = dv.getUint16(offset + 43, false);
 
-      /* 定位 blockette 1000 */
       var blk1000 = locateBlockette1000(dv, offset, buffer.byteLength, firstBlockette);
 
       if (!blk1000) {
@@ -780,7 +764,6 @@
                         '    print(st)');
       }
 
-      /* 确定记录长度 */
       var recordLength = blk1000.recordLength;
       if (!recordLength) {
         recordLength = inferRecordLength(buffer.byteLength);
@@ -799,7 +782,6 @@
       var encoding = blk1000.encoding;
       var le = blk1000.littleEndian;
 
-      /* Steim 压缩：明确提示 */
       if (encoding === 10 || encoding === 11 || encoding === 13) {
         var steimName = encoding === 10 ? 'Steim-1' : (encoding === 11 ? 'Steim-2' : 'Steim-3');
         throw new Error('此 MiniSEED 文件使用 ' + steimName + ' 压缩编码，本工具暂不支持。\n\n' +
@@ -863,7 +845,6 @@
                         '\n（0=ASCII, 1=int16, 2=int24, 3=int32, 4=float32, 5=float64, 10/11/13=Steim）');
       }
 
-      /* 起始时间 */
       var startTime = null;
       var fullYear;
       if (yearRaw >= 1900 && yearRaw <= 2200) fullYear = yearRaw;
@@ -879,7 +860,6 @@
         if (!isNaN(d.getTime())) startTime = d;
       }
 
-      /* 采样率 */
       var sampleRate = null;
       if (rateFactor !== 0 && rateMult !== 0) {
         sampleRate = rateFactor * rateMult;
@@ -1231,8 +1211,24 @@
   }
 
   /* ============================================================
-     科研风格波形绘制
+     科研风格波形绘制（跟随主题色）
      ============================================================ */
+
+  /* 读取主题相关的 canvas 颜色 */
+  function getCanvasColors() {
+    var s = getComputedStyle(document.documentElement);
+    function v(name, fallback) {
+      var x = s.getPropertyValue(name).trim();
+      return x || fallback;
+    }
+    return {
+      bg:     v('--panel', '#ffffff'),
+      text:   v('--text', '#111111'),
+      grid:   v('--border-soft', '#e8e8e8'),
+      border: v('--text', '#111111'),
+      muted:  v('--muted', '#444444')
+    };
+  }
 
   function niceTicks(min, max, count) {
     var range = max - min;
@@ -1285,12 +1281,14 @@
     var ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    var C = getCanvasColors();
+
     var W = cssW, H = cssH;
     var margin = { top: 16, right: 20, bottom: 46, left: 72 };
     var plotW = W - margin.left - margin.right;
     var plotH = H - margin.top - margin.bottom;
 
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
 
     var min = Infinity, max = -Infinity;
@@ -1307,8 +1305,9 @@
     var yTicks = niceTicks(yMin, yMax, 5);
     var xTicks = niceTicks(0, xMax, 6);
 
+    /* 网格线 */
     ctx.save();
-    ctx.strokeStyle = '#e8e8e8';
+    ctx.strokeStyle = C.grid;
     ctx.lineWidth = 0.5;
     ctx.setLineDash([2, 3]);
 
@@ -1331,11 +1330,13 @@
     }
     ctx.restore();
 
-    ctx.strokeStyle = '#111';
+    /* 外框 */
+    ctx.strokeStyle = C.border;
     ctx.lineWidth = 0.9;
     ctx.strokeRect(margin.left, margin.top, plotW, plotH);
 
-    ctx.strokeStyle = '#111';
+    /* 波形 */
+    ctx.strokeStyle = C.text;
     ctx.lineWidth = 0.6;
     ctx.beginPath();
 
@@ -1360,12 +1361,13 @@
     }
     ctx.stroke();
 
+    /* 刻度 */
     var tickLen = 5;
-    ctx.strokeStyle = '#111';
+    ctx.strokeStyle = C.border;
     ctx.lineWidth = 0.8;
 
     ctx.font = '11px "Times New Roman", "Songti SC", "SimSun", serif';
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = C.text;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
 
@@ -1399,8 +1401,9 @@
       ctx.fillText(formatTick(tx), xx, margin.top + plotH + 8);
     }
 
+    /* 轴标签 */
     ctx.font = 'italic 12px "Times New Roman", "Songti SC", "SimSun", serif';
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = C.muted;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(xLabel, margin.left + plotW / 2, H - 18);
@@ -1743,6 +1746,7 @@
 
   $('btnDownload').addEventListener('click', doDownload);
 
+  /* 窗口尺寸变化：防抖后重绘波形 */
   var resizeTimer = null;
   window.addEventListener('resize', function () {
     if (resizeTimer) clearTimeout(resizeTimer);
@@ -1760,6 +1764,26 @@
       drawWaveform($('waveCanvas'), trace.data, xMax, xLabel);
     }, 180);
   });
+
+  /* 主题切换：canvas 跟随重绘 */
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function () {
+      setTimeout(function () {
+        if (!state.trace) return;
+        var trace = state.trace;
+        var xMax, xLabel;
+        if (trace.sampleRate > 0) {
+          xMax = (trace.data.length - 1) / trace.sampleRate;
+          xLabel = 'Time (s)';
+        } else {
+          xMax = trace.data.length - 1;
+          xLabel = 'Sample';
+        }
+        drawWaveform($('waveCanvas'), trace.data, xMax, xLabel);
+      }, 60);
+    });
+  }
 
 })();
 </script>

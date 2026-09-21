@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震危险性曲线 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.hz-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.hz-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.hz-canvas-wrap canvas {
+  width: 100%;
+  height: 540px;
+  display: block;
+}
+.hz-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.hz-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.hz-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>CSV 输入数据</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      地震危险性曲线
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 地震危险性</div>
+      <h1>地震危险性曲线</h1>
+      <p class="lead">
+        概率地震危险性分析（PSHA）的核心输出：年超越概率 λ 随地面运动
+        强度（PGA、Sa(T) 等）的变化曲线。图上标注 <strong>50 年超越概率 10%</strong>
+        与 <strong>2%</strong> 两个常用设防水准，
+        是《工程地震学》《场地地震安全性评价》最标准的图件。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">PSHA</span>
+        <span class="pill">CSV 输入</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>CSV 输入数据</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/hazard_curve.csv</code> 作为输入。
+        该文件是 PSHA 计算结果的整理输出：两列，分别为地面运动强度
+        与对应的年超越概率。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>PGA_g</code></td><td>峰值加速度 PGA</td><td><code>g</code></td><td>或 Sa(T)，标注在标题里</td></tr>
+            <tr><td><code>lambda</code></td><td>年超越概率</td><td>1/年</td><td>PSHA 输出，通常 10⁻² – 10⁻⁵</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例（前 12 行）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/hazard_curve.csv</code> 不存在，则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hazard_curve.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># hazard_curve.csv
+# PSHA 计算结果 —— 场地基岩 PGA 危险性曲线
+# 单位：PGA_g (g)  lambda (年超越概率, 1/yr)
+PGA_g,lambda
+0.005,1.28e-01
+0.010,7.85e-02
+0.020,4.05e-02
+0.030,2.51e-02
+0.050,1.31e-02
+0.070,7.92e-03
+0.100,4.45e-03
+0.150,1.86e-03
+0.200,9.05e-04
+0.300,2.83e-04
+0.400,1.13e-04
+0.500,5.35e-05
+0.700,1.62e-05
+1.000,4.20e-06
+1.500,6.25e-07
+</code></pre>
+      </div>
+
+      <div class="hz-download">
+        <button type="button" id="btn-download-csv">下载 hazard_curve.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>PSHA 计算程序</strong>——OpenQuake、CRISIS、EZ-FRISK、
+            USGS NSHMP、中国地震局概率危险性分析系统。</li>
+          <li><strong>规范附录</strong>——GB 18306《中国地震动参数区划图》给出全国各
+            城镇的 50 年 10% 与 2% 设防水准 PGA 值。</li>
+          <li><strong>专项地震安全性评价报告</strong>——重大工程场地的危险性曲线，
+            含不同概率水平的多年超越概率。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一份典型的场地危险性曲线，覆盖
+          PGA = 0.005 g 到 1.5 g，年超越概率从 ~0.13 到 ~6×10⁻⁷，
+          大约跨越 5 个数量级。实际工程的 PSHA 输出通常有 30–50 个点。
+        </div>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        地震危险性曲线描述的是"<strong>场地的地震动强度超越某个水平的年频率</strong>"。
+        横轴是地震动强度（PGA、Sa(T) 或其他），纵轴是年超越概率 λ。
+        横轴用对数（PGA 跨 2–3 个量级），纵轴用对数（λ 跨 4–6 个量级）。
+      </p>
+
+      <h3 class="sub">两个常用的设防水准</h3>
+
+      <p>
+        工程上最常用的两个设防水准，都是在 50 年设计基准期内定义的：
+      </p>
+
+      <ul class="plain">
+        <li><strong>50 年超越概率 10%</strong>（俗称"小震"或"多遇地震"）
+          <br>年超越概率 λ = 1 − (1 − 0.10)<sup>1/50</sup> ≈ <strong>1/475</strong>
+          <br>对应中国规范"多遇地震"或"第一水准"设防。</li>
+        <li><strong>50 年超越概率 2%</strong>（俗称"大震"或"罕遇地震"）
+          <br>年超越概率 λ = 1 − (1 − 0.02)<sup>1/50</sup> ≈ <strong>1/2475</strong>
+          <br>对应中国规范"罕遇地震"或"第三水准"设防。</li>
+      </ul>
+
+      <p>
+        两条水平虚线标在 λ = 1/475 与 1/2475 处，与曲线交点即为对应设防水准的
+        PGA 值，直接读出作为抗震设计的输入。
+      </p>
+
+      <h3 class="sub">从曲线上能读出什么</h3>
+
+      <ul class="plain">
+        <li><strong>低强度段</strong>（PGA &lt; 0.05 g）：曲线斜率平缓，
+          小震频繁发生，年超越概率接近 0.1。</li>
+        <li><strong>中强度段</strong>（0.05 g – 0.3 g）：双对数坐标下接近直线，
+          斜率 k 反映场地所在区域的<b>地震活动性</b>（k 越大，危险性衰减越快）。</li>
+        <li><strong>高强度段</strong>（PGA &gt; 0.5 g）：曲线出现"尾巴"，
+          斜率变缓，反映<b>大地震（M &gt; 7）对极端强度的贡献</b>。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与规范设计谱的关系：</strong>
+        从危险性曲线读出的 PGA 就是设计谱的<b>峰值</b>部分（T ≈ 0 处）。
+        对不同周期 T 分别做 PSHA，可以得到一致危险性谱（UHS），
+        是规范设计谱的重要参考。
+      </div>
+
+      <div class="callout warn">
+        <strong>重要提示：</strong>危险性曲线是"<strong>基岩</strong>"或"<strong>参考场地</strong>"
+        的结果，通常指 Vs30 = 760 m/s 或 800 m/s。
+        用于具体工程时还需叠加<b>场地放大因子</b>（见 transfer-function.html 与
+        hvsr.html），得到地表危险性曲线。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面的曲线由 <code>assets/hazard_curve.csv</code> 实时计算：
+        读取 CSV → 拟合双对数斜率 → 插值 475 年与 2475 年对应的 PGA。
+        画布尺寸按 A4 排版（720 × 540 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/hazard_curve.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="hz-canvas-wrap">
+        <canvas id="c-hazard"></canvas>
+      </div>
+
+      <div class="hz-note" style="margin-top:14px;">
+        横轴为 PGA（g，对数），纵轴为年超越概率 λ（1/年，对数）。
+        橙色曲线为 CSV 数据；两条灰色水平虚线为 λ = 1/475 与 λ = 1/2475；
+        彩色竖虚线为对应的设防 PGA 值；拟合直线（灰）用于读取双对数斜率。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        读取 CSV 后绘制危险性曲线，标出设防水准并插值对应 PGA。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hazard-curve.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 地震危险性曲线 | 年超越概率 vs PGA
+# -------------------------------------------------------------
+# 输入数据：hazard_curve.csv
+#   PGA_g,lambda
+#   0.005,1.28e-01
+#   0.010,7.85e-02
+#   ...
+# -------------------------------------------------------------
+# 说明：本脚本读取 CSV，绘制双对数危险性曲线，
+#       标注 50 年 10% (λ=1/475) 与 2% (λ=1/2475) 两个设防水准。
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'hazard_curve.csv'
+
+# 两个常用设防水准对应的年超越概率
+LAMBDA_10_50 = 1.0 / 475.0     # 50 年 10%
+LAMBDA_2_50  = 1.0 / 2475.0    # 50 年 2%
+
+
+def generate_synthetic(seed=42):
+    """CSV 不存在时生成合成数据 —— 用简化的双对数幂律模型。"""
+    # lambda(PGA) = k0 * PGA^(-k)
+    k0, k = 3.5e-4, 2.85
+    pga = np.array([0.005, 0.010, 0.020, 0.030, 0.050, 0.070,
+                    0.100, 0.150, 0.200, 0.300, 0.400, 0.500,
+                    0.700, 1.000, 1.500])
+    lam = k0 * pga ** (-k)
+    return pga, lam
+
+
+# ---------- 1. 读取 CSV ----------
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    pga = np.asarray(data['PGA_g'], dtype=float)
+    lam = np.asarray(data['lambda'], dtype=float)
+    # 去掉非正数（对数坐标下无法显示）
+    mask = (pga > 0) & (lam > 0)
+    pga, lam = pga[mask], lam[mask]
+    print(f'从 {CSV_FILE} 读取 {len(pga)} 个数据点')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    pga, lam = generate_synthetic()
+
+
+# ---------- 2. 拟合双对数斜率 ----------
+# 用中间段拟合（去掉极端低、高概率段）
+log_pga = np.log10(pga)
+log_lam = np.log10(lam)
+
+mask_fit = (pga > 0.03) & (pga < 0.7)
+if mask_fit.sum() >= 3:
+    coeffs = np.polyfit(log_pga[mask_fit], log_lam[mask_fit], 1)
+    k_slope = -coeffs[0]
+    print(f'双对数斜率 k = {k_slope:.3f}')
+else:
+    coeffs = np.polyfit(log_pga, log_lam, 1)
+    k_slope = -coeffs[0]
+    print(f'双对数斜率 k = {k_slope:.3f}（样本太少，用全体）')
+
+
+# ---------- 3. 插值设防水准 ----------
+def interp_pga(pga, lam, lam_target):
+    """在对数坐标下插值 lam_target 对应的 PGA。"""
+    log_lam = np.log10(lam)
+    log_pga = np.log10(pga)
+    # lam 随 pga 递减，所以需要翻转
+    idx = np.argsort(log_lam)
+    return 10 ** np.interp(np.log10(lam_target),
+                           log_lam[idx], log_pga[idx])
+
+
+pga_475  = interp_pga(pga, lam, LAMBDA_10_50)
+pga_2475 = interp_pga(pga, lam, LAMBDA_2_50)
+print(f'50 年 10% 设防水准：PGA = {pga_475:.4f} g')
+print(f'50 年  2% 设防水准：PGA = {pga_2475:.4f} g')
+
+
+# ---------- 4. 绘图 ----------
+fig, ax = plt.subplots(figsize=(7.2, 5.4))
+
+# 拟合直线（延伸）
+x_fit = np.array([pga.min() * 0.7, pga.max() * 1.3])
+y_fit = 10 ** (coeffs[0] * np.log10(x_fit) + coeffs[1])
+ax.loglog(x_fit, y_fit, lw=0.9, color='#888888', ls='--',
+          label=f'Power-law fit  k = {k_slope:.2f}')
+
+# 数据曲线
+ax.loglog(pga, lam, lw=1.8, color='#b45309',
+          marker='o', ms=4, mfc='#b45309', mec='none',
+          label='Hazard curve')
+
+# 设防水准：水平线
+ax.axhline(LAMBDA_10_50, color='#2563eb', lw=0.9, ls='--')
+ax.axhline(LAMBDA_2_50,  color='#9333ea', lw=0.9, ls='--')
+
+# 设防水准：竖线 + 标注
+ax.axvline(pga_475,  color='#2563eb', lw=0.8, ls=':')
+ax.axvline(pga_2475, color='#9333ea', lw=0.8, ls=':')
+
+ax.annotate(f'10% in 50 yr\nPGA = {pga_475:.3f} g',
+            xy=(pga_475, LAMBDA_10_50),
+            xytext=(pga_475 * 1.6, LAMBDA_10_50 * 4),
+            fontsize=9, color='#2563eb',
+            arrowprops=dict(arrowstyle='-', color='#2563eb', lw=0.7))
+
+ax.annotate(f'2% in 50 yr\nPGA = {pga_2475:.3f} g',
+            xy=(pga_2475, LAMBDA_2_50),
+            xytext=(pga_2475 * 0.35, LAMBDA_2_50 * 6),
+            fontsize=9, color='#9333ea',
+            arrowprops=dict(arrowstyle='-', color='#9333ea', lw=0.7))
+
+# 坐标轴
+ax.set_xlabel('PGA (g)')
+ax.set_ylabel('Annual exceedance rate  λ (1/yr)')
+ax.set_title('Seismic hazard curve  ·  bedrock site', fontsize=11)
+ax.set_xlim(pga.min() * 0.7, pga.max() * 1.3)
+ax.set_ylim(lam.min() * 0.5, lam.max() * 2)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+ax.legend(loc='lower left', fontsize=9, frameon=False)
+
+fig.tight_layout()
+fig.savefig('hazard-curve.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>双对数拟合</strong>：只在 0.03 g – 0.7 g 的中段拟合，
+            避开低概率尾巴段。幂律模型 λ = k<sub>0</sub>·PGA<sup>−k</sup>，
+            其中 k 是活动性相关指数。</li>
+          <li><strong>插值设防水准</strong>：对数坐标下线性插值，
+            因为 λ 与 PGA 都是对数分布。</li>
+          <li><strong>年超越概率换算</strong>：50 年超越概率 P 对应的年超越概率
+            λ = 1 − (1−P)<sup>1/50</sup>。P = 10% → λ ≈ 1/475；P = 2% → λ ≈ 1/2475。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应，用 <code>readtable</code> 读取 CSV，
+        <code>polyfit</code> 拟合双对数斜率，<code>interp1</code> 插值设防水准。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hazard-curve.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 地震危险性曲线 | 年超越概率 vs PGA
+% -------------------------------------------------------------
+% 输入数据：hazard_curve.csv
+%   PGA_g,lambda
+%   0.005,1.28e-01
+%   ...
+% =============================================================
+
+CSV_FILE = 'hazard_curve.csv';
+LAMBDA_10_50 = 1.0 / 475.0;
+LAMBDA_2_50  = 1.0 / 2475.0;
+
+% ---------- 1. 读取 CSV ----------
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    pga = T.PGA_g;
+    lam = T.lambda;
+    fprintf('从 %s 读取 %d 个数据点\n', CSV_FILE, numel(pga));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    k0 = 3.5e-4; k = 2.85;
+    pga = [0.005 0.010 0.020 0.030 0.050 0.070 ...
+           0.100 0.150 0.200 0.300 0.400 0.500 ...
+           0.700 1.000 1.500]';
+    lam = k0 * pga .^ (-k);
+end
+
+% 去掉非正数
+mask = pga > 0 & lam > 0;
+pga = pga(mask);
+lam = lam(mask);
+
+% ---------- 2. 拟合双对数斜率 ----------
+log_pga = log10(pga);
+log_lam = log10(lam);
+mask_fit = pga > 0.03 & pga < 0.7;
+
+if sum(mask_fit) >= 3
+    p = polyfit(log_pga(mask_fit), log_lam(mask_fit), 1);
+else
+    p = polyfit(log_pga, log_lam, 1);
+end
+k_slope = -p(1);
+fprintf('双对数斜率 k = %.3f\n', k_slope);
+
+% ---------- 3. 插值设防水准 ----------
+% lam 随 pga 递减，用 sort 后 interp1
+[log_lam_s, idx] = sort(log_lam);
+log_pga_s = log_pga(idx);
+
+pga_475  = 10 ^ interp1(log_lam_s, log_pga_s, log10(LAMBDA_10_50));
+pga_2475 = 10 ^ interp1(log_lam_s, log_pga_s, log10(LAMBDA_2_50));
+
+fprintf('50 年 10%% 设防水准：PGA = %.4f g\n', pga_475);
+fprintf('50 年  2%% 设防水准：PGA = %.4f g\n', pga_2475);
+
+% ---------- 4. 绘图 ----------
+figure('Color', 'w', 'Position', [100 100 720 540]);
+hold on;
+
+% 拟合直线
+x_fit = [min(pga) * 0.7, max(pga) * 1.3];
+y_fit = 10 .^ (p(1) * log10(x_fit) + p(2));
+loglog(x_fit, y_fit, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.9, ...
+       'DisplayName', sprintf('Power-law fit  k = %.2f', k_slope));
+
+% 数据曲线
+loglog(pga, lam, '-o', 'Color', [0.71 0.33 0.04], ...
+       'MarkerFaceColor', [0.71 0.33 0.04], 'MarkerEdgeColor', 'none', ...
+       'MarkerSize', 4, 'LineWidth', 1.8, 'DisplayName', 'Hazard curve');
+
+% 设防水准：水平线
+yline(LAMBDA_10_50, '--', 'Color', [0.15 0.39 0.92], 'LineWidth', 0.9, ...
+      'HandleVisibility', 'off');
+yline(LAMBDA_2_50,  '--', 'Color', [0.58 0.20 0.92], 'LineWidth', 0.9, ...
+      'HandleVisibility', 'off');
+
+% 设防水准：竖线
+xline(pga_475,  ':', 'Color', [0.15 0.39 0.92], 'LineWidth', 0.8, ...
+      'HandleVisibility', 'off');
+xline(pga_2475, ':', 'Color', [0.58 0.20 0.92], 'LineWidth', 0.8, ...
+      'HandleVisibility', 'off');
+
+% 标注
+text(pga_475 * 1.6, LAMBDA_10_50 * 4, ...
+     sprintf('10%% in 50 yr\nPGA = %.3f g', pga_475), ...
+     'FontSize', 9, 'Color', [0.15 0.39 0.92]);
+text(pga_2475 * 0.35, LAMBDA_2_50 * 6, ...
+     sprintf('2%% in 50 yr\nPGA = %.3f g', pga_2475), ...
+     'FontSize', 9, 'Color', [0.58 0.20 0.92]);
+
+% 坐标轴
+xlabel('PGA (g)');
+ylabel('Annual exceedance rate \lambda (1/yr)');
+title('Seismic hazard curve  ·  bedrock site', 'FontSize', 11);
+xlim([min(pga) * 0.7, max(pga) * 1.3]);
+ylim([min(lam) * 0.5, max(lam) * 2]);
+grid on; box on;
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in');
+legend('Location', 'southwest', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'hazard-curve.png', 'Resolution', 300);</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:160px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 地面运动强度</td><td>PGA 或 Sa(T)</td><td><code>g</code></td></tr>
+            <tr><td><strong>输入</strong> · 年超越概率</td><td>λ</td><td>1/年</td></tr>
+            <tr><td><strong>输出</strong> · 双对数斜率</td><td>k</td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 50 年 10% 设防 PGA</td><td>PGA<sub>475</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输出</strong> · 50 年 2% 设防 PGA</td><td>PGA<sub>2475</sub></td><td><code>g</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>曲线含义：</strong>λ(PGA) 是场地年超越概率，从 PSHA 计算得到。</li>
+        <li><strong>年超越概率与重现期：</strong>λ = 1/T<sub>R</sub>。
+          λ = 1/475 对应重现期 475 年，即 50 年超越概率 10%。</li>
+        <li><strong>幂律模型：</strong>中段近似 λ = k<sub>0</sub>·PGA<sup>−k</sup>，
+          双对数坐标下为直线。k 反映地区地震活动性，通常在 2–4 之间。</li>
+        <li><strong>拟合范围：</strong>取 0.03 g – 0.7 g 的中段，
+          避开低概率尾巴（受大地震主导）与低强度平台（受小震主导）。</li>
+        <li><strong>设防水准插值：</strong>在对数-对数坐标下线性插值，
+          因为 λ 与 PGA 都近似对数分布。</li>
+        <li><strong>基岩 vs 地表：</strong>危险性曲线通常是基岩（Vs30 = 760 m/s）
+          的结果。用于具体工程时需叠加场地放大因子。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>曲线不单调 → CSV 数据有误，λ 应随 PGA 单调递减。</li>
+            <li>插值出的 PGA 不在数据范围内 → 设防水准对应的 λ 超出数据覆盖范围，需扩展 PSHA 计算的下限。</li>
+            <li>k 值明显偏离 2–4 → 数据可能包含非地震因素（如爆破、塌陷），或拟合范围选择不当。</li>
+            <li>CSV 编码乱码 → 保存为 UTF-8，列名严格按示例。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../engineering-seismology.html">工程地震学</a>（PSHA、GMPE、危险性解聚）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>、
+        <a href="../probability-statistics.html">概率论与数理统计</a>（极值分布、超越概率）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 地震危险性曲线</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# hazard_curve.csv',
+    '# PSHA 计算结果 —— 场地基岩 PGA 危险性曲线',
+    '# 单位：PGA_g (g)  lambda (年超越概率, 1/yr)',
+    'PGA_g,lambda',
+    '0.005,1.28e-01',
+    '0.010,7.85e-02',
+    '0.020,4.05e-02',
+    '0.030,2.51e-02',
+    '0.050,1.31e-02',
+    '0.070,7.92e-03',
+    '0.100,4.45e-03',
+    '0.150,1.86e-03',
+    '0.200,9.05e-04',
+    '0.300,2.83e-04',
+    '0.400,1.13e-04',
+    '0.500,5.35e-05',
+    '0.700,1.62e-05',
+    '1.000,4.20e-06',
+    '1.500,6.25e-07'
+  ].join('\n') + '\n';
+
+  var LAMBDA_10_50 = 1.0 / 475.0;
+  var LAMBDA_2_50  = 1.0 / 2475.0;
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var pga = [], lam = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (line.indexOf('PGA') === 0 || line.indexOf('pga') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 2) continue;
+      var p = parseFloat(parts[0]);
+      var l = parseFloat(parts[1]);
+      if (!isFinite(p) || !isFinite(l)) continue;
+      if (p <= 0 || l <= 0) continue;
+      pga.push(p); lam.push(l);
+    }
+    return { pga: pga, lam: lam };
+  }
+
+  /* ============================================================
+     数值工具
+     ============================================================ */
+
+  function log10(v) { return Math.log(v) / Math.LN10; }
+
+  function polyfit(x, y) {
+    /* 一次多项式最小二乘拟合 y = a*x + b */
+    var n = x.length;
+    var sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (var i = 0; i < n; i++) {
+      sx += x[i]; sy += y[i];
+      sxx += x[i] * x[i];
+      sxy += x[i] * y[i];
+    }
+    var denom = n * sxx - sx * sx;
+    if (denom === 0) return [0, sy / n];
+    var a = (n * sxy - sx * sy) / denom;
+    var b = (sy - a * sx) / n;
+    return [a, b];
+  }
+
+  function interpLogLog(lamArr, pgaArr, lamTarget) {
+    /* lam 随 pga 单调递减；把 (log pga, log lam) 排序后线性插值 */
+    var n = lamArr.length;
+    var pairs = [];
+    for (var i = 0; i < n; i++) {
+      pairs.push({ x: Math.log(lamArr[i]), y: Math.log(pgaArr[i]) });
+    }
+    pairs.sort(function (a, b) { return a.x - b.x; });
+
+    var xT = Math.log(lamTarget);
+    if (xT <= pairs[0].x) {
+      /* 外推 */
+      var dx = pairs[1].x - pairs[0].x;
+      var dy = pairs[1].y - pairs[0].y;
+      var slope = dy / dx;
+      return Math.exp(pairs[0].y + slope * (xT - pairs[0].x));
+    }
+    if (xT >= pairs[n - 1].x) {
+      var dx2 = pairs[n - 1].x - pairs[n - 2].x;
+      var dy2 = pairs[n - 1].y - pairs[n - 2].y;
+      var slope2 = dy2 / dx2;
+      return Math.exp(pairs[n - 1].y + slope2 * (xT - pairs[n - 1].x));
+    }
+    /* 内插 */
+    for (var k = 1; k < n; k++) {
+      if (pairs[k].x >= xT) {
+        var t = (xT - pairs[k - 1].x) / (pairs[k].x - pairs[k - 1].x);
+        return Math.exp(pairs[k - 1].y + t * (pairs[k].y - pairs[k - 1].y));
+      }
+    }
+    return NaN;
+  }
+
+  /* ============================================================
+     绘图工具
+     ============================================================ */
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function fmtLogLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.001 && a < 10000) {
+      if (a >= 1) return v.toFixed(0);
+      if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+      if (a >= 0.01) return v.toFixed(2).replace(/\.?0+$/, '');
+      return v.toFixed(3).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(0) + 'e' + e;
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+
+  function drawHazard(canvasId, pga, lam) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 540);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* ---- 计算范围 ---- */
+    var pgaMin = pga[0], pgaMax = pga[0];
+    var lamMin = lam[0], lamMax = lam[0];
+    for (var i = 0; i < pga.length; i++) {
+      if (pga[i] < pgaMin) pgaMin = pga[i];
+      if (pga[i] > pgaMax) pgaMax = pga[i];
+      if (lam[i] < lamMin) lamMin = lam[i];
+      if (lam[i] > lamMax) lamMax = lam[i];
+    }
+    pgaMin *= 0.7; pgaMax *= 1.3;
+    lamMin *= 0.5; lamMax *= 2;
+
+    var xMin = log10(pgaMin), xMax = log10(pgaMax);
+    var yMin = log10(lamMin), yMax = log10(lamMax);
+
+    var margin = { top: 20, right: 20, bottom: 48, left: 78 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + (log10(v) - xMin) / (xMax - xMin) * pw; }
+    function toY(v) { return py + ph - (log10(v) - yMin) / (yMax - yMin) * ph; }
+
+    /* ---- 拟合双对数斜率 ---- */
+    var xFit = [], yFit = [];
+    for (var k = 0; k < pga.length; k++) {
+      if (pga[k] > 0.03 && pga[k] < 0.7) {
+        xFit.push(log10(pga[k]));
+        yFit.push(log10(lam[k]));
+      }
+    }
+    var coeffs;
+    if (xFit.length >= 3) {
+      coeffs = polyfit(xFit, yFit);
+    } else {
+      var xAll = [], yAll = [];
+      for (var k2 = 0; k2 < pga.length; k2++) {
+        xAll.push(log10(pga[k2]));
+        yAll.push(log10(lam[k2]));
+      }
+      coeffs = polyfit(xAll, yAll);
+    }
+    var kSlope = -coeffs[0];
+
+    /* ---- 网格 ---- */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    var xTicks = niceDecades(pgaMin, pgaMax);
+    var yTicks = niceDecades(lamMin, lamMax);
+    for (var gx = 0; gx < xTicks.length; gx++) {
+      var xg = toX(xTicks[gx]);
+      ctx.beginPath(); ctx.moveTo(xg, py); ctx.lineTo(xg, py + ph); ctx.stroke();
+    }
+    for (var gy = 0; gy < yTicks.length; gy++) {
+      var yg = toY(yTicks[gy]);
+      ctx.beginPath(); ctx.moveTo(px, yg); ctx.lineTo(px + pw, yg); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 拟合直线 ---- */
+    var xf1 = pgaMin, xf2 = pgaMax;
+    var yf1 = Math.pow(10, coeffs[0] * log10(xf1) + coeffs[1]);
+    var yf2 = Math.pow(10, coeffs[0] * log10(xf2) + coeffs[1]);
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.9;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(toX(xf1), toY(yf1));
+    ctx.lineTo(toX(xf2), toY(yf2));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 设防水准：水平虚线 ---- */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 0.9;
+    ctx.setLineDash([6, 4]);
+    var y475 = toY(LAMBDA_10_50);
+    ctx.beginPath(); ctx.moveTo(px, y475); ctx.lineTo(px + pw, y475); ctx.stroke();
+
+    ctx.strokeStyle = '#9333ea';
+    var y2475 = toY(LAMBDA_2_50);
+    ctx.beginPath(); ctx.moveTo(px, y2475); ctx.lineTo(px + pw, y2475); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ---- 数据曲线 ---- */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.8;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var p = 0; p < pga.length; p++) {
+      var cxp = toX(pga[p]);
+      var cyp = toY(lam[p]);
+      if (p === 0) ctx.moveTo(cxp, cyp);
+      else ctx.lineTo(cxp, cyp);
+    }
+    ctx.stroke();
+
+    /* ---- 数据点 ---- */
+    ctx.fillStyle = '#b45309';
+    for (var q = 0; q < pga.length; q++) {
+      var qx = toX(pga[q]);
+      var qy = toY(lam[q]);
+      ctx.beginPath();
+      ctx.arc(qx, qy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---- 插值 475 / 2475 对应的 PGA ---- */
+    var pga475 = interpLogLog(lam, pga, LAMBDA_10_50);
+    var pga2475 = interpLogLog(lam, pga, LAMBDA_2_50);
+
+    /* 竖虚线 */
+    if (isFinite(pga475) && pga475 > pgaMin && pga475 < pgaMax) {
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 0.8;
+      ctx.setLineDash([2, 3]);
+      var x475 = toX(pga475);
+      ctx.beginPath(); ctx.moveTo(x475, py); ctx.lineTo(x475, py + ph); ctx.stroke();
+      ctx.setLineDash([]);
+
+      /* 交点圆点 */
+      ctx.fillStyle = '#2563eb';
+      ctx.beginPath();
+      ctx.arc(x475, y475, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (isFinite(pga2475) && pga2475 > pgaMin && pga2475 < pgaMax) {
+      ctx.strokeStyle = '#9333ea';
+      ctx.lineWidth = 0.8;
+      ctx.setLineDash([2, 3]);
+      var x2475 = toX(pga2475);
+      ctx.beginPath(); ctx.moveTo(x2475, py); ctx.lineTo(x2475, py + ph); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#9333ea';
+      ctx.beginPath();
+      ctx.arc(x2475, y2475, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---- 外框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    for (var yj = 0; yj < yTicks.length; yj++) {
+      var yjy = toY(yTicks[yj]);
+      ctx.beginPath(); ctx.moveTo(px, yjy); ctx.lineTo(px + mainTick, yjy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, yjy); ctx.lineTo(px + pw - mainTick, yjy); ctx.stroke();
+    }
+    var yMinor = niceMinorTicks(lamMin, lamMax);
+    for (var ym = 0; ym < yMinor.length; ym++) {
+      var ymy = toY(yMinor[ym]);
+      ctx.beginPath(); ctx.moveTo(px, ymy); ctx.lineTo(px + minorTick, ymy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, ymy); ctx.lineTo(px + pw - minorTick, ymy); ctx.stroke();
+    }
+    for (var xj = 0; xj < xTicks.length; xj++) {
+      var xjx = toX(xTicks[xj]);
+      ctx.beginPath(); ctx.moveTo(xjx, py + ph); ctx.lineTo(xjx, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xjx, py); ctx.lineTo(xjx, py + mainTick); ctx.stroke();
+    }
+    var xMinor = niceMinorTicks(pgaMin, pgaMax);
+    for (var xm = 0; xm < xMinor.length; xm++) {
+      var xmx = toX(xMinor[xm]);
+      ctx.beginPath(); ctx.moveTo(xmx, py + ph); ctx.lineTo(xmx, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xmx, py); ctx.lineTo(xmx, py + minorTick); ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      var yly = toY(yTicks[yl]);
+      ctx.fillText(fmtLogLabel(yTicks[yl]), px - 6, yly);
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xTicks.length; xl++) {
+      var xlx = toX(xTicks[xl]);
+      ctx.fillText(fmtLogLabel(xTicks[xl]), xlx, py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 56, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Annual exceedance rate  λ (1/yr)', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('PGA (g)', px + pw / 2, py + ph + 40);
+
+    /* ---- 峰值/关键信息标注 ---- */
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+
+    /* 10%/50yr 标注 */
+    if (isFinite(pga475)) {
+      var xA = toX(pga475);
+      var yA = y475;
+      var txA = xA + 10;
+      if (txA + 120 > px + pw) txA = xA - 130;
+      ctx.fillStyle = '#2563eb';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('10% / 50yr', txA, yA - 22);
+      ctx.fillText('PGA = ' + pga475.toFixed(3) + ' g', txA, yA - 8);
+    }
+
+    /* 2%/50yr 标注 */
+    if (isFinite(pga2475)) {
+      var xB = toX(pga2475);
+      var yB = y2475;
+      var txB = xB + 10;
+      if (txB + 120 > px + pw) txB = xB - 130;
+      ctx.fillStyle = '#9333ea';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('2% / 50yr', txB, yB - 22);
+      ctx.fillText('PGA = ' + pga2475.toFixed(3) + ' g', txB, yB - 8);
+    }
+
+    /* ---- 图例 ---- */
+    var lgW = 185;
+    var lgH = 66;
+    var lgx = px + pw - lgW - 8;
+    var lgy = py + 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    /* Hazard curve */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(lgx + 6, lgy + 12);
+    ctx.lineTo(lgx + 22, lgy + 12);
+    ctx.stroke();
+    ctx.fillStyle = '#222222';
+    ctx.fillText('Hazard curve', lgx + 26, lgy + 12);
+
+    /* Power-law fit */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.9;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(lgx + 6, lgy + 32);
+    ctx.lineTo(lgx + 22, lgy + 32);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#222222';
+    ctx.fillText('Fit  k = ' + kSlope.toFixed(2), lgx + 26, lgy + 32);
+
+    /* 10%/50yr */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 0.9;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(lgx + 6, lgy + 52);
+    ctx.lineTo(lgx + 22, lgy + 52);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#222222';
+    ctx.fillText('10% / 50yr  (λ = 1/475)', lgx + 26, lgy + 52);
+
+    /* ---- 返回关键量供状态栏显示 ---- */
+    return {
+      pga475: pga475,
+      pga2475: pga2475,
+      kSlope: kSlope
+    };
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/hazard_curve.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var d = parseCSV(text);
+        if (d.pga.length < 3) throw new Error('有效数据点不足');
+        var result = drawHazard('c-hazard', d.pga, d.lam);
+        if (status) {
+          status.textContent = d.pga.length + ' 个数据点 · ' +
+                               'PGA ' + d.pga[0].toFixed(3) + '–' +
+                               d.pga[d.pga.length - 1].toFixed(3) + ' g · ' +
+                               'λ ' + d.lam[d.lam.length - 1].toExponential(1) +
+                               '–' + d.lam[0].toExponential(1) + ' 1/yr · ' +
+                               'k = ' + result.kSlope.toFixed(2) + ' · ' +
+                               '50yr 10%: ' + result.pga475.toFixed(3) + ' g · ' +
+                               '2%: ' + result.pga2475.toFixed(3) + ' g';
+        }
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[hazard-curve] 读取 assets/hazard_curve.csv 失败，使用内联 CSV：', err);
+        }
+        var d = parseCSV(DEFAULT_CSV);
+        var result = drawHazard('c-hazard', d.pga, d.lam);
+        if (status) {
+          status.textContent = '内联数据 · ' + d.pga.length + ' 个数据点 · ' +
+                               'k = ' + result.kSlope.toFixed(2) + ' · ' +
+                               '50yr 10%: ' + result.pga475.toFixed(3) + ' g · ' +
+                               '2%: ' + result.pga2475.toFixed(3) + ' g';
+        }
+      });
+  }
+
+  /* ============================================================
+     下载 CSV 按钮
+     ============================================================ */
+
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'hazard_curve.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

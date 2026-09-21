@@ -1,0 +1,1016 @@
+/* =========================================================
+   tools.css — 小工具页专属样式
+   ---------------------------------------------------------
+   适用于：
+     magnitude.html            震级能量换算器
+     waveform.html             波形格式转换器
+     ground-motion-calc.html   地震动参数计算器
+
+   使用方式（工具页只引这两个 CSS，不引 pages.css / projects.css）：
+     <link rel="stylesheet" href="assets/site.css">
+     <link rel="stylesheet" href="assets/tools.css">
+
+   职责划分：
+     site.css      → 全站通用（导航、侧栏、卡片、代码块、KaTeX、打印）
+     pages.css     → 笔记页
+     projects.css  → 项目页
+     tools.css     → 工具页（本文件）
+   ========================================================= */
+
+
+/* =========================================================
+   1. 主题变量（琥珀色）
+   ========================================================= */
+:where(html[data-page="magnitude"]):root,
+:where(html[data-page="waveform"]):root,
+:where(html[data-page="ground-motion-calc"]):root {
+  --bg-nav: rgba(254, 252, 232, 0.92);
+  --accent-strong: #92400e;
+  --alert-bg: #fff4f0;
+  --alert-border: #f5c0a8;
+  --alert-text: #9a3412;
+  --alert-strong: #7c2d12;
+  --warn-soft-bg: #fffbeb;
+  --warn-soft-border: #f0d99a;
+  --warn-soft-text: #854d0e;
+  --warn-soft-strong: #713f12;
+  --drop-bg: #fff7ed;
+  --bg: #fefce8;
+  --bg-blue: #eff6ff;
+  --bg-blue-soft: #f7fbff;
+  --panel: #ffffff;
+  --border: #f0e2b8;
+  --border-blue: #d5e3f7;
+  --border-soft: #faf3d8;
+  --muted: #59636e;
+  --dim: #a19770;
+  --accent: #b45309;
+  --accent-dim: rgba(180, 83, 9, 0.08);
+  --green: #15803d;
+  --red: #c2410c;
+  --serif: "Times New Roman", "Songti SC", "SimSun", serif;
+}
+
+/* 深色覆盖 */
+[data-theme="dark"]:where(html[data-page="magnitude"]):root,
+[data-theme="dark"]:where(html[data-page="waveform"]):root,
+[data-theme="dark"]:where(html[data-page="ground-motion-calc"]):root {
+  --bg: #14120d;
+  --bg-nav: rgba(20, 18, 13, 0.9);
+  --bg-solid: #1c1913;
+  --panel: #1c1913;
+  --bg-blue: #131a24;
+  --bg-blue-soft: #182029;
+  --border: #352c1e;
+  --border-soft: #2a2418;
+  --border-blue: #26364a;
+  --text: #ece7dc;
+  --muted: #b3aa99;
+  --dim: #857c6b;
+  --accent: #f59e0b;
+  --accent-2: #60a5fa;
+  --accent-dim: rgba(245, 158, 11, 0.12);
+  --accent-strong: #b45309;
+  --green: #7ee787;
+  --red: #fb923c;
+  --alert-bg: rgba(194, 65, 12, 0.16);
+  --alert-border: rgba(194, 65, 12, 0.45);
+  --alert-text: #fdba74;
+  --alert-strong: #fed7aa;
+  --warn-soft-bg: rgba(245, 158, 11, 0.12);
+  --warn-soft-border: rgba(245, 158, 11, 0.4);
+  --warn-soft-text: #fcd34d;
+  --warn-soft-strong: #fde68a;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --warn-border: rgba(245, 158, 11, 0.35);
+  --warn-text: #fcd34d;
+  --info-text: #93c5fd;
+  --drop-bg: rgba(245, 158, 11, 0.12);
+  --error-bg: rgba(220, 38, 38, 0.16);
+  --error-border: rgba(220, 38, 38, 0.45);
+  --error-text: #fca5a5;
+  --ok-bg: rgba(34, 197, 94, 0.14);
+  --ok-border: rgba(34, 197, 94, 0.45);
+  --ok-text: #86efac;
+  --caption-text: #b3aa99;
+}
+
+/* 选区颜色 */
+:where(html[data-page="magnitude"],
+       html[data-page="waveform"],
+       html[data-page="ground-motion-calc"]) ::selection {
+  background: rgba(180, 83, 9, 0.16);
+}
+
+
+/* =========================================================
+   2. 导航
+   ========================================================= */
+:where(html[data-page="magnitude"],
+       html[data-page="waveform"],
+       html[data-page="ground-motion-calc"]) .nav-inner {
+  max-width: 1080px;
+  padding: 0 24px;
+}
+
+/* logo 圆点用纯色，避免和琥珀色主题冲突 */
+:where(html[data-page="magnitude"],
+       html[data-page="waveform"],
+       html[data-page="ground-motion-calc"]) .nav-logo .dot {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+:where(html[data-page="magnitude"],
+       html[data-page="waveform"],
+       html[data-page="ground-motion-calc"]) .nav-right a {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+
+/* =========================================================
+   3. 布局 / 面包屑 / 页头
+   ========================================================= */
+
+/* 工具页用窄栏容器（.wrap）替代 .layout */
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 34px 24px 90px;
+}
+
+.crumb {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: 650;
+  margin-bottom: 9px;
+}
+.crumb a { color: inherit; }
+.crumb a:hover { opacity: .75; }
+
+.page-head h1 {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  margin-bottom: 8px;
+}
+.page-head p {
+  color: var(--muted);
+  font-size: 14.5px;
+  max-width: 720px;
+}
+
+
+/* =========================================================
+   4. 面板 panel
+   ========================================================= */
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  background: var(--panel);
+}
+.panel-label {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--dim);
+  font-weight: 650;
+  margin-bottom: 13px;
+}
+:where(html[data-page="waveform"]) .panel-label,
+:where(html[data-page="ground-motion-calc"]) .panel-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.panel-label .hint {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: .8px;
+  text-transform: none;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   5. 输入区
+   ========================================================= */
+.input-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+
+#magInput {
+  width: 152px;
+  font-size: 30px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -0.5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 14px;
+  color: var(--accent);
+  background: var(--panel);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -moz-appearance: textfield;
+}
+#magInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+#magInput::-webkit-outer-spin-button,
+#magInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#scaleSelect {
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  border: 1px solid var(--border-blue);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--bg-blue-soft);
+  cursor: pointer;
+  outline: none;
+  min-width: 168px;
+}
+#scaleSelect:focus { border-color: var(--accent-2); }
+
+input[type="range"] {
+  width: 100%;
+  height: 4px;
+  margin: 4px 0 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   6. 预设按钮
+   ========================================================= */
+.presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.presets button {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-blue);
+  background: var(--bg-blue-soft);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.presets button:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: var(--blue-dim);
+}
+
+
+/* =========================================================
+   7. 饱和预警
+   ========================================================= */
+.sat-warn {
+  margin-top: 14px;
+  padding: 11px 14px 11px 13px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  border: 1px solid;
+  border-left-width: 4px;
+  animation: warnIn .25s ease;
+}
+@keyframes warnIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sat-warn strong { font-family: var(--mono); }
+.sat-warn.severe {
+  background: var(--alert-bg);
+  border-color: var(--alert-border);
+  border-left-color: var(--red);
+  color: var(--alert-text);
+}
+.sat-warn.severe strong { color: var(--alert-strong); }
+.sat-warn.mild {
+  background: var(--warn-soft-bg);
+  border-color: var(--warn-soft-border);
+  border-left-color: #b45309;
+  color: var(--warn-soft-text);
+}
+.sat-warn.mild strong { color: var(--warn-soft-strong); }
+.sat-warn .warn-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+
+/* =========================================================
+   8. 能量主卡（magnitude 页）
+   ========================================================= */
+.energy-card {
+  border: 1px solid var(--border-blue);
+  border-radius: 14px;
+  padding: 26px 26px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-blue);
+}
+.energy-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.energy-value {
+  font-size: clamp(30px, 6.2vw, 46px);
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -1.5px;
+  line-height: 1.05;
+  color: var(--text);
+  word-break: break-all;
+}
+.energy-value .unit {
+  font-size: .42em;
+  color: var(--dim);
+  font-weight: 600;
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.energy-sub { margin-top: 12px; font-size: 14.5px; color: var(--muted); }
+.energy-sub strong {
+  color: var(--accent);
+  font-weight: 650;
+  font-family: var(--mono);
+}
+.energy-note {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--dim);
+  font-family: var(--mono);
+  letter-spacing: .3px;
+}
+
+
+/* =========================================================
+   9. 小格 / 等效震级 / 饱和阈值 / 对比条 / 表格
+   ========================================================= */
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 10px;
+}
+.mini {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--bg-blue-soft);
+}
+.mini .k {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 5px;
+}
+.mini .v {
+  font-size: 15px;
+  font-weight: 620;
+  font-family: var(--mono);
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.35;
+}
+
+.scale-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.scale-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 15px 10px;
+  text-align: center;
+  background: var(--bg);
+  transition: border-color .18s, background .18s;
+  position: relative;
+}
+.scale-item .k {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--dim);
+  letter-spacing: .9px;
+  margin-bottom: 3px;
+}
+.scale-item .v {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.scale-item.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.scale-item.active .k { color: var(--accent); }
+.scale-item.active .v { color: var(--accent); }
+.scale-item .sat-mark {
+  position: absolute;
+  top: 5px; right: 7px;
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--red);
+  opacity: 0;
+  transition: opacity .2s;
+  line-height: 1;
+}
+.scale-item.over .sat-mark { opacity: 1; }
+.scale-item.over {
+  border-color: var(--alert-border);
+  background: var(--alert-bg);
+}
+.scale-item.over .v { color: var(--red); }
+
+.sat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+}
+.sat-item {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--bg-blue-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sat-item .sk {
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent-2);
+  letter-spacing: .5px;
+}
+.sat-item .sv {
+  font-size: 13.5px;
+  font-weight: 620;
+  color: var(--text);
+  font-family: var(--mono);
+}
+.sat-item .sd {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.4;
+}
+.sat-item.no-sat .sk,
+.sat-item.no-sat .sv { color: var(--green); }
+
+.bars { display: flex; flex-direction: column; gap: 11px; }
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(64px, 104px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.bar-name {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar-track {
+  height: 10px;
+  background: var(--bg-blue-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  width: 0;
+  background: var(--accent);
+  transition: width .4s cubic-bezier(.4, 0, .2, 1);
+}
+.bar-row.ref .bar-fill { background: #b8cdf0; }
+.bar-row.ref .bar-name { color: var(--dim); }
+.bar-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.bar-row.current .bar-name { color: var(--accent); font-weight: 650; }
+.bar-row.current .bar-val { color: var(--accent); font-weight: 650; }
+
+.table-scroll { overflow-x: auto; margin: 0 -4px; }
+td.mono { font-family: var(--mono); color: var(--text); }
+td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
+:where(html[data-page="magnitude"]) tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.note code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--bg-blue-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--muted);
+}
+:where(html[data-page="magnitude"],
+       html[data-page="waveform"],
+       html[data-page="ground-motion-calc"]) .note {
+  font-size: 12.5px;
+  color: var(--dim);
+  line-height: 1.75;
+  margin-top: 12px;
+}
+.note ul { margin: 6px 0 0 18px; }
+.note li { margin-bottom: 3px; }
+
+
+/* =========================================================
+   10. 拖拽区（waveform / ground-motion-calc）
+   ========================================================= */
+.drop-zone {
+  border: 2px dashed var(--border-blue);
+  border-radius: 14px;
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--bg-blue-soft);
+  cursor: pointer;
+  transition: all .18s ease;
+  position: relative;
+}
+.drop-zone:hover {
+  border-color: var(--accent-2);
+  background: var(--bg-blue);
+}
+.drop-zone.drag {
+  border-color: var(--accent);
+  background: var(--drop-bg);
+  transform: scale(1.005);
+}
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.drop-ico {
+  font-size: 34px;
+  margin-bottom: 8px;
+  line-height: 1;
+  display: block;
+  filter: grayscale(0.3);
+}
+.drop-title {
+  font-size: 15.5px;
+  font-weight: 620;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.drop-sub {
+  font-size: 12.5px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+.drop-sub strong {
+  font-family: var(--mono);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   11. Demo 样例
+   ========================================================= */
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.demo-item {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 13px 15px;
+  background: var(--bg-blue-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.demo-head { display: flex; align-items: baseline; gap: 8px; }
+.demo-tag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  color: var(--accent-2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--blue-dim);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  white-space: nowrap;
+}
+.demo-name { font-size: 13px; font-weight: 620; color: var(--text); }
+.demo-desc {
+  font-size: 11.5px;
+  color: var(--dim);
+  line-height: 1.5;
+  flex: 1;
+}
+.demo-actions { display: flex; gap: 6px; }
+.demo-actions button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border-blue);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.demo-actions button:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: var(--blue-dim);
+}
+.demo-actions button[data-action="load"] {
+  background: var(--accent-2);
+  color: #fff;
+  border-color: var(--accent-2);
+}
+.demo-actions button[data-action="load"]:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+
+/* =========================================================
+   12. 文件信息条 / 波形信息
+   ========================================================= */
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  background: var(--bg-blue-soft);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.file-info .fname {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 620;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+.file-info .fsize {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.file-info .ftag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .8px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  white-space: nowrap;
+  font-weight: 650;
+}
+.btn-clear {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-clear:hover {
+  color: var(--red);
+  border-color: rgba(194, 65, 12, 0.35);
+}
+
+.trace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.trace-item {
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--bg-blue-soft);
+}
+.trace-item .k {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+.trace-item .v {
+  font-size: 14.5px;
+  font-weight: 620;
+  font-family: var(--mono);
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.35;
+}
+.trace-item .v.small { font-size: 12.5px; font-weight: 550; }
+
+.wave-wrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 8px;
+}
+#waveCanvas {
+  width: 100%;
+  height: 260px;
+  display: block;
+}
+.wave-caption {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--caption-text, #333);
+  text-align: center;
+  padding: 6px 0 2px;
+  font-style: italic;
+}
+
+
+/* =========================================================
+   13. 格式选择 / 保存 / 提示条
+   ========================================================= */
+.format-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.format-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 15px;
+  cursor: pointer;
+  background: var(--panel);
+  transition: all .15s ease;
+  position: relative;
+}
+.format-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.format-item.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.14);
+}
+.format-item .fk {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+.format-item .fv {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.format-item .fd {
+  font-size: 11.5px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.save-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 620;
+  padding: 11px 26px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.btn-primary:hover {
+  background: var(--accent-strong, #92400e);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+.save-hint {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.55;
+  flex: 1;
+  min-width: 200px;
+}
+.save-hint strong { color: var(--muted); font-weight: 620; }
+
+.alert {
+  padding: 12px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.65;
+  border: 1px solid;
+  border-left-width: 4px;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+}
+.alert.error {
+  background: var(--error-bg, #fef2f2);
+  border-color: var(--error-border, #fecaca);
+  border-left-color: var(--red);
+  color: var(--error-text, #991b1b);
+}
+.alert.ok {
+  background: var(--ok-bg, #f0fdf4);
+  border-color: var(--ok-border, #bbf7d0);
+  border-left-color: var(--green);
+  color: var(--ok-text, #166534);
+}
+.alert code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(0,0,0,0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+:where(html[data-page="waveform"],
+       html[data-page="ground-motion-calc"]) [hidden] {
+  display: none !important;
+}
+
+
+/* =========================================================
+   14. 顶部返回主页
+   ========================================================= */
+.nav-back {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.nav-back:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(180, 83, 9, 0.25);
+  text-decoration: none;
+}
+[data-theme="dark"] .nav-back:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+
+/* =========================================================
+   15. 响应式
+   ========================================================= */
+@media (max-width: 960px) {
+  :where(html[data-page="magnitude"],
+         html[data-page="waveform"],
+         html[data-page="ground-motion-calc"]) .split {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 620px) {
+  .wrap { padding: 24px 18px 70px; }
+  :where(html[data-page="magnitude"],
+         html[data-page="waveform"],
+         html[data-page="ground-motion-calc"]) .nav-inner { padding: 0 18px; }
+  :where(html[data-page="magnitude"],
+         html[data-page="waveform"],
+         html[data-page="ground-motion-calc"]) .page-head h1 { font-size: 22px; }
+  .panel { padding: 17px 16px; }
+  .energy-card { padding: 22px 20px; }
+  .scale-grid { grid-template-columns: repeat(2, 1fr); }
+  .scale-item .v { font-size: 19px; }
+  #magInput { width: 122px; font-size: 26px; }
+  #scaleSelect { min-width: 140px; }
+  .drop-zone { padding: 30px 18px; }
+  .format-grid { grid-template-columns: 1fr; }
+  #waveCanvas { height: 220px; }
+  .btn-primary { width: 100%; justify-content: center; }
+}
+
+
+/* =========================================================
+   16. 通用工具输入控件（ground-motion-calc 等）
+   ========================================================= */
+.tool-select {
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  border: 1px solid var(--border-blue);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--bg-blue-soft);
+  cursor: pointer;
+  outline: none;
+  min-width: 180px;
+  height: 44px;
+}
+.tool-select:focus { border-color: var(--accent-2); }
+
+.tool-input {
+  font-size: 14px;
+  font-family: var(--mono);
+  color: var(--text);
+  border: 1px solid var(--border-blue);
+  border-radius: 12px;
+  padding: 0 14px;
+  height: 44px;
+  background: var(--bg-blue-soft);
+  outline: none;
+  flex: 1;
+  min-width: 200px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.tool-input:focus {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px var(--blue-dim);
+}
+.tool-input::placeholder {
+  color: var(--dim);
+  font-family: inherit;
+}
+
+/* 通用绘图 canvas（waveform / ground-motion-calc 共用） */
+.wave-wrap canvas {
+  width: 100%;
+  height: 260px;
+  display: block;
+}
+.wave-wrap canvas.tall {
+  height: 320px;
+}

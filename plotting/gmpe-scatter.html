@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMPE 四图 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.gs-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.gs-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.gs-canvas-wrap canvas {
+  width: 100%;
+  height: 760px;
+  display: block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>数据与模型</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>四张图的意义</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      GMPE 四图
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 地震动参数</div>
+      <h1>GMPE 四图</h1>
+      <p class="lead">
+        按 GMPE（地震动预测方程）研究中的标准做法，用四张子图分别展示
+        <strong>震级标度</strong>、<strong>距离衰减</strong>、
+        <strong>场地放大</strong>、<strong>残差诊断</strong>。
+        四张图合起来完整覆盖 GMPE 回归的核心诊断流程，
+        是《工程地震学》论文中反复出现的标准组合。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">GMPE</span>
+        <span class="pill">CSV 数据</span>
+        <span class="pill blue">Vs30</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">Data & Model</span>
+        <h2>数据与模型</h2>
+      </div>
+
+      <p>
+        Python 与 MATLAB 代码默认读取 <strong>CSV 格式的真实数据</strong>（四列）。
+        页面下方的在线预览使用<strong>合成数据</strong>（不依赖外部文件），
+        目的是演示四张子图的效果；CSV 数据可直接替换。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 数据格式（推荐）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          四列，带表头，逗号分隔。任意行数，行数越多拟合越稳定。
+        </p>
+        <table>
+          <thead><tr>
+            <th style="width:100px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>M</code></td><td>矩震级 M<sub>w</sub></td><td>无量纲</td><td>常用 4.0–8.0</td></tr>
+            <tr><td><code>R</code></td><td>Joyner-Boore 距离</td><td><code>km</code></td><td>断层地表投影到台站的最短距离</td></tr>
+            <tr><td><code>Vs30</code></td><td>30 m 平均剪切波速</td><td><code>m/s</code></td><td>场地条件指标，150–1500 m/s</td></tr>
+            <tr><td><code>PGA</code></td><td>峰值加速度</td><td><code>g</code></td><td>也可用 m/s²，需在代码里统一换算</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例（前 8 行）</h4>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>gmpe_data.csv</span><span class="lang">CSV</span></div>
+        </div>
+<pre><code>M,R,Vs30,PGA
+5.0,12.3,210,0.108
+5.2,25.7,540,0.028
+5.5,48.1,780,0.009
+6.1,8.9,180,0.612
+6.4,17.5,420,0.245
+6.8,35.2,960,0.052
+7.0,5.2,320,0.985
+7.2,22.8,150,0.642
+...
+</code></pre>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>场地分类参考（NEHRP / IBC）</h4>
+        <table>
+          <thead><tr>
+            <th style="width:120px;">场地类别</th>
+            <th style="width:200px;">Vs30 范围（m/s）</th>
+            <th>描述</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>A（岩石）</td><td>&gt; 1500</td><td>坚硬岩石</td></tr>
+            <tr><td>B（软岩）</td><td>760 – 1500</td><td>软岩 / 硬土</td></tr>
+            <tr><td>C（中硬土）</td><td>360 – 760</td><td>很密土 / 软岩</td></tr>
+            <tr><td>D（中软土）</td><td>180 – 360</td><td>硬土</td></tr>
+            <tr><td>E（软土）</td><td>&lt; 180</td><td>软粘土</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="io-card">
+        <h4>合成数据模型（页面预览用）</h4>
+        <div class="formula" style="text-align:center; margin:12px 0;">
+          log<sub>10</sub>(PGA/g) = 0.3·M − 1.0·log<sub>10</sub>(R + 10) − 0.3·log<sub>10</sub>(Vs30 / 760) − 0.8
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:180px;">参数</th>
+            <th>取值</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>震级 M</td><td>5.0 / 6.0 / 7.0 三组</td></tr>
+            <tr><td>距离 R</td><td>5 – 200 km，对数均匀分布</td></tr>
+            <tr><td>Vs30</td><td>150 – 1500 m/s，对数均匀分布</td></tr>
+            <tr><td>对数正态残差 σ</td><td>0.25（自然对数）</td></tr>
+            <tr><td>每组样本数</td><td>60 个</td></tr>
+            <tr><td>随机种子</td><td>42（保证每次加载一致）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>注意：</strong>合成模型的系数是教学用，<strong>不能用于实际工程</strong>。
+          真实 GMPE（如 Boore-Atkinson 2014、Campbell-Bozorgnia 2014）
+          包含几十个系数，场地项还区分线性与非线性部分。
+        </div>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>四张图的意义</h2>
+      </div>
+
+      <p>
+        GMPE 回归的核心是把对数 PGA 分解为震级项、距离项、场地项之和：
+      </p>
+      <div class="formula" style="text-align:center;">
+        ln(PGA) = f<sub>M</sub>(M) + f<sub>R</sub>(M, R) + f<sub>S</sub>(V<sub>S30</sub>) + ε
+      </div>
+      <p>
+        四张图分别检验这三项的标度是否正确，以及残差是否随机。
+        这是 Boore-Atkinson、Campbell-Bozorgnia、Chiou-Youngs 等
+        主流 GMPE 论文中反复出现的标准组合。
+      </p>
+
+      <h3 class="sub">(a) Magnitude scaling · 震级标度</h3>
+      <p>
+        固定 Vs30 = 760 m/s，画 PGA 随震级 M 的变化，四条曲线对应
+        R = 10 / 30 / 70 / 150 km。同一距离下，震级越大，PGA 越大，
+        曲线整体上移。数据散点按距离分档着色，与曲线对照。
+      </p>
+      <p>
+        <strong>诊断什么：</strong>震级项 f<sub>M</sub>(M) 是否捕捉了主要的
+        震级效应；不同震级之间的间距是否与曲线一致；近场是否出现饱和。
+      </p>
+
+      <h3 class="sub">(b) Distance attenuation · 距离衰减</h3>
+      <p>
+        固定 Vs30 = 760 m/s，画 PGA 随距离 R 的变化，三条曲线对应
+        M = 5 / 6 / 7。对数横轴下，中远场曲线接近直线，近场逐渐变平。
+      </p>
+      <p>
+        <strong>诊断什么：</strong>距离项 f<sub>R</sub>(M, R) 的几何衰减
+        是否与观测一致；大震级曲线在近场是否出现了接近饱和的平坦段；
+        远场是否衰减过快或过慢。
+      </p>
+
+      <h3 class="sub">(c) Site amplification · 场地放大</h3>
+      <p>
+        固定 R = 30 km，画 PGA 随 Vs30 的变化，三条曲线对应 M = 5 / 6 / 7。
+        理论关系为 PGA ∝ (Vs30/760)<sup>−0.3</sup>，双对数坐标下近似直线。
+      </p>
+      <p>
+        <strong>诊断什么：</strong>场地项 f<sub>S</sub>(Vs30) 的放大趋势
+        是否与数据一致；软土场地（Vs30 &lt; 300 m/s）的放大是否被高估或低估；
+        是否存在非线性场地效应（软土处散点明显低于线性预测）。
+      </p>
+
+      <h3 class="sub">(d) Residual diagnostics · 残差诊断</h3>
+      <p>
+        残差 = log<sub>10</sub>(PGA / PGA<sub>median</sub>)，
+        表示 GMPE 中位值未解释的部分。横轴为距离 R，纵轴为残差，
+        按震级着色。
+      </p>
+      <p>
+        <strong>诊断什么：</strong>理想情况下残差应围绕 0 随机分布，
+        且不随距离或震级出现系统趋势。如果出现 U 型、V 型或斜向趋势，
+        说明对应的项（距离项或震级项）标定不足。
+      </p>
+
+      <div class="callout">
+        <strong>回归分析的诊断闭环：</strong>
+        <ol style="margin:6px 0 0 18px;">
+          <li>看 (a) 判断震级项是否合理；</li>
+          <li>看 (b) 判断距离项是否合理；</li>
+          <li>看 (c) 判断场地项是否合理；</li>
+          <li>看 (d) 判断三项合起来后残差是否无偏；</li>
+          <li>若 (d) 出现趋势，回到对应项重新标定。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面四张子图由页面内的 JavaScript 实时生成。
+        三个震级（M = 5 / 6 / 7）各 60 个合成样本，每个样本带有一个 R 与 Vs30。
+        画布尺寸按 A4 排版（720 × 760 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">合成数据</span>
+        <span class="fname">GMPE: log₁₀(PGA/g) = 0.3·M − 1.0·log₁₀(R+10) − 0.3·log₁₀(Vs30/760) − 0.8</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="gs-canvas-wrap">
+        <canvas id="c-gmpe"></canvas>
+      </div>
+
+      <div class="gs-note" style="margin-top:14px;">
+        <strong>(a) 震级标度</strong>：PGA vs M，固定 Vs30 = 760 m/s，
+        四条曲线 R = 10 / 30 / 70 / 150 km，散点按距离分档着色。
+        <br>
+        <strong>(b) 距离衰减</strong>：PGA vs R，固定 Vs30 = 760 m/s，
+        三条曲线 M = 5 / 6 / 7，散点按震级着色。
+        <br>
+        <strong>(c) 场地放大</strong>：PGA vs Vs30，固定 R = 30 km，
+        三条曲线 M = 5 / 6 / 7，散点只显示 R 在 20–50 km 之间的样本。
+        <br>
+        <strong>(d) 残差诊断</strong>：残差 log<sub>10</sub>(PGA/PGA<sub>med</sub>) vs R，
+        散点按震级着色，参考线为 0。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        从 <code>gmpe_data.csv</code> 读取四列数据，绘制 GMPE 标准四图。
+        CSV 文件不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>gmpe-4panel.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 输入数据：CSV 文件（四列，带表头）
+#   M,   R,   Vs30,  PGA
+#   5.0, 12.3, 210,  0.108
+#   5.2, 25.7, 540,  0.028
+#   ...
+#   单位：M 无量纲，R 单位 km，Vs30 单位 m/s，PGA 单位 g
+# -------------------------------------------------------------
+# 如果你的 PGA 单位是 m/s²，在读取后除以 9.80665 转 g；
+# 如果是 gal（cm/s²），除以 980.665。
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 9,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'gmpe_data.csv'
+VS30_REF = 760.0
+
+
+# ---------- GMPE 中位值模型（含场地项） ----------
+def gmpe_median(M, R, Vs30, Vs30_ref=VS30_REF):
+    """简化 GMPE：
+    log10(PGA_g) = 0.3·M − 1.0·log10(R+10)
+                   − 0.3·log10(Vs30/Vs30_ref) − 0.8
+    """
+    f_mag  = 0.3 * M
+    f_dist = -1.0 * np.log10(R + 10.0)
+    f_site = -0.3 * np.log10(Vs30 / Vs30_ref)
+    return 10 ** (f_mag + f_dist + f_site - 0.8)
+
+
+# ---------- 生成合成数据（CSV 不存在时使用） ----------
+def generate_synthetic(seed=42):
+    rng = np.random.default_rng(seed)
+    Ms = [5.0, 6.0, 7.0]
+    M_all, R_all, Vs30_all, PGA_all = [], [], [], []
+    for M in Ms:
+        R    = 10 ** rng.uniform(np.log10(5),    np.log10(200),   60)
+        Vs30 = 10 ** rng.uniform(np.log10(150),  np.log10(1500),  60)
+        pga_med = gmpe_median(M, R, Vs30)
+        pga = pga_med * 10 ** (0.25 * rng.standard_normal(60))
+        M_all.append(np.full(60, M))
+        R_all.append(R)
+        Vs30_all.append(Vs30)
+        PGA_all.append(pga)
+    return (np.concatenate(M_all), np.concatenate(R_all),
+            np.concatenate(Vs30_all), np.concatenate(PGA_all))
+
+
+# ---------- 1. 读取数据 ----------
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    M    = np.asarray(data['M'],    dtype=float)
+    R    = np.asarray(data['R'],    dtype=float)
+    Vs30 = np.asarray(data['Vs30'], dtype=float)
+    PGA  = np.asarray(data['PGA'],  dtype=float)
+    # 若 PGA 单位不是 g，取消对应注释
+    # PGA = PGA / 9.80665   # m/s² → g
+    # PGA = PGA / 980.665   # gal  → g
+    print(f'从 {CSV_FILE} 读取 {len(M)} 条记录')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    M, R, Vs30, PGA = generate_synthetic()
+
+
+# ---------- 2. 计算残差 ----------
+pga_med  = gmpe_median(M, R, Vs30)
+residual = np.log10(PGA) - np.log10(pga_med)
+
+
+# ---------- 3. 四张子图 ----------
+fig, axes = plt.subplots(2, 2, figsize=(8.0, 8.0))
+
+colors_M = {5.0: '#2563eb', 6.0: '#b45309', 7.0: '#15803d'}
+R_bins   = [(0, 20, '<20',    '#0891b2'),
+            (20, 50, '20–50', '#ca8a04'),
+            (50, 100, '50–100', '#9333ea'),
+            (100, 1e9, '>100', '#dc2626')]
+
+# ===== (a) Magnitude scaling =====
+ax = axes[0, 0]
+M_range = np.linspace(4.5, 7.5, 100)
+for R_val, color in zip([10, 30, 70, 150], ['#0891b2', '#ca8a04', '#9333ea', '#dc2626']):
+    ax.plot(M_range, gmpe_median(M_range, R_val, VS30_REF),
+            color=color, lw=1.5, label=f'R = {R_val} km')
+for lo, hi, name, c in R_bins:
+    mask = (R >= lo) & (R < hi)
+    if mask.any():
+        ax.scatter(M[mask], PGA[mask], s=14, color=c, alpha=0.6, edgecolors='none')
+ax.set_yscale('log')
+ax.set_xlabel('Magnitude M')
+ax.set_ylabel('PGA (g)')
+ax.set_title('(a) Magnitude scaling  ·  Vs30 = 760 m/s', fontsize=10)
+ax.set_xlim(4.5, 7.5); ax.set_ylim(0.003, 3)
+ax.legend(loc='lower right', fontsize=8, frameon=False)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+
+# ===== (b) Distance attenuation =====
+ax = axes[0, 1]
+R_curve = np.logspace(np.log10(5), np.log10(200), 200)
+for M_val in [5.0, 6.0, 7.0]:
+    ax.plot(R_curve, gmpe_median(M_val, R_curve, VS30_REF),
+            color=colors_M[M_val], lw=1.5, label=f'M = {M_val}')
+for M_val in [5.0, 6.0, 7.0]:
+    mask = np.round(M, 1) == M_val
+    ax.scatter(R[mask], PGA[mask], s=14, color=colors_M[M_val],
+               alpha=0.6, edgecolors='none')
+ax.set_xscale('log'); ax.set_yscale('log')
+ax.set_xlabel('Joyner-Boore distance R (km)')
+ax.set_ylabel('PGA (g)')
+ax.set_title('(b) Distance attenuation  ·  Vs30 = 760 m/s', fontsize=10)
+ax.set_xlim(3, 250); ax.set_ylim(0.003, 3)
+ax.legend(loc='lower left', fontsize=8, frameon=False)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+
+# ===== (c) Site amplification =====
+ax = axes[1, 0]
+Vs30_curve = np.logspace(np.log10(150), np.log10(1500), 100)
+for M_val in [5.0, 6.0, 7.0]:
+    ax.plot(Vs30_curve, gmpe_median(M_val, 30.0, Vs30_curve),
+            color=colors_M[M_val], lw=1.5, label=f'M = {M_val}')
+# 散点：只显示 R 在 20–50 km 之间的样本
+mask_near = (R > 20) & (R < 50)
+for M_val in [5.0, 6.0, 7.0]:
+    sub = mask_near & (np.round(M, 1) == M_val)
+    ax.scatter(Vs30[sub], PGA[sub], s=14, color=colors_M[M_val],
+               alpha=0.75, edgecolors='none')
+ax.set_xscale('log'); ax.set_yscale('log')
+ax.set_xlabel('Vs30 (m/s)')
+ax.set_ylabel('PGA (g)')
+ax.set_title('(c) Site amplification  ·  R = 30 km', fontsize=10)
+ax.set_xlim(100, 2000); ax.set_ylim(0.01, 2)
+ax.legend(loc='lower left', fontsize=8, frameon=False)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+
+# ===== (d) Residual diagnostics =====
+ax = axes[1, 1]
+for M_val in [5.0, 6.0, 7.0]:
+    mask = np.round(M, 1) == M_val
+    ax.scatter(R[mask], residual[mask], s=14, color=colors_M[M_val],
+               alpha=0.6, edgecolors='none', label=f'M = {M_val}')
+ax.axhline(0, color='#888888', lw=0.7, ls='--')
+ax.set_xscale('log')
+ax.set_xlabel('Joyner-Boore distance R (km)')
+ax.set_ylabel(r'Residual $\log_{10}(PGA/PGA_{median})$')
+ax.set_title('(d) Residual diagnostics', fontsize=10)
+ax.set_xlim(3, 250); ax.set_ylim(-0.8, 0.8)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+
+# ---------- 4. 统一格式 ----------
+for a in axes.flat:
+    a.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('gmpe-4panel.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+print(f'共 {len(M)} 条记录')
+print(f'残差均值 = {residual.mean():.4f}，标准差 = {residual.std():.4f}')</code></pre>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        用 <code>readtable</code> 读取带表头的 CSV，绘制 GMPE 标准四图。
+        CSV 不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>gmpe-4panel.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 输入数据：CSV 文件（四列，带表头）
+%   M,   R,   Vs30,  PGA
+%   5.0, 12.3, 210,  0.108
+%   ...
+%   单位：M 无量纲，R 单位 km，Vs30 单位 m/s，PGA 单位 g
+% -------------------------------------------------------------
+% 如果你的 PGA 单位是 m/s²，在读取后除以 9.80665 转 g；
+% 如果是 gal（cm/s²），除以 980.665。
+% =============================================================
+
+CSV_FILE = 'gmpe_data.csv';
+VS30_REF = 760.0;
+
+% ---------- GMPE 中位值模型 ----------
+gmpe_median = @(M, R, Vs30) 10 .^ ( ...
+    0.3 * M ...
+    - 1.0 * log10(R + 10) ...
+    - 0.3 * log10(Vs30 / VS30_REF) ...
+    - 0.8);
+
+% ---------- 1. 读取数据 ----------
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE);
+    M    = T.M;
+    R    = T.R;
+    Vs30 = T.Vs30;
+    PGA  = T.PGA;
+    % 若 PGA 单位不是 g，取消对应注释
+    % PGA = PGA / 9.80665;
+    % PGA = PGA / 980.665;
+    fprintf('从 %s 读取 %d 条记录\n', CSV_FILE, height(T));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    rng(42);
+    Ms = [5.0; 6.0; 7.0];
+    M = []; R = []; Vs30 = []; PGA = [];
+    for k = 1:numel(Ms)
+        Mk = Ms(k);
+        u1 = rand(60, 1); u2 = rand(60, 1);
+        Rk    = 10 .^ (log10(5)   + (log10(200)  - log10(5))   * u1);
+        Vk    = 10 .^ (log10(150) + (log10(1500) - log10(150)) * u2);
+        pga_k = gmpe_median(Mk, Rk, Vk) .* 10 .^ (0.25 * randn(60, 1));
+        M = [M; repmat(Mk, 60, 1)]; %#ok<AGROW>
+        R = [R; Rk];                %#ok<AGROW>
+        Vs30 = [Vs30; Vk];          %#ok<AGROW>
+        PGA = [PGA; pga_k];         %#ok<AGROW>
+    end
+end
+
+% ---------- 2. 残差 ----------
+pga_med  = gmpe_median(M, R, Vs30);
+residual = log10(PGA) - log10(pga_med);
+
+% ---------- 3. 配色 ----------
+colors_M = containers.Map('KeyType', 'double', 'ValueType', 'any');
+colors_M(5.0) = [0.15 0.39 0.92];
+colors_M(6.0) = [0.71 0.33 0.04];
+colors_M(7.0) = [0.08 0.50 0.24];
+
+% ---------- 4. 四张子图 ----------
+figure('Color', 'w', 'Position', [100 100 800 800]);
+
+% ===== (a) Magnitude scaling =====
+subplot(2, 2, 1); hold on;
+M_range = linspace(4.5, 7.5, 100);
+R_list  = [10 30 70 150];
+R_colors = [0.03 0.57 0.70; 0.79 0.54 0.02; 0.58 0.20 0.92; 0.86 0.15 0.15];
+for i = 1:numel(R_list)
+    semilogy(M_range, gmpe_median(M_range, R_list(i), VS30_REF), ...
+             'Color', R_colors(i, :), 'LineWidth', 1.5, ...
+             'DisplayName', sprintf('R = %d km', R_list(i)));
+end
+R_bins = [0 20; 20 50; 50 100; 100 1e9];
+for i = 1:size(R_bins, 1)
+    mask = R >= R_bins(i, 1) & R < R_bins(i, 2);
+    if any(mask)
+        scatter(M(mask), PGA(mask), 14, R_colors(i, :), 'filled', ...
+                'MarkerFaceAlpha', 0.6, 'HandleVisibility', 'off');
+    end
+end
+xlabel('Magnitude M'); ylabel('PGA (g)');
+title('(a) Magnitude scaling  ·  Vs30 = 760 m/s', 'FontSize', 10);
+xlim([4.5 7.5]); ylim([0.003 3]);
+legend('Location', 'southeast', 'Box', 'off', 'FontSize', 8);
+grid on; box on;
+
+% ===== (b) Distance attenuation =====
+subplot(2, 2, 2); hold on;
+R_curve = logspace(log10(5), log10(200), 200);
+for Mv = [5.0 6.0 7.0]
+    loglog(R_curve, gmpe_median(Mv, R_curve, VS30_REF), ...
+           'Color', colors_M(Mv), 'LineWidth', 1.5, ...
+           'DisplayName', sprintf('M = %.1f', Mv));
+end
+M_rounded = round(M * 10) / 10;
+for Mv = [5.0 6.0 7.0]
+    mask = M_rounded == Mv;
+    scatter(R(mask), PGA(mask), 14, colors_M(Mv), 'filled', ...
+            'MarkerFaceAlpha', 0.6, 'HandleVisibility', 'off');
+end
+xlabel('Joyner-Boore distance R (km)'); ylabel('PGA (g)');
+title('(b) Distance attenuation  ·  Vs30 = 760 m/s', 'FontSize', 10);
+xlim([3 250]); ylim([0.003 3]);
+legend('Location', 'southwest', 'Box', 'off', 'FontSize', 8);
+grid on; box on;
+
+% ===== (c) Site amplification =====
+subplot(2, 2, 3); hold on;
+Vs30_curve = logspace(log10(150), log10(1500), 100);
+for Mv = [5.0 6.0 7.0]
+    loglog(Vs30_curve, gmpe_median(Mv, 30.0, Vs30_curve), ...
+           'Color', colors_M(Mv), 'LineWidth', 1.5, ...
+           'DisplayName', sprintf('M = %.1f', Mv));
+end
+mask_near = R > 20 & R < 50;
+for Mv = [5.0 6.0 7.0]
+    sub = mask_near & (M_rounded == Mv);
+    scatter(Vs30(sub), PGA(sub), 14, colors_M(Mv), 'filled', ...
+            'MarkerFaceAlpha', 0.75, 'HandleVisibility', 'off');
+end
+xlabel('Vs30 (m/s)'); ylabel('PGA (g)');
+title('(c) Site amplification  ·  R = 30 km', 'FontSize', 10);
+xlim([100 2000]); ylim([0.01 2]);
+legend('Location', 'southwest', 'Box', 'off', 'FontSize', 8);
+grid on; box on;
+
+% ===== (d) Residual diagnostics =====
+subplot(2, 2, 4); hold on;
+for Mv = [5.0 6.0 7.0]
+    mask = M_rounded == Mv;
+    scatter(R(mask), residual(mask), 14, colors_M(Mv), 'filled', ...
+            'MarkerFaceAlpha', 0.6, ...
+            'DisplayName', sprintf('M = %.1f', Mv));
+end
+yline(0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7, ...
+      'HandleVisibility', 'off');
+set(gca, 'XScale', 'log');
+xlabel('Joyner-Boore distance R (km)');
+ylabel('Residual log_{10}(PGA/PGA_{median})');
+title('(d) Residual diagnostics', 'FontSize', 10);
+xlim([3 250]); ylim([-0.8 0.8]);
+legend('Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+grid on; box on;
+
+% 统一格式
+for k = 1:4
+    subplot(2, 2, k);
+    set(gca, 'FontName', 'Times New Roman', 'FontSize', 9, 'TickDir', 'in');
+end
+
+exportgraphics(gcf, 'gmpe-4panel.png', 'Resolution', 300);
+
+fprintf('共 %d 条记录\n', numel(M));
+fprintf('残差均值 = %.4f，标准差 = %.4f\n', mean(residual), std(residual));</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:140px;">项</th><th style="width:160px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 震级</td><td>M</td><td><code>M<sub>w</sub></code>（无量纲）</td></tr>
+            <tr><td><strong>输入</strong> · 距离</td><td>R</td><td><code>km</code>（Joyner-Boore 距离）</td></tr>
+            <tr><td><strong>输入</strong> · 场地</td><td>Vs30</td><td><code>m/s</code></td></tr>
+            <tr><td><strong>输入</strong> · 峰值加速度</td><td>PGA</td><td><code>g</code>（推荐）</td></tr>
+            <tr><td><strong>输出</strong> · 对数残差</td><td>log<sub>10</sub>(PGA/PGA<sub>med</sub>)</td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>CSV 格式：</strong>四列（M, R, Vs30, PGA），带表头，逗号分隔。</li>
+        <li><strong>四张图的作用：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>(a) 震级项诊断——PGA vs M，多距离曲线；</li>
+            <li>(b) 距离项诊断——PGA vs R，多震级曲线；</li>
+            <li>(c) 场地项诊断——PGA vs Vs30，多震级曲线；</li>
+            <li>(d) 残差诊断——残差 vs R，检查是否随机。</li>
+          </ul>
+        </li>
+        <li><strong>为什么四张图都用同一套配色：</strong>M = 5 用蓝、M = 6 用橙、M = 7 用绿，
+          在 (a)(b)(c)(d) 之间形成视觉一致性，方便对照。</li>
+        <li><strong>子图 (a) 的距离配色：</strong>近场用青、中远场用黄/紫/红，
+          与子图 (b)(c)(d) 的震级配色区分开。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>子图 (c) 散点太少 → 数据中 R 在 20–50 km 的样本不足，可放宽到 15–70 km。</li>
+            <li>子图 (d) 出现 U 型或斜向趋势 → 距离项标定不足，需要重新拟合。</li>
+            <li>子图 (d) 出现某一震级系统性偏差 → 震级项标定不足。</li>
+            <li>中文表头乱码 → CSV 保存为 UTF-8 编码，或用英文列名。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../engineering-seismology.html">工程地震学</a>（GMPE、PSHA、场地效应）、
+        <a href="../soil-dynamics.html">土动力学</a>（Vs30、场地分类）、
+        <a href="../probability-statistics.html">概率论与数理统计</a>（对数正态、回归分析）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · GMPE 四图</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var SEED = 42;
+  var SIGMA = 0.25;
+  var N_PER_GROUP = 60;
+  var VS30_REF = 760.0;
+
+  /* ============================================================
+     伪随机数发生器
+     ============================================================ */
+
+  function makeRNG(seed) {
+    var s = seed >>> 0;
+    return function () {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+  function standardNormal(rng) {
+    var u1 = rng();
+    if (u1 < 1e-12) u1 = 1e-12;
+    var u2 = rng();
+    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  }
+
+  /* ============================================================
+     GMPE 模型与数据生成
+     ============================================================ */
+
+  function gmpeMedian(M, R, Vs30) {
+    var fM = 0.3 * M;
+    var fD = -1.0 * Math.log10(R + 10);
+    var fS = -0.3 * Math.log10(Vs30 / VS30_REF);
+    return Math.pow(10, fM + fD + fS - 0.8);
+  }
+
+  function generateData() {
+    var rng = makeRNG(SEED);
+    var Ms = [5.0, 6.0, 7.0];
+    var logRmin = Math.log10(5),   logRmax = Math.log10(200);
+    var logVmin = Math.log10(150), logVmax = Math.log10(1500);
+
+    var pts = [];
+    for (var g = 0; g < Ms.length; g++) {
+      var M = Ms[g];
+      for (var i = 0; i < N_PER_GROUP; i++) {
+        var R    = Math.pow(10, logRmin + (logRmax - logRmin) * rng());
+        var Vs30 = Math.pow(10, logVmin + (logVmax - logVmin) * rng());
+        var med  = gmpeMedian(M, R, Vs30);
+        var pga  = med * Math.pow(10, SIGMA * standardNormal(rng));
+        pts.push({
+          M: M, R: R, Vs30: Vs30, PGA: pga,
+          pga_med: med,
+          residual: Math.log10(pga) - Math.log10(med)
+        });
+      }
+    }
+    return pts;
+  }
+
+  /* ============================================================
+     通用绘图工具
+     ============================================================ */
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+  function fmtLogLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.001 && a < 10000) {
+      if (a >= 1) return v.toFixed(0);
+      if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+      if (a >= 0.01) return v.toFixed(2).replace(/\.?0+$/, '');
+      return v.toFixed(3).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(Math.log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(0) + 'e' + e;
+  }
+  function fmtLinLabel(v, step) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 100) return v.toFixed(0);
+    if (a >= 10) return v.toFixed(1);
+    if (a >= 1) return v.toFixed(1);
+    if (step < 0.5) return v.toFixed(1);
+    return v.toFixed(1);
+  }
+  function hexToRgb(hex) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16)
+    };
+  }
+
+  /* ============================================================
+     通用坐标轴绘制
+     ============================================================ */
+
+  function drawAxesCommon(ctx, box, xLog, yLog, xRange, yRange, xLabel, yLabel, title) {
+    var margin = { top: 26, right: 14, bottom: 42, left: 58 };
+    var px = box.x + margin.left;
+    var py = box.y + margin.top;
+    var pw = box.w - margin.left - margin.right;
+    var ph = box.h - margin.top - margin.bottom;
+
+    var xMinV = xRange[0], xMaxV = xRange[1];
+    var yMinV = yRange[0], yMaxV = yRange[1];
+
+    var xMin = xLog ? Math.log10(xMinV) : xMinV;
+    var xMax = xLog ? Math.log10(xMaxV) : xMaxV;
+    var yMin = yLog ? Math.log10(yMinV) : yMinV;
+    var yMax = yLog ? Math.log10(yMaxV) : yMaxV;
+
+    function toX(v) {
+      var xv = xLog ? Math.log10(v) : v;
+      return px + (xv - xMin) / (xMax - xMin) * pw;
+    }
+    function toY(v) {
+      var yv = yLog ? Math.log10(v) : v;
+      return py + ph - (yv - yMin) / (yMax - yMin) * ph;
+    }
+
+    /* 标题 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, box.x + box.w / 2, box.y + 4);
+
+    /* 刻度 */
+    var xTicksMajor, yTicksMajor, xTicksMinor, yTicksMinor;
+    if (xLog) {
+      xTicksMajor = niceDecades(xMinV, xMaxV);
+      xTicksMinor = niceMinorTicks(xMinV, xMaxV);
+    } else {
+      var xStep = (xMaxV - xMinV) / 3;
+      xTicksMajor = [xMinV, xMinV + xStep, xMinV + 2 * xStep, xMaxV];
+      xTicksMinor = [];
+    }
+    if (yLog) {
+      yTicksMajor = niceDecades(yMinV, yMaxV);
+      yTicksMinor = niceMinorTicks(yMinV, yMaxV);
+    } else {
+      var yStep = (yMaxV - yMinV) / 4;
+      yTicksMajor = [];
+      for (var k = 0; k <= 4; k++) yTicksMajor.push(yMinV + k * yStep);
+      yTicksMinor = [];
+    }
+
+    /* 网格 */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py); ctx.lineTo(x, py + ph); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    /* 外框 */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* 刻度朝内 */
+    var mainTick = 5, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + mainTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - mainTick, y); ctx.stroke();
+    });
+    yTicksMinor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + minorTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - minorTick, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + mainTick);      ctx.stroke();
+    });
+    xTicksMinor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + minorTick);      ctx.stroke();
+    });
+
+    /* 刻度标签 */
+    ctx.fillStyle = '#222222';
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      var s = yLog ? fmtLogLabel(v) : fmtLinLabel(v);
+      ctx.fillText(s, px - 5, y);
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      var s = xLog ? fmtLogLabel(v) : fmtLinLabel(v);
+      ctx.fillText(s, x, py + ph + 6);
+    });
+
+    /* 轴标签 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 11px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(box.x + 12, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, px + pw / 2, box.y + box.h - 2);
+
+    return { toX: toX, toY: toY, px: px, py: py, pw: pw, ph: ph };
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+
+  var COLORS_M = { 5.0: '#2563eb', 6.0: '#b45309', 7.0: '#15803d' };
+  var R_COLORS = ['#0891b2', '#ca8a04', '#9333ea', '#dc2626'];
+  var R_LABELS = ['<20', '20–50', '50–100', '>100'];
+  var R_EDGES  = [0, 20, 50, 100, 1e9];
+  var R_CURVES = [10, 30, 70, 150];
+
+  function drawAll(canvasId, pts) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(400, Math.round(rect.height) || 760);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var gapX = 10, gapY = 10;
+    var cellW = (W - gapX * 3) / 2;
+    var cellH = (H - gapY * 3) / 2;
+
+    var boxes = [
+      { x: gapX,                y: gapY,               w: cellW, h: cellH },
+      { x: gapX * 2 + cellW,    y: gapY,               w: cellW, h: cellH },
+      { x: gapX,                y: gapY * 2 + cellH,   w: cellW, h: cellH },
+      { x: gapX * 2 + cellW,    y: gapY * 2 + cellH,   w: cellW, h: cellH }
+    ];
+
+    drawPanelA(ctx, boxes[0], pts);
+    drawPanelB(ctx, boxes[1], pts);
+    drawPanelC(ctx, boxes[2], pts);
+    drawPanelD(ctx, boxes[3], pts);
+  }
+
+  /* ---------- (a) Magnitude scaling ---------- */
+  function drawPanelA(ctx, box, pts) {
+    var axes = drawAxesCommon(ctx, box,
+      false, true,
+      [4.5, 7.5], [0.003, 3],
+      'Magnitude M', 'PGA (g)',
+      '(a) Magnitude scaling · Vs30 = 760 m/s');
+
+    /* 四条曲线 */
+    for (var c = 0; c < R_CURVES.length; c++) {
+      var Rc = R_CURVES[c];
+      ctx.strokeStyle = R_COLORS[c];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i <= 100; i++) {
+        var M = 4.5 + (7.5 - 4.5) * i / 100;
+        var pga = gmpeMedian(M, Rc, VS30_REF);
+        if (pga < 0.003 || pga > 3) { started = false; continue; }
+        var px = axes.toX(M), py = axes.toY(pga);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* 散点：按 R 分档着色 */
+    for (var p = 0; p < pts.length; p++) {
+      var pt = pts[p];
+      if (pt.PGA < 0.003 || pt.PGA > 3) continue;
+      var bin = -1;
+      for (var k = 0; k < R_EDGES.length - 1; k++) {
+        if (pt.R >= R_EDGES[k] && pt.R < R_EDGES[k + 1]) { bin = k; break; }
+      }
+      if (bin < 0) continue;
+      var rgb = hexToRgb(R_COLORS[bin]);
+      ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.6)';
+      var x = axes.toX(pt.M), y = axes.toY(pt.PGA);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* 图例 */
+    drawLegendBox(ctx, axes.px + 6, axes.py + axes.ph - 74, 90, 68,
+      R_LABELS.map(function (name, i) {
+        return { name: 'R ' + name + ' km', color: R_COLORS[i] };
+      }));
+  }
+
+  /* ---------- (b) Distance attenuation ---------- */
+  function drawPanelB(ctx, box, pts) {
+    var axes = drawAxesCommon(ctx, box,
+      true, true,
+      [3, 250], [0.003, 3],
+      'Joyner-Boore distance R (km)', 'PGA (g)',
+      '(b) Distance attenuation · Vs30 = 760 m/s');
+
+    /* 三条曲线 */
+    var Ms = [5.0, 6.0, 7.0];
+    for (var c = 0; c < Ms.length; c++) {
+      ctx.strokeStyle = COLORS_M[Ms[c]];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i <= 200; i++) {
+        var logR = Math.log10(5) + (Math.log10(200) - Math.log10(5)) * i / 200;
+        var R = Math.pow(10, logR);
+        var pga = gmpeMedian(Ms[c], R, VS30_REF);
+        if (pga < 0.003 || pga > 3) { started = false; continue; }
+        var px = axes.toX(R), py = axes.toY(pga);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* 散点：按 M 着色 */
+    for (var p = 0; p < pts.length; p++) {
+      var pt = pts[p];
+      if (pt.PGA < 0.003 || pt.PGA > 3) continue;
+      var col = COLORS_M[pt.M];
+      if (!col) continue;
+      var rgb = hexToRgb(col);
+      ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.6)';
+      var x = axes.toX(pt.R), y = axes.toY(pt.PGA);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* 图例 */
+    drawLegendBox(ctx, axes.px + 6, axes.py + axes.ph - 56, 78, 50, [
+      { name: 'M = 5', color: COLORS_M[5.0] },
+      { name: 'M = 6', color: COLORS_M[6.0] },
+      { name: 'M = 7', color: COLORS_M[7.0] }
+    ]);
+  }
+
+  /* ---------- (c) Site amplification ---------- */
+  function drawPanelC(ctx, box, pts) {
+    var axes = drawAxesCommon(ctx, box,
+      true, true,
+      [100, 2000], [0.01, 2],
+      'Vs30 (m/s)', 'PGA (g)',
+      '(c) Site amplification · R = 30 km');
+
+    /* 三条曲线 */
+    var Ms = [5.0, 6.0, 7.0];
+    for (var c = 0; c < Ms.length; c++) {
+      ctx.strokeStyle = COLORS_M[Ms[c]];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i <= 100; i++) {
+        var logV = Math.log10(150) + (Math.log10(1500) - Math.log10(150)) * i / 100;
+        var V = Math.pow(10, logV);
+        var pga = gmpeMedian(Ms[c], 30, V);
+        if (pga < 0.01 || pga > 2) { started = false; continue; }
+        var px = axes.toX(V), py = axes.toY(pga);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* 散点：R 在 20–50 km 之间的样本 */
+    for (var p = 0; p < pts.length; p++) {
+      var pt = pts[p];
+      if (pt.R <= 20 || pt.R >= 50) continue;
+      if (pt.PGA < 0.01 || pt.PGA > 2) continue;
+      if (pt.Vs30 < 100 || pt.Vs30 > 2000) continue;
+      var col = COLORS_M[pt.M];
+      if (!col) continue;
+      var rgb = hexToRgb(col);
+      ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.7)';
+      var x = axes.toX(pt.Vs30), y = axes.toY(pt.PGA);
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* 图例 */
+    drawLegendBox(ctx, axes.px + 6, axes.py + axes.ph - 56, 78, 50, [
+      { name: 'M = 5', color: COLORS_M[5.0] },
+      { name: 'M = 6', color: COLORS_M[6.0] },
+      { name: 'M = 7', color: COLORS_M[7.0] }
+    ]);
+  }
+
+  /* ---------- (d) Residual diagnostics ---------- */
+  function drawPanelD(ctx, box, pts) {
+    var axes = drawAxesCommon(ctx, box,
+      true, false,
+      [3, 250], [-0.8, 0.8],
+      'Joyner-Boore distance R (km)',
+      'Residual log10(PGA/PGA_med)',
+      '(d) Residual diagnostics');
+
+    /* 零线 */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([4, 4]);
+    var y0 = axes.toY(0);
+    ctx.beginPath();
+    ctx.moveTo(axes.px, y0);
+    ctx.lineTo(axes.px + axes.pw, y0);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 散点：按 M 着色 */
+    for (var p = 0; p < pts.length; p++) {
+      var pt = pts[p];
+      if (pt.residual < -0.8 || pt.residual > 0.8) continue;
+      var col = COLORS_M[pt.M];
+      if (!col) continue;
+      var rgb = hexToRgb(col);
+      ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.6)';
+      var x = axes.toX(pt.R), y = axes.toY(pt.residual);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* 图例 */
+    drawLegendBox(ctx, axes.px + axes.pw - 78, axes.py + 6, 72, 50, [
+      { name: 'M = 5', color: COLORS_M[5.0] },
+      { name: 'M = 6', color: COLORS_M[6.0] },
+      { name: 'M = 7', color: COLORS_M[7.0] }
+    ]);
+  }
+
+  /* ---------- 图例盒 ---------- */
+  function drawLegendBox(ctx, x, y, w, h, items) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var rowH = h / (items.length + 1);
+    for (var i = 0; i < items.length; i++) {
+      var cy = y + rowH * (i + 1);
+      ctx.fillStyle = items[i].color;
+      ctx.beginPath();
+      ctx.arc(x + 9, cy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#222222';
+      ctx.fillText(items[i].name, x + 18, cy);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+
+  function load() {
+    var pts = generateData();
+    drawAll('c-gmpe', pts);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var totalN = pts.length;
+      var sum = 0;
+      for (var i = 0; i < totalN; i++) sum += pts[i].residual;
+      var mean = sum / totalN;
+      var sum2 = 0;
+      for (var j = 0; j < totalN; j++) {
+        var d = pts[j].residual - mean;
+        sum2 += d * d;
+      }
+      var std = Math.sqrt(sum2 / totalN);
+
+      status.textContent = totalN + ' 个样本点 · 3 个震级 (5/6/7) · ' +
+                           'Vs30 150–1500 m/s · σ = ' + SIGMA +
+                           ' · 残差均值 ' + mean.toFixed(3) +
+                           ' · 残差标准差 ' + std.toFixed(3);
+    }
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

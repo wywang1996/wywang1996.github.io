@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震危险性解聚 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.dg-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.dg-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+.dg-tabs button {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.dg-tabs button:hover { color: var(--accent); border-color: var(--accent); }
+.dg-tabs button.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.dg-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.dg-canvas-wrap canvas {
+  width: 100%;
+  height: 840px;
+  display: block;
+}
+.dg-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.dg-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.dg-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>CSV 输入数据</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      地震危险性解聚
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 地震危险性</div>
+      <h1>地震危险性解聚</h1>
+      <p class="lead">
+        PSHA 得到危险性水平后，需要回答"<strong>这个危险性来自哪些地震场景</strong>"。
+        解聚分析把目标危险性分解为震级 M、距离 R、epsilon 三个变量的联合贡献。
+        页面提供 <strong>2D 四面板</strong> 与 <strong>3D 立体视图</strong> 两种展示方式。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">PSHA</span>
+        <span class="pill">CSV 输入</span>
+        <span class="pill blue">2D / 3D</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>CSV 输入数据</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/disaggregation.csv</code> 作为输入。
+        文件是 PSHA 解聚结果的逐分箱输出，每行对应一个
+        (M, R, epsilon) 组合的贡献百分比。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>M_center</code></td><td>震级 M 分箱中心</td><td>无量纲</td><td>通常 0.25 或 0.5 分箱</td></tr>
+            <tr><td><code>R_center</code></td><td>距离 R 分箱中心</td><td><code>km</code></td><td>Joyner-Boore 距离</td></tr>
+            <tr><td><code>epsilon</code></td><td>epsilon 分箱中心</td><td>无量纲</td><td>对数残差的标准分数</td></tr>
+            <tr><td><code>contribution</code></td><td>贡献百分比</td><td><code>%</code></td><td>所有分箱之和 ≈ 100</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例（前 12 行）</h4>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>disaggregation.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># disaggregation.csv
+# 地震危险性解聚结果 - 场地基岩 PGA, 50 年超越概率 10%
+M_center,R_center,epsilon,contribution
+5.25,7.5,-0.5,0.15
+5.25,7.5,0.5,0.27
+5.25,7.5,1.5,0.35
+...
+</code></pre>
+      </div>
+
+      <div class="dg-download">
+        <button type="button" id="btn-download-csv">下载 disaggregation.csv</button>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>两种视图的用途</h2>
+      </div>
+
+      <h3 class="sub">2D 四面板（信息最全）</h3>
+      <p>
+        (a) M-R 联合分布热图 · (b) M 边际分布 · (c) R 边际分布 · (d) ε 分布。
+      </p>
+
+      <h3 class="sub">3D 立体视图（一图概览）</h3>
+      <p>
+        经典 matplotlib bar3d 视角：三面墙（后墙、右墙、底面）带网格，
+        X 轴（震级）水平，Y 轴（距离）斜向右上，Z 轴（贡献率）竖直向上。
+        每个 (M, R) 格子中央一根柱子，柱高 = 贡献百分比。
+      </p>
+
+      <div class="callout warn">
+        <strong>用途与局限：</strong>解聚结果用于挑选和调整真实地震记录，
+        或构造条件均值谱（CMS）。但它给出的是"场景的统计特征"，
+        不能作为<b>单次地震</b>的代表。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        两种视图由 <code>assets/disaggregation.csv</code> 实时计算。
+        点击上方按钮切换视图。画布尺寸按 A4 排版（720 × 840 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:8px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/disaggregation.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="dg-tabs">
+        <button type="button" class="active" data-view="2d">2D 四面板</button>
+        <button type="button" data-view="3d">3D 立体</button>
+      </div>
+
+      <div class="dg-canvas-wrap">
+        <canvas id="c-disagg"></canvas>
+      </div>
+
+      <div class="dg-note" style="margin-top:14px;">
+        <strong>2D 视图：</strong>(a) M-R 联合分布热图；(b) M 边际分布；
+        (c) R 边际分布；(d) Epsilon 分布。
+        <br>
+        <strong>3D 视图：</strong>X = 震级，Y = 距离，Z = 贡献率。
+        柱子按深度排序绘制，柱高 ∝ 贡献百分比。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        代码同时生成 2D 四面板与 3D 立体图两个文件。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>disaggregation.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 地震危险性解聚 | M-R-epsilon 联合贡献
+# -------------------------------------------------------------
+# 输入数据：disaggregation.csv
+#   M_center,R_center,epsilon,contribution
+#   5.25,7.5,-0.5,0.15
+#   5.25,7.5,0.5,0.27
+#   ...
+#   单位：M 无量纲, R km, epsilon 无量纲, contribution %
+# -------------------------------------------------------------
+# 输出：
+#   disaggregation.png      2D 四面板（热图 + 3 个边际分布）
+#   disaggregation-3d.png   3D 立体柱状图（经典 bar3d 视角）
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
+# ---------- 全局字体 ----------
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun', 'DejaVu Sans'],
+    'font.size': 9,
+    'axes.linewidth': 0.8,
+    'axes.unicode_minus': False,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'disaggregation.csv'
+
+
+# =============================================================
+# 1. 读取与聚合
+# =============================================================
+def generate_synthetic():
+    """CSV 缺失时的合成数据（与网页版内联数据一致）。"""
+    Ms = [5.25, 5.75, 6.25, 6.75, 7.25]
+    Rs = [7.5, 15.0, 25.0, 40.0]
+    eps = [-0.5, 0.5, 1.5]
+    fM = {5.25: 0.20, 5.75: 0.60, 6.25: 1.00, 6.75: 0.85, 7.25: 0.35}
+    fR = {7.5: 0.30, 15.0: 1.00, 25.0: 0.85, 40.0: 0.45}
+    fE = {-0.5: 0.20, 0.5: 0.35, 1.5: 0.45}
+
+    M_all, R_all, E_all, C_all = [], [], [], []
+    for M in Ms:
+        for R in Rs:
+            w = fM[M] * fR[R]
+            for e in eps:
+                M_all.append(M)
+                R_all.append(R)
+                E_all.append(e)
+                C_all.append(w * fE[e])
+    C_all = np.array(C_all)
+    C_all = C_all / C_all.sum() * 100
+    return (np.array(M_all), np.array(R_all),
+            np.array(E_all), C_all)
+
+
+def read_csv(path):
+    """读取 CSV，跳过 # 注释行，返回 4 列数组。"""
+    M_all, R_all, eps_all, c_all = [], [], [], []
+    with open(path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if line.lower().startswith('m_center'):
+                continue
+            parts = line.split(',')
+            if len(parts) < 4:
+                continue
+            try:
+                M = float(parts[0])
+                R = float(parts[1])
+                e = float(parts[2])
+                c = float(parts[3])
+            except ValueError:
+                continue
+            if c <= 0:
+                continue
+            M_all.append(M); R_all.append(R)
+            eps_all.append(e); c_all.append(c)
+    return (np.array(M_all), np.array(R_all),
+            np.array(eps_all), np.array(c_all))
+
+
+if os.path.exists(CSV_FILE):
+    M_all, R_all, eps_all, c_all = read_csv(CSV_FILE)
+    print(f'从 {CSV_FILE} 读取 {len(c_all)} 个分箱')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    M_all, R_all, eps_all, c_all = generate_synthetic()
+
+# 归一化到 100%
+if abs(c_all.sum() - 100) > 0.5:
+    c_all = c_all / c_all.sum() * 100
+
+# 唯一分箱
+M_bins = np.unique(M_all)
+R_bins = np.unique(R_all)
+eps_bins = np.unique(eps_all)
+nM, nR, nE = len(M_bins), len(R_bins), len(eps_bins)
+
+# 联合矩阵 + 加权 ε
+MR_joint = np.zeros((nM, nR))
+MR_eps_sum = np.zeros((nM, nR))
+for i, m in enumerate(M_bins):
+    for j, r in enumerate(R_bins):
+        mask = (M_all == m) & (R_all == r)
+        MR_joint[i, j] = c_all[mask].sum()
+        MR_eps_sum[i, j] = (c_all[mask] * eps_all[mask]).sum()
+
+MR_eps_mean = np.where(
+    MR_joint > 0,
+    MR_eps_sum / np.maximum(MR_joint, 1e-12),
+    0.0
+)
+
+# 边际分布
+M_marg = MR_joint.sum(axis=1)
+R_marg = MR_joint.sum(axis=0)
+eps_marg = np.array([c_all[eps_all == e].sum() for e in eps_bins])
+
+# 峰值与均值
+iM_peak = int(np.argmax(M_marg))
+iR_peak = int(np.argmax(R_marg))
+iE_peak = int(np.argmax(eps_marg))
+
+M_mean = (M_marg * M_bins).sum() / M_marg.sum()
+R_mean = (R_marg * R_bins).sum() / R_marg.sum()
+eps_mean = (eps_marg * eps_bins).sum() / eps_marg.sum()
+
+print(f'M 峰值 = {M_bins[iM_peak]:.2f}, 贡献 {M_marg[iM_peak]:.1f}%')
+print(f'R 峰值 = {R_bins[iR_peak]:.1f} km, 贡献 {R_marg[iR_peak]:.1f}%')
+print(f'ε 峰值 = {eps_bins[iE_peak]:.2f}, 贡献 {eps_marg[iE_peak]:.1f}%')
+print(f'平均 M = {M_mean:.2f}, R = {R_mean:.1f} km, ε = {eps_mean:.2f}')
+
+
+# =============================================================
+# 2. 2D 四面板
+# =============================================================
+fig = plt.figure(figsize=(7.2, 8.4))
+gs = GridSpec(3, 2, figure=fig, height_ratios=[1.6, 1.0, 1.0],
+              hspace=0.55, wspace=0.35)
+
+# ----- (a) M-R 联合分布热图 -----
+ax_heat = fig.add_subplot(gs[0, :])
+pcm = ax_heat.pcolormesh(
+    np.arange(nR + 1), np.arange(nM + 1), MR_joint,
+    cmap='OrRd', edgecolors='white', linewidth=1.5
+)
+
+# 单元格数字
+cmax = MR_joint.max()
+for i in range(nM):
+    for j in range(nR):
+        val = MR_joint[i, j]
+        if val > 0.5:
+            color = '#222222' if val < cmax * 0.6 else 'white'
+            ax_heat.text(j + 0.5, i + 0.5, f'{val:.1f}',
+                         ha='center', va='center',
+                         fontsize=8, color=color)
+
+ax_heat.set_xticks(np.arange(nR) + 0.5)
+ax_heat.set_xticklabels([f'{r:g}' for r in R_bins])
+ax_heat.set_yticks(np.arange(nM) + 0.5)
+ax_heat.set_yticklabels([f'{m:.2f}' for m in M_bins])
+ax_heat.set_xlabel('Joyner-Boore distance  R (km)')
+ax_heat.set_ylabel('Magnitude M')
+ax_heat.invert_yaxis()
+ax_heat.set_title('(a) M-R disaggregation  ·  contribution %', fontsize=10)
+cbar = fig.colorbar(pcm, ax=ax_heat, fraction=0.035, pad=0.02)
+cbar.set_label('Contribution (%)', fontsize=8)
+
+# ----- (b) M 边际分布 -----
+ax_M = fig.add_subplot(gs[1, 0])
+bars_M = ax_M.bar(np.arange(nM), M_marg, width=0.7,
+                  color='#b45309', edgecolor='#222222', linewidth=0.6)
+bars_M[iM_peak].set_color('#7c2d12')
+ax_M.axvline(iM_peak, color='#7c2d12', lw=0.8, ls=':', alpha=0.8)
+ax_M.set_xticks(np.arange(nM))
+ax_M.set_xticklabels([f'{m:.2f}' for m in M_bins], fontsize=8)
+ax_M.set_xlabel('Magnitude M')
+ax_M.set_ylabel('Contribution (%)')
+ax_M.set_title('(b) Marginal M distribution', fontsize=10)
+ax_M.grid(True, axis='y', ls=':', lw=0.4, alpha=0.6)
+ax_M.text(0.98, 0.95,
+          f'peak = {M_bins[iM_peak]:.2f}\nmean = {M_mean:.2f}',
+          transform=ax_M.transAxes, ha='right', va='top', fontsize=8,
+          color='#7c2d12',
+          bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                    edgecolor='#cccccc', linewidth=0.5))
+
+# ----- (c) R 边际分布 -----
+ax_R = fig.add_subplot(gs[1, 1])
+bars_R = ax_R.bar(np.arange(nR), R_marg, width=0.7,
+                  color='#2563eb', edgecolor='#222222', linewidth=0.6)
+bars_R[iR_peak].set_color('#1e3a8a')
+ax_R.axvline(iR_peak, color='#1e3a8a', lw=0.8, ls=':', alpha=0.8)
+ax_R.set_xticks(np.arange(nR))
+ax_R.set_xticklabels([f'{r:g}' for r in R_bins], fontsize=8)
+ax_R.set_xlabel('R (km)')
+ax_R.set_ylabel('Contribution (%)')
+ax_R.set_title('(c) Marginal R distribution', fontsize=10)
+ax_R.grid(True, axis='y', ls=':', lw=0.4, alpha=0.6)
+ax_R.text(0.98, 0.95,
+          f'peak = {R_bins[iR_peak]:.1f}\nmean = {R_mean:.1f} km',
+          transform=ax_R.transAxes, ha='right', va='top', fontsize=8,
+          color='#1e3a8a',
+          bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                    edgecolor='#cccccc', linewidth=0.5))
+
+# ----- (d) Epsilon 分布 -----
+ax_eps = fig.add_subplot(gs[2, :])
+bars_E = ax_eps.bar(np.arange(nE), eps_marg, width=0.5,
+                    color='#15803d', edgecolor='#222222', linewidth=0.6)
+bars_E[iE_peak].set_color('#14532d')
+ax_eps.axvline(iE_peak, color='#14532d', lw=0.8, ls=':', alpha=0.8)
+ax_eps.set_xticks(np.arange(nE))
+ax_eps.set_xticklabels([f'{e:.1f}' for e in eps_bins])
+ax_eps.set_xlabel('Epsilon')
+ax_eps.set_ylabel('Contribution (%)')
+ax_eps.set_title('(d) Epsilon distribution', fontsize=10)
+ax_eps.grid(True, axis='y', ls=':', lw=0.4, alpha=0.6)
+ax_eps.text(0.98, 0.95,
+            f'peak = {eps_bins[iE_peak]:.2f}\nmean = {eps_mean:.2f}',
+            transform=ax_eps.transAxes, ha='right', va='top', fontsize=8,
+            color='#14532d',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                      edgecolor='#cccccc', linewidth=0.5))
+
+for ax in [ax_M, ax_R, ax_eps]:
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.savefig('disaggregation.png', dpi=300, bbox_inches='tight')
+plt.show()
+print('已保存 disaggregation.png')
+
+
+# =============================================================
+# 3. 3D 立体柱状图 —— 经典 bar3d 视角
+# =============================================================
+fig3d = plt.figure(figsize=(7.6, 6.2))
+ax3d = fig3d.add_subplot(111, projection='3d')
+
+# 网格坐标：每个 (M, R) 分箱一根柱子
+iM_idx, iR_idx = np.meshgrid(np.arange(nM), np.arange(nR), indexing='ij')
+xpos = iM_idx.ravel()
+ypos = iR_idx.ravel()
+zpos = np.zeros_like(xpos, dtype=float)
+
+dx = 0.62 * np.ones_like(xpos, dtype=float)
+dy = 0.62 * np.ones_like(ypos, dtype=float)
+dz = MR_joint.ravel()
+
+# 柱子颜色：橙色系（前面浅橙、右面深橙、顶面最浅）
+# matplotlib bar3d 使用单一颜色，通过 shade=True 自动产生明暗
+bar_color = '#e89a52'
+
+# 空柱子（贡献 = 0）不绘制
+mask_nonzero = dz > 0
+ax3d.bar3d(
+    xpos[mask_nonzero], ypos[mask_nonzero], zpos[mask_nonzero],
+    dx[mask_nonzero], dy[mask_nonzero], dz[mask_nonzero],
+    color=bar_color, edgecolor='#1a1a1a', linewidth=0.5, shade=True
+)
+
+# 坐标轴范围
+ax3d.set_xlim(0, nM)
+ax3d.set_ylim(0, nR)
+
+z_nice_max = np.ceil(MR_joint.max() / 5) * 5
+if z_nice_max < MR_joint.max() * 1.15:
+    z_nice_max += 5
+ax3d.set_zlim(0, z_nice_max)
+
+# 刻度位置与标签
+ax3d.set_xticks(np.arange(nM) + 0.5)
+ax3d.set_xticklabels([f'{m:.1f}' for m in M_bins], fontsize=9)
+ax3d.set_yticks(np.arange(nR) + 0.5)
+ax3d.set_yticklabels([f'{r:.0f}' for r in R_bins], fontsize=9)
+
+# Z 轴刻度：5 等分
+z_ticks = np.linspace(0, z_nice_max, 6)
+ax3d.set_zticks(z_ticks)
+ax3d.set_zticklabels([f'{z:.0f}' for z in z_ticks], fontsize=9)
+
+# 轴标题
+ax3d.set_xlabel('震级', fontsize=12, labelpad=10)
+ax3d.set_ylabel('距离/km', fontsize=12, labelpad=10)
+ax3d.set_zlabel('贡献率/(%)', fontsize=12, labelpad=8)
+
+# 图标题
+ax3d.set_title('(a) 二维设定地震解耦（震级-距离）结果',
+               fontsize=11, pad=14)
+
+# ---------- 三个面板的颜色 ----------
+# 后墙 (y = nR)：浅灰
+# 右墙 (x = nM)：稍深灰
+# 底面 (z = 0)：白色
+# matplotlib 里通过 xaxis/yaxis/zaxis 的 pane 颜色设置
+ax3d.xaxis.set_pane_color((0.94, 0.94, 0.94, 0.6))  # 右墙
+ax3d.yaxis.set_pane_color((0.97, 0.97, 0.97, 0.6))  # 后墙
+ax3d.zaxis.set_pane_color((1.00, 1.00, 1.00, 0.0))  # 底面（透明）
+
+# 面板边框（网格线）
+ax3d.xaxis._axinfo['grid'].update(color='#666666', linewidth=0.5)
+ax3d.yaxis._axinfo['grid'].update(color='#666666', linewidth=0.5)
+ax3d.zaxis._axinfo['grid'].update(color='#666666', linewidth=0.5)
+
+# 轴线加粗
+ax3d.xaxis.line.set_linewidth(1.2)
+ax3d.yaxis.line.set_linewidth(1.2)
+ax3d.zaxis.line.set_linewidth(1.2)
+
+# ---------- 视角 ----------
+# elev=22（从上方 22° 俯视），azim=-55（从右前方看）
+# 微调这两个参数可改变观察角度
+ax3d.view_init(elev=22, azim=-55)
+
+# 3D 盒子比例（让柱子看起来更高一些）
+ax3d.set_box_aspect((nM, nR, z_nice_max / 4))
+
+plt.tight_layout()
+fig3d.savefig('disaggregation-3d.png', dpi=300, bbox_inches='tight')
+plt.show()
+print('已保存 disaggregation-3d.png')</code></pre>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。<code>bar3</code> 绘制 3D 立体柱状图。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>disaggregation.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 地震危险性解聚 | M-R-epsilon 联合贡献
+% -------------------------------------------------------------
+% 输入数据：disaggregation.csv
+%   M_center,R_center,epsilon,contribution
+%   ...
+%   单位：M 无量纲, R km, epsilon 无量纲, contribution %
+% -------------------------------------------------------------
+% 输出：
+%   disaggregation.png      2D 四面板
+%   disaggregation-3d.png   3D 立体柱状图
+% =============================================================
+
+clear; clc; close all;
+
+CSV_FILE = 'disaggregation.csv';
+
+% =============================================================
+% 1. 读取与聚合
+% =============================================================
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, ...
+        'CommentStyle', '#', ...
+        'VariableNamingRule', 'preserve');
+    M_all   = T.M_center;
+    R_all   = T.R_center;
+    eps_all = T.epsilon;
+    c_all   = T.contribution;
+    fprintf('从 %s 读取 %d 个分箱\n', CSV_FILE, numel(c_all));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    Ms  = [5.25; 5.75; 6.25; 6.75; 7.25];
+    Rs  = [7.5; 15.0; 25.0; 40.0];
+    eps = [-0.5; 0.5; 1.5];
+    fM  = [0.20; 0.60; 1.00; 0.85; 0.35];
+    fR  = [0.30; 1.00; 0.85; 0.45];
+    fE  = [0.20; 0.35; 0.45];
+
+    M_all = []; R_all = []; eps_all = []; c_all = [];
+    for i = 1:numel(Ms)
+        for j = 1:numel(Rs)
+            w = fM(i) * fR(j);
+            for k = 1:numel(eps)
+                M_all   = [M_all; Ms(i)];    %#ok<AGROW>
+                R_all   = [R_all; Rs(j)];    %#ok<AGROW>
+                eps_all = [eps_all; eps(k)]; %#ok<AGROW>
+                c_all   = [c_all; w*fE(k)];  %#ok<AGROW>
+            end
+        end
+    end
+    c_all = c_all / sum(c_all) * 100;
+end
+
+if abs(sum(c_all) - 100) > 0.5
+    c_all = c_all / sum(c_all) * 100;
+end
+
+% 唯一分箱
+M_bins   = unique(M_all);
+R_bins   = unique(R_all);
+eps_bins = unique(eps_all);
+nM = numel(M_bins);
+nR = numel(R_bins);
+nE = numel(eps_bins);
+
+% 联合矩阵
+MR_joint   = zeros(nM, nR);
+MR_eps_sum = zeros(nM, nR);
+for i = 1:nM
+    for j = 1:nR
+        mask = M_all == M_bins(i) & R_all == R_bins(j);
+        MR_joint(i,j)   = sum(c_all(mask));
+        MR_eps_sum(i,j) = sum(c_all(mask) .* eps_all(mask));
+    end
+end
+MR_eps_mean = MR_joint;
+maskPos = MR_joint > 0;
+MR_eps_mean(maskPos) = MR_eps_sum(maskPos) ./ MR_joint(maskPos);
+
+% 边际分布
+M_marg   = sum(MR_joint, 2);
+R_marg   = sum(MR_joint, 1)';
+eps_marg = zeros(nE, 1);
+for k = 1:nE
+    eps_marg(k) = sum(c_all(eps_all == eps_bins(k)));
+end
+
+% 峰值与均值
+[~, iM_peak] = max(M_marg);
+[~, iR_peak] = max(R_marg);
+[~, iE_peak] = max(eps_marg);
+
+M_mean   = sum(M_marg .* M_bins)   / sum(M_marg);
+R_mean   = sum(R_marg .* R_bins)   / sum(R_marg);
+eps_mean = sum(eps_marg .* eps_bins) / sum(eps_marg);
+
+fprintf('M 峰值 = %.2f, 贡献 %.1f%%\n', M_bins(iM_peak), M_marg(iM_peak));
+fprintf('R 峰值 = %.1f km, 贡献 %.1f%%\n', R_bins(iR_peak), R_marg(iR_peak));
+fprintf('ε 峰值 = %.2f, 贡献 %.1f%%\n', eps_bins(iE_peak), eps_marg(iE_peak));
+fprintf('平均 M = %.2f, R = %.1f km, ε = %.2f\n', M_mean, R_mean, eps_mean);
+
+
+% =============================================================
+% 2. 2D 四面板
+% =============================================================
+figure('Color', 'w', 'Position', [100 100 720 840]);
+
+% ----- (a) M-R 联合分布热图 -----
+ax1 = subplot(3, 2, [1 2]);
+imagesc(1:nR, 1:nM, MR_joint);
+colormap(ax1, 'hot');
+cb = colorbar;
+cb.Label.String = 'Contribution (%)';
+cb.Label.FontSize = 8;
+
+set(ax1, ...
+    'XTick', 1:nR, ...
+    'XTickLabel', arrayfun(@(x) sprintf('%.1f',x), R_bins, 'Uni',false), ...
+    'YTick', 1:nM, ...
+    'YTickLabel', arrayfun(@(x) sprintf('%.2f',x), M_bins, 'Uni',false));
+xlabel('Joyner-Boore distance R (km)');
+ylabel('Magnitude M');
+title('(a) M-R disaggregation  ·  contribution %', 'FontSize', 10);
+axis(ax1, 'xy');
+
+% 单元格数字
+cmax = max(MR_joint(:));
+for i = 1:nM
+    for j = 1:nR
+        val = MR_joint(i,j);
+        if val > 0.5
+            if val < cmax * 0.6
+                tc = [0.1 0.1 0.1];
+            else
+                tc = [1 1 1];
+            end
+            text(j, i, sprintf('%.1f', val), ...
+                 'HorizontalAlignment', 'center', ...
+                 'VerticalAlignment', 'middle', ...
+                 'FontSize', 8, 'Color', tc);
+        end
+    end
+end
+
+% ----- (b) M 边际分布 -----
+ax2 = subplot(3, 2, 3);
+b = bar(1:nM, M_marg, 0.7, ...
+        'FaceColor', [0.71 0.33 0.04], ...
+        'EdgeColor', [0.13 0.13 0.13], 'LineWidth', 0.6);
+b.CData(iM_peak, :) = [0.49 0.18 0.07];
+xline(iM_peak, ':', 'Color', [0.49 0.18 0.07], 'LineWidth', 0.8);
+set(ax2, 'XTick', 1:nM, ...
+    'XTickLabel', arrayfun(@(x) sprintf('%.2f',x), M_bins, 'Uni',false));
+xlabel('Magnitude M'); ylabel('Contribution (%)');
+title('(b) Marginal M distribution', 'FontSize', 10);
+grid on; box on;
+text(0.98, 0.95, sprintf('peak = %.2f\nmean = %.2f', M_bins(iM_peak), M_mean), ...
+     'Units', 'normalized', 'HorizontalAlignment', 'right', ...
+     'VerticalAlignment', 'top', 'FontSize', 8, ...
+     'Color', [0.49 0.18 0.07], 'BackgroundColor', 'white', ...
+     'EdgeColor', [0.8 0.8 0.8], 'LineWidth', 0.5);
+
+% ----- (c) R 边际分布 -----
+ax3 = subplot(3, 2, 4);
+b = bar(1:nR, R_marg, 0.7, ...
+        'FaceColor', [0.15 0.39 0.92], ...
+        'EdgeColor', [0.13 0.13 0.13], 'LineWidth', 0.6);
+b.CData(iR_peak, :) = [0.12 0.23 0.54];
+xline(iR_peak, ':', 'Color', [0.12 0.23 0.54], 'LineWidth', 0.8);
+set(ax3, 'XTick', 1:nR, ...
+    'XTickLabel', arrayfun(@(x) sprintf('%.1f',x), R_bins, 'Uni',false));
+xlabel('R (km)'); ylabel('Contribution (%)');
+title('(c) Marginal R distribution', 'FontSize', 10);
+grid on; box on;
+text(0.98, 0.95, sprintf('peak = %.1f\nmean = %.1f km', R_bins(iR_peak), R_mean), ...
+     'Units', 'normalized', 'HorizontalAlignment', 'right', ...
+     'VerticalAlignment', 'top', 'FontSize', 8, ...
+     'Color', [0.12 0.23 0.54], 'BackgroundColor', 'white', ...
+     'EdgeColor', [0.8 0.8 0.8], 'LineWidth', 0.5);
+
+% ----- (d) Epsilon 分布 -----
+ax4 = subplot(3, 2, [5 6]);
+b = bar(1:nE, eps_marg, 0.5, ...
+        'FaceColor', [0.08 0.50 0.24], ...
+        'EdgeColor', [0.13 0.13 0.13], 'LineWidth', 0.6);
+b.CData(iE_peak, :) = [0.08 0.33 0.18];
+xline(iE_peak, ':', 'Color', [0.08 0.33 0.18], 'LineWidth', 0.8);
+set(ax4, 'XTick', 1:nE, ...
+    'XTickLabel', arrayfun(@(x) sprintf('%.1f',x), eps_bins, 'Uni',false));
+xlabel('Epsilon'); ylabel('Contribution (%)');
+title('(d) Epsilon distribution', 'FontSize', 10);
+grid on; box on;
+text(0.98, 0.95, sprintf('peak = %.2f\nmean = %.2f', eps_bins(iE_peak), eps_mean), ...
+     'Units', 'normalized', 'HorizontalAlignment', 'right', ...
+     'VerticalAlignment', 'top', 'FontSize', 8, ...
+     'Color', [0.08 0.33 0.18], 'BackgroundColor', 'white', ...
+     'EdgeColor', [0.8 0.8 0.8], 'LineWidth', 0.5);
+
+% 统一格式
+for ax = [ax2, ax3, ax4]
+    set(ax, 'FontName', 'Times New Roman', 'FontSize', 9, 'TickDir', 'in');
+    box(ax, 'on');
+end
+
+exportgraphics(gcf, 'disaggregation.png', 'Resolution', 300);
+fprintf('已保存 disaggregation.png\n');
+
+
+% =============================================================
+% 3. 3D 立体柱状图 —— 经典 bar3d 视角
+% =============================================================
+figure('Color', 'w', 'Position', [100 100 760 620]);
+ax3d = axes('Parent', gcf);
+
+% bar3 的输入矩阵：行 = M 索引，列 = R 索引
+h = bar3(MR_joint, 0.62);
+
+% 柱子颜色：橙色
+orange = [0.91 0.60 0.32];
+for k = 1:numel(h)
+    set(h(k), ...
+        'FaceColor', orange, ...
+        'EdgeColor', [0.10 0.10 0.10], ...
+        'LineWidth', 0.5);
+end
+
+% 坐标轴范围
+xlim(ax3d, [0.5, nR + 0.5]);
+ylim(ax3d, [0.5, nM + 0.5]);
+
+z_nice_max = ceil(max(MR_joint(:)) / 5) * 5;
+if z_nice_max < max(MR_joint(:)) * 1.15
+    z_nice_max = z_nice_max + 5;
+end
+zlim(ax3d, [0, z_nice_max]);
+
+% 刻度与标签
+set(ax3d, ...
+    'XTick', 1:nR, ...
+    'XTickLabel', arrayfun(@(x) sprintf('%.0f',x), R_bins, 'Uni',false), ...
+    'YTick', 1:nM, ...
+    'YTickLabel', arrayfun(@(x) sprintf('%.1f',x), M_bins, 'Uni',false), ...
+    'ZTick', linspace(0, z_nice_max, 6), ...
+    'FontName', 'Times New Roman', 'FontSize', 9);
+
+% 轴标题（中文）
+xlabel('距离/km',  'FontSize', 12);
+ylabel('震级',     'FontSize', 12);
+zlabel('贡献率/(%)', 'FontSize', 12);
+
+% 图标题
+title('(a) 二维设定地震解耦（震级-距离）结果', ...
+      'FontSize', 11, 'FontWeight', 'normal');
+
+% 三面墙的颜色
+% MATLAB 中通过 axes 的 XColor / YColor / ZColor 设置轴线颜色
+% 面板颜色由 GridColor + GridAlpha 控制
+ax3d.XColor = [0.1 0.1 0.1];
+ax3d.YColor = [0.1 0.1 0.1];
+ax3d.ZColor = [0.1 0.1 0.1];
+ax3d.GridColor = [0.4 0.4 0.4];
+ax3d.GridAlpha = 0.5;
+
+% 轴线加粗
+ax3d.XAxis.LineWidth = 1.2;
+ax3d.YAxis.LineWidth = 1.2;
+ax3d.ZAxis.LineWidth = 1.2;
+
+grid on;
+box on;
+
+% ---------- 视角 ----------
+% azim = -55（从右前方看），elev = 22（从上方 22° 俯视）
+% 微调这两个参数可改变观察角度
+view(ax3d, -55, 22);
+
+% 3D 盒子比例（让柱子看起来更高）
+pbaspect(ax3d, [nM, nR, z_nice_max / 4]);
+
+exportgraphics(gcf, 'disaggregation-3d.png', 'Resolution', 300);
+fprintf('已保存 disaggregation-3d.png\n');</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <ul class="plain">
+        <li><strong>3D 视图的四个维度：</strong>M、R、贡献、ε。
+          三维空间只能放三个，所以用柱高 = 贡献。</li>
+        <li><strong>坐标轴视角：</strong>经典 bar3d 视角，X 轴（震级）水平，
+          Y 轴（距离）斜向右后，Z 轴竖直向上。三面墙（后墙、右墙、底面）
+          带网格。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>柱子互相遮挡 → 按 (i + j) 排序绘制，远的先画。</li>
+            <li>贡献百分比总和不为 100 → CSV 未归一化或分箱不完整。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../engineering-seismology.html">工程地震学</a>（PSHA、解聚、CMS）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 地震危险性解聚</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var DEFAULT_CSV = [
+    '# disaggregation.csv',
+    '# 地震危险性解聚结果 - 场地基岩 PGA, 50 年超越概率 10%',
+    '# 每一行对应一个 (M, R, epsilon) 分箱的贡献百分比',
+    '# 单位：M 无量纲, R km, epsilon 无量纲, contribution %',
+    'M_center,R_center,epsilon,contribution',
+    '5.25,7.5,-0.5,0.15', '5.25,7.5,0.5,0.27', '5.25,7.5,1.5,0.35',
+    '5.25,15,-0.5,0.51', '5.25,15,0.5,0.90', '5.25,15,1.5,1.15',
+    '5.25,25,-0.5,0.44', '5.25,25,0.5,0.76', '5.25,25,1.5,0.98',
+    '5.25,40,-0.5,0.23', '5.25,40,0.5,0.40', '5.25,40,1.5,0.52',
+    '5.75,7.5,-0.5,0.46', '5.75,7.5,0.5,0.81', '5.75,7.5,1.5,1.04',
+    '5.75,15,-0.5,1.54', '5.75,15,0.5,2.69', '5.75,15,1.5,3.46',
+    '5.75,25,-0.5,1.31', '5.75,25,0.5,2.29', '5.75,25,1.5,2.94',
+    '5.75,40,-0.5,0.69', '5.75,40,0.5,1.21', '5.75,40,1.5,1.56',
+    '6.25,7.5,-0.5,0.77', '6.25,7.5,0.5,1.35', '6.25,7.5,1.5,1.73',
+    '6.25,15,-0.5,2.56', '6.25,15,0.5,4.49', '6.25,15,1.5,5.77',
+    '6.25,25,-0.5,2.18', '6.25,25,0.5,3.82', '6.25,25,1.5,4.91',
+    '6.25,40,-0.5,1.15', '6.25,40,0.5,2.02', '6.25,40,1.5,2.60',
+    '6.75,7.5,-0.5,0.65', '6.75,7.5,0.5,1.14', '6.75,7.5,1.5,1.47',
+    '6.75,15,-0.5,2.18', '6.75,15,0.5,3.82', '6.75,15,1.5,4.91',
+    '6.75,25,-0.5,1.85', '6.75,25,0.5,3.24', '6.75,25,1.5,4.17',
+    '6.75,40,-0.5,0.98', '6.75,40,0.5,1.72', '6.75,40,1.5,2.21',
+    '7.25,7.5,-0.5,0.27', '7.25,7.5,0.5,0.47', '7.25,7.5,1.5,0.61',
+    '7.25,15,-0.5,0.90', '7.25,15,0.5,1.57', '7.25,15,1.5,2.02',
+    '7.25,25,-0.5,0.76', '7.25,25,0.5,1.33', '7.25,25,1.5,1.71',
+    '7.25,40,-0.5,0.40', '7.25,40,0.5,0.71', '7.25,40,1.5,0.91'
+  ].join('\n') + '\n';
+
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var rows = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (line.indexOf('M_center') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 4) continue;
+      var M = parseFloat(parts[0]);
+      var R = parseFloat(parts[1]);
+      var eps = parseFloat(parts[2]);
+      var c = parseFloat(parts[3]);
+      if (!isFinite(M) || !isFinite(R) || !isFinite(eps) || !isFinite(c)) continue;
+      if (c <= 0) continue;
+      rows.push({ M: M, R: R, eps: eps, c: c });
+    }
+    return rows;
+  }
+
+  function aggregate(rows) {
+    var total = 0;
+    for (var i = 0; i < rows.length; i++) total += rows[i].c;
+    if (Math.abs(total - 100) > 0.5) {
+      for (var j = 0; j < rows.length; j++) rows[j].c = rows[j].c / total * 100;
+    }
+
+    var M_set = {}, R_set = {}, E_set = {};
+    for (var k = 0; k < rows.length; k++) {
+      M_set[rows[k].M] = true;
+      R_set[rows[k].R] = true;
+      E_set[rows[k].eps] = true;
+    }
+    var M_bins = Object.keys(M_set).map(Number).sort(function (a, b) { return a - b; });
+    var R_bins = Object.keys(R_set).map(Number).sort(function (a, b) { return a - b; });
+    var eps_bins = Object.keys(E_set).map(Number).sort(function (a, b) { return a - b; });
+
+    var nM = M_bins.length, nR = R_bins.length, nE = eps_bins.length;
+
+    var joint = [];
+    var epsSum = [];
+    for (var a = 0; a < nM; a++) {
+      var r1 = [], r2 = [];
+      for (var b = 0; b < nR; b++) { r1.push(0); r2.push(0); }
+      joint.push(r1); epsSum.push(r2);
+    }
+    for (var m = 0; m < rows.length; m++) {
+      var iM = M_bins.indexOf(rows[m].M);
+      var iR = R_bins.indexOf(rows[m].R);
+      if (iM >= 0 && iR >= 0) {
+        joint[iM][iR] += rows[m].c;
+        epsSum[iM][iR] += rows[m].c * rows[m].eps;
+      }
+    }
+
+    var meanEps = [];
+    for (var a2 = 0; a2 < nM; a2++) {
+      var r3 = [];
+      for (var b2 = 0; b2 < nR; b2++) {
+        r3.push(joint[a2][b2] > 0 ? epsSum[a2][b2] / joint[a2][b2] : 0);
+      }
+      meanEps.push(r3);
+    }
+
+    var M_marg = [], R_marg = [], E_marg = [];
+    for (var x = 0; x < nM; x++) {
+      var s = 0;
+      for (var y = 0; y < nR; y++) s += joint[x][y];
+      M_marg.push(s);
+    }
+    for (var y2 = 0; y2 < nR; y2++) {
+      var s2 = 0;
+      for (var x2 = 0; x2 < nM; x2++) s2 += joint[x2][y2];
+      R_marg.push(s2);
+    }
+    for (var e = 0; e < nE; e++) {
+      var s3 = 0;
+      for (var r = 0; r < rows.length; r++) {
+        if (rows[r].eps === eps_bins[e]) s3 += rows[r].c;
+      }
+      E_marg.push(s3);
+    }
+
+    function argmax(arr) {
+      var best = 0;
+      for (var z = 1; z < arr.length; z++) if (arr[z] > arr[best]) best = z;
+      return best;
+    }
+    var iM_peak = argmax(M_marg);
+    var iR_peak = argmax(R_marg);
+    var iE_peak = argmax(E_marg);
+
+    var M_sum = 0, R_sum = 0, E_sum = 0, M_t = 0, R_t = 0, E_t = 0;
+    for (var ii = 0; ii < nM; ii++) { M_sum += M_marg[ii] * M_bins[ii]; M_t += M_marg[ii]; }
+    for (var jj = 0; jj < nR; jj++) { R_sum += R_marg[jj] * R_bins[jj]; R_t += R_marg[jj]; }
+    for (var kk = 0; kk < nE; kk++) { E_sum += E_marg[kk] * eps_bins[kk]; E_t += E_marg[kk]; }
+
+    return {
+      M_bins: M_bins, R_bins: R_bins, eps_bins: eps_bins,
+      joint: joint, meanEps: meanEps,
+      M_marg: M_marg, R_marg: R_marg, E_marg: E_marg,
+      iM_peak: iM_peak, iR_peak: iR_peak, iE_peak: iE_peak,
+      M_mean: M_sum / M_t, R_mean: R_sum / R_t, E_mean: E_sum / E_t,
+      nM: nM, nR: nR, nE: nE
+    };
+  }
+
+  function hexToRgb(hex) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16)
+    };
+  }
+
+  function lerpColor(c1, c2, t) {
+    return 'rgb(' + Math.round(c1[0] + (c2[0] - c1[0]) * t) + ',' +
+                    Math.round(c1[1] + (c2[1] - c1[1]) * t) + ',' +
+                    Math.round(c1[2] + (c2[2] - c1[2]) * t) + ')';
+  }
+
+  var HEAT_LOW  = [255, 251, 235];
+  var HEAT_HIGH = [180, 83, 9];
+  function heatColor(t) {
+    return lerpColor(HEAT_LOW, HEAT_HIGH, Math.min(1, Math.max(0, t)));
+  }
+
+  var CW_BLUE = [59, 130, 246];
+  var CW_MID  = [229, 231, 235];
+  var CW_RED  = [220, 38, 38];
+  function coolwarm(t) {
+    t = Math.min(1, Math.max(0, t));
+    if (t < 0.5) return lerpColor(CW_BLUE, CW_MID, t * 2);
+    return lerpColor(CW_MID, CW_RED, (t - 0.5) * 2);
+  }
+
+  function darken(colorStr, factor) {
+    var m = colorStr.match(/rgb\((\d+),(\d+),(\d+)\)/);
+    if (!m) return colorStr;
+    return 'rgb(' + Math.min(255, Math.round(+m[1] * factor)) + ',' +
+                    Math.min(255, Math.round(+m[2] * factor)) + ',' +
+                    Math.min(255, Math.round(+m[3] * factor)) + ')';
+  }
+
+  /* ============================================================
+     2D 视图
+     ============================================================ */
+
+  function draw2D(ctx, W, H, data) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var padX = 10, padY = 10, gapY = 24;
+    var totalH = H - padY * 2 - gapY * 2;
+    var hHeat = totalH * 0.42;
+    var hMid  = totalH * 0.30;
+    var hEps  = totalH * 0.28;
+
+    var boxHeat = { x: padX, y: padY, w: W - padX * 2, h: hHeat };
+    var boxMid  = { x: padX, y: boxHeat.y + boxHeat.h + gapY, w: W - padX * 2, h: hMid };
+    var boxEps  = { x: padX, y: boxMid.y + boxMid.h + gapY, w: W - padX * 2, h: hEps };
+
+    drawHeatmap(ctx, boxHeat, data);
+    drawMarginals(ctx, boxMid, data);
+    drawEpsilon(ctx, boxEps, data);
+  }
+
+  function drawHeatmap(ctx, box, data) {
+    var margin = { top: 30, right: 90, bottom: 42, left: 66 };
+    var px = box.x + margin.left;
+    var py = box.y + margin.top;
+    var pw = box.w - margin.left - margin.right;
+    var ph = box.h - margin.top - margin.bottom;
+
+    var nM = data.nM, nR = data.nR;
+    var cellW = pw / nR;
+    var cellH = ph / nM;
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('(a) M-R disaggregation  ·  contribution %',
+                 box.x + box.w / 2, box.y + 6);
+
+    var cmax = 0;
+    for (var i = 0; i < nM; i++) {
+      for (var j = 0; j < nR; j++) {
+        if (data.joint[i][j] > cmax) cmax = data.joint[i][j];
+      }
+    }
+    if (cmax === 0) cmax = 1;
+
+    for (var ii = 0; ii < nM; ii++) {
+      for (var jj = 0; jj < nR; jj++) {
+        var cx = px + jj * cellW;
+        var cy = py + ii * cellH;
+        var val = data.joint[ii][jj];
+        var t = val / cmax;
+        ctx.fillStyle = heatColor(t);
+        ctx.fillRect(cx, cy, cellW, cellH);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx, cy, cellW, cellH);
+
+        if (val > 0.5) {
+          ctx.fillStyle = t > 0.55 ? '#ffffff' : '#222222';
+          ctx.font = 'bold 10px "Times New Roman", serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(val.toFixed(1), cx + cellW / 2, cy + cellH / 2);
+        }
+      }
+    }
+
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.9;
+    ctx.strokeRect(px, py, pw, ph);
+
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var k = 0; k < nR; k++) {
+      var lx = px + k * cellW + cellW / 2;
+      ctx.fillText(fmtNum(data.R_bins[k]), lx, py + ph + 6);
+    }
+    ctx.font = 'italic 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.fillText('Joyner-Boore distance  R (km)', px + pw / 2, py + ph + 24);
+
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var m2 = 0; m2 < nM; m2++) {
+      var ly = py + m2 * cellH + cellH / 2;
+      ctx.fillText(data.M_bins[m2].toFixed(2), px - 6, ly);
+    }
+
+    ctx.save();
+    ctx.translate(box.x + 14, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.fillText('Magnitude M', 0, 0);
+    ctx.restore();
+
+    var cbarX = px + pw + 16;
+    var cbarY = py;
+    var cbarW = 18;
+    var cbarH = ph;
+    for (var s = 0; s < cbarH; s++) {
+      var t2 = 1 - s / cbarH;
+      ctx.fillStyle = heatColor(t2);
+      ctx.fillRect(cbarX, cbarY + s, cbarW, 1);
+    }
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.6;
+    ctx.strokeRect(cbarX, cbarY, cbarW, cbarH);
+
+    ctx.fillStyle = '#222222';
+    ctx.font = '9px "Times New Roman", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cmax.toFixed(1), cbarX + cbarW + 4, cbarY + 4);
+    ctx.fillText((cmax / 2).toFixed(1), cbarX + cbarW + 4, cbarY + cbarH / 2);
+    ctx.fillText('0', cbarX + cbarW + 4, cbarY + cbarH - 4);
+
+    ctx.save();
+    ctx.translate(cbarX + cbarW + 38, cbarY + cbarH / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'italic 10px "Times New Roman", serif';
+    ctx.fillText('Contribution (%)', 0, 0);
+    ctx.restore();
+  }
+
+  function drawMarginals(ctx, box, data) {
+    var gap = 24;
+    var halfW = (box.w - gap) / 2;
+    var boxM = { x: box.x, y: box.y, w: halfW, h: box.h };
+    var boxR = { x: box.x + halfW + gap, y: box.y, w: halfW, h: box.h };
+
+    drawBarPanel(ctx, boxM, data.M_bins, data.M_marg, data.iM_peak,
+      '(b) Marginal M distribution', 'Magnitude M', 'Contribution (%)',
+      '#b45309', '#7c2d12', data.M_mean);
+
+    drawBarPanel(ctx, boxR, data.R_bins, data.R_marg, data.iR_peak,
+      '(c) Marginal R distribution', 'R (km)', 'Contribution (%)',
+      '#2563eb', '#1e3a8a', data.R_mean);
+  }
+
+  function drawEpsilon(ctx, box, data) {
+    drawBarPanel(ctx, box, data.eps_bins, data.E_marg, data.iE_peak,
+      '(d) Epsilon distribution', 'Epsilon', 'Contribution (%)',
+      '#15803d', '#14532d', data.E_mean);
+  }
+
+  function drawBarPanel(ctx, box, labels, values, iPeak, title,
+                        xLabel, yLabel, color, peakColor, meanValue) {
+    var margin = { top: 32, right: 16, bottom: 44, left: 62 };
+    var px = box.x + margin.left;
+    var py = box.y + margin.top;
+    var pw = box.w - margin.left - margin.right;
+    var ph = box.h - margin.top - margin.bottom;
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, box.x + box.w / 2, box.y + 6);
+
+    var vMax = 0;
+    for (var i = 0; i < values.length; i++) {
+      if (values[i] > vMax) vMax = values[i];
+    }
+    var vHi = Math.ceil(vMax * 1.15);
+    if (vHi === 0) vHi = 10;
+
+    function toY(v) { return py + ph - (v / vHi) * ph; }
+
+    var yStep;
+    if (vHi <= 10) yStep = 2;
+    else if (vHi <= 25) yStep = 5;
+    else if (vHi <= 50) yStep = 10;
+    else yStep = 20;
+    var yTicks = [];
+    for (var yv = 0; yv <= vHi; yv += yStep) yTicks.push(yv);
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yt = 0; yt < yTicks.length; yt++) {
+      var yy = toY(yTicks[yt]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    var n = values.length;
+    var step = pw / n;
+    var barW = step * 0.68;
+    for (var b = 0; b < n; b++) {
+      var bx = px + b * step + (step - barW) / 2;
+      var by = toY(values[b]);
+      var bh = py + ph - by;
+      ctx.fillStyle = (b === iPeak) ? peakColor : color;
+      ctx.fillRect(bx, by, barW, bh);
+      ctx.strokeStyle = '#222222';
+      ctx.lineWidth = 0.7;
+      ctx.strokeRect(bx, by, barW, bh);
+    }
+
+    if (iPeak >= 0) {
+      var pkX = px + iPeak * step + step / 2;
+      ctx.strokeStyle = peakColor;
+      ctx.lineWidth = 0.8;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(pkX, py);
+      ctx.lineTo(pkX, py + ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    var mainTick = 5;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+    for (var yt2 = 0; yt2 < yTicks.length; yt2++) {
+      var yv2 = toY(yTicks[yt2]);
+      ctx.beginPath(); ctx.moveTo(px, yv2); ctx.lineTo(px + mainTick, yv2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, yv2); ctx.lineTo(px + pw - mainTick, yv2); ctx.stroke();
+    }
+    for (var xt = 0; xt <= n; xt++) {
+      var xtx = px + xt * step;
+      ctx.beginPath(); ctx.moveTo(xtx, py + ph); ctx.lineTo(xtx, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xtx, py); ctx.lineTo(xtx, py + mainTick); ctx.stroke();
+    }
+
+    ctx.fillStyle = '#222222';
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      var yly = toY(yTicks[yl]);
+      ctx.fillText(String(yTicks[yl]), px - 5, yly);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < n; xl++) {
+      var xlx = px + xl * step + step / 2;
+      var s;
+      if (labels[xl] >= 10) s = labels[xl].toFixed(0);
+      else s = labels[xl].toFixed(2);
+      ctx.fillText(s, xlx, py + ph + 6);
+    }
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 11px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(box.x + 14, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, px + pw / 2, box.y + box.h - 4);
+
+    var pkLabel = labels[iPeak];
+    var pkStr = pkLabel >= 10 ? pkLabel.toFixed(1) : pkLabel.toFixed(2);
+    var summary = 'peak = ' + pkStr + '\n' +
+                  'mean = ' + (meanValue >= 10 ? meanValue.toFixed(1) : meanValue.toFixed(2));
+
+    ctx.font = '9px "Times New Roman", "Songti SC", serif';
+    var lines = summary.split('\n');
+    var tw = 0;
+    lines.forEach(function (line) {
+      var lw = ctx.measureText(line).width;
+      if (lw > tw) tw = lw;
+    });
+    var bxW = tw + 14;
+    var bxH = 14 * lines.length + 8;
+    var bxX = px + pw - bxW - 6;
+    var bxY = py + 6;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(bxX, bxY, bxW, bxH);
+    ctx.strokeRect(bxX, bxY, bxW, bxH);
+
+    ctx.fillStyle = peakColor;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    for (var ln = 0; ln < lines.length; ln++) {
+      ctx.fillText(lines[ln], bxX + 7, bxY + 5 + ln * 14);
+    }
+  }
+
+  function fmtNum(v) {
+    if (Math.abs(v) >= 10) return v.toFixed(0);
+    if (Math.abs(v) >= 1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  /* ============================================================
+     3D 视图 —— 经典 matplotlib bar3d 视角
+     -------------------------------------------------------------
+     X 轴（震级）—— 底面前边，水平向右略向下
+     Y 轴（距离）—— 底面右边，斜向右上（从近到远）
+     Z 轴（贡献）—— 竖直向上
+     三个面：后墙（y=yMax）、右墙（x=xMax）、底面
+     ============================================================ */
+
+  function draw3D(ctx, W, H, data) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var nM = data.nM, nR = data.nR;
+
+    /* ---- 贡献最大值，并向上取整到 5 的倍数 ---- */
+    var cMax = 0;
+    for (var i = 0; i < nM; i++) {
+      for (var j = 0; j < nR; j++) {
+        if (data.joint[i][j] > cMax) cMax = data.joint[i][j];
+      }
+    }
+    if (cMax === 0) cMax = 1;
+    var zNiceMax = Math.ceil(cMax / 5) * 5;
+    if (zNiceMax < cMax * 1.15) zNiceMax += 5;
+
+    /* ---- 投影基向量（屏幕方向） ---- */
+    /* X 轴（震级）—— 水平向右略向下 */
+    var uXx = 1.0, uXy = 0.32;
+    /* Y 轴（距离）—— 斜向右上 */
+    var uYx = 0.85, uYy = -0.5;
+    /* Z 轴 —— 竖直向上 */
+    var uZy = -1;
+
+    /* ---- 布局 ---- */
+    var margin = { top: 60, right: 160, bottom: 110, left: 120 };
+    var availW = W - margin.left - margin.right;
+    var availH = H - margin.top - margin.bottom;
+
+    /* 单位长度（先给一组初值） */
+    var sX = 50, sY = 50, sZ = 25;
+
+    var projW = nM * sX * uXx + nR * sY * uYx;
+    var projH = nM * sX * Math.abs(uXy) + nR * sY * Math.abs(uYy) + zNiceMax * sZ;
+
+    /* 自动缩放 */
+    var k = 1;
+    if (projW > availW) k = availW / projW;
+    if (projH > availH) k = Math.min(k, availH / projH);
+    if (k < 1) {
+      sX *= k; sY *= k; sZ *= k;
+      projW = nM * sX * uXx + nR * sY * uYx;
+      projH = nM * sX * Math.abs(uXy) + nR * sY * Math.abs(uYy) + zNiceMax * sZ;
+    }
+
+    /* ---- 原点位置（底面前左端） ---- */
+    var ox = margin.left + (availW - projW) / 2;
+    var oy = margin.top + zNiceMax * sZ + nR * sY * Math.abs(uYy) + 40;
+
+    function project(x, y, z) {
+      return [
+        ox + x * sX * uXx + y * sY * uYx,
+        oy + x * sX * uXy + y * sY * uYy + z * sZ * uZy
+      ];
+    }
+
+    /* ---- 底面 4 角 + 三个顶角 ---- */
+    var P00 = project(0, 0, 0);           /* 前左 */
+    var P10 = project(nM, 0, 0);          /* 前右 */
+    var P11 = project(nM, nR, 0);         /* 后右 */
+    var P01 = project(0, nR, 0);          /* 后左 */
+    var Q01 = project(0, nR, zNiceMax);   /* 后左顶 */
+    var Q11 = project(nM, nR, zNiceMax);  /* 后右顶 */
+    var Q10 = project(nM, 0, zNiceMax);   /* 前右顶 */
+
+    /* ============================================================
+       1. 后墙（y = nR）填色
+       ============================================================ */
+    ctx.fillStyle = '#f8f8f8';
+    ctx.beginPath();
+    ctx.moveTo(P01[0], P01[1]);
+    ctx.lineTo(P11[0], P11[1]);
+    ctx.lineTo(Q11[0], Q11[1]);
+    ctx.lineTo(Q01[0], Q01[1]);
+    ctx.closePath();
+    ctx.fill();
+
+    /* ============================================================
+       2. 右墙（x = nM）填色
+       ============================================================ */
+    ctx.fillStyle = '#efefef';
+    ctx.beginPath();
+    ctx.moveTo(P10[0], P10[1]);
+    ctx.lineTo(P11[0], P11[1]);
+    ctx.lineTo(Q11[0], Q11[1]);
+    ctx.lineTo(Q10[0], Q10[1]);
+    ctx.closePath();
+    ctx.fill();
+
+    /* ============================================================
+       3. 底面填色
+       ============================================================ */
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(P00[0], P00[1]);
+    ctx.lineTo(P10[0], P10[1]);
+    ctx.lineTo(P11[0], P11[1]);
+    ctx.lineTo(P01[0], P01[1]);
+    ctx.closePath();
+    ctx.fill();
+
+    /* ============================================================
+       4. 三面网格（细黑线）
+       ============================================================ */
+    var zSteps = 5;
+    ctx.strokeStyle = '#666666';
+    ctx.lineWidth = 0.5;
+
+    /* 后墙网格 */
+    for (var gi = 0; gi <= nM; gi++) {
+      var a1 = project(gi, nR, 0);
+      var b1 = project(gi, nR, zNiceMax);
+      ctx.beginPath();
+      ctx.moveTo(a1[0], a1[1]);
+      ctx.lineTo(b1[0], b1[1]);
+      ctx.stroke();
+    }
+    for (var gk = 0; gk <= zSteps; gk++) {
+      var zv1 = gk * zNiceMax / zSteps;
+      var a2 = project(0, nR, zv1);
+      var b2 = project(nM, nR, zv1);
+      ctx.beginPath();
+      ctx.moveTo(a2[0], a2[1]);
+      ctx.lineTo(b2[0], b2[1]);
+      ctx.stroke();
+    }
+
+    /* 右墙网格 */
+    for (var gj = 0; gj <= nR; gj++) {
+      var a3 = project(nM, gj, 0);
+      var b3 = project(nM, gj, zNiceMax);
+      ctx.beginPath();
+      ctx.moveTo(a3[0], a3[1]);
+      ctx.lineTo(b3[0], b3[1]);
+      ctx.stroke();
+    }
+    for (var gk2 = 0; gk2 <= zSteps; gk2++) {
+      var zv2 = gk2 * zNiceMax / zSteps;
+      var a4 = project(nM, 0, zv2);
+      var b4 = project(nM, nR, zv2);
+      ctx.beginPath();
+      ctx.moveTo(a4[0], a4[1]);
+      ctx.lineTo(b4[0], b4[1]);
+      ctx.stroke();
+    }
+
+    /* 底面网格 */
+    for (var gi2 = 0; gi2 <= nM; gi2++) {
+      var a5 = project(gi2, 0, 0);
+      var b5 = project(gi2, nR, 0);
+      ctx.beginPath();
+      ctx.moveTo(a5[0], a5[1]);
+      ctx.lineTo(b5[0], b5[1]);
+      ctx.stroke();
+    }
+    for (var gj2 = 0; gj2 <= nR; gj2++) {
+      var a6 = project(0, gj2, 0);
+      var b6 = project(nM, gj2, 0);
+      ctx.beginPath();
+      ctx.moveTo(a6[0], a6[1]);
+      ctx.lineTo(b6[0], b6[1]);
+      ctx.stroke();
+    }
+
+    /* ============================================================
+       5. 外框（加粗黑线）
+       ============================================================ */
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 1.2;
+
+    /* 底面前边 */
+    ctx.beginPath();
+    ctx.moveTo(P00[0], P00[1]);
+    ctx.lineTo(P10[0], P10[1]);
+    ctx.stroke();
+
+    /* 底面右边 */
+    ctx.beginPath();
+    ctx.moveTo(P10[0], P10[1]);
+    ctx.lineTo(P11[0], P11[1]);
+    ctx.stroke();
+
+    /* 底面左边 */
+    ctx.beginPath();
+    ctx.moveTo(P00[0], P00[1]);
+    ctx.lineTo(P01[0], P01[1]);
+    ctx.stroke();
+
+    /* 后墙左边（Z 轴） */
+    ctx.beginPath();
+    ctx.moveTo(P01[0], P01[1]);
+    ctx.lineTo(Q01[0], Q01[1]);
+    ctx.stroke();
+
+    /* 后墙顶边 */
+    ctx.beginPath();
+    ctx.moveTo(Q01[0], Q01[1]);
+    ctx.lineTo(Q11[0], Q11[1]);
+    ctx.stroke();
+
+    /* 右墙顶边 */
+    ctx.beginPath();
+    ctx.moveTo(Q10[0], Q10[1]);
+    ctx.lineTo(Q11[0], Q11[1]);
+    ctx.stroke();
+
+    /* 后墙右边（= 右墙后边） */
+    ctx.beginPath();
+    ctx.moveTo(P11[0], P11[1]);
+    ctx.lineTo(Q11[0], Q11[1]);
+    ctx.stroke();
+
+    /* 右墙前边 */
+    ctx.beginPath();
+    ctx.moveTo(P10[0], P10[1]);
+    ctx.lineTo(Q10[0], Q10[1]);
+    ctx.stroke();
+
+    /* ============================================================
+       6. 柱子（远的先画，近的后画）
+       ============================================================ */
+    var order = [];
+    for (var oi = 0; oi < nM; oi++) {
+      for (var oj = 0; oj < nR; oj++) {
+        if (data.joint[oi][oj] > 0) {
+          order.push({ i: oi, j: oj, c: data.joint[oi][oj] });
+        }
+      }
+    }
+    /* x+y 越大越远，先画 */
+    order.sort(function (a, b) {
+      return (b.i + b.j) - (a.i + a.j);
+    });
+
+    /* 柱子尺寸（格子单位） */
+    var barDX = 0.62;
+    var barDY = 0.62;
+
+    /* 橙色系配色 */
+    var colFront = '#e89a52';
+    var colRight = '#b87333';
+    var colTop   = '#f5b87a';
+
+    ctx.lineWidth = 0.6;
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineJoin = 'round';
+
+    for (var bi = 0; bi < order.length; bi++) {
+      var ob = order[bi];
+      var ib = ob.i, jb = ob.j, cb = ob.c;
+
+      var x0 = ib + 0.5 - barDX / 2;
+      var x1 = ib + 0.5 + barDX / 2;
+      var y0 = jb + 0.5 - barDY / 2;
+      var y1 = jb + 0.5 + barDY / 2;
+
+      /* 底面 4 角 */
+      var A = project(x0, y0, 0);
+      var B = project(x1, y0, 0);
+      var C = project(x1, y1, 0);
+      var D = project(x0, y1, 0);
+
+      /* 顶面 4 角 */
+      var At = project(x0, y0, cb);
+      var Bt = project(x1, y0, cb);
+      var Ct = project(x1, y1, cb);
+      var Dt = project(x0, y1, cb);
+
+      /* 前面（y = y0，面向观察者） */
+      ctx.fillStyle = colFront;
+      ctx.beginPath();
+      ctx.moveTo(A[0], A[1]);
+      ctx.lineTo(B[0], B[1]);
+      ctx.lineTo(Bt[0], Bt[1]);
+      ctx.lineTo(At[0], At[1]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      /* 右面（x = x1） */
+      ctx.fillStyle = colRight;
+      ctx.beginPath();
+      ctx.moveTo(B[0], B[1]);
+      ctx.lineTo(C[0], C[1]);
+      ctx.lineTo(Ct[0], Ct[1]);
+      ctx.lineTo(Bt[0], Bt[1]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      /* 顶面 */
+      ctx.fillStyle = colTop;
+      ctx.beginPath();
+      ctx.moveTo(At[0], At[1]);
+      ctx.lineTo(Bt[0], Bt[1]);
+      ctx.lineTo(Ct[0], Ct[1]);
+      ctx.lineTo(Dt[0], Dt[1]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    /* ============================================================
+       7. 轴刻度与标签
+       ============================================================ */
+
+    /* ---- X 轴刻度（震级）—— 底面前边下方 ---- */
+    ctx.fillStyle = '#111111';
+    ctx.font = '11.5px "Times New Roman", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    for (var ti = 0; ti < nM; ti++) {
+      var txc = project(ti + 0.5, 0, 0);
+      var tip = project(ti + 0.5, -0.28, 0);
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(txc[0], txc[1]);
+      ctx.lineTo(tip[0], tip[1]);
+      ctx.stroke();
+      ctx.fillText(data.M_bins[ti].toFixed(1), tip[0], tip[1] + 4);
+    }
+
+    /* X 轴标题 */
+    ctx.font = 'italic 13px "Times New Roman", "Songti SC", serif';
+    var xTitlePos = project(nM / 2, -1.0, 0);
+    ctx.fillText('震级', xTitlePos[0], xTitlePos[1]);
+
+    /* ---- Y 轴刻度（距离）—— 底面右边右侧 ---- */
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    for (var tj = 0; tj < nR; tj++) {
+      var tyc = project(nM, tj + 0.5, 0);
+      var tip2 = project(nM + 0.28, tj + 0.5, 0);
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(tyc[0], tyc[1]);
+      ctx.lineTo(tip2[0], tip2[1]);
+      ctx.stroke();
+      ctx.fillText(data.R_bins[tj].toFixed(0), tip2[0] + 5, tip2[1]);
+    }
+
+    /* Y 轴标题 */
+    ctx.font = 'italic 13px "Times New Roman", "Songti SC", serif';
+    var yTitlePos = project(nM + 0.75, nR / 2, 0);
+    ctx.textAlign = 'left';
+    ctx.fillText('距离/km', yTitlePos[0], yTitlePos[1]);
+
+    /* ---- Z 轴刻度（贡献率）—— 后墙左侧 ---- */
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (var tk = 0; tk <= zSteps; tk++) {
+      var zv3 = tk * zNiceMax / zSteps;
+      var zpc = project(0, nR, zv3);
+      var tipp = project(-0.28, nR, zv3);
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(zpc[0], zpc[1]);
+      ctx.lineTo(tipp[0], tipp[1]);
+      ctx.stroke();
+      ctx.fillText(zv3.toFixed(0), tipp[0] - 6, tipp[1]);
+    }
+
+    /* Z 轴标题 */
+    ctx.save();
+    var zTitlePos = project(-1.0, nR, zNiceMax / 2);
+    ctx.translate(zTitlePos[0], zTitlePos[1]);
+    ctx.rotate(-Math.PI / 2);
+    ctx.font = 'italic 13px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('贡献率/(%)', 0, 0);
+    ctx.restore();
+
+    /* ============================================================
+       8. 标题
+       ============================================================ */
+    ctx.fillStyle = '#222222';
+    ctx.font = '13.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('(a) 地震解耦（震级-距离）结果', W / 2, 14);
+
+    /* ============================================================
+       9. 状态栏
+       ============================================================ */
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var peakStr = '(M=' + data.M_bins[data.iM_peak].toFixed(2) +
+                    ', R=' + data.R_bins[data.iR_peak].toFixed(0) + ' km)';
+      status.textContent = '3D 视图 · ' +
+                           data.nM + '×' + data.nR + '×' + data.nE + ' 分箱 · ' +
+                           '峰值 ' + peakStr + ' · ' +
+                           '平均 M=' + data.M_mean.toFixed(2) +
+                           ' · R=' + data.R_mean.toFixed(1) + ' km' +
+                           ' · ε=' + data.E_mean.toFixed(2);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+
+  var currentView = '2d';
+  var currentData = null;
+
+  function updateStatus2D() {
+    var status = document.getElementById('info-stats');
+    if (!status || !currentData) return;
+    var peakStr = '(M=' + currentData.M_bins[currentData.iM_peak].toFixed(2) +
+                  ', R=' + currentData.R_bins[currentData.iR_peak].toFixed(1) +
+                  ' km)';
+    status.textContent = '2D 四面板 · ' +
+                         currentData.nM + '×' + currentData.nR + '×' +
+                         currentData.nE + ' 分箱 · ' +
+                         '峰值 ' + peakStr + ' · ' +
+                         '平均 M=' + currentData.M_mean.toFixed(2) +
+                         ' · R=' + currentData.R_mean.toFixed(1) + ' km' +
+                         ' · ε=' + currentData.E_mean.toFixed(2);
+  }
+
+  function render() {
+    var canvas = document.getElementById('c-disagg');
+    if (!canvas || !currentData) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(400, Math.round(rect.height) || 840);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (currentView === '3d') {
+      draw3D(ctx, W, H, currentData);
+    } else {
+      draw2D(ctx, W, H, currentData);
+      updateStatus2D();
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/disaggregation.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var rows = parseCSV(text);
+        if (rows.length < 3) throw new Error('有效数据点不足');
+        currentData = aggregate(rows);
+        render();
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[disaggregation] 读取失败，使用内联 CSV：', err);
+        }
+        var rows = parseCSV(DEFAULT_CSV);
+        currentData = aggregate(rows);
+        render();
+      });
+  }
+
+  var tabs = document.querySelectorAll('.dg-tabs button');
+  tabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      tabs.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentView = btn.getAttribute('data-view') || '2d';
+      render();
+    });
+  });
+
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'disaggregation.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(render, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

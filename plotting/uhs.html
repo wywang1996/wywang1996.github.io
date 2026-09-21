@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一致危险性谱 UHS · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.uhs-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.uhs-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.uhs-canvas-wrap canvas {
+  width: 100%;
+  height: 800px;
+  display: block;
+}
+.uhs-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.uhs-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.uhs-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>CSV 输入数据</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      一致危险性谱 UHS
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 工程地震 · 地震危险性</div>
+      <h1>一致危险性谱 UHS</h1>
+      <p class="lead">
+        在多个周期上分别做 PSHA，取每个周期上<strong>相同年超越概率</strong>
+        对应的谱加速度 Sa(T)，连成一条曲线即<strong>一致危险性谱</strong>
+        (Uniform Hazard Spectrum)。它是连接地震危险性分析与结构抗震设计的核心图件。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">工程地震</span>
+        <span class="pill">PSHA</span>
+        <span class="pill">CSV 输入</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>CSV 输入数据</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/uhs.csv</code> 作为输入。
+        文件包含每个周期上<strong>两个设防水准</strong>的谱加速度值，
+        这是 PSHA 计算结果的常见整理形式。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>period_s</code></td><td>自振周期 T</td><td><code>s</code></td><td>0.01–10 s，对数均匀</td></tr>
+            <tr><td><code>Sa_475_g</code></td><td>50 年 10% 的 Sa</td><td><code>g</code></td><td>λ = 1/475，对应多遇地震</td></tr>
+            <tr><td><code>Sa_2475_g</code></td><td>50 年 2% 的 Sa</td><td><code>g</code></td><td>λ = 1/2475，对应罕遇地震</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例（前 12 行）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/uhs.csv</code> 不存在，则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>uhs.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># uhs.csv
+# 一致危险性谱 UHS - 5% 阻尼
+# 单位：period_s (s)  Sa_475_g (g)  Sa_2475_g (g)
+period_s,Sa_475_g,Sa_2475_g
+0.010,0.182,0.420
+0.020,0.185,0.428
+0.050,0.192,0.451
+0.100,0.221,0.538
+0.150,0.268,0.685
+0.200,0.318,0.835
+0.300,0.385,1.052
+0.400,0.412,1.168
+0.500,0.402,1.138
+0.750,0.341,0.942
+1.000,0.282,0.762
+1.500,0.192,0.498
+2.000,0.135,0.342
+3.000,0.075,0.182
+4.000,0.048,0.112
+5.000,0.033,0.075
+6.000,0.024,0.053
+8.000,0.014,0.030
+10.000,0.009,0.019
+</code></pre>
+      </div>
+
+      <div class="uhs-download">
+        <button type="button" id="btn-download-csv">下载 uhs.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>PSHA 计算程序</strong>——OpenQuake、CRISIS、EZ-FRISK 等，
+            对一组周期分别计算危险性曲线，再取等概率线。</li>
+          <li><strong>规范区划图</strong>——GB 18306《中国地震动参数区划图》给出
+            全国各城镇的 50 年 10% 和 2% 设防水准 Sa(T)，可直接查表。</li>
+          <li><strong>专项地震安全性评价报告</strong>——重大工程场地会给出
+            多周期、多设防水准的一致危险性谱。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一份典型的场地 UHS：
+          短周期段 Sa ≈ 0.18 g（475 年）与 0.42 g（2475 年），
+          谱峰在 T ≈ 0.4 s 附近，长周期段随 T 逐渐衰减。
+          两个水准的比值 Sa<sub>2475</sub>/Sa<sub>475</sub> 约在 2.2–2.8 之间。
+        </div>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>三张图说明了什么</h2>
+      </div>
+
+      <p>
+        一致危险性谱在每一个周期上，都对应<strong>同一个年超越概率</strong>。
+        严格地说，它并不是"某一次地震"的反应谱，而是"最不利地震场景组合"
+        的包络。这与规范设计谱的物理意义不同——后者是一条经过平滑和
+        保守调整的标准化谱。
+      </p>
+
+      <h3 class="sub">(a) UHS at two hazard levels · 两个设防水准</h3>
+      <p>
+        同时展示 50 年 10%（<strong>多遇地震</strong>）与 50 年 2%
+        （<strong>罕遇地震</strong>）两条 UHS：
+      </p>
+      <ul class="plain">
+        <li>两条曲线形状相似，但罕遇曲线整体高出约 2.5–3 倍；</li>
+        <li>谱峰位置都在 T ≈ 0.3–0.5 s，反映场地卓越周期；</li>
+        <li>长周期段两者差别逐渐缩小，因为极端事件对长周期贡献有限。</li>
+      </ul>
+
+      <h3 class="sub">(b) UHS vs GB 50011 design spectrum · 与规范设计谱对比</h3>
+      <p>
+        把 UHS 与 GB 50011-2010 在 8 度（0.2 g）设防下的设计谱对比：
+      </p>
+      <ul class="plain">
+        <li>规范设计谱采用<strong>四段分段函数</strong>（平台段、下降段、直线下降段），
+          是平滑化的保守包络；</li>
+        <li>UHS 是真实计算谱，谱形不够光滑，但更贴近物理；</li>
+        <li>UHS 与规范谱在短周期段可能接近，在中长周期段往往有差异。</li>
+      </ul>
+
+      <h3 class="sub">(c) Spectral ratio · 谱比 Sa(2475)/Sa(475)</h3>
+      <p>
+        两个设防水准的谱加速度比值随周期的变化：
+      </p>
+      <ul class="plain">
+        <li>短周期段（T &lt; 0.3 s）比值约 2.2–2.4；</li>
+        <li>中周期段（0.3–1 s）比值约 2.5–2.9；</li>
+        <li>长周期段（T &gt; 2 s）比值逐渐趋向 2.0；</li>
+        <li>整体比值在 2.2–3.0 之间，可作为不同水准地震动的快速换算系数。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>UHS 的物理诠释：</strong>UHS 每个周期上的值来自<b>不同的地震场景</b>。
+        例如短周期 Sa 可能由近场小震（M6）控制，而长周期 Sa 由远场大震（M8）控制。
+        因此 UHS 是一条<b>人工包络</b>，而不是任何一次真实地震的反应谱。
+        与 UHS 相对的，是<b>条件均值谱</b>（CMS）——它固定了某个周期的
+        Sa 值，其他周期用解聚结果的条件分布计算，物理上更一致。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>UHS 通常是<strong>基岩</strong>或参考场地
+        （Vs30 = 760 m/s）的结果。用于具体场地时需要按场地放大因子调整
+        （见 transfer-function.html）。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面三张子图由 <code>assets/uhs.csv</code> 实时计算：
+        读取 CSV → 绘制两个设防水准 UHS → 叠加 GB 50011 设计谱 → 计算谱比。
+        画布尺寸按 A4 排版（720 × 800 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/uhs.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="uhs-canvas-wrap">
+        <canvas id="c-uhs"></canvas>
+      </div>
+
+      <div class="uhs-note" style="margin-top:14px;">
+        <strong>(a)</strong> UHS 两个设防水准；
+        <strong>(b)</strong> 与 GB 50011-2010（8 度，0.2g，II 类场地，Tg=0.4 s）
+        设计谱对比；
+        <strong>(c)</strong> 谱比 Sa(2475)/Sa(475) 随周期变化。
+        横轴为周期 T（s，对数），纵轴为 Sa（g，对数）或比值（线性）。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        读取 CSV 后绘制三张子图，并包含 GB 50011 设计谱的实现。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>uhs.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 一致危险性谱 UHS（Uniform Hazard Spectrum）
+# -------------------------------------------------------------
+# 输入数据：uhs.csv
+#   period_s,Sa_475_g,Sa_2475_g
+#   0.010,0.182,0.420
+#   ...
+# -------------------------------------------------------------
+# 三张子图：
+#   (a) UHS at 50yr 10% and 2%
+#   (b) 与 GB 50011 设计谱对比
+#   (c) 谱比 Sa(2475)/Sa(475)
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 9,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'uhs.csv'
+
+
+def gb50011_spectrum(T, alpha_max, Tg=0.4, zeta=0.05):
+    """GB 50011-2010 地震影响系数曲线（阻尼比 zeta，特征周期 Tg）。"""
+    eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta)
+    gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta)
+    eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta)
+
+    alpha = np.zeros_like(T)
+    for i, Ti in enumerate(T):
+        if Ti < 0.1:
+            alpha[i] = (0.45 + 10 * (eta2 - 0.45) * Ti) * alpha_max
+        elif Ti < Tg:
+            alpha[i] = eta2 * alpha_max
+        elif Ti < 5 * Tg:
+            alpha[i] = (Tg / Ti) ** gamma * eta2 * alpha_max
+        else:
+            alpha[i] = (eta2 * 0.2 ** gamma - eta1 * (Ti - 5 * Tg)) * alpha_max
+    return alpha
+
+
+def generate_synthetic():
+    """CSV 缺失时的合成数据。"""
+    T = np.array([0.01, 0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50,
+                  0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 5.00, 6.00, 8.00, 10.0])
+    Sa_475  = np.array([0.182, 0.185, 0.192, 0.221, 0.268, 0.318, 0.385,
+                        0.412, 0.402, 0.341, 0.282, 0.192, 0.135, 0.075,
+                        0.048, 0.033, 0.024, 0.014, 0.009])
+    Sa_2475 = np.array([0.420, 0.428, 0.451, 0.538, 0.685, 0.835, 1.052,
+                        1.168, 1.138, 0.942, 0.762, 0.498, 0.342, 0.182,
+                        0.112, 0.075, 0.053, 0.030, 0.019])
+    return T, Sa_475, Sa_2475
+
+
+# ---------- 1. 读取 CSV ----------
+if os.path.exists(CSV_FILE):
+    data = np.genfromtxt(CSV_FILE, delimiter=',', names=True,
+                         dtype=None, encoding='utf-8')
+    T        = np.asarray(data['period_s'],   dtype=float)
+    Sa_475   = np.asarray(data['Sa_475_g'],   dtype=float)
+    Sa_2475  = np.asarray(data['Sa_2475_g'],  dtype=float)
+    mask = (T > 0) & (Sa_475 > 0) & (Sa_2475 > 0)
+    T, Sa_475, Sa_2475 = T[mask], Sa_475[mask], Sa_2475[mask]
+    print(f'从 {CSV_FILE} 读取 {len(T)} 个周期点')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    T, Sa_475, Sa_2475 = generate_synthetic()
+
+
+# ---------- 2. 谱比 ----------
+ratio = Sa_2475 / Sa_475
+
+
+# ---------- 3. 三张子图 ----------
+fig, axes = plt.subplots(3, 1, figsize=(7.2, 8.0))
+
+# ===== (a) UHS 两个设防水准 =====
+ax = axes[0]
+ax.loglog(T, Sa_475,  lw=1.8, color='#b45309',
+          marker='o', ms=3.5, mfc='#b45309', mec='none',
+          label='50 yr 10% (λ = 1/475)')
+ax.loglog(T, Sa_2475, lw=1.8, color='#dc2626',
+          marker='s', ms=3.5, mfc='#dc2626', mec='none',
+          label='50 yr 2% (λ = 1/2475)')
+ax.set_xlabel('Period T (s)')
+ax.set_ylabel('Sa (g)')
+ax.set_title('(a) Uniform Hazard Spectrum  ·  two hazard levels', fontsize=10)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+
+# ===== (b) 与 GB 50011 设计谱对比 =====
+ax = axes[1]
+ax.loglog(T, Sa_475,  lw=1.6, color='#b45309', label='UHS · 10% in 50yr')
+ax.loglog(T, Sa_2475, lw=1.6, color='#dc2626', label='UHS · 2% in 50yr')
+
+# GB 50011 设计谱（8 度 0.2g，II 类场地，Tg = 0.4 s）
+T_curve = np.logspace(np.log10(0.01), np.log10(10), 400)
+# 多遇地震：alpha_max ≈ 0.16
+gb_minor = gb50011_spectrum(T_curve, alpha_max=0.16, Tg=0.4)
+# 罕遇地震：alpha_max ≈ 0.90
+gb_major = gb50011_spectrum(T_curve, alpha_max=0.90, Tg=0.4)
+
+ax.loglog(T_curve, gb_minor, lw=1.2, color='#2563eb', ls='--',
+          label='GB 50011 · frequent (8°, 0.16g)')
+ax.loglog(T_curve, gb_major, lw=1.2, color='#9333ea', ls='--',
+          label='GB 50011 · rare (8°, 0.90g)')
+
+ax.set_xlabel('Period T (s)')
+ax.set_ylabel('Sa (g)')
+ax.set_title('(b) UHS vs GB 50011 design spectrum  ·  Tg = 0.4 s', fontsize=10)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+
+# ===== (c) 谱比 =====
+ax = axes[2]
+ax.semilogx(T, ratio, lw=1.8, color='#15803d',
+            marker='o', ms=3.5, mfc='#15803d', mec='none')
+ax.axhline(1.0, color='#888888', lw=0.5, ls='--')
+ax.axhline(np.mean(ratio), color='#888888', lw=0.7, ls=':',
+           label=f'mean = {np.mean(ratio):.2f}')
+ax.set_xlabel('Period T (s)')
+ax.set_ylabel('Sa(2475) / Sa(475)')
+ax.set_title('(c) Spectral ratio between two hazard levels', fontsize=10)
+ax.set_ylim(1.5, max(3.5, np.max(ratio) * 1.1))
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='upper right', fontsize=8, frameon=False)
+
+for ax in axes:
+    ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('uhs.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# ---------- 4. 打印关键量 ----------
+print(f'谱比范围：{np.min(ratio):.3f} – {np.max(ratio):.3f}')
+print(f'谱比均值：{np.mean(ratio):.3f}')</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>UHS 双对数坐标</strong>：横轴周期 T、纵轴 Sa，都是对数。</li>
+          <li><strong>GB 50011 设计谱</strong>：四段分段函数，α<sub>max</sub> 对应
+            多遇（0.16）与罕遇（0.90）设防水准。</li>
+          <li><strong>谱比</strong>：两个设防水准的 Sa 比值，反映罕遇/多遇的
+            "放大倍数"，是快速的工程估算手段。</li>
+          <li><strong>η<sub>1</sub>, η<sub>2</sub>, γ</strong> 是阻尼调整系数，
+            ζ = 0.05 时 η<sub>2</sub> = 1、γ = 0.9。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应，用 <code>readtable</code> 读取 CSV，
+        <code>local_gb50011</code> 局部函数实现 GB 50011 设计谱。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>uhs.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 一致危险性谱 UHS（Uniform Hazard Spectrum）
+% -------------------------------------------------------------
+% 输入数据：uhs.csv
+%   period_s,Sa_475_g,Sa_2475_g
+%   ...
+% =============================================================
+
+CSV_FILE = 'uhs.csv';
+
+% ---------- 1. 读取 CSV ----------
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    period  = T.period_s;
+    Sa_475  = T.Sa_475_g;
+    Sa_2475 = T.Sa_2475_g;
+    fprintf('从 %s 读取 %d 个周期点\n', CSV_FILE, numel(period));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    period = [0.01 0.02 0.05 0.10 0.15 0.20 0.30 0.40 0.50 ...
+              0.75 1.00 1.50 2.00 3.00 4.00 5.00 6.00 8.00 10.0]';
+    Sa_475 = [0.182 0.185 0.192 0.221 0.268 0.318 0.385 ...
+              0.412 0.402 0.341 0.282 0.192 0.135 0.075 ...
+              0.048 0.033 0.024 0.014 0.009]';
+    Sa_2475 = [0.420 0.428 0.451 0.538 0.685 0.835 1.052 ...
+               1.168 1.138 0.942 0.762 0.498 0.342 0.182 ...
+               0.112 0.075 0.053 0.030 0.019]';
+end
+
+% ---------- 2. 谱比 ----------
+ratio = Sa_2475 ./ Sa_475;
+
+% ---------- 3. 三张子图 ----------
+figure('Color', 'w', 'Position', [100 100 720 800]);
+
+% ===== (a) UHS 两个设防水准 =====
+subplot(3, 1, 1);
+loglog(period, Sa_475, '-o', 'Color', [0.71 0.33 0.04], ...
+       'MarkerFaceColor', [0.71 0.33 0.04], 'MarkerEdgeColor', 'none', ...
+       'MarkerSize', 4, 'LineWidth', 1.8); hold on;
+loglog(period, Sa_2475, '-s', 'Color', [0.86 0.15 0.15], ...
+       'MarkerFaceColor', [0.86 0.15 0.15], 'MarkerEdgeColor', 'none', ...
+       'MarkerSize', 4, 'LineWidth', 1.8);
+xlabel('Period T (s)'); ylabel('Sa (g)');
+title('(a) Uniform Hazard Spectrum  ·  two hazard levels', 'FontSize', 10);
+grid on; box on;
+legend({'50 yr 10% (\lambda = 1/475)', '50 yr 2% (\lambda = 1/2475)'}, ...
+       'Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+
+% ===== (b) 与 GB 50011 设计谱对比 =====
+subplot(3, 1, 2);
+loglog(period, Sa_475, 'Color', [0.71 0.33 0.04], 'LineWidth', 1.6); hold on;
+loglog(period, Sa_2475, 'Color', [0.86 0.15 0.15], 'LineWidth', 1.6);
+
+T_curve = logspace(log10(0.01), log10(10), 400);
+gb_minor = arrayfun(@(x) local_gb50011(x, 0.16, 0.4, 0.05), T_curve);
+gb_major = arrayfun(@(x) local_gb50011(x, 0.90, 0.4, 0.05), T_curve);
+
+loglog(T_curve, gb_minor, '--', 'Color', [0.15 0.39 0.92], 'LineWidth', 1.2);
+loglog(T_curve, gb_major, '--', 'Color', [0.58 0.20 0.92], 'LineWidth', 1.2);
+
+xlabel('Period T (s)'); ylabel('Sa (g)');
+title('(b) UHS vs GB 50011 design spectrum  ·  Tg = 0.4 s', 'FontSize', 10);
+grid on; box on;
+legend({'UHS · 10% in 50yr', 'UHS · 2% in 50yr', ...
+        'GB 50011 · frequent (8°, 0.16g)', ...
+        'GB 50011 · rare (8°, 0.90g)'}, ...
+       'Location', 'northeast', 'Box', 'off', 'FontSize', 8);
+
+% ===== (c) 谱比 =====
+subplot(3, 1, 3);
+semilogx(period, ratio, '-o', 'Color', [0.08 0.50 0.24], ...
+         'MarkerFaceColor', [0.08 0.50 0.24], 'MarkerEdgeColor', 'none', ...
+         'MarkerSize', 4, 'LineWidth', 1.8); hold on;
+yline(1.0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.5);
+yline(mean(ratio), ':', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7);
+xlabel('Period T (s)'); ylabel('Sa(2475) / Sa(475)');
+title('(c) Spectral ratio between two hazard levels', 'FontSize', 10);
+ylim([1.5 max(3.5, max(ratio) * 1.1)]);
+grid on; box on;
+
+for k = 1:3
+    subplot(3, 1, k);
+    set(gca, 'FontName', 'Times New Roman', 'FontSize', 9, 'TickDir', 'in');
+end
+
+exportgraphics(gcf, 'uhs.png', 'Resolution', 300);
+
+fprintf('谱比范围：%.3f – %.3f\n', min(ratio), max(ratio));
+fprintf('谱比均值：%.3f\n', mean(ratio));
+
+
+% ===== 局部函数：GB 50011 设计谱 =====
+function alpha = local_gb50011(T, alpha_max, Tg, zeta)
+    eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+    gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta);
+    eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+
+    if T < 0.1
+        alpha = (0.45 + 10 * (eta2 - 0.45) * T) * alpha_max;
+    elseif T < Tg
+        alpha = eta2 * alpha_max;
+    elseif T < 5 * Tg
+        alpha = (Tg / T) ^ gamma * eta2 * alpha_max;
+    else
+        alpha = (eta2 * 0.2 ^ gamma - eta1 * (T - 5 * Tg)) * alpha_max;
+    end
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:160px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 周期</td><td>T</td><td><code>s</code></td></tr>
+            <tr><td><strong>输入</strong> · 谱加速度（多遇）</td><td>Sa<sub>475</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输入</strong> · 谱加速度（罕遇）</td><td>Sa<sub>2475</sub></td><td><code>g</code></td></tr>
+            <tr><td><strong>输出</strong> · 谱比</td><td>Sa<sub>2475</sub>/Sa<sub>475</sub></td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 设计谱（对比）</td><td>α(T)</td><td>无量纲（相当于 Sa/g）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>UHS 定义：</strong>对每一个周期 T，找到<strong>相同年超越概率</strong>
+          对应的 Sa(T)，连成曲线。</li>
+        <li><strong>与设计谱的区别：</strong>设计谱是标准化 + 保守包络；
+          UHS 是真实计算结果的等概率线。</li>
+        <li><strong>与 CMS 的区别：</strong>CMS（条件均值谱）固定一个周期的 Sa，
+          其他周期用条件分布计算，物理上更一致。</li>
+        <li><strong>设防水准换算：</strong>50 年超越概率 P 对应年超越概率
+          λ = 1 − (1−P)<sup>1/50</sup>。P = 10% → λ ≈ 1/475；P = 2% → λ ≈ 1/2475。</li>
+        <li><strong>与危险性曲线的关系：</strong>危险性曲线是单一周期上的
+          λ–PGA 关系；UHS 是把多周期的危险性曲线放在同一概率截面上。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>UHS 曲线不光滑 → 每个周期的 Sa 来自不同地震场景，属正常现象。</li>
+            <li>长周期段 Sa 不收敛 → 数据精度不足或周期覆盖不够，需扩展 PSHA 计算范围。</li>
+            <li>与规范设计谱差别很大 → 检查设防烈度与场地类别，UHS 与规范谱的
+              设防标准要对应。</li>
+            <li>谱比异常大（&gt; 4） → 检查是否混用了不同阻尼比或不同场地条件的数据。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../engineering-seismology.html">工程地震学</a>（PSHA、UHS、解聚）、
+        <a href="../site-seismic-safety-evaluation.html">场地地震安全性评价</a>、
+        <a href="../spectral-analysis.html">地震动谱分析入门</a>（反应谱基础）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 一致危险性谱 UHS</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV
+     ============================================================ */
+  var DEFAULT_CSV = [
+    '# uhs.csv',
+    '# 一致危险性谱 UHS - 5% 阻尼',
+    '# 单位：period_s (s)  Sa_475_g (g)  Sa_2475_g (g)',
+    'period_s,Sa_475_g,Sa_2475_g',
+    '0.010,0.182,0.420',
+    '0.020,0.185,0.428',
+    '0.050,0.192,0.451',
+    '0.100,0.221,0.538',
+    '0.150,0.268,0.685',
+    '0.200,0.318,0.835',
+    '0.300,0.385,1.052',
+    '0.400,0.412,1.168',
+    '0.500,0.402,1.138',
+    '0.750,0.341,0.942',
+    '1.000,0.282,0.762',
+    '1.500,0.192,0.498',
+    '2.000,0.135,0.342',
+    '3.000,0.075,0.182',
+    '4.000,0.048,0.112',
+    '5.000,0.033,0.075',
+    '6.000,0.024,0.053',
+    '8.000,0.014,0.030',
+    '10.000,0.009,0.019'
+  ].join('\n') + '\n';
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var T = [], s475 = [], s2475 = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      var lower = line.toLowerCase();
+      if (lower.indexOf('period') === 0) continue;
+      var parts = line.split(',');
+      if (parts.length < 3) continue;
+      var t = parseFloat(parts[0]);
+      var a = parseFloat(parts[1]);
+      var b = parseFloat(parts[2]);
+      if (!isFinite(t) || !isFinite(a) || !isFinite(b)) continue;
+      if (t <= 0 || a <= 0 || b <= 0) continue;
+      T.push(t); s475.push(a); s2475.push(b);
+    }
+    return { T: T, s475: s475, s2475: s2475 };
+  }
+
+  /* ============================================================
+     GB 50011 设计谱
+     ============================================================ */
+
+  function gb50011(T, alpha_max, Tg, zeta) {
+    if (zeta === undefined) zeta = 0.05;
+    if (Tg === undefined) Tg = 0.4;
+    var eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+    var gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta);
+    var eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+
+    if (T < 0.1) {
+      return (0.45 + 10 * (eta2 - 0.45) * T) * alpha_max;
+    } else if (T < Tg) {
+      return eta2 * alpha_max;
+    } else if (T < 5 * Tg) {
+      return Math.pow(Tg / T, gamma) * eta2 * alpha_max;
+    } else {
+      return (eta2 * Math.pow(0.2, gamma) - eta1 * (T - 5 * Tg)) * alpha_max;
+    }
+  }
+
+  /* ============================================================
+     绘图工具
+     ============================================================ */
+
+  function log10(v) { return Math.log(v) / Math.LN10; }
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.floor(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      if (v >= min - step * 1e-6) ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtLogLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.001 && a < 10000) {
+      if (a >= 1) return v.toFixed(0);
+      if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+      if (a >= 0.01) return v.toFixed(2).replace(/\.?0+$/, '');
+      return v.toFixed(3).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(0) + 'e' + e;
+  }
+
+  function fmtLinearLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 100) return v.toFixed(0);
+    if (a >= 10) return v.toFixed(0);
+    if (a >= 1) return v.toFixed(1).replace(/\.0$/, '');
+    if (a >= 0.1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  function hexToRgb(hex) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16)
+    };
+  }
+
+  function makeFrame(ctx, box, xLog, yLog, xRange, yRange, xLabel, yLabel, title) {
+    var margin = { top: 24, right: 16, bottom: 42, left: 62 };
+    var px = box.x + margin.left;
+    var py = box.y + margin.top;
+    var pw = box.w - margin.left - margin.right;
+    var ph = box.h - margin.top - margin.bottom;
+
+    var xMinV = xRange[0], xMaxV = xRange[1];
+    var yMinV = yRange[0], yMaxV = yRange[1];
+
+    var xMin = xLog ? log10(xMinV) : xMinV;
+    var xMax = xLog ? log10(xMaxV) : xMaxV;
+    var yMin = yLog ? log10(yMinV) : yMinV;
+    var yMax = yLog ? log10(yMaxV) : yMaxV;
+
+    function toX(v) {
+      var xv = xLog ? log10(v) : v;
+      return px + (xv - xMin) / (xMax - xMin) * pw;
+    }
+    function toY(v) {
+      var yv = yLog ? log10(v) : v;
+      return py + ph - (yv - yMin) / (yMax - yMin) * ph;
+    }
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, box.x + box.w / 2, box.y + 4);
+
+    var xTicksMajor, yTicksMajor, xTicksMinor, yTicksMinor;
+    if (xLog) {
+      xTicksMajor = niceDecades(xMinV, xMaxV);
+      xTicksMinor = niceMinorTicks(xMinV, xMaxV);
+    } else {
+      xTicksMajor = niceLinearTicks(xMinV, xMaxV, 5);
+      xTicksMinor = [];
+    }
+    if (yLog) {
+      yTicksMajor = niceDecades(yMinV, yMaxV);
+      yTicksMinor = niceMinorTicks(yMinV, yMaxV);
+    } else {
+      yTicksMajor = niceLinearTicks(yMinV, yMaxV, 5);
+      yTicksMinor = [];
+    }
+
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py); ctx.lineTo(x, py + ph); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    var mainTick = 5, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + mainTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - mainTick, y); ctx.stroke();
+    });
+    yTicksMinor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + minorTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - minorTick, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + mainTick);      ctx.stroke();
+    });
+    xTicksMinor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + minorTick);      ctx.stroke();
+    });
+
+    ctx.fillStyle = '#222222';
+    ctx.font = '10px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      var s = yLog ? fmtLogLabel(v) : fmtLinearLabel(v);
+      ctx.fillText(s, px - 5, y);
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      var s = xLog ? fmtLogLabel(v) : fmtLinearLabel(v);
+      ctx.fillText(s, x, py + ph + 6);
+    });
+
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(box.x + 12, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, px + pw / 2, box.y + box.h - 2);
+
+    return { toX: toX, toY: toY, px: px, py: py, pw: pw, ph: ph };
+  }
+
+  function drawLineSeries(ctx, frame, xArr, yArr, color, lw, marker, markerSize) {
+    if (marker === undefined) marker = true;
+    if (markerSize === undefined) markerSize = 3.5;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var i = 0; i < xArr.length; i++) {
+      var px = frame.toX(xArr[i]);
+      var py = frame.toY(yArr[i]);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    if (marker) {
+      ctx.fillStyle = color;
+      for (var j = 0; j < xArr.length; j++) {
+        var mx = frame.toX(xArr[j]);
+        var my = frame.toY(yArr[j]);
+        ctx.beginPath();
+        ctx.arc(mx, my, markerSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawSmoothCurve(ctx, frame, xArr, yArr, color, lw, dash) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.lineJoin = 'round';
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath();
+    for (var i = 0; i < xArr.length; i++) {
+      var px = frame.toX(xArr[i]);
+      var py = frame.toY(yArr[i]);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    if (dash) ctx.setLineDash([]);
+  }
+
+  function drawLegend(ctx, frame, items, xAlign, yAlign) {
+    var lgW = 0;
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    items.forEach(function (it) {
+      var w = ctx.measureText(it.name).width + 34;
+      if (w > lgW) lgW = w;
+    });
+    var lgH = 16 * items.length + 8;
+    var lgx = xAlign === 'right' ? frame.px + frame.pw - lgW - 6 : frame.px + 6;
+    var lgy = yAlign === 'top' ? frame.py + 6 : frame.py + frame.ph - lgH - 6;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    items.forEach(function (it, i) {
+      var ly = lgy + 8 + i * 16;
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = it.lw || 1.6;
+      if (it.dash) ctx.setLineDash(it.dash);
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly);
+      ctx.lineTo(lgx + 22, ly);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#222222';
+      ctx.fillText(it.name, lgx + 26, ly);
+    });
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+
+  function drawAll(canvasId, data) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(400, Math.round(rect.height) || 800);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    var padX = 8, padY = 8, gapY = 10;
+    var usableH = H - padY * 2 - gapY * 2;
+    var panelH = usableH / 3;
+    var boxes = [
+      { x: padX, y: padY,                              w: W - padX * 2, h: panelH },
+      { x: padX, y: padY + panelH + gapY,              w: W - padX * 2, h: panelH },
+      { x: padX, y: padY + (panelH + gapY) * 2,        w: W - padX * 2, h: panelH }
+    ];
+
+    var T = data.T, s475 = data.s475, s2475 = data.s2475;
+
+    /* 全局范围 */
+    var T_min = T[0], T_max = T[T.length - 1];
+    var yMin_all = Math.min.apply(null, s475);
+    var yMax_all = Math.max.apply(null, s2475);
+    yMin_all *= 0.5;
+    yMax_all *= 1.6;
+
+    /* ---- (a) UHS 两个水准 ---- */
+    var frameA = makeFrame(ctx, boxes[0], true, true,
+      [T_min * 0.9, T_max * 1.1], [yMin_all, yMax_all],
+      'Period T (s)', 'Sa (g)',
+      '(a) Uniform Hazard Spectrum  ·  two hazard levels');
+    drawLineSeries(ctx, frameA, T, s475, '#b45309', 1.8, true);
+    drawLineSeries(ctx, frameA, T, s2475, '#dc2626', 1.8, true);
+    drawLegend(ctx, frameA, [
+      { name: '50 yr 10% (\u03bb = 1/475)', color: '#b45309', lw: 1.8 },
+      { name: '50 yr  2% (\u03bb = 1/2475)', color: '#dc2626', lw: 1.8 }
+    ], 'right', 'top');
+
+    /* ---- (b) 与 GB 50011 对比 ---- */
+    var frameB = makeFrame(ctx, boxes[1], true, true,
+      [T_min * 0.9, T_max * 1.1], [yMin_all, yMax_all],
+      'Period T (s)', 'Sa (g)',
+      '(b) UHS vs GB 50011 design spectrum  ·  Tg = 0.4 s');
+    drawLineSeries(ctx, frameB, T, s475, '#b45309', 1.6, true);
+    drawLineSeries(ctx, frameB, T, s2475, '#dc2626', 1.6, true);
+
+    /* GB 50011 光滑曲线 */
+    var gbX = [], gbMinor = [], gbMajor = [];
+    for (var i = 0; i <= 400; i++) {
+      var tt = Math.pow(10, log10(0.01) + (log10(10) - log10(0.01)) * i / 400);
+      gbX.push(tt);
+      gbMinor.push(gb50011(tt, 0.16, 0.4, 0.05));
+      gbMajor.push(gb50011(tt, 0.90, 0.4, 0.05));
+    }
+    drawSmoothCurve(ctx, frameB, gbX, gbMinor, '#2563eb', 1.2, [6, 4]);
+    drawSmoothCurve(ctx, frameB, gbX, gbMajor, '#9333ea', 1.2, [6, 4]);
+
+    drawLegend(ctx, frameB, [
+      { name: 'UHS · 10% in 50yr', color: '#b45309', lw: 1.6 },
+      { name: 'UHS ·  2% in 50yr', color: '#dc2626', lw: 1.6 },
+      { name: 'GB 50011 · frequent (8\u00b0)', color: '#2563eb', lw: 1.2, dash: [6, 4] },
+      { name: 'GB 50011 · rare (8\u00b0)', color: '#9333ea', lw: 1.2, dash: [6, 4] }
+    ], 'right', 'top');
+
+    /* ---- (c) 谱比 ---- */
+    var ratio = [];
+    var rMin = Infinity, rMax = -Infinity;
+    for (var k = 0; k < T.length; k++) {
+      var r = s2475[k] / s475[k];
+      ratio.push(r);
+      if (r < rMin) rMin = r;
+      if (r > rMax) rMax = r;
+    }
+    var yLo = Math.min(1.5, rMin - 0.3);
+    var yHi = Math.max(3.5, rMax + 0.3);
+
+    var frameC = makeFrame(ctx, boxes[2], true, false,
+      [T_min * 0.9, T_max * 1.1], [yLo, yHi],
+      'Period T (s)', 'Sa(2475) / Sa(475)',
+      '(c) Spectral ratio between two hazard levels');
+
+    /* 参考线 */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([4, 4]);
+    var y1 = frameC.toY(1.0);
+    ctx.beginPath(); ctx.moveTo(frameC.px, y1); ctx.lineTo(frameC.px + frameC.pw, y1); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 均值线 */
+    var meanR = ratio.reduce(function (a, b) { return a + b; }, 0) / ratio.length;
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([2, 3]);
+    var ym = frameC.toY(meanR);
+    ctx.beginPath(); ctx.moveTo(frameC.px, ym); ctx.lineTo(frameC.px + frameC.pw, ym); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 谱比曲线 */
+    drawLineSeries(ctx, frameC, T, ratio, '#15803d', 1.8, true);
+
+    drawLegend(ctx, frameC, [
+      { name: 'mean = ' + meanR.toFixed(2), color: '#888888', lw: 0.7, dash: [2, 3] }
+    ], 'right', 'top');
+
+    /* ---- 状态信息 ---- */
+    var status = document.getElementById('info-stats');
+    if (status) {
+      status.textContent = T.length + ' 个周期点 · ' +
+                           'T = ' + T_min.toFixed(2) + '–' + T_max.toFixed(1) + ' s · ' +
+                           'Sa(475) ' + Math.min.apply(null, s475).toFixed(3) + '–' +
+                           Math.max.apply(null, s475).toFixed(3) + ' g · ' +
+                           'Sa(2475) ' + Math.min.apply(null, s2475).toFixed(3) + '–' +
+                           Math.max.apply(null, s2475).toFixed(3) + ' g · ' +
+                           '谱比均值 ' + meanR.toFixed(2);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/uhs.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var d = parseCSV(text);
+        if (d.T.length < 3) throw new Error('有效数据点不足');
+        drawAll('c-uhs', d);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[uhs] 读取 assets/uhs.csv 失败，使用内联 CSV：', err);
+        }
+        var d = parseCSV(DEFAULT_CSV);
+        drawAll('c-uhs', d);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV 按钮
+     ============================================================ */
+
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'uhs.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>

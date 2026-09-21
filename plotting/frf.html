@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>频率响应函数 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.frf-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.frf-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.frf-canvas-wrap canvas {
+  width: 100%;
+  height: 380px;
+  display: block;
+}
+.frf-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.frf-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.frf-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入参数</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      频率响应函数
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 结构弹性响应</div>
+      <h1>频率响应函数</h1>
+      <p class="lead">
+        单自由度体系的幅频与相频曲线，展示共振峰与阻尼比的关系。
+        这是《结构动力学》《振动力学》与《数字信号处理》中共用的
+        核心表达，也是反应谱计算的频域基础。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">频响</span>
+        <span class="pill">共振</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">Parameters</span>
+        <h2>输入参数</h2>
+      </div>
+
+      <p>
+        频率响应函数是<strong>解析式</strong>，只需要三个物理量：
+        质量 m、刚度 k、阻尼比 ζ。不需要外部数据文件。
+        本页的在线预览与代码示例都基于同一组默认值，
+        可修改为实际结构的参数。
+      </p>
+
+      <div class="io-card">
+        <h4>默认参数</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">参数</th>
+            <th style="width:100px;">符号</th>
+            <th style="width:140px;">默认值</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>质量</td><td>m</td><td><code>1.0 × 10⁵ kg</code></td><td>单自由度体系的质量</td></tr>
+            <tr><td>刚度</td><td>k</td><td><code>3.95 × 10⁷ N/m</code></td><td>对应 ω<sub>n</sub> ≈ 19.87 rad/s，f<sub>n</sub> ≈ 3.16 Hz</td></tr>
+            <tr><td>阻尼比</td><td>ζ</td><td><code>0.02 / 0.05 / 0.10</code></td><td>三条对比曲线</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">导出量</h4>
+        <table>
+          <thead><tr>
+            <th style="width:220px;">量</th>
+            <th style="width:140px;">公式</th>
+            <th>默认值</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>固有圆频率 ω<sub>n</sub></td><td>√(k/m)</td><td><code>19.87 rad/s</code></td></tr>
+            <tr><td>固有频率 f<sub>n</sub></td><td>ω<sub>n</sub> / (2π)</td><td><code>3.16 Hz</code></td></tr>
+            <tr><td>阻尼系数 c</td><td>2·ζ·√(k·m)</td><td>随 ζ 变化</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是单自由度体系的位移频响函数。
+          用于地震工程时，通常对应结构顶部位移对地面运动的传递关系，
+          参数按实际结构的层质量与层刚度取值。
+        </div>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>图形说明</h2>
+      </div>
+
+      <p>
+        频率响应函数（Frequency Response Function, FRF）描述线性系统对
+        <strong>简谐激励</strong>的稳态响应。对单自由度体系，
+        位移传递函数为：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        H(ω) = 1 / [ (1 − β²) + i · 2ζβ ]
+      </div>
+
+      <p>
+        其中 β = ω / ω<sub>n</sub> 为频率比。幅频与相频分别为：
+      </p>
+
+      <div class="formula" style="text-align:center;">
+        |H(ω)| = 1 / √[ (1 − β²)² + (2ζβ)² ]<br>
+        φ(ω) = −arctan[ 2ζβ / (1 − β²) ]
+      </div>
+
+      <h3 class="sub">(a) 幅频曲线 |H(ω)|</h3>
+      <p>
+        纵轴为放大因子，横轴为频率比 β（对数）。三条曲线对应
+        ζ = 0.02 / 0.05 / 0.10。三个关键区域：
+      </p>
+      <ul class="plain">
+        <li><strong>准静态区</strong>（β ≪ 1）：|H| ≈ 1，位移响应约等于静力位移；</li>
+        <li><strong>共振区</strong>（β ≈ 1）：|H| ≈ 1/(2ζ)，峰值随阻尼比急剧变化；</li>
+        <li><strong>惯性区</strong>（β ≫ 1）：|H| ≈ 1/β²，位移趋近于零。</li>
+      </ul>
+
+      <h3 class="sub">(b) 相频曲线 φ(ω)</h3>
+      <p>
+        相位从 0° 逐渐过渡到 −180°。三个关键值：
+      </p>
+      <ul class="plain">
+        <li>β → 0：φ → 0°（位移与激励同相）；</li>
+        <li>β = 1：φ = −90°（无论阻尼多大）；</li>
+        <li>β → ∞：φ → −180°（位移与激励反相）。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>共振峰值与阻尼比的关系：</strong>
+        精确共振频率是 ω<sub>r</sub> = ω<sub>n</sub>·√(1 − 2ζ²)，
+        峰值放大因子为 |H|<sub>max</sub> = 1 / (2ζ·√(1 − ζ²))。
+        ζ = 0.05 时，|H|<sub>max</sub> ≈ 10.0；
+        ζ = 0.02 时，|H|<sub>max</sub> ≈ 25.0。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>本页只展示线性弹性情况下的 FRF。
+        强震下结构出现非线性（刚度退化、滞回耗能），
+        FRF 不再是单一曲线，需要用时变系统或等效线性化方法处理。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面两张子图由页面内的 JavaScript 实时计算：
+        默认参数 m = 1.0×10⁵ kg、k = 3.95×10⁷ N/m，
+        阻尼比 ζ = 0.02 / 0.05 / 0.10。
+        画布尺寸按 A4 排版（720 × 380 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">参数</span>
+        <span class="fname">m = 1.0×10⁵ kg · k = 3.95×10⁷ N/m · ζ = 0.02 / 0.05 / 0.10</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="frf-canvas-wrap" style="margin-bottom:14px;">
+        <canvas id="c-frf-amp"></canvas>
+      </div>
+      <div class="frf-canvas-wrap">
+        <canvas id="c-frf-phase"></canvas>
+      </div>
+
+      <div class="frf-legend">
+        <span><span class="line" style="background:#2563eb"></span>ζ = 0.02</span>
+        <span><span class="line" style="background:#b45309"></span>ζ = 0.05</span>
+        <span><span class="line" style="background:#15803d"></span>ζ = 0.10</span>
+      </div>
+
+      <div class="frf-note" style="margin-top:14px;">
+        <strong>上图：</strong>幅频曲线 |H(β)|，横轴为频率比 β = f/f<sub>n</sub>（对数），
+        纵轴为放大因子（对数）。<strong>下图：</strong>相频曲线 φ(β)，
+        横轴为频率比 β（对数），纵轴为相位（度，线性）。
+        两条竖虚线分别标注 β = 1（共振）与 β = √(1 − 2ζ²)（精确共振峰）。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        代码直接从解析式绘制幅频与相频曲线，无需外部数据文件。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>frf.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 单自由度体系的频率响应函数
+# -------------------------------------------------------------
+# 位移传递函数：
+#   H(ω) = 1 / [ (1 - β²) + i·2ζβ ]     ,  β = ω / ω_n
+#
+# 幅频：|H(ω)| = 1 / sqrt[ (1 - β²)² + (2ζβ)² ]
+# 相频：φ(ω)  = -arctan[ 2ζβ / (1 - β²) ]
+#
+# 无需外部数据，参数直接写在代码里
+# =============================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+# ---------- 1. 结构参数 ----------
+m = 1.0e5          # kg
+k = 3.95e7         # N/m
+
+omega_n = np.sqrt(k / m)         # rad/s
+f_n     = omega_n / (2 * np.pi)  # Hz
+
+print(f'固有频率 f_n = {f_n:.4f} Hz')
+print(f'固有圆频率 ω_n = {omega_n:.4f} rad/s')
+
+# ---------- 2. 频率比 β ----------
+beta = np.logspace(np.log10(0.1), np.log10(10.0), 500)
+
+# ---------- 3. 三个阻尼比 ----------
+zetas = [0.02, 0.05, 0.10]
+colors = ['#2563eb', '#b45309', '#15803d']
+
+# ---------- 4. 绘制幅频与相频 ----------
+fig, axes = plt.subplots(2, 1, figsize=(7.2, 7.6))
+
+# ===== 上图：幅频 =====
+ax = axes[0]
+for zeta, color in zip(zetas, colors):
+    H_amp = 1.0 / np.sqrt((1 - beta ** 2) ** 2 + (2 * zeta * beta) ** 2)
+    ax.loglog(beta, H_amp, lw=1.6, color=color, label=f'ζ = {zeta:.2f}')
+
+ax.axvline(1.0, color='#888888', lw=0.7, ls='--')
+ax.set_xlabel('Frequency ratio  β = f / f$_n$')
+ax.set_ylabel('|H(β)|')
+ax.set_title('(a) Amplitude response', fontsize=11)
+ax.set_xlim(0.1, 10.0)
+ax.set_ylim(0.005, 60)
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='lower left', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+# 标注准静态区、共振区、惯性区
+ax.text(0.15, 1.6, 'quasi-static', fontsize=8, color='#888888', style='italic')
+ax.text(1.0, 40, 'resonance', fontsize=8, color='#888888',
+        style='italic', ha='center')
+ax.text(6.0, 0.03, 'inertial', fontsize=8, color='#888888', style='italic')
+
+# ===== 下图：相频 =====
+ax = axes[1]
+for zeta, color in zip(zetas, colors):
+    phi = -np.arctan2(2 * zeta * beta, 1 - beta ** 2) * 180.0 / np.pi
+    ax.semilogx(beta, phi, lw=1.6, color=color, label=f'ζ = {zeta:.2f}')
+
+ax.axvline(1.0, color='#888888', lw=0.7, ls='--')
+ax.axhline(-90.0, color='#888888', lw=0.5, ls=':')
+ax.set_xlabel('Frequency ratio  β = f / f$_n$')
+ax.set_ylabel('Phase  φ (deg)')
+ax.set_title('(b) Phase response', fontsize=11)
+ax.set_xlim(0.1, 10.0)
+ax.set_ylim(-185, 5)
+ax.set_yticks([0, -45, -90, -135, -180])
+ax.grid(True, which='major', ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='lower left', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('frf.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# ---------- 5. 打印峰值 ----------
+print('\n各阻尼比对应的共振峰：')
+for zeta in zetas:
+    beta_r = np.sqrt(1 - 2 * zeta ** 2) if zeta < 1 / np.sqrt(2) else 0
+    if beta_r > 0:
+        H_max = 1.0 / (2 * zeta * np.sqrt(1 - zeta ** 2))
+        f_r = beta_r * f_n
+        print(f'  ζ = {zeta:.2f}：β_r = {beta_r:.4f}，'
+              f'f_r = {f_r:.4f} Hz，|H|_max = {H_max:.2f}')
+    else:
+        print(f'  ζ = {zeta:.2f}：无共振峰（过阻尼）')</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>无需外部数据</strong>：FRF 是解析式，参数直接写在代码里。</li>
+          <li><strong>幅频双对数坐标</strong>：β 用对数（跨 2 个量级），|H| 用对数（跨 3–4 个量级）。</li>
+          <li><strong>相频半对数坐标</strong>：β 用对数，φ 用线性。</li>
+          <li><strong>相位计算用 arctan2</strong>：正确处理 β &gt; 1 时 φ &lt; −90° 的情况，
+            直接 <code>arctan(2ζβ/(1−β²))</code> 会丢失象限信息。</li>
+          <li><strong>共振峰位置</strong>：ω<sub>r</sub> = ω<sub>n</sub>·√(1 − 2ζ²)，
+            ζ &lt; 1/√2 ≈ 0.707 时存在。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。相位用 <code>atan2</code> 计算，
+        保证相位从 0 平滑过渡到 −180°。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>frf.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 单自由度体系的频率响应函数
+% -------------------------------------------------------------
+% 位移传递函数：
+%   H(ω) = 1 / [ (1 - β²) + i·2ζβ ]     ,  β = ω / ω_n
+% =============================================================
+
+% ---------- 1. 结构参数 ----------
+m = 1.0e5;         % kg
+k = 3.95e7;        % N/m
+
+omega_n = sqrt(k / m);         % rad/s
+f_n     = omega_n / (2*pi);    % Hz
+
+fprintf('固有频率 f_n = %.4f Hz\n', f_n);
+fprintf('固有圆频率 ω_n = %.4f rad/s\n', omega_n);
+
+% ---------- 2. 频率比 β ----------
+beta = logspace(log10(0.1), log10(10.0), 500);
+
+% ---------- 3. 三个阻尼比 ----------
+zetas  = [0.02 0.05 0.10];
+colors = [0.15 0.39 0.92;   % 蓝
+          0.71 0.33 0.04;   % 橙
+          0.08 0.50 0.24];  % 绿
+
+% ---------- 4. 绘制幅频与相频 ----------
+figure('Color', 'w', 'Position', [100 100 720 760]);
+
+% ===== 上图：幅频 =====
+subplot(2, 1, 1); hold on;
+for i = 1:numel(zetas)
+    zeta = zetas(i);
+    H_amp = 1 ./ sqrt((1 - beta.^2).^2 + (2*zeta*beta).^2);
+    loglog(beta, H_amp, 'Color', colors(i, :), 'LineWidth', 1.6, ...
+           'DisplayName', sprintf('ζ = %.2f', zeta));
+end
+xline(1.0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7, ...
+      'HandleVisibility', 'off');
+xlabel('Frequency ratio β = f / f_n');
+ylabel('|H(β)|');
+title('(a) Amplitude response', 'FontSize', 11);
+xlim([0.1 10.0]); ylim([0.005 60]);
+grid on; box on;
+legend('Location', 'southwest', 'Box', 'off', 'FontSize', 9);
+
+% ===== 下图：相频 =====
+subplot(2, 1, 2); hold on;
+for i = 1:numel(zetas)
+    zeta = zetas(i);
+    phi = -atan2(2*zeta*beta, 1 - beta.^2) * 180/pi;
+    semilogx(beta, phi, 'Color', colors(i, :), 'LineWidth', 1.6, ...
+             'DisplayName', sprintf('ζ = %.2f', zeta));
+end
+xline(1.0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.7, ...
+      'HandleVisibility', 'off');
+yline(-90, ':', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.5, ...
+      'HandleVisibility', 'off');
+xlabel('Frequency ratio β = f / f_n');
+ylabel('Phase φ (deg)');
+title('(b) Phase response', 'FontSize', 11);
+xlim([0.1 10.0]); ylim([-185 5]);
+yticks([0 -45 -90 -135 -180]);
+grid on; box on;
+legend('Location', 'southwest', 'Box', 'off', 'FontSize', 9);
+
+% 统一格式
+for k = 1:2
+    subplot(2, 1, k);
+    set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in');
+end
+
+exportgraphics(gcf, 'frf.png', 'Resolution', 300);
+
+% ---------- 5. 打印峰值 ----------
+fprintf('\n各阻尼比对应的共振峰：\n');
+for i = 1:numel(zetas)
+    zeta = zetas(i);
+    if zeta < 1/sqrt(2)
+        beta_r = sqrt(1 - 2*zeta^2);
+        H_max = 1 / (2*zeta*sqrt(1 - zeta^2));
+        f_r = beta_r * f_n;
+        fprintf('  ζ = %.2f：β_r = %.4f，f_r = %.4f Hz，|H|_max = %.2f\n', ...
+                zeta, beta_r, f_r, H_max);
+    else
+        fprintf('  ζ = %.2f：无共振峰（过阻尼）\n', zeta);
+    end
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:180px;">量</th><th style="width:160px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 质量</td><td>m</td><td><code>kg</code></td></tr>
+            <tr><td><strong>输入</strong> · 刚度</td><td>k</td><td><code>N/m</code></td></tr>
+            <tr><td><strong>输入</strong> · 阻尼比</td><td>ζ</td><td>无量纲</td></tr>
+            <tr><td><strong>中间</strong> · 固有圆频率</td><td>ω<sub>n</sub></td><td><code>rad/s</code></td></tr>
+            <tr><td><strong>中间</strong> · 固有频率</td><td>f<sub>n</sub></td><td><code>Hz</code></td></tr>
+            <tr><td><strong>输出</strong> · 幅频</td><td>\|H(β)\|</td><td>无量纲（放大因子）</td></tr>
+            <tr><td><strong>输出</strong> · 相频</td><td>φ(β)</td><td><code>deg</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>位移传递函数：</strong>H(ω) = 1 / [(1−β²) + i·2ζβ]，β = ω/ω<sub>n</sub>。</li>
+        <li><strong>幅频公式：</strong>\|H\| = 1 / √[(1−β²)² + (2ζβ)²]。</li>
+        <li><strong>相频公式：</strong>φ = −arctan2(2ζβ, 1−β²)。用 <code>atan2</code> 而非 <code>arctan</code>，避免丢失象限。</li>
+        <li><strong>精确共振频率：</strong>ω<sub>r</sub> = ω<sub>n</sub>·√(1 − 2ζ²)，仅当 ζ &lt; 1/√2 ≈ 0.707 时存在。</li>
+        <li><strong>共振峰值：</strong>\|H\|<sub>max</sub> = 1 / [2ζ·√(1−ζ²)]。</li>
+        <li><strong>与反应谱的关系：</strong>反应谱是 FRF 与地震动 Fourier 谱乘积的最大值随周期变化，
+          即 S<sub>a</sub>(T) ≈ max\|H(f)·A<sub>g</sub>(f)\|。</li>
+        <li><strong>无去均值、无去趋势</strong>：本页是解析计算，不涉及原始时程处理。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>β &gt; 1 时相位不对 → 检查是否用了 <code>arctan</code> 而不是 <code>atan2</code>。</li>
+            <li>幅频曲线在 β = 1 处没有峰 → 阻尼比过大（ζ &gt; 0.707），或坐标范围不对。</li>
+            <li>纵轴范围太挤 → 阻尼比小时峰值可达几十，需要给足上限。</li>
+            <li>与实测频响对比偏差大 → 实际结构常为多自由度，单自由度模型只适用于基频段。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../vibration.html">振动力学</a>（单自由度、多自由度、Duhamel 积分）、
+        <a href="../structural-dynamics.html">结构动力学</a>（反应谱、时程分析）、
+        <a href="../dsp.html">数字信号处理</a>（频响、传递函数）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 频率响应函数</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var MASS_KG = 1.0e5;
+  var STIFFNESS = 3.95e7;
+  var ZETAS = [0.02, 0.05, 0.10];
+  var COLORS = ['#2563eb', '#b45309', '#15803d'];
+
+  var OMEGA_N = Math.sqrt(STIFFNESS / MASS_KG);
+  var F_N = OMEGA_N / (2 * Math.PI);
+
+  function hexToRgb(hex) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16)
+    };
+  }
+
+  function log10(v) { return Math.log(v) / Math.LN10; }
+
+  function niceDecades(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      var v = Math.pow(10, e);
+      if (v >= min * 0.999 && v <= max * 1.001) out.push(v);
+    }
+    return out;
+  }
+
+  function niceMinorTicks(min, max) {
+    var out = [];
+    for (var e = Math.floor(log10(min)); e <= Math.ceil(log10(max)); e++) {
+      [2, 5].forEach(function (m) {
+        var v = m * Math.pow(10, e);
+        if (v > min * 1.001 && v < max * 0.999) out.push(v);
+      });
+    }
+    return out;
+  }
+
+  function niceLinearTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.ceil(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) ticks.push(v);
+    return ticks;
+  }
+
+  function fmtLogLabel(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 0.01 && a < 10000) {
+      if (a >= 1) return v.toFixed(a >= 10 ? 0 : 1).replace(/\.0+$/, '');
+      if (a >= 0.1) return v.toFixed(1).replace(/\.0$/, '');
+      if (a >= 0.01) return v.toFixed(2).replace(/\.?0+$/, '');
+      return v.toFixed(3).replace(/\.?0+$/, '');
+    }
+    var e = Math.floor(log10(a));
+    var m = v / Math.pow(10, e);
+    return m.toFixed(0) + 'e' + e;
+  }
+
+  function makeFrame(ctx, W, H, xLog, yLog, xRange, yRange, xLabel, yLabel, title) {
+    var margin = { top: 32, right: 20, bottom: 46, left: 68 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    var xMinV = xRange[0], xMaxV = xRange[1];
+    var yMinV = yRange[0], yMaxV = yRange[1];
+
+    var xMin = xLog ? log10(xMinV) : xMinV;
+    var xMax = xLog ? log10(xMaxV) : xMaxV;
+    var yMin = yLog ? log10(yMinV) : yMinV;
+    var yMax = yLog ? log10(yMaxV) : yMaxV;
+
+    function toX(v) {
+      var xv = xLog ? log10(v) : v;
+      return px + (xv - xMin) / (xMax - xMin) * pw;
+    }
+    function toY(v) {
+      var yv = yLog ? log10(v) : v;
+      return py + ph - (yv - yMin) / (yMax - yMin) * ph;
+    }
+
+    /* 白底 */
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* 标题 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'bold 11.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, W / 2, 6);
+
+    /* 网格与刻度 */
+    var xTicksMajor, yTicksMajor, xTicksMinor, yTicksMinor;
+    if (xLog) {
+      xTicksMajor = niceDecades(xMinV, xMaxV);
+      xTicksMinor = niceMinorTicks(xMinV, xMaxV);
+    } else {
+      xTicksMajor = niceLinearTicks(xMinV, xMaxV, 5);
+      xTicksMinor = [];
+    }
+    if (yLog) {
+      yTicksMajor = niceDecades(yMinV, yMaxV);
+      yTicksMinor = niceMinorTicks(yMinV, yMaxV);
+    } else {
+      yTicksMajor = niceLinearTicks(yMinV, yMaxV, 5);
+      yTicksMinor = [];
+    }
+
+    /* 网格 */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py); ctx.lineTo(x, py + ph); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    /* 外框 */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.9;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* 刻度朝内 */
+    var mainTick = 5, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + mainTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - mainTick, y); ctx.stroke();
+    });
+    yTicksMinor.forEach(function (v) {
+      var y = toY(v);
+      ctx.beginPath(); ctx.moveTo(px, y);      ctx.lineTo(px + minorTick, y);      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, y); ctx.lineTo(px + pw - minorTick, y); ctx.stroke();
+    });
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - mainTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + mainTick);      ctx.stroke();
+    });
+    xTicksMinor.forEach(function (v) {
+      var x = toX(v);
+      ctx.beginPath(); ctx.moveTo(x, py + ph); ctx.lineTo(x, py + ph - minorTick); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, py);      ctx.lineTo(x, py + minorTick);      ctx.stroke();
+    });
+
+    /* 刻度标签 */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    yTicksMajor.forEach(function (v) {
+      var y = toY(v);
+      var s = yLog ? fmtLogLabel(v) : v.toFixed(0);
+      ctx.fillText(s, px - 6, y);
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    xTicksMajor.forEach(function (v) {
+      var x = toX(v);
+      var s = xLog ? fmtLogLabel(v) : v.toFixed(1);
+      ctx.fillText(s, x, py + ph + 8);
+    });
+
+    /* 轴标题 */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, px + pw / 2, H - 6);
+
+    ctx.save();
+    ctx.translate(16, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    return { toX: toX, toY: toY, px: px, py: py, pw: pw, ph: ph };
+  }
+
+  /* ============================================================
+     幅频曲线
+     ============================================================ */
+  function drawAmp(canvasId) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(240, Math.round(rect.height) || 380);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var frame = makeFrame(ctx, W, H, true, true,
+      [0.1, 10.0], [0.005, 60],
+      'Frequency ratio  \u03b2 = f / f\u2099',
+      '|H(\u03b2)|',
+      '(a) Amplitude response');
+
+    /* 参考虚线 β = 1 */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([4, 4]);
+    var xb1 = frame.toX(1.0);
+    ctx.beginPath();
+    ctx.moveTo(xb1, frame.py);
+    ctx.lineTo(xb1, frame.py + frame.ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 三条曲线 */
+    for (var k = 0; k < ZETAS.length; k++) {
+      var zeta = ZETAS[k];
+      var color = COLORS[k];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      var started = false;
+      for (var i = 0; i <= 300; i++) {
+        var logB = log10(0.1) + (log10(10) - log10(0.1)) * i / 300;
+        var b = Math.pow(10, logB);
+        var Hamp = 1.0 / Math.sqrt(
+          Math.pow(1 - b * b, 2) + Math.pow(2 * zeta * b, 2)
+        );
+        if (!(Hamp > 0)) continue;
+        if (Hamp < 0.005 || Hamp > 60) {
+          started = false;
+          continue;
+        }
+        var px = frame.toX(b);
+        var py = frame.toY(Hamp);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* 图例 */
+    drawLegend(ctx, frame, [
+      { name: '\u03b6 = 0.02', color: COLORS[0] },
+      { name: '\u03b6 = 0.05', color: COLORS[1] },
+      { name: '\u03b6 = 0.10', color: COLORS[2] }
+    ]);
+
+    /* 区域标注 */
+    ctx.fillStyle = '#888888';
+    ctx.font = 'italic 10.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('quasi-static', frame.toX(0.15), frame.toY(1.6));
+    ctx.textAlign = 'center';
+    ctx.fillText('resonance', frame.toX(1.0), frame.toY(40));
+    ctx.textAlign = 'left';
+    ctx.fillText('inertial', frame.toX(4.0), frame.toY(0.02));
+  }
+
+  /* ============================================================
+     相频曲线
+     ============================================================ */
+  function drawPhase(canvasId) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(240, Math.round(rect.height) || 380);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var frame = makeFrame(ctx, W, H, true, false,
+      [0.1, 10.0], [-185, 5],
+      'Frequency ratio  \u03b2 = f / f\u2099',
+      'Phase  \u03c6 (deg)',
+      '(b) Phase response');
+
+    /* 参考线 */
+    ctx.strokeStyle = '#888888';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([4, 4]);
+    var xb1 = frame.toX(1.0);
+    ctx.beginPath();
+    ctx.moveTo(xb1, frame.py);
+    ctx.lineTo(xb1, frame.py + frame.ph);
+    ctx.stroke();
+
+    ctx.lineWidth = 0.6;
+    ctx.setLineDash([2, 3]);
+    var y90 = frame.toY(-90);
+    ctx.beginPath();
+    ctx.moveTo(frame.px, y90);
+    ctx.lineTo(frame.px + frame.pw, y90);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 三条曲线 */
+    for (var k = 0; k < ZETAS.length; k++) {
+      var zeta = ZETAS[k];
+      var color = COLORS[k];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (var i = 0; i <= 300; i++) {
+        var logB = log10(0.1) + (log10(10) - log10(0.1)) * i / 300;
+        var b = Math.pow(10, logB);
+        var phi = -Math.atan2(2 * zeta * b, 1 - b * b) * 180 / Math.PI;
+        var px = frame.toX(b);
+        var py = frame.toY(phi);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    /* 图例 */
+    drawLegend(ctx, frame, [
+      { name: '\u03b6 = 0.02', color: COLORS[0] },
+      { name: '\u03b6 = 0.05', color: COLORS[1] },
+      { name: '\u03b6 = 0.10', color: COLORS[2] }
+    ]);
+  }
+
+  function drawLegend(ctx, frame, items) {
+    var lgW = 84;
+    var lgH = 16 * items.length + 8;
+    var lgx = frame.px + 8;
+    var lgy = frame.py + frame.ph - lgH - 8;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.font = '10.5px "Times New Roman", "Songti SC", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var i = 0; i < items.length; i++) {
+      var ly = lgy + 8 + i * 16;
+      ctx.strokeStyle = items[i].color;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly);
+      ctx.lineTo(lgx + 22, ly);
+      ctx.stroke();
+      ctx.fillStyle = '#222222';
+      ctx.fillText(items[i].name, lgx + 26, ly);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render() {
+    drawAmp('c-frf-amp');
+    drawPhase('c-frf-phase');
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      status.textContent = 'm = 1.0×10⁵ kg · k = 3.95×10⁷ N/m · ' +
+                           'f\u2099 = ' + F_N.toFixed(3) + ' Hz · ' +
+                           'ω\u2099 = ' + OMEGA_N.toFixed(2) + ' rad/s · ' +
+                           'ζ = 0.02 / 0.05 / 0.10';
+    }
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(render, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+  else render();
+
+})();
+</script>
+
+</body>
+</html>

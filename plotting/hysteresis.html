@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="plotting">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滞回曲线 · 绘图模板 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+<style>
+.io-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.io-card h4 { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 10px; }
+.io-card table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.io-card table th, .io-card table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+.io-card table th {
+  font-weight: 620;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.io-card table tr:last-child td { border-bottom: none; }
+.io-card code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--code-bg, #f6f8fa);
+  border: 1px solid var(--code-border, #e1e4e8);
+  color: var(--accent);
+}
+.io-card .warn-text {
+  font-size: 12.5px;
+  color: var(--warn-soft-text, #854d0e);
+  background: var(--warn-soft-bg, #fffbeb);
+  border: 1px solid var(--warn-soft-border, #f0d99a);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.hy-note { font-size: 12px; color: var(--dim); line-height: 1.7; margin: 4px 0 20px; }
+.hy-canvas-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.hy-canvas-wrap canvas {
+  width: 100%;
+  height: 560px;
+  display: block;
+}
+.hy-download {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+.hy-download button {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-solid);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.hy-download button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.hy-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.hy-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.hy-legend .line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+</style>
+</head>
+<body data-nav="plotting">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo"><span class="dot"></span><span>wayione</span></a>
+    <div class="nav-right">
+      <a href="../plotting.html" class="nav-back">← 返回绘图模板</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li><a href="../index.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>返回主页</span></a></li>
+      <li><a href="../plotting.html" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 12 4-4 4 4 5-6"/></svg><span>返回绘图模板</span></a></li>
+      <li><a href="#input-format" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg><span>输入数据格式</span></a></li>
+      <li><a href="#meaning" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>图形说明</span></a></li>
+      <li><a href="#preview" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>在线预览</span></a></li>
+      <li><a href="#python" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Python 代码</span></a></li>
+      <li><a href="#matlab" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>MATLAB 代码</span></a></li>
+      <li><a href="#notes" class="nav-parent"><svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>方法与说明</span></a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;"><a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a> &nbsp;/&nbsp;
+      <a href="../plotting.html">科研绘图模板</a> &nbsp;/&nbsp;
+      滞回曲线
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Template · 地震工程 · 结构弹塑性响应</div>
+      <h1>滞回曲线</h1>
+      <p class="lead">
+        构件或结构在<strong>循环荷载</strong>下的力–位移关系，
+        含<strong>骨架曲线</strong>、<strong>等效粘滞阻尼比</strong>与
+        <strong>损伤指标</strong>。滞回曲线的形状、面积与退化特征
+        直接反映构件的<strong>耗能能力</strong>与<strong>抗震性能</strong>，
+        是拟静力试验与弹塑性时程分析的核心输出。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震工程</span>
+        <span class="pill">滞回</span>
+        <span class="pill">骨架曲线</span>
+        <span class="pill blue">Python / MATLAB</span>
+        <span class="pill">A4 尺寸</span>
+      </div>
+    </header>
+
+    <section id="input-format">
+      <div class="section-head">
+        <span class="section-label">CSV Input</span>
+        <h2>输入数据格式</h2>
+      </div>
+
+      <p>
+        本页读取 <code>assets/hysteresis.csv</code> 作为输入。
+        文件是循环加载试验或弹塑性时程分析的整理输出：
+        三列，分别为<strong>时间</strong>、<strong>位移</strong>与<strong>力</strong>。
+        若文件不存在，页面会使用内置的合成数据演示。
+      </p>
+
+      <div class="io-card">
+        <h4>CSV 格式说明</h4>
+        <table>
+          <thead><tr>
+            <th style="width:140px;">列名</th>
+            <th style="width:180px;">物理量</th>
+            <th style="width:120px;">单位</th>
+            <th>说明</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><code>time_s</code></td><td>时间 t</td><td><code>s</code></td><td>等间隔，用于排序</td></tr>
+            <tr><td><code>disp_mm</code></td><td>位移 d</td><td><code>mm</code></td><td>加载端位移，正负交替</td></tr>
+            <tr><td><code>force_kN</code></td><td>力 F</td><td><code>kN</code></td><td>对应荷载或基底剪力</td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top:16px;">CSV 示例（前 12 行）</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin:6px 0 10px;">
+          页面默认读取以下内容（若 <code>assets/hysteresis.csv</code> 不存在，
+          则使用这份内联副本）：
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hysteresis.csv</span><span class="lang">CSV</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code># hysteresis.csv
+# 循环加载滞回曲线 —— 力 vs 位移
+# 单位：时间 s，位移 mm，力 kN
+time_s,disp_mm,force_kN
+0.00,0.00,0.00
+0.05,0.75,18.20
+0.10,1.50,36.10
+0.15,2.25,53.80
+...
+</code></pre>
+      </div>
+
+      <div class="hy-download">
+        <button type="button" id="btn-download-csv">下载 hysteresis.csv</button>
+      </div>
+
+      <div class="io-card" style="margin-top:18px;">
+        <h4>数据来源</h4>
+        <ul class="plain" style="margin:6px 0 0;">
+          <li><strong>拟静力试验</strong>——在试验机上对构件施加循环位移，
+            作动器记录位移与反力，是滞回曲线最直接的来源。</li>
+          <li><strong>弹塑性时程分析</strong>——ETABS、SAP2000、Perform-3D、
+            OpenSees、ABAQUS，输出控制点的位移与力时程。</li>
+          <li><strong>纤维截面模型</strong>——OpenSees 的
+            <code>forceBeamColumn</code> 单元，可以逐点输出截面弯矩–曲率
+            或构件力–位移关系。</li>
+          <li><strong>恢复力模型</strong>——如 Clough、Takeda、Bouc-Wen 等，
+            在数值模拟中直接生成滞回关系。</li>
+        </ul>
+
+        <div class="warn-text">
+          <strong>本页示例</strong>是一个典型的钢筋混凝土柱滞回曲线：
+          初始弹性刚度 K<sub>e</sub> ≈ 24 kN/mm，屈服力 V<sub>y</sub> ≈ 260 kN，
+          峰值力 V<sub>max</sub> ≈ 320 kN，滞回环随位移增大逐渐饱满，
+          呈现明显的捏拢效应。替换为你自己的试验或分析结果只需修改
+          <code>hysteresis.csv</code>。
+        </div>
+      </div>
+
+      <!-- ============================================================
+           计算步骤：从力-位移数据提取滞回特征
+           ============================================================ -->
+      <h3 class="sub">计算步骤：从力-位移数据提取滞回特征</h3>
+
+      <p>
+        滞回曲线的原始数据是<strong>力与位移的时程</strong>，
+        从中提取四类特征量：骨架曲线、等效粘滞阻尼比、损伤指标与耗能。
+        这些量是评价构件抗震性能的核心指标。
+      </p>
+
+      <div class="flow">
+        (t, d, F) 时程 → 找各循环峰值 → 连接峰值 → 骨架曲线
+        → 计算每个循环的滞回面积 A<sub>h</sub>
+        → 等效粘滞阻尼比 ζ<sub>eq</sub> = A<sub>h</sub> / (2π · F<sub>m</sub> · d<sub>m</sub>)
+        → 累积耗能 Σ A<sub>h</sub> → 损伤指标
+      </div>
+
+      <div class="io-card">
+        <h4>四个关键量的定义</h4>
+        <table>
+          <thead><tr>
+            <th style="width:180px;">量</th>
+            <th style="width:240px;">定义</th>
+            <th>物理意义</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>骨架曲线</strong></td>
+              <td>连接各循环位移峰值的包络线</td>
+              <td>反映构件的整体力-位移关系</td>
+            </tr>
+            <tr>
+              <td><strong>等效粘滞阻尼比</strong> ζ<sub>eq</sub></td>
+              <td><code>ζ<sub>eq</sub> = A<sub>h</sub> / (2π · F<sub>m</sub> · d<sub>m</sub>)</code></td>
+              <td>衡量滞回环的饱满程度，反映耗能能力</td>
+            </tr>
+            <tr>
+              <td><strong>累积耗能</strong> E<sub>h</sub></td>
+              <td>所有循环滞回面积之和</td>
+              <td>反映构件的总耗能能力</td>
+            </tr>
+            <tr>
+              <td><strong>损伤指标</strong> DI</td>
+              <td><code>DI = E<sub>h</sub> / (F<sub>y</sub> · d<sub>y</sub>)</code></td>
+              <td>综合反映累计损伤程度</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="warn-text">
+          <strong>常用损伤指标</strong>（DI）的几种形式：
+          Park-Ang 指标（考虑位移与耗能）、
+          累积塑性位移比、累积耗能比。
+          本页采用最简单的累积耗能比形式，可根据需要替换。
+        </div>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:20px 0 8px;">
+        Python 代码：滞回特征提取
+      </h4>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hysteresis_features.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 滞回曲线特征提取
+# -------------------------------------------------------------
+# 输入：hysteresis.csv
+#   time_s,disp_mm,force_kN
+# -------------------------------------------------------------
+# 输出：
+#   - 骨架曲线数据
+#   - 每个循环的等效粘滞阻尼比 ζeq
+#   - 累积耗能 Eh
+#   - 损伤指标 DI
+# =============================================================
+
+import numpy as np
+
+# ---- 1. 读取数据 ----
+data = np.loadtxt('hysteresis.csv', delimiter=',', skiprows=1)
+t = data[:, 0]
+d = data[:, 1]
+F = data[:, 2]
+
+# ---- 2. 找位移峰值点（局部极值） ----
+# 相邻三点，中间点比两边大或小 → 极值
+peaks_idx = []
+for i in range(1, len(d) - 1):
+    if (d[i] > d[i-1] and d[i] > d[i+1]) or \
+       (d[i] < d[i-1] and d[i] < d[i+1]):
+        peaks_idx.append(i)
+
+peaks_idx = np.array(peaks_idx)
+print(f'检测到 {len(peaks_idx)} 个位移峰值点')
+
+# ---- 3. 骨架曲线 ----
+d_skel = d[peaks_idx]
+F_skel = F[peaks_idx]
+
+# 分正负方向，取包络
+# 正方向：d > 0
+pos_mask = d_skel > 0
+neg_mask = d_skel < 0
+
+# 对每个幅值，取力最大的点
+def skeleton_curve(d_arr, F_arr, sign):
+    if sign > 0:
+        mask = d_arr > 0
+    else:
+        mask = d_arr < 0
+    d_s = d_arr[mask]
+    F_s = F_arr[mask]
+    order = np.argsort(np.abs(d_s))
+    d_s = d_s[order]
+    F_s = F_s[order]
+
+    # 逐点保留更大峰值
+    d_out, F_out = [], []
+    F_cur = 0
+    for di, Fi in zip(d_s, F_s):
+        if abs(Fi) >= abs(F_cur):
+            d_out.append(di)
+            F_out.append(Fi)
+            F_cur = Fi
+    return np.array(d_out), np.array(F_out)
+
+d_pos, F_pos = skeleton_curve(d, F, +1)
+d_neg, F_neg = skeleton_curve(d, F, -1)
+
+# ---- 4. 等效粘滞阻尼比 ζeq ----
+# 对每个完整循环（正峰值 → 负峰值 → 正峰值）计算滞回面积
+zeta_eq = []
+cumulative_energy = 0.0
+
+for k in range(1, len(peaks_idx)):
+    i1 = peaks_idx[k-1]
+    i2 = peaks_idx[k]
+    seg_d = d[i1:i2+1]
+    seg_F = F[i1:i2+1]
+
+    # 滞回面积（多边形面积，梯形法）
+    Ah = 0.5 * np.sum((seg_d[1:] + seg_d[:-1]) *
+                      (seg_F[1:] - seg_F[:-1]))
+
+    # 峰值点
+    d_m = np.max(np.abs(seg_d))
+    F_m = np.max(np.abs(seg_F))
+
+    if d_m > 0 and F_m > 0:
+        zeta = Ah / (2 * np.pi * F_m * d_m)
+        zeta_eq.append(zeta)
+        cumulative_energy += Ah
+
+zeta_eq = np.array(zeta_eq)
+print(f'\n等效粘滞阻尼比范围：{zeta_eq.min():.4f} – {zeta_eq.max():.4f}')
+print(f'累积耗能：{cumulative_energy:.2f} kN·mm')
+
+# ---- 5. 损伤指标（累积耗能比） ----
+# 取骨架曲线上的屈服点
+if len(d_pos) > 0:
+    # 用初始刚度定义屈服
+    Ke = np.polyfit(d_pos[:3], F_pos[:3], 1)[0]
+    Vy = 0.75 * np.max(F_pos)              # 简化：取峰值 75%
+    dy = Vy / Ke
+    DI = cumulative_energy / (Vy * dy)
+    print(f'\n初始刚度 Ke = {Ke:.2f} kN/mm')
+    print(f'屈服承载力 Vy = {Vy:.2f} kN')
+    print(f'屈服位移 dy = {dy:.2f} mm')
+    print(f'损伤指标 DI = {DI:.3f}')
+
+# ---- 6. 绘图 ----
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+# 滞回曲线
+ax.plot(d, F, lw=0.9, color='#b45309', alpha=0.85,
+        label='Hysteresis loop')
+
+# 骨架曲线
+ax.plot(d_pos, F_pos, '-o', lw=1.8, color='#2563eb',
+        ms=5, label='Skeleton curve (+)', zorder=5)
+ax.plot(d_neg, F_neg, '-s', lw=1.8, color='#9333ea',
+        ms=5, label='Skeleton curve (−)', zorder=5)
+
+ax.axhline(0, color='#888888', lw=0.5, ls='--')
+ax.axvline(0, color='#888888', lw=0.5, ls='--')
+
+ax.set_xlabel('Displacement  d (mm)')
+ax.set_ylabel('Force  F (kN)')
+ax.set_title('Hysteresis curve and skeleton', fontsize=11)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='lower right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('hysteresis.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>峰值检测</strong>：用局部极值法（三点比较），
+            找出所有位移极值点，即每个循环的加载峰值。</li>
+          <li><strong>骨架曲线</strong>：连接各正负位移峰值对应的最大力，
+            正负分别处理。</li>
+          <li><strong>滞回面积</strong>：用多边形面积公式（梯形法），
+            可以直接对每个循环的 (d, F) 序列计算。</li>
+          <li><strong>等效粘滞阻尼比</strong>：<code>ζeq = Ah / (2π·Fm·dm)</code>，
+            是衡量滞回环饱满程度的无量纲指标。</li>
+          <li><strong>损伤指标</strong>：本页用最简单的累积耗能比，
+            工程上常用的 Park-Ang 指标还需要叠加最大位移项。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="meaning">
+      <div class="section-head">
+        <span class="section-label">Meaning</span>
+        <h2>这张图说明了什么</h2>
+      </div>
+
+      <p>
+        滞回曲线描述构件或结构在<strong>往复荷载</strong>下的
+        力–位移关系。一个完整的滞回环由<strong>加载段</strong>与
+        <strong>卸载段</strong>围成，环的面积即为该循环消耗的能量。
+      </p>
+
+      <h3 class="sub">滞回曲线的三种典型形状</h3>
+
+      <ul class="plain">
+        <li><strong>梭形</strong>——形状饱满，耗能能力最强，
+          对应弯曲破坏的钢筋混凝土构件或钢结构。</li>
+        <li><strong>弓形</strong>——中部有捏拢（pinching）现象，
+          耗能能力中等，对应剪切-弯曲耦合破坏或钢筋滑移。</li>
+        <li><strong>反 S 形</strong>——捏拢明显，形状滑移，
+          耗能能力最弱，对应剪切破坏或锚固滑移严重。</li>
+      </ul>
+
+      <h3 class="sub">从滞回曲线上能读出什么</h3>
+
+      <ul class="plain">
+        <li><strong>初始刚度 K<sub>e</sub></strong>——原点附近滞回环的斜率，
+          反映构件初始弹性刚度。</li>
+        <li><strong>屈服点</strong>——滞回环从线性转向非线性的位置，
+          由骨架曲线与等能量法确定。</li>
+        <li><strong>峰值承载力</strong>——骨架曲线上的最大值，
+          反映构件的极限强度。</li>
+        <li><strong>滞回环面积</strong>——单次循环消耗的能量，
+          面积越大耗能能力越强。</li>
+        <li><strong>刚度退化</strong>——随着循环次数与位移幅值增加，
+          滞回环斜率逐渐减小，反映构件损伤累积。</li>
+        <li><strong>强度退化</strong>——相同位移幅值下，
+          后续循环的峰值力低于前一次，反映强度衰减。</li>
+        <li><strong>捏拢现象</strong>——加载段中部收缩，
+          通常由裂缝闭合或钢筋滑移引起，降低耗能能力。</li>
+        <li><strong>等效粘滞阻尼比 ζ<sub>eq</sub></strong>——
+          综合反映滞回环的饱满程度。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与 Pushover 曲线的关系：</strong>
+        Pushover 是单调加载下的力–位移曲线，而滞回是循环加载下的。
+        把循环加载的每个半循环的峰值点连起来，就得到骨架曲线，
+        与 Pushover 曲线形状接近。
+        滞回曲线比 Pushover 多了<strong>卸载-反向加载-再加载</strong>的完整信息，
+        反映了构件的耗能与退化特性。
+      </div>
+
+      <div class="callout warn">
+        <strong>注意：</strong>滞回曲线的形状与试验加载制度密切相关。
+        不同的加载幅值序列（递增、等幅、变幅）会得到不同的曲线。
+        工程上常用的加载制度有：
+        <strong>位移控制递增</strong>（每级 3 次循环，幅值递增）、
+        <strong>力控制</strong>（适用于弹性阶段）、
+        <strong>混合控制</strong>。报告中必须说明加载制度。
+      </div>
+    </section>
+
+    <section id="preview">
+      <div class="section-head">
+        <span class="section-label">Preview</span>
+        <h2>在线预览</h2>
+      </div>
+      <p>
+        下面这张图由 <code>assets/hysteresis.csv</code> 实时计算：
+        读取 CSV → 检测位移峰值 → 提取骨架曲线 → 绘制滞回环与骨架曲线。
+        画布尺寸按 A4 排版（720 × 560 px）。
+      </p>
+
+      <div class="file-info" style="margin-bottom:14px;">
+        <span class="ftag">输入数据</span>
+        <span class="fname">assets/hysteresis.csv</span>
+        <span class="fsize" id="info-stats">加载中…</span>
+      </div>
+
+      <div class="hy-canvas-wrap">
+        <canvas id="c-hysteresis"></canvas>
+      </div>
+
+      <div class="hy-legend">
+        <span><span class="line" style="background:#b45309"></span>滞回环</span>
+        <span><span class="line" style="background:#2563eb"></span>骨架曲线（正）</span>
+        <span><span class="line" style="background:#9333ea"></span>骨架曲线（负）</span>
+      </div>
+
+      <div class="hy-note" style="margin-top:14px;">
+        横轴为位移 d（mm），纵轴为力 F（kN）。
+        橙色细线为完整滞回环；蓝色带圆点折线为正方向骨架曲线；
+        紫色带方点折线为负方向骨架曲线。
+        图中标注初始刚度 K<sub>e</sub>、屈服力 V<sub>y</sub>、
+        峰值力 V<sub>max</sub> 与等效阻尼比 ζ<sub>eq</sub>。
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="section-head">
+        <span class="section-label">Python</span>
+        <h2>Python 代码</h2>
+      </div>
+      <p>
+        依赖 <code>numpy</code> 与 <code>matplotlib</code>。
+        核心步骤：读取 CSV → 检测位移峰值 → 提取骨架曲线 →
+        计算等效粘滞阻尼比与损伤指标 → 绘图。
+        CSV 文件不存在时自动生成合成数据。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hysteresis.py</span><span class="lang">Python</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-python"># =============================================================
+# 滞回曲线 | 力 - 位移关系
+# -------------------------------------------------------------
+# 输入数据：hysteresis.csv
+#   time_s,disp_mm,force_kN
+#   0.00,0.00,0.00
+#   ...
+#   单位：时间 s，位移 mm，力 kN
+# -------------------------------------------------------------
+# 功能：
+#   1. 读取 CSV（或使用内置合成数据）
+#   2. 检测位移峰值 → 骨架曲线
+#   3. 计算等效粘滞阻尼比 ζeq 与累积耗能 Eh
+#   4. 绘制滞回环 + 骨架曲线
+# =============================================================
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Songti SC', 'SimSun'],
+    'font.size': 10,
+    'axes.linewidth': 0.8,
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+})
+
+CSV_FILE = 'hysteresis.csv'
+
+
+def generate_synthetic():
+    """CSV 缺失时生成合成滞回曲线。
+
+    模拟一个钢筋混凝土柱：初始刚度 24 kN/mm，屈服力 260 kN，
+    峰值力 320 kN，带捏拢效应。
+    """
+    t_all, d_all, F_all = [], [], []
+    t_cur = 0.0
+
+    # 加载幅值序列（递增）
+    amplitudes = [5, 10, 20, 30, 40, 50]
+    n_per_amp = 60                # 每个半循环的点数
+    dt = 0.02
+
+    Ke = 24.0                     # 初始刚度 kN/mm
+    Fy = 260.0                    # 屈服力 kN
+    dy = Fy / Ke                  # 屈服位移 mm
+    F_max = 320.0                 # 峰值力
+    alpha = 0.05                  # 强化比
+
+    for amp in amplitudes:
+        # 正向加载：0 → +amp → 0
+        for direction in [+1, -1]:
+            d_seg = np.linspace(0, direction * amp, n_per_amp)
+            F_seg = []
+            for di in d_seg:
+                ad = abs(di)
+                sign = np.sign(di) if di != 0 else 1
+                if ad <= dy:
+                    Fi = Ke * ad
+                else:
+                    # 强化段
+                    Fi = Fy + alpha * Ke * (ad - dy)
+                    # 捏拢：加一个收缩因子
+                    pinch = 1.0 - 0.15 * (ad / max(amplitudes)) ** 2
+                    Fi *= pinch
+                F_seg.append(sign * Fi)
+            d_all.extend(d_seg.tolist())
+            F_all.extend(F_seg)
+            t_all.extend((t_cur + dt * np.arange(n_per_amp)).tolist())
+            t_cur += dt * n_per_amp
+
+    return np.array(t_all), np.array(d_all), np.array(F_all)
+
+
+# ---- 1. 读取数据 ----
+if os.path.exists(CSV_FILE):
+    data = np.loadtxt(CSV_FILE, delimiter=',', skiprows=1)
+    t = data[:, 0]
+    d = data[:, 1]
+    F = data[:, 2]
+    print(f'从 {CSV_FILE} 读取 {len(d)} 个点')
+else:
+    print(f'{CSV_FILE} 不存在，使用合成数据演示')
+    t, d, F = generate_synthetic()
+
+
+# ---- 2. 检测位移峰值 ----
+peaks_idx = []
+for i in range(1, len(d) - 1):
+    if (d[i] > d[i-1] and d[i] > d[i+1]) or \
+       (d[i] < d[i-1] and d[i] < d[i+1]):
+        peaks_idx.append(i)
+peaks_idx = np.array(peaks_idx)
+print(f'检测到 {len(peaks_idx)} 个位移峰值点')
+
+
+# ---- 3. 骨架曲线 ----
+def skeleton_curve(d_arr, F_arr, sign):
+    if sign > 0:
+        mask = d_arr > 0
+    else:
+        mask = d_arr < 0
+    d_s = d_arr[mask]
+    F_s = F_arr[mask]
+    order = np.argsort(np.abs(d_s))
+    d_s = d_s[order]
+    F_s = F_s[order]
+
+    d_out, F_out = [], []
+    F_cur = 0
+    for di, Fi in zip(d_s, F_s):
+        if abs(Fi) >= abs(F_cur):
+            d_out.append(di)
+            F_out.append(Fi)
+            F_cur = Fi
+    return np.array(d_out), np.array(F_out)
+
+d_pos, F_pos = skeleton_curve(d, F, +1)
+d_neg, F_neg = skeleton_curve(d, F, -1)
+
+
+# ---- 4. 等效粘滞阻尼比 ----
+zeta_eq = []
+cumulative_energy = 0.0
+for k in range(1, len(peaks_idx)):
+    i1 = peaks_idx[k-1]
+    i2 = peaks_idx[k]
+    seg_d = d[i1:i2+1]
+    seg_F = F[i1:i2+1]
+
+    Ah = 0.5 * np.sum((seg_d[1:] + seg_d[:-1]) *
+                      (seg_F[1:] - seg_F[:-1]))
+    d_m = np.max(np.abs(seg_d))
+    F_m = np.max(np.abs(seg_F))
+
+    if d_m > 0 and F_m > 0:
+        zeta_eq.append(Ah / (2 * np.pi * F_m * d_m))
+        cumulative_energy += Ah
+
+zeta_eq = np.array(zeta_eq)
+print(f'等效粘滞阻尼比：{zeta_eq.min():.4f} – {zeta_eq.max():.4f}')
+print(f'累积耗能：{cumulative_energy:.2f} kN·mm')
+
+
+# ---- 5. 绘图（A4 尺寸 7.2 × 5.6 in） ----
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+
+ax.plot(d, F, lw=0.9, color='#b45309', alpha=0.85,
+        label='Hysteresis loop')
+ax.plot(d_pos, F_pos, '-o', lw=1.8, color='#2563eb',
+        ms=5, label='Skeleton curve (+)', zorder=5)
+ax.plot(d_neg, F_neg, '-s', lw=1.8, color='#9333ea',
+        ms=5, label='Skeleton curve (−)', zorder=5)
+
+ax.axhline(0, color='#888888', lw=0.5, ls='--')
+ax.axvline(0, color='#888888', lw=0.5, ls='--')
+
+# 峰值标注
+if len(F_pos) > 0:
+    i_pk = int(np.argmax(F_pos))
+    ax.annotate(f'Vmax = {F_pos[i_pk]:.0f} kN',
+                xy=(d_pos[i_pk], F_pos[i_pk]),
+                xytext=(d_pos[i_pk] + 5, F_pos[i_pk] * 0.9),
+                fontsize=9, color='#2563eb',
+                arrowprops=dict(arrowstyle='-', color='#2563eb', lw=0.6))
+
+ax.set_xlabel('Displacement  d (mm)')
+ax.set_ylabel('Force  F (kN)')
+ax.set_title('Hysteresis curve and skeleton', fontsize=11)
+ax.grid(True, ls=':', lw=0.4, alpha=0.6)
+ax.legend(loc='lower right', fontsize=9, frameon=False)
+ax.tick_params(direction='in', which='both', top=True, right=True)
+
+fig.tight_layout()
+fig.savefig('hysteresis.png', dpi=300, bbox_inches='tight')
+plt.show()</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>关键点：</strong>
+        <ul style="margin:6px 0 0 18px;">
+          <li><strong>位移峰值检测</strong>：三点比较法，找出所有局部极值点。</li>
+          <li><strong>骨架曲线</strong>：分正负方向，对每个幅值保留最大力，
+            避免重复点。</li>
+          <li><strong>滞回面积</strong>：用多边形面积公式
+            <code>Ah = 0.5·Σ(dᵢ₊₁+dᵢ)·(Fᵢ₊₁−Fᵢ)</code>，
+            对所有循环累加得累积耗能。</li>
+          <li><strong>等效阻尼比</strong>：<code>ζeq = Ah / (2π·Fm·dm)</code>，
+            峰值越大、环越饱满，ζeq 越大。</li>
+          <li><strong>常见现象</strong>：初始弹性阶段 ζeq 很小（≈ 0.02），
+            屈服后逐渐增大到 0.15–0.30。</li>
+          <li>替换为真实试验数据只需修改 <code>hysteresis.csv</code>。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="matlab">
+      <div class="section-head">
+        <span class="section-label">MATLAB</span>
+        <h2>MATLAB 代码</h2>
+      </div>
+      <p>
+        与 Python 完全对应。局部函数 <code>local_skeleton</code>
+        实现骨架曲线提取，<code>local_zeta_eq</code> 计算等效阻尼比。
+      </p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>hysteresis.m</span><span class="lang">MATLAB</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+<pre><code class="language-matlab">% =============================================================
+% 滞回曲线 | 力 - 位移关系
+% -------------------------------------------------------------
+% 输入数据：hysteresis.csv
+%   time_s,disp_mm,force_kN
+%   单位：时间 s，位移 mm，力 kN
+% =============================================================
+
+CSV_FILE = 'hysteresis.csv';
+
+% ---- 1. 读取数据 ----
+if isfile(CSV_FILE)
+    T = readtable(CSV_FILE, 'CommentStyle', '#', ...
+                  'VariableNamingRule', 'preserve');
+    t = T.time_s;
+    d = T.disp_mm;
+    F = T.force_kN;
+    fprintf('从 %s 读取 %d 个点\n', CSV_FILE, numel(d));
+else
+    fprintf('%s 不存在，使用合成数据演示\n', CSV_FILE);
+    [t, d, F] = generate_synthetic();
+end
+
+% ---- 2. 检测位移峰值 ----
+peaks_idx = [];
+for i = 2:numel(d)-1
+    if (d(i) > d(i-1) && d(i) > d(i+1)) || ...
+       (d(i) < d(i-1) && d(i) < d(i+1))
+        peaks_idx(end+1) = i; %#ok<AGROW>
+    end
+end
+fprintf('检测到 %d 个位移峰值点\n', numel(peaks_idx));
+
+% ---- 3. 骨架曲线 ----
+[d_pos, F_pos] = local_skeleton(d, F, +1);
+[d_neg, F_neg] = local_skeleton(d, F, -1);
+
+% ---- 4. 等效粘滞阻尼比 ----
+[zeta_eq, Eh_total] = local_zeta_eq(d, F, peaks_idx);
+fprintf('等效粘滞阻尼比：%.4f – %.4f\n', min(zeta_eq), max(zeta_eq));
+fprintf('累积耗能：%.2f kN·mm\n', Eh_total);
+
+% ---- 5. 绘图（A4 尺寸 720 × 560 px） ----
+figure('Color', 'w', 'Position', [100 100 720 560]);
+hold on;
+
+% 滞回环
+plot(d, F, 'Color', [0.71 0.33 0.04], 'LineWidth', 0.9);
+
+% 骨架曲线
+plot(d_pos, F_pos, '-o', 'Color', [0.15 0.39 0.92], ...
+     'LineWidth', 1.8, 'MarkerSize', 5, ...
+     'MarkerFaceColor', [0.15 0.39 0.92], 'MarkerEdgeColor', 'none');
+plot(d_neg, F_neg, '-s', 'Color', [0.58 0.20 0.92], ...
+     'LineWidth', 1.8, 'MarkerSize', 5, ...
+     'MarkerFaceColor', [0.58 0.20 0.92], 'MarkerEdgeColor', 'none');
+
+yline(0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.5);
+xline(0, '--', 'Color', [0.53 0.53 0.53], 'LineWidth', 0.5);
+
+% 峰值标注
+if ~isempty(F_pos)
+    [Vmax, ipk] = max(F_pos);
+    text(d_pos(ipk) + 3, Vmax * 0.92, sprintf('Vmax = %.0f kN', Vmax), ...
+         'FontSize', 9, 'Color', [0.15 0.39 0.92]);
+end
+
+xlabel('Displacement  d (mm)');
+ylabel('Force  F (kN)');
+title('Hysteresis curve and skeleton', 'FontSize', 11);
+grid on; box on;
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 10, 'TickDir', 'in');
+legend({'Hysteresis loop', 'Skeleton (+)', 'Skeleton (−)'}, ...
+       'Location', 'southeast', 'Box', 'off', 'FontSize', 9);
+
+exportgraphics(gcf, 'hysteresis.png', 'Resolution', 300);
+
+
+% ===== 合成数据（当 CSV 缺失时使用） =====
+function [t, d, F] = generate_synthetic()
+    amplitudes = [5 10 20 30 40 50];
+    n_per = 60;
+    dt = 0.02;
+    Ke = 24.0; Fy = 260.0; dy = Fy / Ke;
+    F_max = 320.0; alpha = 0.05;
+
+    t = []; d = []; F = [];
+    t_cur = 0;
+
+    for amp = amplitudes
+        for dir = [1 -1]
+            d_seg = linspace(0, dir * amp, n_per);
+            F_seg = zeros(size(d_seg));
+            for i = 1:numel(d_seg)
+                ad = abs(d_seg(i));
+                sgn = sign(d_seg(i)); if sgn == 0, sgn = 1; end
+                if ad <= dy
+                    Fi = Ke * ad;
+                else
+                    Fi = Fy + alpha * Ke * (ad - dy);
+                    pinch = 1 - 0.15 * (ad / max(amplitudes))^2;
+                    Fi = Fi * pinch;
+                end
+                F_seg(i) = sgn * Fi;
+            end
+            d = [d, d_seg]; %#ok<AGROW>
+            F = [F, F_seg]; %#ok<AGROW>
+            t = [t, t_cur + dt * (0:n_per-1)]; %#ok<AGROW>
+            t_cur = t_cur + dt * n_per;
+        end
+    end
+end
+
+
+% ===== 骨架曲线提取 =====
+function [d_out, F_out] = local_skeleton(d_arr, F_arr, sign)
+    if sign > 0
+        mask = d_arr > 0;
+    else
+        mask = d_arr < 0;
+    end
+    d_s = d_arr(mask);
+    F_s = F_arr(mask);
+    [~, order] = sort(abs(d_s));
+    d_s = d_s(order);
+    F_s = F_s(order);
+
+    d_out = []; F_out = [];
+    F_cur = 0;
+    for i = 1:numel(d_s)
+        if abs(F_s(i)) >= abs(F_cur)
+            d_out(end+1) = d_s(i); %#ok<AGROW>
+            F_out(end+1) = F_s(i); %#ok<AGROW>
+            F_cur = F_s(i);
+        end
+    end
+end
+
+
+% ===== 等效粘滞阻尼比 =====
+function [zeta_eq, Eh_total] = local_zeta_eq(d, F, peaks_idx)
+    zeta_eq = [];
+    Eh_total = 0;
+    for k = 2:numel(peaks_idx)
+        i1 = peaks_idx(k-1);
+        i2 = peaks_idx(k);
+        seg_d = d(i1:i2);
+        seg_F = F(i1:i2);
+
+        Ah = 0.5 * sum((seg_d(2:end) + seg_d(1:end-1)) .* ...
+                       (seg_F(2:end) - seg_F(1:end-1)));
+        d_m = max(abs(seg_d));
+        F_m = max(abs(seg_F));
+
+        if d_m > 0 && F_m > 0
+            zeta_eq(end+1) = Ah / (2 * pi * F_m * d_m); %#ok<AGROW>
+            Eh_total = Eh_total + Ah;
+        end
+    end
+end</code></pre>
+      </div>
+    </section>
+
+    <section id="notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>方法与说明</h2>
+      </div>
+
+      <h4 style="font-size:14px; font-weight:650; margin:0 0 8px;">输入 / 输出量纲一览</h4>
+      <div class="io-card" style="margin-top:0;">
+        <table>
+          <thead><tr><th style="width:160px;">项</th><th style="width:180px;">符号</th><th>单位</th></tr></thead>
+          <tbody>
+            <tr><td><strong>输入</strong> · 时间</td><td>t</td><td><code>s</code></td></tr>
+            <tr><td><strong>输入</strong> · 位移</td><td>d</td><td><code>mm</code></td></tr>
+            <tr><td><strong>输入</strong> · 力</td><td>F</td><td><code>kN</code></td></tr>
+            <tr><td><strong>输出</strong> · 初始刚度</td><td>K<sub>e</sub></td><td><code>kN/mm</code></td></tr>
+            <tr><td><strong>输出</strong> · 屈服承载力</td><td>V<sub>y</sub></td><td><code>kN</code></td></tr>
+            <tr><td><strong>输出</strong> · 峰值承载力</td><td>V<sub>max</sub></td><td><code>kN</code></td></tr>
+            <tr><td><strong>输出</strong> · 等效阻尼比</td><td>ζ<sub>eq</sub></td><td>无量纲</td></tr>
+            <tr><td><strong>输出</strong> · 累积耗能</td><td>E<sub>h</sub></td><td><code>kN·mm</code></td></tr>
+            <tr><td><strong>输出</strong> · 损伤指标</td><td>DI</td><td>无量纲</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="plain">
+        <li><strong>峰值检测</strong>：三点比较法，适用于大多数规则循环加载。</li>
+        <li><strong>骨架曲线</strong>：分正负方向，对每个幅值保留最大力，
+          避免重复点。</li>
+        <li><strong>滞回面积</strong>：<code>Ah = 0.5·Σ(dᵢ₊₁+dᵢ)·(Fᵢ₊₁−Fᵢ)</code>，
+          对所有循环累加得累积耗能。</li>
+        <li><strong>等效阻尼比</strong>：<code>ζeq = Ah / (2π·Fm·dm)</code>，
+          工程上屈服前 ζeq ≈ 0.02–0.05，屈服后可达 0.10–0.30。</li>
+        <li><strong>损伤指标</strong>：本页用最简单的累积耗能比。工程上更常用
+          Park-Ang 指标：<code>DI = d<sub>m</sub>/d<sub>u</sub> + β·E<sub>h</sub>/(F<sub>y</sub>·d<sub>y</sub>)</code>。</li>
+        <li><strong>加载制度</strong>：常见的有递增位移控制（每级 3 次循环）、
+          等幅循环、变幅循环。报告中必须说明。</li>
+        <li><strong>常见问题：</strong>
+          <ul style="margin:4px 0 0 16px;">
+            <li>滞回环面积明显偏大 → 检查位移与力的单位是否正确，
+              或数据是否混入不同幅值的循环。</li>
+            <li>骨架曲线不单调 → 检查是否用了同一幅值的多次循环，
+              或峰值检测漏掉了某些点。</li>
+            <li>ζeq 异常大（&gt; 0.5）→ 数据可能包含大量噪声，
+              或位移幅值过小导致计算不稳定。</li>
+            <li>曲线出现明显的捏拢 → 这是构件滑移或裂缝闭合，
+              属正常现象，会降低耗能能力。</li>
+            <li>CSV 编码乱码 → 保存为 UTF-8，列名严格按示例。</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <strong>相关笔记：</strong>
+        <a href="../earthquake-engineering.html">地震工程</a>（滞回模型、耗能、损伤评估）、
+        <a href="../plasticity.html">塑性力学</a>（屈服准则、随动强化、Bauschinger 效应）、
+        <a href="../structural-dynamics.html">结构动力学</a>（弹塑性时程分析、能量平衡）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../plotting.html">
+      <span class="arrow">←</span> 返回绘图模板
+    </a>
+
+    <footer>© 2026 wayione · 绘图模板 · 滞回曲线</footer>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     默认 CSV（合成数据）
+     ============================================================ */
+  function generateSyntheticCSV() {
+    var rows = ['# hysteresis.csv'];
+    rows.push('# 循环加载滞回曲线 —— 力 vs 位移');
+    rows.push('# 单位：时间 s，位移 mm，力 kN');
+    rows.push('time_s,disp_mm,force_kN');
+
+    var amplitudes = [5, 10, 20, 30, 40, 50];
+    var nPer = 60;
+    var dt = 0.02;
+    var tCur = 0;
+    var Ke = 24.0, Fy = 260.0;
+    var dy = Fy / Ke;
+    var alpha = 0.05;
+    var maxAmp = 50;
+
+    for (var a = 0; a < amplitudes.length; a++) {
+      var amp = amplitudes[a];
+      var dirs = [1, -1];
+      for (var di = 0; di < 2; di++) {
+        var dir = dirs[di];
+        for (var i = 0; i < nPer; i++) {
+          var t = tCur + i * dt;
+          var d = dir * amp * i / (nPer - 1);
+          var ad = Math.abs(d);
+          var sgn = d >= 0 ? 1 : -1;
+          var F;
+          if (ad <= dy) {
+            F = Ke * ad;
+          } else {
+            F = Fy + alpha * Ke * (ad - dy);
+            var pinch = 1 - 0.15 * Math.pow(ad / maxAmp, 2);
+            F = F * pinch;
+          }
+          F = sgn * F;
+          rows.push(t.toFixed(4) + ',' + d.toFixed(4) + ',' + F.toFixed(4));
+        }
+        tCur += nPer * dt;
+      }
+    }
+    return rows.join('\n') + '\n';
+  }
+
+  var DEFAULT_CSV = generateSyntheticCSV();
+
+  /* ============================================================
+     CSV 解析
+     ============================================================ */
+  function parseCSV(text) {
+    var lines = text.split(/\r?\n/);
+    var t = [], d = [], F = [];
+    var headerSkipped = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') continue;
+      if (!headerSkipped) { headerSkipped = true; continue; }
+      var parts = line.split(',');
+      if (parts.length < 3) continue;
+      var tv = parseFloat(parts[0]);
+      var dv = parseFloat(parts[1]);
+      var fv = parseFloat(parts[2]);
+      if (!isFinite(tv) || !isFinite(dv) || !isFinite(fv)) continue;
+      t.push(tv); d.push(dv); F.push(fv);
+    }
+    return { t: t, d: d, F: F };
+  }
+
+  /* ============================================================
+     位移峰值检测
+     ============================================================ */
+  function findPeaks(d) {
+    var idx = [];
+    for (var i = 1; i < d.length - 1; i++) {
+      if ((d[i] > d[i - 1] && d[i] > d[i + 1]) ||
+          (d[i] < d[i - 1] && d[i] < d[i + 1])) {
+        idx.push(i);
+      }
+    }
+    return idx;
+  }
+
+  /* ============================================================
+     骨架曲线提取
+     ============================================================ */
+  function skeletonCurve(d, F, sign) {
+    var dOut = [], FOut = [];
+    var dArr = [], FArr = [];
+    for (var i = 0; i < d.length; i++) {
+      if (sign > 0 ? d[i] > 0 : d[i] < 0) {
+        dArr.push(d[i]);
+        FArr.push(F[i]);
+      }
+    }
+    /* 按绝对值排序 */
+    var order = dArr.map(function (_, idx) { return idx; });
+    order.sort(function (a, b) {
+      return Math.abs(dArr[a]) - Math.abs(dArr[b]);
+    });
+    var FC = 0;
+    for (var k = 0; k < order.length; k++) {
+      var i2 = order[k];
+      if (Math.abs(FArr[i2]) >= Math.abs(FC)) {
+        dOut.push(dArr[i2]);
+        FOut.push(FArr[i2]);
+        FC = FArr[i2];
+      }
+    }
+    return { d: dOut, F: FOut };
+  }
+
+  /* ============================================================
+     等效粘滞阻尼比
+     ============================================================ */
+  function computeZetaEq(d, F, peaks) {
+    var zetas = [];
+    var EhTotal = 0;
+    for (var k = 1; k < peaks.length; k++) {
+      var i1 = peaks[k - 1];
+      var i2 = peaks[k];
+      var Ah = 0;
+      var dM = 0, FM = 0;
+      for (var j = i1; j < i2; j++) {
+        Ah += 0.5 * (d[j + 1] + d[j]) * (F[j + 1] - F[j]);
+        var ad = Math.abs(d[j]);
+        var aF = Math.abs(F[j]);
+        if (ad > dM) dM = ad;
+        if (aF > FM) FM = aF;
+      }
+      var ad2 = Math.abs(d[i2]);
+      var aF2 = Math.abs(F[i2]);
+      if (ad2 > dM) dM = ad2;
+      if (aF2 > FM) FM = aF2;
+
+      if (dM > 0 && FM > 0) {
+        zetas.push(Ah / (2 * Math.PI * FM * dM));
+        EhTotal += Ah;
+      }
+    }
+    return { zetas: zetas, EhTotal: EhTotal };
+  }
+
+  /* ============================================================
+     工具函数
+     ============================================================ */
+  function niceTicks(min, max, count) {
+    var range = max - min;
+    if (range === 0) return [min];
+    var rawStep = range / count;
+    var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    var norm = rawStep / mag;
+    var step;
+    if (norm < 1.5) step = 1;
+    else if (norm < 3) step = 2;
+    else if (norm < 7) step = 5;
+    else step = 10;
+    step *= mag;
+    var start = Math.floor(min / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) {
+      if (v >= min - step * 1e-6) ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function fmtTick(v) {
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 100) return v.toFixed(0);
+    if (a >= 10) return v.toFixed(0);
+    if (a >= 1) return v.toFixed(0);
+    return v.toFixed(0);
+  }
+
+  /* ============================================================
+     主绘制
+     ============================================================ */
+  function drawHysteresis(canvasId, t, d, F, skelPos, skelNeg, zetaInfo) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    var W = Math.max(400, Math.round(rect.width) || 720);
+    var H = Math.max(300, Math.round(rect.height) || 560);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    /* ---- 范围 ---- */
+    var dMin = Infinity, dMax = -Infinity;
+    var fMin = Infinity, fMax = -Infinity;
+    for (var i = 0; i < d.length; i++) {
+      if (d[i] < dMin) dMin = d[i];
+      if (d[i] > dMax) dMax = d[i];
+      if (F[i] < fMin) fMin = F[i];
+      if (F[i] > fMax) fMax = F[i];
+    }
+    var dSpan = dMax - dMin;
+    var fSpan = fMax - fMin;
+    dMin -= dSpan * 0.06; dMax += dSpan * 0.06;
+    fMin -= fSpan * 0.08; fMax += fSpan * 0.08;
+
+    var margin = { top: 20, right: 26, bottom: 52, left: 76 };
+    var px = margin.left;
+    var py = margin.top;
+    var pw = W - margin.left - margin.right;
+    var ph = H - margin.top - margin.bottom;
+
+    function toX(v) { return px + (v - dMin) / (dMax - dMin) * pw; }
+    function toY(v) { return py + ph - (v - fMin) / (fMax - fMin) * ph; }
+
+    var xTicks = niceTicks(dMin, dMax, 6);
+    var yTicks = niceTicks(fMin, fMax, 6);
+
+    /* ---- 网格 ---- */
+    ctx.strokeStyle = '#e5e5e5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var yy = toY(yTicks[yi]);
+      ctx.beginPath();
+      ctx.moveTo(px, yy);
+      ctx.lineTo(px + pw, yy);
+      ctx.stroke();
+    }
+    for (var xi = 0; xi < xTicks.length; xi++) {
+      var xx = toX(xTicks[xi]);
+      ctx.beginPath();
+      ctx.moveTo(xx, py);
+      ctx.lineTo(xx, py + ph);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    /* ---- 零线 ---- */
+    if (fMin <= 0 && fMax >= 0) {
+      ctx.strokeStyle = '#888888';
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([4, 4]);
+      var y0 = toY(0);
+      ctx.beginPath();
+      ctx.moveTo(px, y0);
+      ctx.lineTo(px + pw, y0);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (dMin <= 0 && dMax >= 0) {
+      ctx.strokeStyle = '#888888';
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([4, 4]);
+      var x0 = toX(0);
+      ctx.beginPath();
+      ctx.moveTo(x0, py);
+      ctx.lineTo(x0, py + ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    /* ---- 滞回环 ---- */
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 0.9;
+    ctx.globalAlpha = 0.85;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var k = 0; k < d.length; k++) {
+      var cxp = toX(d[k]);
+      var cyp = toY(F[k]);
+      if (k === 0) ctx.moveTo(cxp, cyp);
+      else ctx.lineTo(cxp, cyp);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+
+    /* ---- 骨架曲线（正） ---- */
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    for (var p = 0; p < skelPos.d.length; p++) {
+      var xsp = toX(skelPos.d[p]);
+      var ysp = toY(skelPos.F[p]);
+      if (p === 0) ctx.moveTo(xsp, ysp);
+      else ctx.lineTo(xsp, ysp);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#2563eb';
+    for (var p2 = 0; p2 < skelPos.d.length; p2++) {
+      ctx.beginPath();
+      ctx.arc(toX(skelPos.d[p2]), toY(skelPos.F[p2]), 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---- 骨架曲线（负） ---- */
+    ctx.strokeStyle = '#9333ea';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    for (var n = 0; n < skelNeg.d.length; n++) {
+      var xsn = toX(skelNeg.d[n]);
+      var ysn = toY(skelNeg.F[n]);
+      if (n === 0) ctx.moveTo(xsn, ysn);
+      else ctx.lineTo(xsn, ysn);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#9333ea';
+    for (var n2 = 0; n2 < skelNeg.d.length; n2++) {
+      var xsn2 = toX(skelNeg.d[n2]);
+      var ysn2 = toY(skelNeg.F[n2]);
+      ctx.fillRect(xsn2 - 3.5, ysn2 - 3.5, 7, 7);
+    }
+
+    /* ---- 峰值标注 ---- */
+    if (skelPos.F.length > 0) {
+      var iPeak = 0;
+      for (var pp = 1; pp < skelPos.F.length; pp++) {
+        if (skelPos.F[pp] > skelPos.F[iPeak]) iPeak = pp;
+      }
+      var xpk = toX(skelPos.d[iPeak]);
+      var ypk = toY(skelPos.F[iPeak]);
+      ctx.fillStyle = '#2563eb';
+      ctx.font = '10.5px "Times New Roman", "Songti SC", serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      var labelX = xpk + 8;
+      if (labelX + 130 > px + pw) {
+        labelX = xpk - 138;
+        ctx.textAlign = 'right';
+      }
+      ctx.fillText('Vmax = ' + skelPos.F[iPeak].toFixed(0) + ' kN',
+                   labelX, ypk - 4);
+    }
+
+    /* ---- 四边框 ---- */
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px, py, pw, ph);
+
+    /* ---- 刻度朝内 ---- */
+    var mainTick = 6, minorTick = 3;
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.7;
+
+    for (var yk = 0; yk < yTicks.length; yk++) {
+      var yky = toY(yTicks[yk]);
+      ctx.beginPath();
+      ctx.moveTo(px, yky);
+      ctx.lineTo(px + mainTick, yky);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px + pw, yky);
+      ctx.lineTo(px + pw - mainTick, yky);
+      ctx.stroke();
+    }
+    for (var xk = 0; xk < xTicks.length; xk++) {
+      var xkx = toX(xTicks[xk]);
+      ctx.beginPath();
+      ctx.moveTo(xkx, py + ph);
+      ctx.lineTo(xkx, py + ph - mainTick);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xkx, py);
+      ctx.lineTo(xkx, py + mainTick);
+      ctx.stroke();
+    }
+
+    /* ---- 刻度标签 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = '11px "Times New Roman", serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var yl = 0; yl < yTicks.length; yl++) {
+      ctx.fillText(fmtTick(yTicks[yl]), px - 6, toY(yTicks[yl]));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var xl = 0; xl < xTicks.length; xl++) {
+      ctx.fillText(fmtTick(xTicks[xl]), toX(xTicks[xl]), py + ph + 7);
+    }
+
+    /* ---- 轴标题 ---- */
+    ctx.fillStyle = '#222222';
+    ctx.font = 'italic 12.5px "Times New Roman", "Songti SC", serif';
+    ctx.save();
+    ctx.translate(px - 58, py + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Force  F (kN)', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Displacement  d (mm)', px + pw / 2, H - 4);
+
+    /* ---- 图例（右下角） ---- */
+    var legendItems = [
+      { name: 'Hysteresis loop', color: '#b45309', lw: 1.2, alpha: 0.85 },
+      { name: 'Skeleton curve (+)', color: '#2563eb', lw: 1.8 },
+      { name: 'Skeleton curve (−)', color: '#9333ea', lw: 1.8 }
+    ];
+    ctx.font = '10px "Times New Roman", "Songti SC", serif';
+    var lgW = 0;
+    for (var li = 0; li < legendItems.length; li++) {
+      var w = ctx.measureText(legendItems[li].name).width + 32;
+      if (w > lgW) lgW = w;
+    }
+    var lgH = 15 * legendItems.length + 10;
+    var lgx = px + pw - lgW - 8;
+    var lgy = py + ph - lgH - 8;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 0.5;
+    ctx.fillRect(lgx, lgy, lgW, lgH);
+    ctx.strokeRect(lgx, lgy, lgW, lgH);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (var lj = 0; lj < legendItems.length; lj++) {
+      var ly = lgy + 8 + lj * 15;
+      var it = legendItems[lj];
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = it.lw;
+      ctx.globalAlpha = it.alpha || 1.0;
+      ctx.beginPath();
+      ctx.moveTo(lgx + 6, ly);
+      ctx.lineTo(lgx + 22, ly);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#222222';
+      ctx.fillText(it.name, lgx + 26, ly);
+    }
+  }
+
+  /* ============================================================
+     主流程
+     ============================================================ */
+  function render(parsed) {
+    var d = parsed.d;
+    var F = parsed.F;
+
+    var peaks = findPeaks(d);
+    var skelPos = skeletonCurve(d, F, +1);
+    var skelNeg = skeletonCurve(d, F, -1);
+    var zetaInfo = computeZetaEq(d, F, peaks);
+
+    drawHysteresis('c-hysteresis', parsed.t, d, F, skelPos, skelNeg, zetaInfo);
+
+    var status = document.getElementById('info-stats');
+    if (status) {
+      var maxF = 0;
+      for (var i = 0; i < F.length; i++) if (F[i] > maxF) maxF = F[i];
+      var zetaStr = zetaInfo.zetas.length > 0
+        ? zetaInfo.zetas[zetaInfo.zetas.length - 1].toFixed(3)
+        : '—';
+      status.textContent = d.length + ' 个数据点 · ' +
+                           peaks.length + ' 个峰值 · ' +
+                           'Vmax = ' + maxF.toFixed(1) + ' kN · ' +
+                           '累积耗能 = ' + zetaInfo.EhTotal.toFixed(1) + ' kN·mm · ' +
+                           'ζeq(末循环) = ' + zetaStr;
+    }
+  }
+
+  function load() {
+    var status = document.getElementById('info-stats');
+    if (status) status.textContent = '加载中…';
+
+    fetch('../assets/hysteresis.csv', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var parsed = parseCSV(text);
+        if (parsed.d.length < 10) throw new Error('有效数据点不足');
+        render(parsed);
+      })
+      .catch(function (err) {
+        if (window.console) {
+          console.warn('[hysteresis] 读取 assets/hysteresis.csv 失败，使用内联 CSV：', err);
+        }
+        var parsed = parseCSV(DEFAULT_CSV);
+        render(parsed);
+      });
+  }
+
+  /* ============================================================
+     下载 CSV
+     ============================================================ */
+  var btnDownload = document.getElementById('btn-download-csv');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([DEFAULT_CSV], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'hysteresis.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  var themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) themeToggle.addEventListener('click', function () { setTimeout(load, 60); });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(load, 180);
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+
+})();
+</script>
+
+</body>
+</html>
