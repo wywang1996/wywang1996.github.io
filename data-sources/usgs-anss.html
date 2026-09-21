@@ -349,7 +349,7 @@
           </tbody>
         </table>
         <div class="warn-text">
-          <strong>服务地址：</strong><code>https://earthquake.usgs.gov/fdsnws/event/1/</code>。
+          <strong>服务地址：</strong><code>earthquake.usgs.gov/fdsnws/event/1/</code>。
           支持 <code>query</code>、<code>count</code>、<code>catalogs</code>、<code>contributors</code>
           等方法。
         </div>
@@ -691,58 +691,198 @@
       </div>
 
       <h3 class="sub">1. 事件元数据字段说明</h3>
-      <div class="io-card">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:160px;">字段</th>
-              <th style="width:140px;">单位/类型</th>
-              <th>说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>time</strong></td><td>UTC</td><td>发震时刻，ISO8601 格式</td></tr>
-            <tr><td><strong>latitude</strong></td><td>度</td><td>震中纬度</td></tr>
-            <tr><td><strong>longitude</strong></td><td>度</td><td>震中经度</td></tr>
-            <tr><td><strong>depth</strong></td><td>km</td><td>震源深度，正值向下</td></tr>
-            <tr><td><strong>mag</strong></td><td>—</td><td>震级值</td></tr>
-            <tr><td><strong>magType</strong></td><td>string</td><td>震级标度：Mw / Ms / mb / ML / Md 等</td></tr>
-            <tr><td><strong>place</strong></td><td>string</td><td>震中位置文字描述</td></tr>
-            <tr><td><strong>id</strong></td><td>string</td><td>事件唯一标识符</td></tr>
-            <tr><td><strong>tsunami</strong></td><td>0/1</td><td>海啸标志</td></tr>
-            <tr><td><strong>felt</strong></td><td>int</td><td>震感报告数量</td></tr>
-            <tr><td><strong>alert</strong></td><td>string</td><td>PAGER 警报等级（green / yellow / orange / red）</td></tr>
-            <tr><td><strong>sig</strong></td><td>int</td><td>事件重要性评分（0–1000）</td></tr>
-            <tr><td><strong>net</strong></td><td>string</td><td>贡献台网代码</td></tr>
-            <tr><td><strong>nst</strong></td><td>int</td><td>参与定位的台站数</td></tr>
-            <tr><td><strong>dmin</strong></td><td>度</td><td>最小震中距（度）</td></tr>
-            <tr><td><strong>gap</strong></td><td>度</td><td>方位角间隙</td></tr>
-            <tr><td><strong>updated</strong></td><td>UTC</td><td>最后更新时间</td></tr>
-          </tbody>
-        </table>
+      <p>
+        ComCat 的字段数量众多，按用途可分为<strong>基本参数</strong>、
+        <strong>定位质量参数</strong>、<strong>影响与评估参数</strong>和
+        <strong>事件标识与状态</strong>四类。点击下方标签查看各类字段的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="basic" role="tab" aria-selected="true">基本参数</button>
+          <button class="nga-tab-btn" data-tab="quality" role="tab" aria-selected="false">定位质量参数</button>
+          <button class="nga-tab-btn" data-tab="impact" role="tab" aria-selected="false">影响与评估参数</button>
+          <button class="nga-tab-btn" data-tab="identity" role="tab" aria-selected="false">事件标识与状态</button>
+        </div>
+
+        <!-- 基本参数 -->
+        <div class="nga-tab-panel active" id="tab-basic" role="tabpanel">
+          <h3>基本参数</h3>
+          <div class="tagline">所有事件均包含 · 描述震源基本属性</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">字段</th>
+                  <th style="width:140px;">单位/类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>time</strong></td><td>UTC / ISO8601</td><td>发震时刻，格式为 <code>YYYY-MM-DDTHH:MM:SS.sssZ</code></td></tr>
+                <tr><td><strong>latitude</strong></td><td>度</td><td>震中纬度（-90 至 90）</td></tr>
+                <tr><td><strong>longitude</strong></td><td>度</td><td>震中经度（-180 至 180）</td></tr>
+                <tr><td><strong>depth</strong></td><td>km</td><td>震源深度，正值向下。浅源事件深度误差较大</td></tr>
+                <tr><td><strong>mag</strong></td><td>—</td><td>震级值（无量纲）</td></tr>
+                <tr><td><strong>magType</strong></td><td>string</td><td>震级标度：<code>mw</code> / <code>mww</code> / <code>mb</code> / <code>ml</code> / <code>md</code> / <code>mwr</code> 等</td></tr>
+                <tr><td><strong>place</strong></td><td>string</td><td>震中位置的文字描述（如 “10 km NE of Ridgecrest, CA”）</td></tr>
+                <tr><td><strong>type</strong></td><td>string</td><td>事件类型：<code>earthquake</code> / <code>quarry blast</code> / <code>explosion</code> / <code>ice quake</code> 等</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>震级标度差异：</strong>ComCat 中同一事件可能包含多个震级解，
+              每条解有各自的标度。首选解（preferred）通常采用
+              <strong>矩震级（Mw）</strong>，适用于中强震；
+              小震级事件可能仅提供 <code>ml</code> 或 <code>md</code>。
+            </div>
+          </div>
+        </div>
+
+        <!-- 定位质量参数 -->
+        <div class="nga-tab-panel" id="tab-quality" role="tabpanel">
+          <h3>定位质量参数</h3>
+          <div class="tagline">评估震源定位可靠性 · 筛选优质事件</div>
+          <p>
+            定位质量参数用于评估震源定位的可靠性。
+            在批量下载和统计分析前，应检查这些参数以剔除质量较差的事件。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>nst</strong></td><td>个</td><td>参与定位的台站数。台站越多定位越可靠，通常 ≥ 10 为佳</td></tr>
+                <tr><td><strong>dmin</strong></td><td>度</td><td>最近台站到震中的距离（度）</td></tr>
+                <tr><td><strong>rms</strong></td><td>秒</td><td>走时残差的均方根。越小表示定位拟合越好</td></tr>
+                <tr><td><strong>gap</strong></td><td>度</td><td>方位角间隙。台站分布的最大方位角空隙，越小越好（&lt; 180° 较可靠）</td></tr>
+                <tr><td><strong>horizontalError</strong></td><td>km</td><td>震中水平定位误差</td></tr>
+                <tr><td><strong>depthError</strong></td><td>km</td><td>震源深度误差。浅源地震深度误差通常较大</td></tr>
+                <tr><td><strong>magError</strong></td><td>—</td><td>震级的标准误差</td></tr>
+                <tr><td><strong>magNst</strong></td><td>个</td><td>参与震级测定的台站数</td></tr>
+                <tr><td><strong>locationSource</strong></td><td>string</td><td>定位来源台网代码（如 <code>ak</code>、<code>ci</code>、<code>us</code>）</td></tr>
+                <tr><td><strong>magSource</strong></td><td>string</td><td>震级来源台网代码</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>质量筛选建议：</strong>
+              通常水平误差 &lt; 10 km、台站数 ≥ 8、方位角间隙 &lt; 180°、
+              RMS &lt; 1.0 s 的定位较为可靠。
+              对于台站数很少或方位角间隙接近 360° 的事件，震中位置可能偏差较大。
+            </div>
+          </div>
+        </div>
+
+        <!-- 影响与评估参数 -->
+        <div class="nga-tab-panel" id="tab-impact" role="tabpanel">
+          <h3>影响与评估参数</h3>
+          <div class="tagline">宏观影响 · 灾害评估 · 自动生成</div>
+          <p>
+            USGS 在事件发生后会自动生成一系列<strong>影响与评估产品</strong>，
+            这些参数在事件详情页和 GeoJSON/QuakeML 中均有体现。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>tsunami</strong></td><td>0/1</td><td>海啸标志。1 表示该事件可能引发海啸</td></tr>
+                <tr><td><strong>felt</strong></td><td>int</td><td>公众震感报告数量（DYFI）</td></tr>
+                <tr><td><strong>cdi</strong></td><td>—</td><td>最大社区十进制烈度（Community Decimal Intensity）</td></tr>
+                <tr><td><strong>mmi</strong></td><td>—</td><td>最大修正麦卡利烈度（Modified Mercalli Intensity）</td></tr>
+                <tr><td><strong>alert</strong></td><td>string</td><td>PAGER 警报等级：<code>green</code> / <code>yellow</code> / <code>orange</code> / <code>red</code></td></tr>
+                <tr><td><strong>sig</strong></td><td>0–1000</td><td>事件重要性评分，综合震级、震感、海啸等计算</td></tr>
+                <tr><td><strong>net</strong></td><td>string</td><td>发布该事件的主要贡献台网代码</td></tr>
+                <tr><td><strong>sources</strong></td><td>string</td><td>提供该事件信息的台网代码列表（逗号分隔）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>PAGER 等级：</strong>green 表示影响很小，red 表示可能造成严重人员伤亡与经济损失。
+              PAGER 等级仅对全球 M5.5+ 事件发布。
+            </div>
+          </div>
+        </div>
+
+        <!-- 事件标识与状态 -->
+        <div class="nga-tab-panel" id="tab-identity" role="tabpanel">
+          <h3>事件标识与状态</h3>
+          <div class="tagline">唯一标识 · 版本管理 · 更新追踪</div>
+          <p>
+            ComCat 的事件标识与状态字段用于追踪事件的版本和更新历史。
+            由于 ComCat 数据是<strong>动态更新</strong>的，这些字段对于数据管理尤为重要。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>id</strong></td><td>事件唯一标识符，格式为 <code>台网代码 + 序号</code>（如 <code>us6000abcd</code>、<code>ci12345678</code>）</td></tr>
+                <tr><td><strong>codes</strong></td><td>该事件的所有已知标识符列表（不同台网使用不同 ID）</td></tr>
+                <tr><td><strong>ids</strong></td><td>逗号分隔的所有标识符</td></tr>
+                <tr><td><strong>status</strong></td><td>审核状态：<code>automatic</code>（自动） / <code>reviewed</code>（已审核） / <code>deleted</code>（已删除）</td></tr>
+                <tr><td><strong>updated</strong></td><td>最后更新时间（UTC），每次信息更新均会刷新</td></tr>
+                <tr><td><strong>detail</strong></td><td>事件详情页的 URL</td></tr>
+                <tr><td><strong>url</strong></td><td>事件主页 URL（通常与 detail 相同）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>状态说明：</strong>
+              自动（automatic）解由系统在事件发生后数分钟内生成，
+              可能随时间被审核（reviewed）解替换。
+              在研究中应优先使用 <strong>reviewed</strong> 状态的事件。
+            </div>
+          </div>
+        </div>
       </div>
 
       <h3 class="sub">2. 数据产品类型</h3>
+      <p>
+        ComCat 的核心特色之一是<strong>同一事件可关联多种产品</strong>。
+        这些产品由 USGS 及合作机构自动或半自动生成，
+        涵盖从震源参数到灾害评估的完整链条。
+      </p>
       <div class="io-card">
         <table>
           <thead>
             <tr>
               <th style="width:180px;">产品类型</th>
+              <th style="width:140px;">生成机构</th>
               <th>说明</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td><strong>Origin</strong></td><td>震源位置解，一个事件可能有多个 Origin</td></tr>
-            <tr><td><strong>Magnitude</strong></td><td>震级解，多种标度</td></tr>
-            <tr><td><strong>Moment Tensor</strong></td><td>矩张量解（全球 GCMT 和区域矩张量）</td></tr>
-            <tr><td><strong>Focal Mechanism</strong></td><td>断层面解（走向、倾角、滑动角）</td></tr>
-            <tr><td><strong>Finite Fault</strong></td><td>有限断层滑动分布模型（大地震）</td></tr>
-            <tr><td><strong>ShakeMap</strong></td><td>震动图（地面运动分布）</td></tr>
-            <tr><td><strong>DYFI</strong></td><td>震感报告（Did You Feel It?）</td></tr>
-            <tr><td><strong>PAGER</strong></td><td>警报等级与影响评估</td></tr>
-            <tr><td><strong>Phase Data</strong></td><td>震相拾取（到时、振幅、周期）</td></tr>
+            <tr><td><strong>Origin</strong></td><td>USGS / 区域台网</td><td>震源位置解。一个事件可能有多个 Origin（不同台网或不同时间）</td></tr>
+            <tr><td><strong>Magnitude</strong></td><td>USGS / 区域台网</td><td>震级解。同一事件可能有多种标度</td></tr>
+            <tr><td><strong>Moment Tensor</strong></td><td>GCMT / USGS</td><td>矩张量解，包含矩心位置、分量、最佳双力偶解</td></tr>
+            <tr><td><strong>Focal Mechanism</strong></td><td>USGS / 区域台网</td><td>断层面解（走向、倾角、滑动角）</td></tr>
+            <tr><td><strong>Finite Fault</strong></td><td>USGS</td><td>有限断层滑动分布模型（M6.0+ 事件）</td></tr>
+            <tr><td><strong>ShakeMap</strong></td><td>USGS</td><td>震动图，估计地面运动分布</td></tr>
+            <tr><td><strong>DYFI</strong></td><td>USGS</td><td>“Did You Feel It?” 公众震感报告汇总</td></tr>
+            <tr><td><strong>PAGER</strong></td><td>USGS</td><td>警报等级与影响评估（人员伤亡、经济损失）</td></tr>
+            <tr><td><strong>Phase Data</strong></td><td>USGS / 区域台网</td><td>震相拾取（到时、振幅、周期、极性）</td></tr>
+            <tr><td><strong>Ground Failure</strong></td><td>USGS</td><td>地面破坏评估（液化、滑坡概率）</td></tr>
+            <tr><td><strong>Waveform</strong></td><td>IRIS DMC</td><td>波形数据引用链接（通过 IRIS 获取）</td></tr>
           </tbody>
         </table>
+        <div class="warn-text">
+          <strong>产品获取：</strong>通过 FDSN Event Web Service 的
+          <code>format=quakeml</code> 请求可获取 Origin、Magnitude、Moment Tensor、
+          Focal Mechanism、Phase Data 等结构化数据。
+          ShakeMap、DYFI、PAGER 等产品需通过 ComCat API 或事件详情页单独获取。
+        </div>
       </div>
 
       <h3 class="sub">3. 数据种类总览</h3>
@@ -755,11 +895,13 @@
             <span class="chip">震源深度</span>
             <span class="chip">震级标度</span>
             <span class="chip">定位质量</span>
-            <span class="chip blue">矩张量解</span>
-            <span class="chip blue">断层面解</span>
+            <span class="chip">矩张量解</span>
+            <span class="chip">断层面解</span>
             <span class="chip blue">震感报告</span>
             <span class="chip blue">ShakeMap</span>
             <span class="chip blue">PAGER</span>
+            <span class="chip blue">有限断层</span>
+            <span class="chip blue">震相数据</span>
           </div>
         </div>
         <div>
@@ -769,12 +911,60 @@
             <span class="chip">GeoJSON</span>
             <span class="chip">CSV</span>
             <span class="chip">KML</span>
+            <span class="chip">Text</span>
             <span class="chip blue">ObsPy</span>
             <span class="chip blue">libcomcat</span>
             <span class="chip blue">requests</span>
           </div>
         </div>
       </div>
+
+      <h3 class="sub">4. 数据质量检查要点</h3>
+      <ol class="steps">
+        <li>
+          <b>检查事件状态：</b>
+          优先使用 <code>status=reviewed</code> 的事件。
+          自动解（automatic）可能在数小时或数天内被审核解替换。
+        </li>
+        <li>
+          <b>选择首选解：</b>
+          一个事件可能包含多个 Origin 和 Magnitude。
+          QuakeML 中通过 <code>preferredOriginID</code> 和
+          <code>preferredMagnitudeID</code> 字段标识首选解，
+          使用时应遵循这些字段。
+        </li>
+        <li>
+          <b>评估定位质量：</b>
+          检查 <code>nst</code>、<code>gap</code>、<code>dmin</code>、
+          <code>horizontalError</code> 等字段。
+          台站数少、间隙大或误差大的事件，震中位置可能不可靠。
+        </li>
+        <li>
+          <b>确认贡献台网：</b>
+          <code>net</code> 和 <code>sources</code> 字段标明数据来源。
+          美国区域事件优先使用对应区域台网（如 <code>ci</code>、<code>ak</code>）；
+          全球事件使用 <code>us</code>（NEIC）。
+        </li>
+        <li>
+          <b>核对更新时刻：</b>
+          ComCat 数据动态更新，同一事件的信息可能随时间变化。
+          使用 <code>updated</code> 字段确认数据版本，
+          并在论文中注明数据获取日期。
+        </li>
+        <li>
+          <b>版本一致性：</b>
+          批量下载后如再次拉取，可能得到更新后的解。
+          建议<strong>锁定数据版本</strong>（记录下载日期和 event ID），
+          避免分析结果因数据更新而不可重现。
+        </li>
+        <li>
+          <b>产品完整性：</b>
+          并非所有事件都有全部产品。
+          ShakeMap、PAGER 等通常仅对 M4.5+ 事件生成；
+          有限断层仅对 M6.0+ 事件生成。
+          使用前应确认所需产品是否可用。
+        </li>
+      </ol>
     </section>
 
     <!-- ===== 使用注意事项 ===== -->

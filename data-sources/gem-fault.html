@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEM 全球活动断层库 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">GEM 全球活动断层库</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>GEM 全球活动断层库</h1>
+      <p class="lead">
+        GEM 全球活动断层库（GEM Global Active Faults Database, GAF-DB）是全球首个公开、
+        覆盖全球的活动断层数据库。它由全球地震模型基金会（GEM）编制，
+        汇编了约 19 个区域或专题断层数据集，包含约 13,500 条断层及其几何、
+        运动学和滑动速率等属性，主要服务于全球概率地震危险性建模。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">活动断层</span>
+        <span class="pill">全球</span>
+        <span class="pill blue">CC BY-SA 4.0</span>
+        <span class="pill">滑动速率</span>
+        <span class="pill">GIS 格式</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>GEM 全球活动断层库（GAF-DB）</strong>是全球地震模型基金会（GEM）
+        编制的<strong>全球首个公开、覆盖全球的活动断层数据库</strong>。
+        它的核心目标是服务于全球概率地震危险性建模（PSHA），
+        为断层源模型提供基础的几何和运动学参数。
+      </p>
+
+      <p>
+        GAF-DB 是约 <strong>19 个区域或专题断层数据集</strong>的汇编成果，
+        通过 Python 脚本算法化构建，可灵活纳入新数据集或更新。
+        数据库包含约 <strong>13,500 条断层</strong>，
+        其中约 <strong>77%</strong> 具有滑动速率信息。
+        数据覆盖全球大部分变形大陆区域，但<strong>不包括马来群岛、马达加斯加、加拿大</strong>等少数地区。
+      </p>
+
+      <h3 class="sub">核心特点</h3>
+      <ul class="plain">
+        <li><strong>全球覆盖：</strong>首个覆盖全球的活动断层数据库，空间完整性高。</li>
+        <li><strong>统一字段：</strong>所有断层使用统一的属性表结构，便于跨区域分析。</li>
+        <li><strong>滑动速率：</strong>约 77% 的断层提供滑动速率，采用三元组形式表示不确定性。</li>
+        <li><strong>算法化构建：</strong>通过 Python 脚本从各区域数据集自动汇编，易于更新和扩展。</li>
+        <li><strong>开放许可：</strong>采用 CC BY-SA 4.0 开放许可，支持学术和商业使用。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与其他数据源的区别：</strong>
+        此前介绍的 PEER NGA、COSMOS、CSMNC 等提供的是<strong>地震动记录</strong>，
+        CENC、USGS ComCat、ISC-GEM 提供的是<strong>地震目录</strong>，
+        而 GAF-DB 提供的是<strong>断层几何与运动学参数</strong>。
+        它是断层源模型的基础数据，与地震目录和地震动记录互补，
+        共同构成地震危险性分析的完整数据体系。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        GAF-DB 以 <strong>GIS 矢量格式</strong>提供，支持多种软件平台。
+        其属性表使用三种数据类型：<strong>string</strong>（文本）、
+        <strong>integer</strong>（整数）和 <strong>tuple</strong>（三元组）。
+        点击下方标签查看各部分的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="geometry" role="tab" aria-selected="true">几何与运动学</button>
+          <button class="nga-tab-btn" data-tab="quality" role="tab" aria-selected="false">质量与元数据</button>
+          <button class="nga-tab-btn" data-tab="types" role="tab" aria-selected="false">数据类型说明</button>
+        </div>
+
+        <!-- 几何与运动学 -->
+        <div class="nga-tab-panel active" id="tab-geometry" role="tabpanel">
+          <h3>几何与运动学字段</h3>
+          <div class="tagline">描述断层的空间形态和滑动特征</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:100px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>dip</strong></td><td>tuple</td><td>断层倾角（度），格式 <code>(最可能值, 最小值, 最大值)</code></td></tr>
+                <tr><td><strong>dip_dir</strong></td><td>string</td><td>倾向（如 <code>W</code>、<code>NE</code>）</td></tr>
+                <tr><td><strong>downthrown_side_id</strong></td><td>string</td><td>下降盘方向</td></tr>
+                <tr><td><strong>average_rake</strong></td><td>tuple</td><td>平均滑动角（度），遵循 Aki &amp; Richards 约定</td></tr>
+                <tr><td><strong>slip_type</strong></td><td>string</td><td>运动学类型（如 <code>Sinistral</code>、<code>Dextral</code>、<code>Normal</code>、<code>Reverse</code>）</td></tr>
+                <tr><td><strong>strike_slip_rate</strong></td><td>tuple</td><td>走滑速率（mm/yr），<strong>负值表示左旋</strong></td></tr>
+                <tr><td><strong>dip_slip_rate</strong></td><td>tuple</td><td>倾滑速率（mm/yr）</td></tr>
+                <tr><td><strong>vert_slip_rate</strong></td><td>tuple</td><td>垂直滑动速率（mm/yr），<strong>均为正值</strong></td></tr>
+                <tr><td><strong>shortening_rate</strong></td><td>tuple</td><td>水平缩短速率（mm/yr）</td></tr>
+                <tr><td><strong>upper_seis_depth</strong></td><td>tuple</td><td>地震发生层上界深度（km）</td></tr>
+                <tr><td><strong>lower_seis_depth</strong></td><td>tuple</td><td>地震发生层下界深度（km）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>滑动速率符号约定：</strong>
+              除 <code>shortening_rate</code> 外，所有滑动速率字段描述的是断层上的
+              <strong>滑动分量大小</strong>，均为正值。
+              <code>strike_slip_rate</code> 的<strong>负值表示左旋滑动</strong>。
+              <code>vert_slip_rate</code> 表示垂直分离速率（断层落差），均为正值，
+              需结合 <code>dip_dir</code>、<code>downthrown_side_id</code>
+              或运动学参数判断是挤压还是拉张。
+            </div>
+          </div>
+        </div>
+
+        <!-- 质量与元数据 -->
+        <div class="nga-tab-panel" id="tab-quality" role="tabpanel">
+          <h3>质量与元数据字段</h3>
+          <div class="tagline">评估数据可靠性 · 溯源原始文献</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">字段</th>
+                  <th style="width:100px;">类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>accuracy</strong></td><td>integer</td><td>地图比例尺分母（如 <code>40000</code>）</td></tr>
+                <tr><td><strong>activity_confidence</strong></td><td>integer</td><td>新构造活动性的置信度：<code>1</code>=高，<code>2</code>=低</td></tr>
+                <tr><td><strong>exposure_quality</strong></td><td>integer</td><td>断层出露质量（可见性）：<code>1</code>=好，<code>2</code>=差</td></tr>
+                <tr><td><strong>epistemic_quality</strong></td><td>integer</td><td>断层存在的认知置信度：<code>1</code>=高，<code>2</code>=低</td></tr>
+                <tr><td><strong>last_movement</strong></td><td>string</td><td>最近一次显著地震的日期（如 <code>1865</code>）</td></tr>
+                <tr><td><strong>name</strong></td><td>string</td><td>断层或断层段名称</td></tr>
+                <tr><td><strong>fs_name</strong></td><td>string</td><td>断层系统名称</td></tr>
+                <tr><td><strong>reference</strong></td><td>string</td><td>数据来源文献（如 <code>Rogers and Mann, 2007</code>）</td></tr>
+                <tr><td><strong>notes</strong></td><td>string</td><td>相关备注信息</td></tr>
+                <tr><td><strong>ogc_fid</strong></td><td>integer</td><td>GIS 使用的内部 ID</td></tr>
+                <tr><td><strong>catalog_id</strong></td><td>string</td><td>全局唯一标识符（如 <code>CCARA_8</code>）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>质量字段的区域性：</strong>
+              <code>activity_confidence</code>、<code>exposure_quality</code> 和
+              <code>epistemic_quality</code> 的取值（1 或 2）是<strong>区域性</strong>的，
+              不能跨数据集直接比较。数值 1 表示在<strong>该区域数据集内部</strong>为高质量或高置信度。
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据类型说明 -->
+        <div class="nga-tab-panel" id="tab-types" role="tabpanel">
+          <h3>数据类型说明</h3>
+          <div class="tagline">理解属性表中的三种数据类型</div>
+          <p>
+            GAF-DB 的属性表使用三种数据类型，理解它们的含义对于正确使用数据至关重要。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:120px;">类型</th>
+                  <th style="width:160px;">用途</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>string</strong></td>
+                  <td>文本数据</td>
+                  <td>用于断层名称、倾向、运动学类型、参考文献等文本字段</td>
+                </tr>
+                <tr>
+                  <td><strong>integer</strong></td>
+                  <td>索引与等级</td>
+                  <td>用于 GIS 索引、地图比例尺分母，以及质量字段的<strong>等级</strong>（1=高，2=低）</td>
+                </tr>
+                <tr>
+                  <td><strong>tuple</strong></td>
+                  <td>连续随机变量</td>
+                  <td>格式为 <code>(最可能值, 最小值, 最大值)</code>，
+                      用于表示滑动速率、倾角等具有不确定性的连续变量。
+                      也可仅为 <code>(最可能值)</code>，表示无不确定性信息。</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>tuple 格式示例：</strong>
+              <code>dip = (40, 30, 50)</code> 表示倾角最可能为 40°，范围在 30° 到 50° 之间。
+              <code>strike_slip_rate = (1.5, 0.5, 2.5)</code> 表示走滑速率最可能为 1.5 mm/yr，
+              范围在 0.5 到 2.5 mm/yr 之间。三元组格式用于简化 GIS 制图时的数据录入，
+              并控制数据库的整体大小。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        GAF-DB 的数据托管在 GitHub 仓库中，同时通过 GEM 产品页面和 Zenodo 归档提供访问。
+        以下列出主要的访问入口。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="github" role="tab" aria-selected="true">GitHub 仓库</button>
+          <button class="nga-tab-btn" data-tab="gem" role="tab" aria-selected="false">GEM 产品页面</button>
+          <button class="nga-tab-btn" data-tab="zenodo" role="tab" aria-selected="false">Zenodo 归档</button>
+        </div>
+
+        <!-- GitHub 仓库 -->
+        <div class="nga-tab-panel active" id="tab-github" role="tabpanel">
+          <h3>GitHub 仓库</h3>
+          <div class="tagline">数据托管 · 持续更新 · 多格式文件</div>
+          <p>
+            GAF-DB 的数据文件托管在 GitHub 仓库中，由 GEM 基金会持续更新。
+            仓库中包含断层迹线的 GIS 文件及其属性数据。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>地址</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>主仓库</strong></td>
+                  <td><code>github.com/GEMScienceTools/gem-global-active-faults</code></td>
+                </tr>
+                <tr>
+                  <td><strong>构建脚本仓库</strong></td>
+                  <td><code>github.com/GEMScienceTools/gaf-processing</code></td>
+                </tr>
+                <tr>
+                  <td><strong>杂项断层仓库</strong></td>
+                  <td><code>github.com/GEMScienceTools/gem_gaf_misc_faults</code></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>文件结构：</strong>仓库中按格式分目录存放数据文件，包括
+              <code>geojson/</code>、<code>geopackage/</code>、<code>kml/</code>
+              和 <code>shapefile/</code>。每个目录中包含原始版本和调和版本的文件。
+            </div>
+          </div>
+        </div>
+
+        <!-- GEM 产品页面 -->
+        <div class="nga-tab-panel" id="tab-gem" role="tabpanel">
+          <h3>GEM 产品页面</h3>
+          <div class="tagline">产品描述 · 许可申请 · 交互式地图</div>
+          <p>
+            GEM 基金会的产品页面提供 GAF-DB 的<strong>官方描述、引用格式和许可信息</strong>，
+            同时提供交互式地图查看工具和商业用途的许可申请入口。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>产品页面</strong></td><td><code>globalquakemodel.org/product/active-faults-database</code></td></tr>
+                <tr><td><strong>Geoviewer 交互式地图</strong></td><td>在产品页面点击 “Geoviewer” 按钮查看断层分布</td></tr>
+                <tr><td><strong>License Request</strong></td><td>商业用途或不符 CC BY-SA 4.0 条款的使用场景，在此申请定制许可</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Zenodo 归档 -->
+        <div class="nga-tab-panel" id="tab-zenodo" role="tabpanel">
+          <h3>Zenodo 归档</h3>
+          <div class="tagline">版本快照 · 固定 DOI · 适合可复现研究</div>
+          <p>
+            GAF-DB 在 Zenodo 上提供<strong>版本化的数据快照</strong>，
+            每个版本有固定的 DOI，适合需要引用特定版本的可复现研究。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">版本</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>v2019.0</strong></td><td>2019 年首次发布版本，包含原始和调和版本 GeoJSON、Shapefile 等格式</td></tr>
+                <tr><td><strong>v0.9</strong></td><td>早期预发布版本</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>版本选择建议：</strong>需要引用固定版本 → 使用 Zenodo 归档；
+              需要最新数据 → 使用 GitHub 仓库。在论文中应注明所用版本号或下载日期。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>入口选择建议：</strong>
+        直接下载数据 → GitHub 仓库；
+        了解产品信息和许可 → GEM 产品页面；
+        需要固定版本 DOI → Zenodo 归档。
+      </div>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        GAF-DB 以 <strong>CC BY-SA 4.0</strong> 许可开放下载，无需注册或审批。
+        如果使用场景不符许可条款，可通过 GEM 申请定制许可。
+        点击下方标签查看两种流程。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="download" role="tab" aria-selected="true">直接下载</button>
+          <button class="nga-tab-btn" data-tab="license" role="tab" aria-selected="false">许可申请</button>
+        </div>
+
+        <!-- 直接下载 -->
+        <div class="nga-tab-panel active" id="tab-download" role="tabpanel">
+          <h3>直接下载</h3>
+          <div class="tagline">无需注册 · 即时获取 · CC BY-SA 4.0</div>
+          <p>
+            适用于符合 CC BY-SA 4.0 许可的使用场景（署名 + 相同方式共享）。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问 GitHub 仓库</div>
+                <div class="flow-desc">
+                  进入 <code>github.com/GEMScienceTools/gem-global-active-faults</code>。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">选择文件格式</div>
+                <div class="flow-desc">
+                  根据所用软件选择格式：<br>
+                  <strong>GeoJSON</strong> — QGIS、Web 地图、API<br>
+                  <strong>GeoPackage</strong> — ArcGIS、QGIS<br>
+                  <strong>KML</strong> — Google Earth<br>
+                  <strong>Shapefile</strong> — 兼容传统 GIS 软件（但不推荐）
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据文件</div>
+                <div class="flow-desc">
+                  下载原始版本或调和版本的文件。
+                  调和版本经过属性统一处理，适合跨区域分析。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">导入 GIS 软件</div>
+                <div class="flow-desc">
+                  在 QGIS、ArcGIS 或 Python（geopandas）中打开文件，
+                  查看断层分布和属性表。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在研究成果中按官方引用格式标注 GAF-DB 和 DOI。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 许可申请 -->
+        <div class="nga-tab-panel" id="tab-license" role="tabpanel">
+          <h3>许可申请</h3>
+          <div class="tagline">商业用途 · 特殊场景 · 定制协议</div>
+          <p>
+            如果使用场景<strong>不符合 CC BY-SA 4.0 的条款</strong>
+            （如商业闭源产品、无法履行 ShareAlike 义务等），
+            可通过 GEM 申请定制许可协议。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">评估使用场景</div>
+                <div class="flow-desc">
+                  确认是否符合 CC BY-SA 4.0 的署名和相同方式共享要求。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">提交许可申请</div>
+                <div class="flow-desc">
+                  在 GEM 产品页面点击 “License Request”，
+                  填写使用场景和需求说明。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">协商定制协议</div>
+                <div class="flow-desc">
+                  GEM 根据具体用例提供定制许可协议。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">获取授权后下载</div>
+                <div class="flow-desc">
+                  协议签署后获取数据，按协议条款使用。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout warn">
+            <strong>注意：</strong>未遵守 CC BY-SA 4.0 条款的使用即构成许可侵权。
+            商业用途请务必提前申请许可。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 文件格式对比</h3>
+      <p>
+        GAF-DB 提供四种 GIS 矢量格式，每种格式的适用场景和限制不同。
+      </p>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:140px;">格式</th>
+              <th style="width:140px;">适用软件</th>
+              <th style="width:100px;">文件大小</th>
+              <th>注意事项</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>GeoJSON</strong></td>
+              <td>QGIS、Web 地图、API</td>
+              <td>约 15–17 MB</td>
+              <td>最推荐的格式，适合 Web 地图和程序化处理</td>
+            </tr>
+            <tr>
+              <td><strong>GeoPackage</strong></td>
+              <td>ArcGIS、QGIS</td>
+              <td>约 9 MB</td>
+              <td>基于 SQLite 的现代格式，支持完整字段名</td>
+            </tr>
+            <tr>
+              <td><strong>KML</strong></td>
+              <td>Google Earth</td>
+              <td>—</td>
+              <td>适合三维可视化，不适合数据分析</td>
+            </tr>
+            <tr>
+              <td><strong>Shapefile</strong></td>
+              <td>传统 GIS 软件</td>
+              <td>约 6 MB</td>
+              <td><strong>不推荐</strong>：会截断列名和长文本字段</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>格式选择建议：</strong>优先使用 <strong>GeoJSON</strong> 或
+          <strong>GeoPackage</strong>。Shapefile 会截断 <code>Notes</code> 等长文本字段，
+          且列名限制为 10 个字符，可能导致属性信息丢失。
+        </div>
+      </div>
+
+      <h3 class="sub">2. 文件版本</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">文件</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>gem_active_faults</strong></td>
+              <td>原始版本，直接来自各区域数据集，属性字段可能不一致</td>
+            </tr>
+            <tr>
+              <td><strong>gem_active_faults_harmonized</strong></td>
+              <td>调和版本，经过属性统一和错误检查，<strong>推荐使用</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>调和版本的优势：</strong>调和版本对来自不同数据集的属性进行了统一处理，
+          包括字段名称映射、质量字段标准化等，更适合跨区域分析和 PSHA 建模。
+        </div>
+      </div>
+
+      <h3 class="sub">3. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">断层属性</div>
+          <div class="chips">
+            <span class="chip">倾角</span>
+            <span class="chip">倾向</span>
+            <span class="chip">滑动角</span>
+            <span class="chip">运动学类型</span>
+            <span class="chip">走滑速率</span>
+            <span class="chip">倾滑速率</span>
+            <span class="chip blue">垂直滑动速率</span>
+            <span class="chip blue">缩短速率</span>
+            <span class="chip blue">地震发生层深度</span>
+            <span class="chip blue">最近一次地震</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">质量与元数据</div>
+          <div class="chips">
+            <span class="chip">活动性置信度</span>
+            <span class="chip">出露质量</span>
+            <span class="chip">认知置信度</span>
+            <span class="chip">地图比例尺</span>
+            <span class="chip">断层名称</span>
+            <span class="chip blue">参考文献</span>
+            <span class="chip blue">全局 ID</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">4. 数据质量检查要点</h3>
+      <ol class="steps">
+        <li>
+          <b>检查质量字段：</b>
+          关注 <code>activity_confidence</code>、<code>exposure_quality</code> 和
+          <code>epistemic_quality</code> 的取值。数值 2 表示该断层在该区域数据集内
+          质量较低或置信度不足。
+        </li>
+        <li>
+          <b>滑动速率的不确定性：</b>
+          <code>strike_slip_rate</code> 等字段的 tuple 格式提供了不确定性范围。
+          在 PSHA 中可将这些范围作为逻辑树的分支依据。
+        </li>
+        <li>
+          <b>垂直滑动速率的符号：</b>
+          <code>vert_slip_rate</code> 均为正值，表示垂直分离速率。
+          需结合 <code>dip_dir</code> 或 <code>downthrown_side_id</code>
+          判断是正断层还是逆断层。
+        </li>
+        <li>
+          <b>深度基准不统一：</b>
+          不同数据集的 <code>upper_seis_depth</code> 和 <code>lower_seis_depth</code>
+          可能使用不同的基准（海平面 vs 地表）。定量分析时需查阅原始数据集。
+        </li>
+        <li>
+          <b>last_movement 标准不一致：</b>
+          不同数据集维护者判断“最近一次地震”的标准可能不同
+          （仪器记录、历史记录或古地震记录），跨区域对比时需谨慎。
+        </li>
+        <li>
+          <b>区域一致性差异：</b>
+          GAF-DB 是多个区域数据集的汇编，不同来源的数据在质量标准和定义上可能存在差异，
+          跨区域分析时需注意。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>CC BY-SA 4.0 许可：</b>
+          GAF-DB 以 CC BY-SA 4.0 开放许可发布。使用时<strong>必须署名</strong>，
+          衍生作品须以<strong>相同方式共享</strong>。商业用途需另行申请许可。
+        </li>
+        <li>
+          <b>区域一致性差异：</b>
+          GAF-DB 是约 19 个区域数据集的汇编，不同来源在质量标准和定义上可能存在差异。
+          跨区域分析时需注意这一特点。
+        </li>
+        <li>
+          <b>覆盖范围有限：</b>
+          数据覆盖全球大部分变形大陆区域，但<strong>不包括马来群岛、马达加斯加、加拿大</strong>
+          等少数地区。使用前应确认目标区域是否在覆盖范围内。
+        </li>
+        <li>
+          <b>滑动速率的符号约定：</b>
+          <code>strike_slip_rate</code> 的负值表示左旋滑动；
+          <code>vert_slip_rate</code> 均为正值，表示垂直分离速率。
+        </li>
+        <li>
+          <b>深度基准不统一：</b>
+          <code>upper_seis_depth</code> 和 <code>lower_seis_depth</code>
+          的基准在不同数据集间可能不同（海平面 vs 地表），
+          定量分析时需查阅原始来源。
+        </li>
+        <li>
+          <b>last_movement 标准不一致：</b>
+          不同数据集维护者判断“最近一次地震”的标准可能不同，
+          跨区域对比时需谨慎。
+        </li>
+        <li>
+          <b>版本管理：</b>
+          GAF-DB 持续更新。建议在论文中注明使用的<strong>版本号</strong>（如 2019.0）
+          或<strong>下载日期</strong>，确保结果可复现。
+        </li>
+        <li>
+          <b>推荐使用调和版本：</b>
+          <code>gem_active_faults_harmonized</code> 经过属性统一处理，
+          更适合跨区域分析和 PSHA 建模。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        GAF-DB 有明确的官方引用格式。使用数据时应引用官方文献，
+        并在致谢中注明 GEM 基金会。
+      </p>
+
+      <h3 class="sub">官方推荐引用格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>Styron, Richard, and Marco Pagani. "The GEM Global Active Faults Database."
+Earthquake Spectra, vol. 36, no. 1_suppl, Oct. 2020, pp. 160–180,
+doi:10.1177/8755293020944182.</code></pre>
+      </div>
+
+      <h3 class="sub">BibTeX 格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Styron2020,
+  title   = {The GEM Global Active Faults Database},
+  author  = {Styron, Richard and Pagani, Marco},
+  journal = {Earthquake Spectra},
+  year    = {2020},
+  volume  = {36},
+  number  = {1\_suppl},
+  pages   = {160--180},
+  doi     = {10.1177/8755293020944182}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">致谢格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>Active fault data were obtained from the GEM Global Active Faults Database
+(Styron and Pagani, 2020), maintained by the Global Earthquake Model Foundation.</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>引用要点：</strong>引用 GAF-DB 时，
+        应<strong>同时注明 GEM 基金会</strong>和所使用的具体版本。
+        如使用了特定区域数据集的数据，也应一并引用其原始文献
+        （可在属性表的 <code>reference</code> 字段中找到）。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · GEM 全球活动断层库
+    </footer>
+
+  </main>
+</div>
+
+<!-- ===== 标签页切换脚本（全局委托，按 .nga-tabs 分组） ===== -->
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nga-tab-btn');
+    if (!btn) return;
+    var tabs = btn.closest('.nga-tabs');
+    if (!tabs) return;
+    var target = btn.getAttribute('data-tab');
+    tabs.querySelectorAll('.nga-tab-btn').forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabs.querySelectorAll('.nga-tab-panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + target);
+    });
+  });
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

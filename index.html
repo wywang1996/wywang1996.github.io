@@ -64,7 +64,22 @@
     <div class="sidebar-title">Index</div>
     <ul class="nav-list">
 
-      <!-- 项目 -->
+      <!-- 小工具 (Moved to Top) -->
+      <li>
+        <a href="#tools" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          <span>小工具</span>
+        </a>
+        <ul class="nav-sub">
+          <li><a href="ground-motion-calc.html">地震动参数计算器</a></li>
+          <li><a href="magnitude.html">震级能量换算器</a></li>
+          <li><a href="waveform.html">波形格式转换器</a></li>
+        </ul>
+      </li>
+
+      <!-- 项目 (Moved to Second) -->
       <li>
         <a href="#projects" class="nav-parent">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -81,7 +96,7 @@
         </ul>
       </li>
 
-      <!-- 笔记（按分类） -->
+      <!-- 笔记（按分类） (Moved to Third) -->
       <li>
         <a href="#notes" class="nav-parent">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -138,21 +153,6 @@
         </ul>
       </li>
 
-      <!-- 小工具 -->
-      <li>
-        <a href="#tools" class="nav-parent">
-          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-          </svg>
-          <span>小工具</span>
-        </a>
-        <ul class="nav-sub">
-          <li><a href="ground-motion-calc.html">地震动参数计算器</a></li>
-          <li><a href="magnitude.html">震级能量换算器</a></li>
-          <li><a href="waveform.html">波形格式转换器</a></li>
-        </ul>
-      </li>
-
       <!-- 关于 -->
       <li>
         <a href="#about" class="nav-parent">
@@ -199,7 +199,67 @@
       </div>
     </header>
 
-    <!-- ===== 项目 ===== -->
+    <!-- ===== 小工具 (Moved to Top) ===== -->
+    <section id="tools">
+      <div class="section-head">
+        <span class="section-label">Tools</span>
+        <h2>小工具</h2>
+      </div>
+      <div class="grid">
+
+        <a class="card" id="t-pga" href="ground-motion-calc.html">
+          <div class="card-head">
+            <h3>地震动参数计算器</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            上传加速度时程（CSV / TXT），自动计算 PGA、PGV、PGD、
+            Arias 强度、有效持时、卓越周期与 5% 阻尼反应谱，
+            支持导出参数汇总 CSV。
+          </p>
+          <div class="tags">
+            <span class="tag">地震动</span>
+            <span class="tag">反应谱</span>
+            <span class="tag blue">浏览器端</span>
+          </div>
+        </a>
+
+        <a class="card" id="t-magnitude" href="magnitude.html">
+          <div class="card-head">
+            <h3>震级能量换算器</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            在不同震级标度（ML、mb、MS、Mw）之间进行经验换算，
+            估算地震释放能量与地震矩，含震级饱和预警。
+          </p>
+          <div class="tags">
+            <span class="tag">震级</span>
+            <span class="tag">能量</span>
+            <span class="tag blue">换算</span>
+          </div>
+        </a>
+
+        <a class="card" id="t-waveform" href="waveform.html">
+          <div class="card-head">
+            <h3>波形格式转换器</h3>
+            <span class="arrow">→</span>
+          </div>
+          <p class="desc">
+            上传 SAC、MiniSEED、ASCII 等波形文件，在浏览器本地解析、
+            预览波形，并导出为 SAC、MiniSEED、CSV 等格式。
+          </p>
+          <div class="tags">
+            <span class="tag">波形</span>
+            <span class="tag">ObsPy</span>
+            <span class="tag blue">转换</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===== 项目 (Moved to Second) ===== -->
     <section id="projects">
       <div class="section-head">
         <span class="section-label">Projects</span>
@@ -292,7 +352,7 @@
       </div>
     </section>
 
-    <!-- ===== 笔记（按分类） ===== -->
+    <!-- ===== 笔记（按分类） (Moved to Third) ===== -->
     <section id="notes">
       <div class="section-head">
         <span class="section-label">Notes</span>
@@ -1128,66 +1188,6 @@
 
     </section>
 
-    <!-- ===== 小工具 ===== -->
-    <section id="tools">
-      <div class="section-head">
-        <span class="section-label">Tools</span>
-        <h2>小工具</h2>
-      </div>
-      <div class="grid">
-
-        <a class="card" id="t-pga" href="ground-motion-calc.html">
-          <div class="card-head">
-            <h3>地震动参数计算器</h3>
-            <span class="arrow">→</span>
-          </div>
-          <p class="desc">
-            上传加速度时程（CSV / TXT），自动计算 PGA、PGV、PGD、
-            Arias 强度、有效持时、卓越周期与 5% 阻尼反应谱，
-            支持导出参数汇总 CSV。
-          </p>
-          <div class="tags">
-            <span class="tag">地震动</span>
-            <span class="tag">反应谱</span>
-            <span class="tag blue">浏览器端</span>
-          </div>
-        </a>
-
-        <a class="card" id="t-magnitude" href="magnitude.html">
-          <div class="card-head">
-            <h3>震级能量换算器</h3>
-            <span class="arrow">→</span>
-          </div>
-          <p class="desc">
-            在不同震级标度（ML、mb、MS、Mw）之间进行经验换算，
-            估算地震释放能量与地震矩，含震级饱和预警。
-          </p>
-          <div class="tags">
-            <span class="tag">震级</span>
-            <span class="tag">能量</span>
-            <span class="tag blue">换算</span>
-          </div>
-        </a>
-
-        <a class="card" id="t-waveform" href="waveform.html">
-          <div class="card-head">
-            <h3>波形格式转换器</h3>
-            <span class="arrow">→</span>
-          </div>
-          <p class="desc">
-            上传 SAC、MiniSEED、ASCII 等波形文件，在浏览器本地解析、
-            预览波形，并导出为 SAC、MiniSEED、CSV 等格式。
-          </p>
-          <div class="tags">
-            <span class="tag">波形</span>
-            <span class="tag">ObsPy</span>
-            <span class="tag blue">转换</span>
-          </div>
-        </a>
-
-      </div>
-    </section>
-
     <!-- ===== 关于 ===== -->
     <section id="about">
       <div class="section-head">
@@ -1246,3 +1246,6 @@
 
 </body>
 </html>
+
+
+

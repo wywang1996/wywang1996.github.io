@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vs30 地形坡度外推 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#china-vs30" class="nav-parent">中国 Vs30 数据集</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">Vs30 地形坡度外推</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>Vs30 地形坡度外推</h1>
+      <p class="lead">
+        Vs30（地表 30 米深度范围内的平均剪切波速）是地震工程中表征场地条件的关键参数。
+        由于实测 Vs30 数据在全球范围内分布稀疏，USGS 发展了基于地形坡度作为代理的
+        Vs30 外推方法（Wald &amp; Allen, 2007），并在此基础上构建了全球混合 Vs30 地图。
+        中国基于大量实测钻孔数据，也发展了多个高精度本土数据集。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">场地参数</span>
+        <span class="pill">全球 + 中国</span>
+        <span class="pill blue">栅格数据</span>
+        <span class="pill">地形坡度代理</span>
+        <span class="pill">SCK 模型</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>Vs30</strong>（时间平均剪切波速，地表至 30 m 深度）是地震工程中
+        量化场地条件对地震动放大效应的<strong>核心参数</strong>。
+        它被广泛应用于地震动预测方程（GMPE）、场地分类、地震危险性分析和
+        ShakeMap 震动图计算中。然而，全球范围内<strong>实测 Vs30 数据极为稀疏</strong>，
+        绝大多数区域缺乏钻孔波速测井数据。
+      </p>
+
+      <p>
+        为解决这一问题，<strong>Wald 和 Allen（2007）</strong>提出了
+        <strong>基于地形坡度作为 Vs30 代理</strong>的方法。
+        其基本原理是：在缺乏地质和岩土场地条件图的区域，
+        地形坡度与 Vs30 之间存在统计相关性——陡峭地形通常对应较硬的岩石场地
+        （高 Vs30），平坦地形通常对应较软的沉积场地（低 Vs30）。
+      </p>
+
+      <p>
+        <strong>中国的 Vs30 数据集</strong>在此基础上实现了显著提升：
+        以中国大陆 <strong>7,939 个实测钻孔数据</strong>为主要约束，
+        采用<strong>协同克里金（SCK）模型</strong>，在有实测钻孔的位置
+        收敛于实测数据，在数据稀疏区通过地形坡度辅助估计。
+      </p>
+
+      <h3 class="sub">数据来源层级</h3>
+      <ul class="plain">
+        <li><strong>全球基础层：</strong>Wald &amp; Allen（2007）坡度基 Vs30，
+            基于 SRTM 30 弧秒 DEM 计算，覆盖全球 -56° 至 84° 纬度范围。</li>
+        <li><strong>全球混合层：</strong>Heath et al.（2020）在全球基础层之上
+            嵌入区域 Vs30 模型，形成全球无缝覆盖的混合产品。</li>
+        <li><strong>中国 SCK 模型（2024）：</strong>李丽研究员团队基于 7,939 个
+            实测钻孔的 SCK 模型，覆盖中国大陆全境，30 弧秒分辨率。</li>
+        <li><strong>中国 100 米产品：</strong>基于地质与基岩深度的 100 米分辨率
+            Vs30 地图和场地类别图。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>中国数据集 vs 全球产品：</strong>
+        中国本土数据集以<strong>实测钻孔</strong>为主要约束，
+        在钻孔位置收敛于实测值，并能合理区分山谷、山前、平原等不同地貌。
+        与 USGS 全球产品对比显示，中国 SCK 模型在
+        <strong>地貌区分能力、地质时代判别能力、山地地形处理合理性</strong>
+        等方面均优于 USGS 地图。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        Vs30 数据以<strong>栅格（Raster）</strong>格式提供。全球产品包含中位数和对数标准差两个图层；
+        中国产品提供 DBF 和 GeoTIFF 等格式。点击下方标签查看各部分的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="global" role="tab" aria-selected="true">全球产品格式</button>
+          <button class="nga-tab-btn" data-tab="china-format" role="tab" aria-selected="false">中国产品格式</button>
+          <button class="nga-tab-btn" data-tab="layers" role="tab" aria-selected="false">数据图层说明</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-global" role="tabpanel">
+          <h3>全球产品格式</h3>
+          <div class="tagline">USGS 全球混合 Vs30 地图 · 两种格式各含两个图层</div>
+          <p>
+            全球混合 Vs30 地图提供 GeoTIFF 和 GMT Grid 两种格式，
+            每种格式均包含<strong>中位数图层</strong>和<strong>对数标准差图层</strong>，
+            并配套版本信息和配色方案文件。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">数据集</th>
+                  <th style="width:160px;">格式</th>
+                  <th style="width:140px;">分辨率</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>全球 Vs30 地图（GeoTIFF）</strong></td>
+                  <td>Cloud-Optimized GeoTIFF</td>
+                  <td>30 弧秒（约 900 m）</td>
+                  <td>含中位数和对数标准差两个图层。GIS 通用格式，支持 HTTP 范围请求</td>
+                </tr>
+                <tr>
+                  <td><strong>全球 Vs30 地图（GMT Grid）</strong></td>
+                  <td>NetCDF 4（GMT Grid）</td>
+                  <td>30 弧秒（约 900 m）</td>
+                  <td>含中位数和对数标准差两个图层。GMT 用户首选，约 551 MB</td>
+                </tr>
+                <tr>
+                  <td><strong>版本信息文件</strong></td>
+                  <td>JSON</td>
+                  <td>—</td>
+                  <td>包含标题、描述、版本号、生成日期和空间范围</td>
+                </tr>
+                <tr>
+                  <td><strong>配色方案文件</strong></td>
+                  <td>CSV</td>
+                  <td>—</td>
+                  <td>建议的 Vs30 着色方案（RGB 值）</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>特殊值说明：</strong>栅格中的 600、601、602、603
+              为特殊标记值，分别表示水体、冰盖、冰川和湖泊，
+              <strong>不是实际的 Vs30 值</strong>。在分析前应将其掩膜或排除。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-china-format" role="tabpanel">
+          <h3>中国产品格式</h3>
+          <div class="tagline">DBF / GeoTIFF / ZIP · 多版本选择</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">数据集</th>
+                  <th style="width:140px;">格式</th>
+                  <th style="width:120px;">分辨率</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>SCK 模型 2024 版</strong></td>
+                  <td>DBF</td>
+                  <td>30 弧秒（约 900 m）</td>
+                  <td>中国大陆全境，7,939 个实测钻孔约束，CC BY 许可</td>
+                </tr>
+                <tr>
+                  <td><strong>100 米场地条件图</strong></td>
+                  <td>ZIP（GeoTIFF）</td>
+                  <td>100 m</td>
+                  <td>Vs30 地图（4.7 GB）+ 场地类别图（6.2 GB），CC BY 4.0</td>
+                </tr>
+                <tr>
+                  <td><strong>定日地震 90 米产品</strong></td>
+                  <td>GeoTIFF</td>
+                  <td>90 m（3 弧秒）</td>
+                  <td>140 km × 200 km 区域，开放共享</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>场地类别编码：</strong>100 米场地类别图采用中国规范编码：
+              0 = I0，1 = I1，2 = II，3 = III，4 = IV。
+              使用前需确认编码含义。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-layers" role="tabpanel">
+          <h3>数据图层说明</h3>
+          <div class="tagline">中位数 + 对数标准差 · 概率建模</div>
+          <p>
+            全球 Vs30 混合地图包含<strong>两个独立的栅格图层</strong>，
+            分别描述 Vs30 对数正态分布的两个参数。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:220px;">文件</th>
+                  <th style="width:160px;">内容</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>中位数图层</td>
+                  <td>Vs30 中位数</td>
+                  <td>对数正态分布的中位数（m/s）</td>
+                </tr>
+                <tr>
+                  <td>标准差图层</td>
+                  <td>对数标准差</td>
+                  <td>Vs30 的对数标准差（m/s）</td>
+                </tr>
+                <tr>
+                  <td>版本信息文件</td>
+                  <td>版本元数据</td>
+                  <td>包含标题、描述、版本号、生成日期和范围</td>
+                </tr>
+                <tr>
+                  <td>配色方案文件</td>
+                  <td>配色方案</td>
+                  <td>建议的 Vs30 着色方案（RGB 值）</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>概率使用方式：</strong>在 PSHA 中，
+              可从<strong>中位数</strong>和<strong>对数标准差</strong>图层
+              生成 Vs30 的对数正态分布样本，用于蒙特卡洛模拟或逻辑树分析。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        Vs30 数据由多个机构托管，全球产品由 USGS 发布，
+        中国产品由中国地震局系统及相关科研团队发布。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="usgs" role="tab" aria-selected="true">USGS 全球产品</button>
+          <button class="nga-tab-btn" data-tab="china" role="tab" aria-selected="false">中国产品入口</button>
+          <button class="nga-tab-btn" data-tab="international" role="tab" aria-selected="false">国际数据平台</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-usgs" role="tabpanel">
+          <h3>USGS 全球产品</h3>
+          <div class="tagline">官方发布 · 数据说明 · 完整文档</div>
+          <p>
+            USGS 地震灾害计划的 Vs30 页面是全球混合 Vs30 地图的主要入口。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Vs30 数据页面</strong></td><td>USGS 地震灾害计划的 Vs30 专题页</td></tr>
+                <tr><td><strong>ScienceBase 数据条目</strong></td><td>USGS 数据仓库中的数据条目</td></tr>
+                <tr><td><strong>DOI 永久链接</strong></td><td>10.5066/P96HFVXM</td></tr>
+                <tr><td><strong>Vs30 地图应用</strong></td><td>交互式浏览与区域裁剪工具</td></tr>
+                <tr><td><strong>GitHub 仓库</strong></td><td>构建源代码与技术文档</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-china" role="tabpanel">
+          <h3>中国产品入口</h3>
+          <div class="tagline">Seismisite · 国家地震科学数据中心 · Zenodo</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Seismisite</strong></td><td>SCK 模型 2024 版地图免费下载</td></tr>
+                <tr><td><strong>地震科学国际数据中心</strong></td><td>SCK 模型数据发布页面</td></tr>
+                <tr><td><strong>国家地震科学数据中心</strong></td><td>强震动参数数据集，含参考 Vs30 字段</td></tr>
+                <tr><td><strong>Zenodo</strong></td><td>100 米分辨率场地条件图归档</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>中国数据集许可：</strong>SCK 模型 2024 版采用 CC BY 许可；
+              100 米场地条件图采用 CC BY 4.0 许可。
+              使用时须署名，商业用途需确认许可条款。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-international" role="tabpanel">
+          <h3>国际数据平台</h3>
+          <div class="tagline">Zenodo · 版本快照 · 固定 DOI</div>
+          <p>
+            Zenodo 是欧洲核子研究中心（CERN）运营的开放数据仓库，
+            为研究数据集提供版本化的固定 DOI。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">数据集</th>
+                  <th>DOI</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>中国 100 米场地条件图</strong></td><td>10.1016/j.enggeo.2025.108199</td></tr>
+                <tr><td><strong>定日地震 90 米 Vs30</strong></td><td>10.1016/j.eqs.2025.01.008</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>入口选择建议：</strong>
+        全球数据 → USGS 主站；
+        中国高精度数据 → Seismisite 或 Zenodo；
+        中国台站场地参数 → 国家地震科学数据中心。
+      </div>
+    </section>
+
+    <!-- ===== 中国 Vs30 数据集 ===== -->
+    <section id="china-vs30">
+      <div class="section-head">
+        <span class="section-label">China Vs30</span>
+        <h2>中国 Vs30 数据集</h2>
+      </div>
+      <p>
+        中国拥有多个基于大量实测钻孔数据构建的高质量 Vs30 数据集，
+        在精度和适用性方面优于全球通用产品。以下按数据集类型介绍。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="sck2024" role="tab" aria-selected="true">SCK 模型 2024 版</button>
+          <button class="nga-tab-btn" data-tab="map100" role="tab" aria-selected="false">100 米场地条件图</button>
+          <button class="nga-tab-btn" data-tab="cnsdb" role="tab" aria-selected="false">CNSDB 场地数据库</button>
+          <button class="nga-tab-btn" data-tab="special" role="tab" aria-selected="false">特定地震高分辨率产品</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-sck2024" role="tabpanel">
+          <h3>中国大陆场地 Vs30 地图（SCK 模型 2024 版）</h3>
+          <div class="tagline">中国地震局地球物理研究所 · 7,939 个实测钻孔约束</div>
+          <p>
+            这是目前最权威、应用最广的中国大陆 Vs30 地图，
+            由中国地震局地球物理研究所李丽研究员团队发布。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>核心方法</strong></td><td>协同克里金（SCK）模型，地形坡度作为辅助参数</td></tr>
+                <tr><td><strong>数据约束</strong></td><td>中国大陆 7,939 个工程场地和强震动台站钻孔数据</td></tr>
+                <tr><td><strong>空间分辨率</strong></td><td>30 弧秒（约 900 米）</td></tr>
+                <tr><td><strong>覆盖范围</strong></td><td>中国大陆全境（除台湾地区和外海岛屿）</td></tr>
+                <tr><td><strong>数据格式</strong></td><td>DBF</td></tr>
+                <tr><td><strong>共享协议</strong></td><td>CC BY</td></tr>
+                <tr><td><strong>DOI</strong></td><td>10.1785/0120240104</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>与 USGS 产品的对比：</strong>
+              SCK 模型 2024 版地图在<strong>不同地貌的 Vs30 区分能力</strong>、
+              <strong>不同地质时代和沉积环境的 Vs30 判别能力</strong>、
+              <strong>山地地形的 Vs30 处理合理性</strong>等方面均优于 USGS 地图。
+              在实测钻孔位置，地图结果收敛于实测数据。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-map100" role="tabpanel">
+          <h3>中国 100 米分辨率场地条件图</h3>
+          <div class="tagline">基于地质与基岩深度 · 高分辨率</div>
+          <p>
+            该数据集采用混合 Vs30 预测方法，融合了地质单元特征和基岩深度信息，
+            考虑了不同地质单元内部的物理性质变化。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>核心方法</strong></td><td>整合 1:50 万地质图与 100 米分辨率基岩深度数据</td></tr>
+                <tr><td><strong>空间分辨率</strong></td><td>100 米</td></tr>
+                <tr><td><strong>数据格式</strong></td><td>ZIP（GeoTIFF）</td></tr>
+                <tr><td><strong>Vs30 文件大小</strong></td><td>约 4.7 GB</td></tr>
+                <tr><td><strong>场地类别文件大小</strong></td><td>约 6.2 GB</td></tr>
+                <tr><td><strong>场地类别编码</strong></td><td>0=I0，1=I1，2=II，3=III，4=IV</td></tr>
+                <tr><td><strong>共享协议</strong></td><td>CC BY 4.0</td></tr>
+                <tr><td><strong>DOI</strong></td><td>10.1016/j.enggeo.2025.108199</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>文件大小注意：</strong>两个文件合计超过 10 GB，
+              下载前请确认存储空间和网络条件。建议使用支持断点续传的工具下载。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-cnsdb" role="tabpanel">
+          <h3>中国场地数据库（CNSDB）</h3>
+          <div class="tagline">1,450 个国家强震动台站 · 多方法综合推荐</div>
+          <p>
+            CNSDB 是“中国地震动 Flatfile 项目”的一部分，
+            为 1,450 个国家强震动台站提供推荐 Vs30 值和场地类别。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>台站数量</strong></td><td>1,450 个国家强震动台站</td></tr>
+                <tr><td><strong>Vs30 估计方法</strong></td><td>速度剖面、HVSR 机器学习、地质/地形代理综合</td></tr>
+                <tr><td><strong>外推模型</strong></td><td>基于 6,179 个工程钻孔建立的中国专属模型</td></tr>
+                <tr><td><strong>场地分类</strong></td><td>按中国抗震设计规范</td></tr>
+                <tr><td><strong>数据格式</strong></td><td>开源表格</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>应用场景：</strong>CNSDB 是开发中国区域地震动预测模型（GMM）
+              和考虑场地效应的地震危险性图的关键基础数据。
+              对于强震动记录使用者，CNSDB 提供了台站场地的权威参考值。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-special" role="tabpanel">
+          <h3>特定地震高分辨率产品</h3>
+          <div class="tagline">90 米分辨率 · 震后快速发布</div>
+          <p>
+            针对特定地震事件，研究人员会发布更高分辨率的数据产品。
+            例如针对 2025 年 1 月西藏定日 Ms6.8 地震，
+            周健和李丽发布了影响区的 90 米分辨率 Vs30 地图及配套开放数据集。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>事件</strong></td><td>2025 年 1 月西藏定日 Ms6.8 地震</td></tr>
+                <tr><td><strong>覆盖区域</strong></td><td>140 km × 200 km</td></tr>
+                <tr><td><strong>空间分辨率</strong></td><td>90 米（3 弧秒）</td></tr>
+                <tr><td><strong>沉积层 Vs30</strong></td><td>200–250 m/s</td></tr>
+                <tr><td><strong>山区 Vs30</strong></td><td>400–600 m/s</td></tr>
+                <tr><td><strong>DOI</strong></td><td>10.1016/j.eqs.2025.01.008</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>方法验证：</strong>该产品展示了 SCK 模型在数据稀疏区
+              生成高分辨率可靠估计的能力，为震后快速评估提供了范例。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">中国数据集 vs 全球产品对比</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">对比项</th>
+              <th style="width:220px;">USGS 全球产品</th>
+              <th>中国本土数据集</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>数据约束</strong></td><td>地形坡度统计相关性为主</td><td>7,939 个实测钻孔为主要约束</td></tr>
+            <tr><td><strong>误差控制</strong></td><td>无法提供估计误差空间分布</td><td>提供误差分布，钻孔位置收敛于实测值</td></tr>
+            <tr><td><strong>地貌区分</strong></td><td>盆地、山前、平原区分能力有限</td><td>有效区分山间盆地、山前、冲洪积平原</td></tr>
+            <tr><td><strong>地质时代判别</strong></td><td>第四纪、第三纪判别能力较弱</td><td>对不同地质时代判别能力优于 USGS</td></tr>
+            <tr><td><strong>分辨率</strong></td><td>30 弧秒</td><td>30 弧秒 / 100 米 / 90 米（按产品）</td></tr>
+            <tr><td><strong>许可协议</strong></td><td>美国联邦政府公共领域</td><td>CC BY / CC BY 4.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        Vs30 数据的获取方式因数据集而异。全球产品无需注册，
+        中国产品通过 Seismisite 和 Zenodo 免费下载。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="global-flow" role="tab" aria-selected="true">全球产品获取</button>
+          <button class="nga-tab-btn" data-tab="china-flow" role="tab" aria-selected="false">中国产品获取</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-global-flow" role="tabpanel">
+          <h3>全球产品获取</h3>
+          <div class="tagline">USGS · 无需注册 · GeoTIFF / GMT Grid</div>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问 USGS Vs30 数据页面</div>
+                <div class="flow-desc">进入 USGS 地震灾害计划的 Vs30 专题页。</div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">选择数据格式</div>
+                <div class="flow-desc">
+                  <strong>GeoTIFF</strong> — GIS 通用，推荐；<br>
+                  <strong>GMT Grid</strong> — GMT 用户首选，约 551 MB。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据文件</div>
+                <div class="flow-desc">
+                  下载中位数图层和对数标准差图层。
+                  如需要，同时下载版本信息文件和配色文件。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">在 GIS/编程环境中读取</div>
+                <div class="flow-desc">
+                  <strong>QGIS / ArcGIS</strong> — 直接打开 GeoTIFF；<br>
+                  <strong>Python</strong> — 使用 rasterio、rioxarray；<br>
+                  <strong>GMT</strong> — 使用 grdread。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">掩膜特殊值</div>
+                <div class="flow-desc">
+                  将 600（水体）、601（冰盖）、602（冰川）、603（湖泊）
+                  掩膜或排除，避免误用于分析。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-china-flow" role="tabpanel">
+          <h3>中国产品获取</h3>
+          <div class="tagline">Seismisite / Zenodo / 国家数据中心</div>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">确定目标数据集</div>
+                <div class="flow-desc">
+                  <strong>SCK 模型 2024 版</strong> — 中国大陆全境 30 弧秒；<br>
+                  <strong>100 米场地条件图</strong> — 全国 100 米分辨率；<br>
+                  <strong>CNSDB</strong> — 1,450 个台站场地参数。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">访问对应平台</div>
+                <div class="flow-desc">
+                  SCK 模型 → Seismisite；<br>
+                  100 米场地条件图 → Zenodo；<br>
+                  CNSDB → 相关论文和项目页面。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据</div>
+                <div class="flow-desc">
+                  各平台均免费开放下载。100 米产品文件较大（合计超过 10 GB），
+                  建议使用支持断点续传的工具下载。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">读取与使用</div>
+                <div class="flow-desc">
+                  SCK 模型 DBF 文件可用 GIS 软件或 Python 读取；
+                  GeoTIFF 文件用 rasterio/rioxarray 读取；
+                  场地类别图需注意编码含义（0=I0 至 4=IV）。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源与引用</div>
+                <div class="flow-desc">
+                  按各数据集的官方引用格式标注来源和 DOI。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>许可注意：</strong>SCK 模型 2024 版采用 CC BY 许可，
+            100 米场地条件图采用 CC BY 4.0 许可。
+            使用时须署名，商业用途需确认许可条款。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 栅格文件参数</h3>
+      <p>
+        Vs30 数据以栅格（Raster）形式存储，其元数据决定了数据的精度、
+        空间范围和可用性。全球产品与中国产品在分辨率、格式和 NoData
+        处理上存在差异，使用前应仔细核对。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="global-params" role="tab" aria-selected="true">全球产品参数</button>
+          <button class="nga-tab-btn" data-tab="china-params" role="tab" aria-selected="false">中国产品参数</button>
+          <button class="nga-tab-btn" data-tab="nodata" role="tab" aria-selected="false">特殊值与 NoData</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-global-params" role="tabpanel">
+          <h3>全球产品参数</h3>
+          <div class="tagline">USGS 全球混合 Vs30 地图 · 30 弧秒</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th style="width:180px;">值</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>数据格式</strong></td><td>Cloud-Optimized GeoTIFF</td><td>支持 HTTP 范围请求，可在云端直接读取</td></tr>
+                <tr><td><strong>备选格式</strong></td><td>GMT Grid（NetCDF 4）</td><td>约 551 MB，适合 GMT 用户</td></tr>
+                <tr><td><strong>空间分辨率</strong></td><td>30 弧秒</td><td>赤道处约 900 m，高纬度经度方向分辨率降低</td></tr>
+                <tr><td><strong>纬度范围</strong></td><td>-56° 至 84°</td><td>南极洲和北极高纬度区域不覆盖</td></tr>
+                <tr><td><strong>经度范围</strong></td><td>-180° 至 180°</td><td>全球覆盖</td></tr>
+                <tr><td><strong>坐标参考</strong></td><td>WGS 84</td><td>地理坐标（经纬度），EPSG:4326</td></tr>
+                <tr><td><strong>数据类型</strong></td><td>Float32</td><td>32 位浮点数</td></tr>
+                <tr><td><strong>有效 Vs30 范围</strong></td><td>98–2197 m/s</td><td>超出范围的值可能为异常或特殊标记</td></tr>
+                <tr><td><strong>图层数量</strong></td><td>2 个</td><td>中位数图层 + 对数标准差图层</td></tr>
+                <tr><td><strong>水体标记</strong></td><td>600</td><td>非实际 Vs30 值</td></tr>
+                <tr><td><strong>冰盖标记</strong></td><td>601</td><td>非实际 Vs30 值</td></tr>
+                <tr><td><strong>冰川标记</strong></td><td>602</td><td>非实际 Vs30 值</td></tr>
+                <tr><td><strong>湖泊标记</strong></td><td>603</td><td>非实际 Vs30 值</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>分辨率变化：</strong>30 弧秒是<strong>经纬度分辨率</strong>，
+              实际地面距离随纬度变化。赤道处约 900 m × 900 m，
+              在 60° 纬度处经度方向的实际距离约为赤道处的一半。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-china-params" role="tabpanel">
+          <h3>中国产品参数</h3>
+          <div class="tagline">SCK 模型 · 100 米场地条件图 · 定日地震产品</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th style="width:220px;">值</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>数据类型</strong></td>
+                  <td>场点表格 · 栅格</td>
+                  <td>场点表格用于钻孔位置查询，栅格用于空间连续分布</td>
+                </tr>
+                <tr>
+                  <td><strong>数据格式</strong></td>
+                  <td>DBF · GeoTIFF（ZIP）</td>
+                  <td>DBF 适合场点查询，GeoTIFF 适合 GIS 分析与制图</td>
+                </tr>
+                <tr>
+                  <td><strong>空间分辨率</strong></td>
+                  <td>30 弧秒 · 100 m · 90 m</td>
+                  <td>从区域尺度到城市级、震区高分辨率</td>
+                </tr>
+                <tr>
+                  <td><strong>覆盖范围</strong></td>
+                  <td>中国大陆全境 · 中国全境 · 定日地震影响区</td>
+                  <td>定日地震产品覆盖 140 km × 200 km 区域</td>
+                </tr>
+                <tr>
+                  <td><strong>数据约束</strong></td>
+                  <td>7,939 个实测钻孔 · 地质图与基岩深度</td>
+                  <td>SCK 模型以实测钻孔为主；100 米产品融合地质与基岩深度</td>
+                </tr>
+                <tr>
+                  <td><strong>场地类别编码</strong></td>
+                  <td>0=I0，1=I1，2=II，3=III，4=IV</td>
+                  <td>仅 100 米场地类别图使用，按中国规范编码</td>
+                </tr>
+                <tr>
+                  <td><strong>文件大小</strong></td>
+                  <td>约 4.7 GB + 6.2 GB</td>
+                  <td>100 米场地条件图的 Vs30 地图与场地类别图合计超过 10 GB</td>
+                </tr>
+                <tr>
+                  <td><strong>共享协议</strong></td>
+                  <td>CC BY · CC BY 4.0 · 开放共享</td>
+                  <td>使用时须署名，商业用途需确认许可条款</td>
+                </tr>
+                <tr>
+                  <td><strong>DOI</strong></td>
+                  <td>10.1785/0120240104 · 10.1016/j.enggeo.2025.108199 · 10.1016/j.eqs.2025.01.008</td>
+                  <td>各数据集有独立 DOI，引用时应注明所用数据集</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>场点与栅格差异：</strong>SCK 模型 2024 版以 DBF 表格形式提供，
+              包含场点坐标和 Vs30 值，而非完整栅格。
+              如需空间连续分布，应使用 100 米场地条件图或全球 GeoTIFF 产品。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-nodata" role="tabpanel">
+          <h3>特殊值与 NoData</h3>
+          <div class="tagline">识别非陆地表面 · 避免统计偏差</div>
+          <p>
+            Vs30 栅格中使用特殊值标记非陆地表面，这些值<strong>不是实际 Vs30</strong>。
+            在统计分析前必须识别并掩膜，否则会导致 Vs30 统计结果严重偏低。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:120px;">值</th>
+                  <th>含义</th>
+                  <th>处理方式</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>600</strong></td><td>水体（海洋、大型湖泊）</td><td>掩膜或设为 NoData</td></tr>
+                <tr><td><strong>601</strong></td><td>冰盖</td><td>掩膜或设为 NoData</td></tr>
+                <tr><td><strong>602</strong></td><td>冰川</td><td>掩膜或设为 NoData</td></tr>
+                <tr><td><strong>603</strong></td><td>湖泊</td><td>掩膜或设为 NoData</td></tr>
+                <tr><td><strong>NaN / -9999</strong></td><td>无数据（不同数据集可能不同）</td><td>根据元数据确认后处理</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>掩膜方法：</strong>
+              在 QGIS 中可使用栅格计算器，条件为 vs30 &lt; 700；
+              在 Python 中可使用 rioxarray 的 where 方法。
+              建议先输出掩膜后的统计直方图，确认异常值已被排除。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">2. Vs30 与场地类别对应</h3>
+      <p>
+        Vs30 与中美两国的场地类别体系存在对应关系。使用跨数据库数据时，
+        需通过 Vs30 进行场地类别映射。
+      </p>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">Vs30 范围（m/s）</th>
+              <th style="width:140px;">中国场地类别</th>
+              <th style="width:160px;">NEHRP 场地类别</th>
+              <th>场地描述</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>&gt; 800</td><td>I0</td><td>A</td><td>坚硬岩石</td></tr>
+            <tr><td>500–800</td><td>I1</td><td>B</td><td>岩石</td></tr>
+            <tr><td>250–500</td><td>II</td><td>C</td><td>软岩石 / 硬土</td></tr>
+            <tr><td>150–250</td><td>III</td><td>D</td><td>中硬土</td></tr>
+            <tr><td>&lt; 150</td><td>IV</td><td>E / F</td><td>软弱土 / 特殊土</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>边界差异：</strong>中国规范与 NEHRP 的场地类别边界并非严格对应，
+          上表为近似映射。跨体系使用时，建议直接使用 Vs30 数值而非类别代码。
+        </div>
+      </div>
+
+      <h3 class="sub">3. 数据来源层级</h3>
+      <p>
+        全球 Vs30 混合地图由多个层级叠加而成，中国产品则是独立的区域数据集。
+        了解数据来源层级有助于判断特定位置的 Vs30 估计可信度。
+      </p>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">层级</th>
+              <th style="width:160px;">来源</th>
+              <th style="width:160px;">覆盖范围</th>
+              <th>可信度</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>全球基础层</strong></td>
+              <td>Wald &amp; Allen（2007）</td>
+              <td>全球（-56° 至 84°）</td>
+              <td>中等，依赖地形坡度代理</td>
+            </tr>
+            <tr>
+              <td><strong>区域嵌入层</strong></td>
+              <td>各区域 Vs30 模型</td>
+              <td>美国、日本、欧洲部分区域</td>
+              <td>较高，基于区域实测数据</td>
+            </tr>
+            <tr>
+              <td><strong>美国实测汇编</strong></td>
+              <td>USGS（2015）</td>
+              <td>美国境内 2,997 个场地</td>
+              <td>高，直接实测</td>
+            </tr>
+            <tr>
+              <td><strong>中国 SCK 模型</strong></td>
+              <td>中国地震局地球物理研究所</td>
+              <td>中国大陆全境</td>
+              <td>高，7,939 个实测钻孔约束</td>
+            </tr>
+            <tr>
+              <td><strong>中国 100 米产品</strong></td>
+              <td>基于地质与基岩深度</td>
+              <td>中国全境</td>
+              <td>高分辨率，区域尺度较好</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>全球产品的中国区域：</strong>在 USGS 全球产品中，
+          中国大陆区域主要依赖全球基础层（地形坡度代理），
+          精度有限。因此中国区域研究应优先使用 SCK 模型或 100 米产品。
+        </div>
+      </div>
+
+      <h3 class="sub">4. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">数据内容</div>
+          <div class="chips">
+            <span class="chip">Vs30 中位数</span>
+            <span class="chip">对数标准差</span>
+            <span class="chip">估计误差</span>
+            <span class="chip">场地类别</span>
+            <span class="chip">水体标记</span>
+            <span class="chip blue">冰盖标记</span>
+            <span class="chip blue">冰川标记</span>
+            <span class="chip blue">湖泊标记</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">格式与工具</div>
+          <div class="chips">
+            <span class="chip">GeoTIFF</span>
+            <span class="chip">GMT Grid</span>
+            <span class="chip">DBF</span>
+            <span class="chip">ZIP</span>
+            <span class="chip blue">QGIS</span>
+            <span class="chip blue">ArcGIS</span>
+            <span class="chip blue">rasterio</span>
+            <span class="chip blue">rioxarray</span>
+            <span class="chip blue">GMT</span>
+            <span class="chip blue">Python</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">5. 数据质量检查要点</h3>
+      <ol class="steps">
+        <li>
+          <b>确认数据层级：</b>
+          判断目标位置属于全球基础层、区域嵌入层还是中国本土数据集。
+          全球基础层的估计精度较低，区域层和中国数据集精度较高。
+        </li>
+        <li>
+          <b>检查特殊值掩膜：</b>
+          确认 600–603 特殊值已被掩膜。未掩膜的特殊值会严重干扰 Vs30 统计分析。
+        </li>
+        <li>
+          <b>评估不确定性：</b>
+          全球产品提供对数标准差图层，中国 SCK 模型提供估计误差分布。
+          在 PSHA 中可将这些不确定性作为逻辑树分支或蒙特卡洛模拟的输入。
+        </li>
+        <li>
+          <b>中国区域优先本土数据：</b>
+          中国大陆区域研究应优先使用 SCK 模型 2024 版或 100 米场地条件图，
+          其精度和地貌区分能力优于全球产品。
+        </li>
+        <li>
+          <b>分辨率匹配研究尺度：</b>
+          区域尺度分析可用 30 弧秒产品；城市级或工程场地研究
+          应使用 100 米或 90 米高分辨率产品。
+        </li>
+        <li>
+          <b>坡度基方法的局限性：</b>
+          Wald &amp; Allen（2007）方法在平坦沉积盆地或地形与地质条件
+          相关性弱的区域，估计精度有限。中国 SCK 模型在这方面有改进。
+        </li>
+        <li>
+          <b>深度与实际场地差异：</b>
+          Vs30 是 30 米深度的平均波速，无法反映更深部的场地放大效应
+          （如深盆地）。深盆地研究应结合沉积层厚度数据。
+        </li>
+        <li>
+          <b>版本管理与可复现性：</b>
+          各数据集持续更新。论文中应注明所用版本号、下载日期和 DOI，
+          确保分析结果可复现。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>中国区域优先使用本土数据集：</b>
+          对于中国大陆区域的研究，优先使用中国本土数据集
+          （SCK 模型 2024 版、100 米场地条件图），
+          其基于大量实测钻孔数据，精度和地貌区分能力优于全球产品。
+        </li>
+        <li>
+          <b>坡度基方法的适用性：</b>
+          Wald &amp; Allen（2007）方法在平坦沉积盆地或地形与地质条件
+          相关性弱的区域，估计精度有限。中国 SCK 模型通过引入周边
+          综合地形环境参数，在这方面有显著改进。
+        </li>
+        <li>
+          <b>特殊值必须掩膜：</b>
+          600（水体）、601（冰盖）、602（冰川）、603（湖泊）
+          为特殊标记值，<strong>不是实际 Vs30</strong>。分析前必须掩膜。
+        </li>
+        <li>
+          <b>分辨率选择：</b>
+          30 弧秒适用于区域尺度；城市级或工程场地研究
+          应使用 100 米或 90 米高分辨率产品。
+        </li>
+        <li>
+          <b>不确定性建模：</b>
+          全球 Vs30 以对数正态分布建模，提供中位数和对数标准差。
+          在 PSHA 中应将不确定性纳入分析。
+        </li>
+        <li>
+          <b>许可协议不同：</b>
+          USGS 全球产品为美国联邦政府公共领域；
+          中国 SCK 模型 2024 版为 CC BY 许可；
+          中国 100 米场地条件图为 CC BY 4.0 许可。
+          使用时须遵守各自条款。
+        </li>
+        <li>
+          <b>文件大小注意：</b>
+          中国 100 米场地条件图文件合计超过 10 GB，
+          下载前请确认存储空间和网络条件。
+        </li>
+        <li>
+          <b>版本管理：</b>
+          数据持续更新，论文中应注明版本号和下载日期。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        使用 Vs30 数据时，应引用<strong>所使用数据集对应的文献</strong>。
+        以下按数据集分别列出引用格式。
+      </p>
+
+      <h3 class="sub">全球混合地图数据发布引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Heath2020,
+  title   = {A Global Hybrid VS30 Map with a Topographic-Slope-Based
+             Default and Regional Map Insets},
+  author  = {Heath, D. C. and Wald, D. J. and Worden, C. B. and
+             Thompson, E. M. and Smoczyk, G. M.},
+  journal = {Earthquake Spectra},
+  year    = {2020},
+  volume  = {36},
+  number  = {3},
+  pages   = {1570--1584},
+  doi     = {10.1177/8755293020911137}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">坡度基方法原始文献</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Wald2007,
+  title   = {Topographic Slope as a Proxy for Seismic Site Conditions
+             and Amplification},
+  author  = {Wald, D. J. and Allen, T. I.},
+  journal = {Bulletin of the Seismological Society of America},
+  year    = {2007},
+  volume  = {97},
+  number  = {5},
+  pages   = {1379--1395},
+  doi     = {10.1785/0120060267}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">中国 SCK 模型 2024 版引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Zhou2024,
+  title   = {A 30 Arcsec Resolution VS30 Map for Mainland China Using
+             Refined Topographic Slope-Based Cokriging (SCK) Model},
+  author  = {Zhou, J. and Li, L. and Li, X. and Xi, N. and Tian, X.},
+  journal = {Bulletin of the Seismological Society of America},
+  year    = {2024},
+  volume  = {114},
+  number  = {6},
+  pages   = {3007--3023},
+  doi     = {10.1785/0120240104}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">中国 100 米场地条件图引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Li2025,
+  title   = {A 100-meter-resolution Site-Condition Map of China Based
+             on Surface Geology and Bedrock Depth},
+  author  = {Li, Kewei and Xie, Junju and Li, Xiaojun and Jiang, Wenxiang
+             and Zhu, Chuanbin and Zhang, Yong},
+  journal = {Engineering Geology},
+  year    = {2025},
+  volume  = {354},
+  pages   = {108199},
+  doi     = {10.1016/j.enggeo.2025.108199}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">定日地震 90 米 Vs30 数据引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Zhou2025,
+  title   = {An Open Access 90 m Resolution VS30 Data and Map for Areas
+             Affected by the January 2025 M6.8 Dingri Xizang, China
+             Earthquake},
+  author  = {Zhou, J. and Li, L.},
+  journal = {Earthquake Science},
+  year    = {2025},
+  volume  = {38},
+  number  = {4},
+  pages   = {339--345},
+  doi     = {10.1016/j.eqs.2025.01.008}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">CNSDB 引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Ren2024,
+  title   = {Site Database for National Strong Motion Stations in
+             Mainland China},
+  author  = {Ren, Y. and others},
+  journal = {Engineering Geology},
+  year    = {2024},
+  volume  = {340},
+  pages   = {107672},
+  doi     = {10.1016/j.enggeo.2024.107672}
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>致谢格式：</strong>在论文致谢中，建议写明
+        “Vs30 数据来自 [数据集名称]（[引用文献]），
+        由 [数据提供机构] 提供”。
+        如使用多个数据集，请逐一列出。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · Vs30 地形坡度外推
+    </footer>
+
+  </main>
+</div>
+
+<!-- ===== 标签页切换脚本（全局委托，按 .nga-tabs 分组） ===== -->
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nga-tab-btn');
+    if (!btn) return;
+    var tabs = btn.closest('.nga-tabs');
+    if (!tabs) return;
+    var target = btn.getAttribute('data-tab');
+    tabs.querySelectorAll('.nga-tab-btn').forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabs.querySelectorAll('.nga-tab-panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + target);
+    });
+  });
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

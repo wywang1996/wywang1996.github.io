@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISC-GEM 目录 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">ISC-GEM 目录</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>ISC-GEM 目录</h1>
+      <p class="lead">
+        ISC-GEM 全球仪器地震目录（1904–2021）由国际地震中心（ISC）主导编制，
+        全球地震模型基金会（GEM）资助，是专为地震危险性评估与风险建模设计的
+        全球统一地震目录。目录采用统一的重定位技术与速度模型（ak135），
+        为每个震源参数提供不确定性估计，是历史地震活动性研究的重要参考。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">地震目录</span>
+        <span class="pill">全球</span>
+        <span class="pill blue">统一重定位</span>
+        <span class="pill">CC BY-SA 3.0</span>
+        <span class="pill">ak135 模型</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>ISC-GEM 全球仪器地震目录</strong>是国际地震中心（ISC）在
+        全球地震模型基金会（GEM）资助下编制的<strong>全球统一地震目录</strong>。
+        其核心目标是服务<strong>地震危险性评估与风险建模</strong>，
+        同时在全球地震活动性、构造、地球内部结构、核试验监测等领域也有广泛应用[reference:0]。
+      </p>
+
+      <p>
+        目录覆盖 <strong>1904–2021</strong> 年，收录大型地震（<strong>Mw 5.5 及以上</strong>），
+        以及大陆区域 <strong>Mw 5.0–5.5</strong> 的较小地震[reference:1]。
+        当前版本（Version 12.1，2025 年 11 月 27 日）包含约
+        <strong>74,100 次地震</strong>[reference:2][reference:3]。
+        其最大特色是所有事件均采用<strong>相同的定位技术</strong>和
+        <strong>统一的速度模型（ak135）</strong>进行处理，
+        并为每个震源参数提供<strong>不确定性估计</strong>，保证了目录内部的高度均一性[reference:4]。
+      </p>
+
+      <h3 class="sub">目录版本演进</h3>
+      <ul class="plain">
+        <li><strong>Version 1（2013 年 1 月）：</strong>首个公开发布版本，覆盖 1900–2009 年，由 GEM 基金会资助，历时 27 个月完成[reference:5]。</li>
+        <li><strong>Extension Project（2013–2017）：</strong>将目录扩展至 2009 年之后的事件，并补充 1904–1959 年间 Mw 5.5–6.3 的地震[reference:6]。</li>
+        <li><strong>Advancement Project（2018–2021）：</strong>从文献中补充早期地震的震源参数，增加大陆区域 Mw 5.0–5.5 的较小地震，改进长期台站的震级测定[reference:7]。</li>
+        <li><strong>Improvement Project（2022 至今）：</strong>持续改进目录，最新版本为 Version 12.1（2025 年 11 月），覆盖至 2021 年[reference:8]。</li>
+      </ul>
+
+      <h3 class="sub">目录组成</h3>
+      <ul class="plain">
+        <li><strong>主目录（Main Catalogue）：</strong>收录震源参数和震级相对可靠的事件。</li>
+        <li><strong>补充目录（Supplementary Catalogue）：</strong>收录被认为足够大、
+            但由于可用到时数据或振幅/周期数据缺乏或矛盾，导致定位或震级高度不确定的事件[reference:9]。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>与其他目录的差异：</strong>
+        ISC-GEM 的核心价值在于<strong>均一性</strong>——所有事件使用同一套定位流程和速度模型重新处理，
+        避免了原始台网报告中因方法差异引入的系统偏差。
+        与 CENC、USGS ComCat 等实时目录相比，ISC-GEM 更新较慢，
+        但历史事件的定位和震级一致性显著更高，是长期地震活动性研究的首选参考目录。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        ISC-GEM 目录以 <strong>CSV</strong> 格式提供，辅以 <strong>KMZ</strong> 文件用于 Google Earth 可视化。
+        点击下方标签查看各格式的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="csv" role="tab" aria-selected="true">CSV 主目录</button>
+          <button class="nga-tab-btn" data-tab="supp" role="tab" aria-selected="false">CSV 补充目录</button>
+          <button class="nga-tab-btn" data-tab="kmz" role="tab" aria-selected="false">KMZ（Google Earth）</button>
+        </div>
+
+        <!-- CSV 主目录 -->
+        <div class="nga-tab-panel active" id="tab-csv" role="tabpanel">
+          <h3>CSV 主目录</h3>
+          <div class="tagline">核心数据文件 · 每条事件一行</div>
+          <p>
+            ISC-GEM 主目录以 <strong>CSV</strong> 格式提供，每行对应一次地震事件，
+            每列对应一个震源参数。字段包含事件标识、发震时刻、位置、深度、
+            震级及其不确定性、矩张量信息等。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:120px;">单位/类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>EVENTID</strong></td><td>string</td><td>ISC 事件唯一标识符</td></tr>
+                <tr><td><strong>DATE</strong></td><td>YYYY-MM-DD</td><td>发震日期（UTC）</td></tr>
+                <tr><td><strong>TIME</strong></td><td>HH:MM:SS.ss</td><td>发震时刻（UTC）</td></tr>
+                <tr><td><strong>LAT</strong></td><td>度</td><td>震中纬度，附不确定性</td></tr>
+                <tr><td><strong>LON</strong></td><td>度</td><td>震中经度，附不确定性</td></tr>
+                <tr><td><strong>DEPTH</strong></td><td>km</td><td>震源深度，附不确定性</td></tr>
+                <tr><td><strong>MAG</strong></td><td>—</td><td>首选震级（通常为 Mw）</td></tr>
+                <tr><td><strong>MAGTYPE</strong></td><td>string</td><td>震级标度（Mw、Ms、mb 等）</td></tr>
+                <tr><td><strong>MAG_AUTH</strong></td><td>string</td><td>震级来源机构</td></tr>
+                <tr><td><strong>M0</strong></td><td>dyne·cm</td><td>标量地震矩（若可得）</td></tr>
+                <tr><td><strong>M0_AUTH</strong></td><td>string</td><td>地震矩来源（如 GCMT）</td></tr>
+                <tr><td><strong>MS</strong></td><td>—</td><td>面波震级（若可得）</td></tr>
+                <tr><td><strong>mb</strong></td><td>—</td><td>体波震级（若可得）</td></tr>
+                <tr><td><strong>SDEPTH</strong></td><td>km</td><td>深度标准差</td></tr>
+                <tr><td><strong>SLAT</strong></td><td>度</td><td>纬度标准差</td></tr>
+                <tr><td><strong>SLON</strong></td><td>度</td><td>经度标准差</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>字段命名：</strong>ISC-GEM 的 CSV 列名在不同版本间可能略有变化。
+              下载时应同时获取随数据发布的<strong>字段说明文档</strong>，
+              以确认所用版本的准确字段定义。
+            </div>
+          </div>
+        </div>
+
+        <!-- CSV 补充目录 -->
+        <div class="nga-tab-panel" id="tab-supp" role="tabpanel">
+          <h3>CSV 补充目录</h3>
+          <div class="tagline">高不确定性事件 · 独立文件</div>
+          <p>
+            补充目录收录那些<strong>被认为足够大，但定位或震级高度不确定</strong>的事件。
+            这些事件的数据质量不足以进入主目录，但仍对危险性评估有参考价值[reference:10]。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">特点</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>与主目录关系</strong></td><td>独立文件，事件不重复</td></tr>
+                <tr><td><strong>不确定性</strong></td><td>定位和震级误差可能显著大于主目录事件</td></tr>
+                <tr><td><strong>使用建议</strong></td><td>在危险性分析中应<strong>单独处理</strong>，或根据不确定性进行加权</td></tr>
+                <tr><td><strong>字段结构</strong></td><td>与主目录基本一致，但可能缺少部分参数</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- KMZ -->
+        <div class="nga-tab-panel" id="tab-kmz" role="tabpanel">
+          <h3>KMZ（Google Earth）</h3>
+          <div class="tagline">可视化文件 · 快速浏览空间分布</div>
+          <p>
+            KMZ 文件用于在 Google Earth 中<strong>三维可视化</strong> ISC-GEM 事件的空间分布和深度。
+            适合快速浏览目录覆盖范围和识别空间聚类[reference:11]。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px;">特点</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>三维展示</strong></td><td>在 Google Earth 中查看地震深度分布</td></tr>
+                <tr><td><strong>符号编码</strong></td><td>按 Agnew (2014) 方案以符号大小/颜色编码震级和深度</td></tr>
+                <tr><td><strong>适用场景</strong></td><td>快速浏览、空间聚类识别、报告插图</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">震级标度说明</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:80px;">标度</th>
+              <th style="width:160px;">全称</th>
+              <th>在 ISC-GEM 中的角色</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Mw</strong></td><td>矩震级</td><td>首选震级，目录的核心均一化标度</td></tr>
+            <tr><td><strong>Ms</strong></td><td>面波震级</td><td>作为辅助信息提供，部分事件可得</td></tr>
+            <tr><td><strong>mb</strong></td><td>体波震级</td><td>作为辅助信息提供，部分事件可得</td></tr>
+            <tr><td><strong>M0</strong></td><td>标量地震矩</td><td>直接计算的地震矩，来源通常为 GCMT[reference:12]</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>统一性优势：</strong>ISC-GEM 的所有事件均经过统一的 Mw 重估，
+          避免了不同机构使用不同震级标度造成的系统偏差。
+          这是其在危险性分析中优于简单合并多个目录的关键原因。
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        ISC-GEM 目录由 ISC 托管，同时通过 GEM 基金会和多个镜像站点提供服务。
+        以下列出主要的数据入口。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="isc" role="tab" aria-selected="true">ISC 主站</button>
+          <button class="nga-tab-btn" data-tab="gem" role="tab" aria-selected="false">GEM 基金会</button>
+          <button class="nga-tab-btn" data-tab="mirror" role="tab" aria-selected="false">镜像站点</button>
+        </div>
+
+        <!-- ISC 主站 -->
+        <div class="nga-tab-panel active" id="tab-isc" role="tabpanel">
+          <h3>ISC 主站</h3>
+          <div class="tagline">官方托管 · CSV 下载 · 版本更新</div>
+          <p>
+            国际地震中心（ISC）是 ISC-GEM 目录的<strong>官方托管机构</strong>。
+            最新版本（Version 12.1，2025 年 11 月 27 日）可从 ISC 网站下载[reference:13]。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>地址</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>ISC-GEM 主页</strong></td>
+                  <td><code>www.isc.ac.uk/iscgem/</code></td>
+                </tr>
+                <tr>
+                  <td><strong>下载页面</strong></td>
+                  <td><code>ftp.isc.ac.uk/iscgem/download.php</code></td>
+                </tr>
+                <tr>
+                  <td><strong>目录概览</strong></td>
+                  <td><code>www.isc.ac.uk/iscgem/overview.php</code></td>
+                </tr>
+                <tr>
+                  <td><strong>更新日志</strong></td>
+                  <td><code>www.isc.ac.uk/iscgem/update_log/</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- GEM 基金会 -->
+        <div class="nga-tab-panel" id="tab-gem" role="tabpanel">
+          <h3>GEM 基金会</h3>
+          <div class="tagline">资助方 · 产品页面 · 许可申请</div>
+          <p>
+            全球地震模型基金会（GEM）是 ISC-GEM 的<strong>资助方和联合发布机构</strong>。
+            GEM 产品页面提供目录的描述、引用说明和许可信息[reference:14]。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>产品页面</strong></td><td><code>www.globalquakemodel.org/product/isc-gem-catalog</code></td></tr>
+                <tr><td><strong>Access Dataset</strong></td><td>跳转至 ISC 网站下载数据</td></tr>
+                <tr><td><strong>License Request</strong></td><td>商业用途许可申请入口[reference:15]</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 镜像站点 -->
+        <div class="nga-tab-panel" id="tab-mirror" role="tabpanel">
+          <h3>镜像站点</h3>
+          <div class="tagline">IRIS 镜像 · 加速下载</div>
+          <p>
+            ISC-GEM 目录在 IRIS 设有镜像站点，可为北美及全球用户提供更快的下载速度。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">站点</th>
+                  <th>地址</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>IRIS 镜像</strong></td>
+                  <td><code>isc-mirror.iris.washington.edu</code></td>
+                </tr>
+                <tr>
+                  <td><strong>ISC 主站 FTP</strong></td>
+                  <td><code>ftp.isc.ac.uk/iscgem/</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>入口选择建议：</strong>
+        直接下载数据 → ISC 主站 FTP 或 IRIS 镜像；
+        了解目录背景和引用规范 → GEM 产品页面或 ISC 概览页；
+        商业用途 → 通过 GEM 的 License Request 申请许可。
+      </div>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        ISC-GEM 目录的获取流程非常直接，无需注册，无审批环节。
+        点击下方标签查看完整流程。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="download" role="tab" aria-selected="true">直接下载</button>
+          <button class="nga-tab-btn" data-tab="license" role="tab" aria-selected="false">许可申请</button>
+        </div>
+
+        <!-- 直接下载 -->
+        <div class="nga-tab-panel active" id="tab-download" role="tabpanel">
+          <h3>直接下载</h3>
+          <div class="tagline">无需注册 · 即时获取 · CC BY-SA 3.0</div>
+          <p>
+            ISC-GEM 目录以 <strong>CC BY-SA 3.0</strong> 许可开放下载，
+            无需注册或审批。只要遵守署名和相同方式共享的要求，即可自由使用[reference:16]。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问 ISC 下载页面</div>
+                <div class="flow-desc">
+                  进入 <code>ftp.isc.ac.uk/iscgem/download.php</code>，
+                  查看最新版本和可用文件。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">阅读许可条款</div>
+                <div class="flow-desc">
+                  确认使用场景符合 <strong>CC BY-SA 3.0</strong> 许可。
+                  使用时应注明数据来源，衍生作品需以相同方式共享。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据文件</div>
+                <div class="flow-desc">
+                  下载主目录 CSV、补充目录 CSV 和 KMZ 文件。
+                  建议同时下载字段说明文档。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">解析与使用</div>
+                <div class="flow-desc">
+                  用 pandas、Excel 或自研脚本读取 CSV。
+                  注意区分主目录和补充目录，使用前检查不确定性字段。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  在研究成果中按官方引用格式标注 ISC-GEM 和 DOI。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 许可申请 -->
+        <div class="nga-tab-panel" id="tab-license" role="tabpanel">
+          <h3>许可申请</h3>
+          <div class="tagline">商业用途 · 特殊场景 · 定制协议</div>
+          <p>
+            如果使用场景<strong>不符合 CC BY-SA 3.0 的条款</strong>
+            （如商业闭源产品、无法履行 ShareAlike 义务等），
+            可通过 GEM 基金会的 License Request 申请定制许可协议[reference:17]。
+          </p>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">评估使用场景</div>
+                <div class="flow-desc">
+                  确认是否符合 CC BY-SA 3.0 的署名和相同方式共享要求。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">提交许可申请</div>
+                <div class="flow-desc">
+                  在 GEM 产品页面点击 “License Request”，
+                  填写使用场景和需求说明。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">协商定制协议</div>
+                <div class="flow-desc">
+                  GEM 根据具体用例提供定制许可协议。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">获取授权后下载</div>
+                <div class="flow-desc">
+                  协议签署后获取数据，按协议条款使用。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout warn">
+            <strong>注意：</strong>未遵守 CC BY-SA 3.0 条款的使用即构成许可侵权。
+            商业用途请务必提前申请许可。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 目录字段说明</h3>
+      <p>
+        ISC-GEM CSV 的字段按用途可分为<strong>基本参数</strong>、
+        <strong>震级与矩张量</strong>、<strong>不确定性参数</strong>三类。
+        点击下方标签查看各类字段的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="basic" role="tab" aria-selected="true">基本参数</button>
+          <button class="nga-tab-btn" data-tab="mag" role="tab" aria-selected="false">震级与矩张量</button>
+          <button class="nga-tab-btn" data-tab="uncertainty" role="tab" aria-selected="false">不确定性参数</button>
+        </div>
+
+        <!-- 基本参数 -->
+        <div class="nga-tab-panel active" id="tab-basic" role="tabpanel">
+          <h3>基本参数</h3>
+          <div class="tagline">描述震源时空位置 · 所有事件均包含</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:140px;">单位/类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>EVENTID</strong></td><td>string</td><td>ISC 事件唯一标识符</td></tr>
+                <tr><td><strong>DATE</strong></td><td>YYYY-MM-DD</td><td>发震日期（UTC）</td></tr>
+                <tr><td><strong>TIME</strong></td><td>HH:MM:SS.ss</td><td>发震时刻（UTC）</td></tr>
+                <tr><td><strong>LAT</strong></td><td>度</td><td>震中纬度（-90 至 90）</td></tr>
+                <tr><td><strong>LON</strong></td><td>度</td><td>震中经度（-180 至 180）</td></tr>
+                <tr><td><strong>DEPTH</strong></td><td>km</td><td>震源深度，正值向下</td></tr>
+                <tr><td><strong>ISCPRIME</strong></td><td>0/1</td><td>是否为 ISC 首选解</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 震级与矩张量 -->
+        <div class="nga-tab-panel" id="tab-mag" role="tabpanel">
+          <h3>震级与矩张量</h3>
+          <div class="tagline">统一 Mw 标度 · 辅以 Ms、mb 和地震矩</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:140px;">单位/类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>MAG</strong></td><td>—</td><td>首选震级，通常为 Mw</td></tr>
+                <tr><td><strong>MAGTYPE</strong></td><td>string</td><td>震级标度（Mw、Ms、mb 等）</td></tr>
+                <tr><td><strong>MAG_AUTH</strong></td><td>string</td><td>震级来源机构</td></tr>
+                <tr><td><strong>M0</strong></td><td>dyne·cm</td><td>标量地震矩（若可得）</td></tr>
+                <tr><td><strong>M0_AUTH</strong></td><td>string</td><td>地震矩来源，通常为 GCMT[reference:18]</td></tr>
+                <tr><td><strong>MS</strong></td><td>—</td><td>面波震级（若可得）</td></tr>
+                <tr><td><strong>mb</strong></td><td>—</td><td>体波震级（若可得）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>震级完整性：</strong>ISC-GEM 的震级下限随时间变化显著。
+              1904–1959 年间低震级事件较少，1960 年代后检测能力逐步提升。
+              在地震活动性分析中需注意这一时间变化特征[reference:19]。
+            </div>
+          </div>
+        </div>
+
+        <!-- 不确定性参数 -->
+        <div class="nga-tab-panel" id="tab-uncertainty" role="tabpanel">
+          <h3>不确定性参数</h3>
+          <div class="tagline">ISC-GEM 的核心特色 · 每个参数附带误差</div>
+          <p>
+            ISC-GEM 为每个震源参数提供不确定性估计，
+            这是其在危险性分析中优于简单合并目录的关键优势[reference:20]。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>SDEPTH</strong></td><td>km</td><td>深度标准差</td></tr>
+                <tr><td><strong>SLAT</strong></td><td>度</td><td>纬度标准差</td></tr>
+                <tr><td><strong>SLON</strong></td><td>度</td><td>经度标准差</td></tr>
+                <tr><td><strong>SMAG</strong></td><td>—</td><td>震级标准差（若可得）</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>使用建议：</strong>
+              在概率地震危险性分析（PSHA）中，
+              可将不确定性参数作为逻辑树的分支权重依据，
+              或在蒙特卡洛模拟中用于生成震源参数的随机样本。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">2. 主目录 vs 补充目录</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">对比项</th>
+              <th style="width:200px;">主目录</th>
+              <th>补充目录</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>定位质量</strong></td><td>较高，参数相对可靠</td><td>较低，定位或震级高度不确定</td></tr>
+            <tr><td><strong>不确定性</strong></td><td>提供标准差</td><td>可能缺少部分参数</td></tr>
+            <tr><td><strong>使用场景</strong></td><td>危险性分析、活动性统计</td><td>参考性使用，需单独处理</td></tr>
+            <tr><td><strong>建议</strong></td><td>作为核心数据集</td><td>根据不确定性加权或单独分析</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>处理建议：</strong>在 PSHA 中，补充目录的事件可考虑
+          按不确定性进行加权，或作为逻辑树中的分支场景，
+          而非直接与主目录事件等权混合。
+        </div>
+      </div>
+
+      <h3 class="sub">3. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">目录内容</div>
+          <div class="chips">
+            <span class="chip">发震时刻</span>
+            <span class="chip">震中位置</span>
+            <span class="chip">震源深度</span>
+            <span class="chip">Mw 震级</span>
+            <span class="chip">Ms 震级</span>
+            <span class="chip blue">mb 震级</span>
+            <span class="chip blue">标量地震矩</span>
+            <span class="chip blue">不确定性参数</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">格式与工具</div>
+          <div class="chips">
+            <span class="chip">CSV</span>
+            <span class="chip">KMZ</span>
+            <span class="chip blue">pandas</span>
+            <span class="chip blue">Excel</span>
+            <span class="chip blue">Google Earth</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">4. 数据质量检查要点</h3>
+      <ol class="steps">
+        <li><b>区分主目录与补充目录：</b>补充目录事件的不确定性显著更高，在统计分析中应单独处理或按不确定性加权。</li>
+        <li><b>检查震级完整性：</b>ISC-GEM 的震级下限随时间变化，1904–1959 年间低震级事件较少。在地震活动性分析中需评估不同时期的完整震级 Mc。</li>
+        <li><b>核对不确定性字段：</b>使用前检查 SDEPTH、SLAT、SLON 等字段，剔除误差过大的事件或据此加权。</li>
+        <li><b>确认版本号：</b>ISC-GEM 持续更新，不同版本的事件集和参数可能有变化。在论文中应注明所用版本（如 Version 12.1）。</li>
+        <li><b>震级标度统一：</b>ISC-GEM 以 Mw 为主，但部分事件可能仅有 Ms 或 mb。跨目录使用时需注意标度转换。</li>
+        <li><b>事件去重：</b>若将 ISC-GEM 与其他目录（如 USGS、CENC）合并使用，需按发震时刻、位置、震级进行事件去重。</li>
+      </ol>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>CC BY-SA 3.0 许可：</b>
+          ISC-GEM 以 CC BY-SA 3.0 开放许可发布。使用时<strong>必须署名</strong>，
+          衍生作品须以<strong>相同方式共享</strong>。商业用途需另行申请许可[reference:21]。
+        </li>
+        <li>
+          <b>震级下限随时间变化：</b>
+          ISC-GEM 的检测能力在 20 世纪逐步提升，
+          1904–1959 年间低震级事件较少。在地震活动性分析中需评估不同时期的完整震级[reference:22]。
+        </li>
+        <li>
+          <b>补充目录需谨慎处理：</b>
+          补充目录中的事件定位或震级高度不确定。
+          在 PSHA 中应单独处理或按不确定性加权，
+          不宜与主目录事件等权混合[reference:23]。
+        </li>
+        <li>
+          <b>版本更新频繁：</b>
+          ISC-GEM 持续改进和扩展（当前为 Version 12.1）。
+          不同版本的事件集和参数可能有变化，
+          使用时应<strong>注明版本号</strong>和下载日期。
+        </li>
+        <li>
+          <b>统一速度模型：</b>
+          所有事件均使用 <strong>ak135</strong> 速度模型重新定位[reference:24]。
+          与其他使用不同速度模型的目录对比时需注意这一差异。
+        </li>
+        <li>
+          <b>事件 ID 体系：</b>
+          ISC-GEM 使用自己的 EVENTID 体系，
+          与 USGS、CENC 的 ID 不同。跨目录合并时需通过时刻、位置进行匹配。
+        </li>
+        <li>
+          <b>时区为 UTC：</b>
+          ISC-GEM 中所有时间均为 <strong>UTC 时间</strong>。
+        </li>
+        <li>
+          <b>推荐使用 pandas：</b>
+          ISC-GEM 的 CSV 文件可直接用 <code>pandas.read_csv()</code> 读取，
+          适合批量处理与统计分析。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        ISC-GEM 对数据引用有明确规范。使用数据时应引用官方 DOI，
+        并在致谢中注明 ISC 和 GEM 基金会。
+      </p>
+
+      <h3 class="sub">官方推荐引用格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>Text</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>International Seismological Centre (2025), ISC-GEM Earthquake Catalogue,
+https://doi.org/10.31905/d808b825</code></pre>
+      </div>
+
+      <h3 class="sub">BibTeX 格式</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@misc{ISCGEM2025,
+  title        = {ISC-GEM Earthquake Catalogue},
+  author       = {{International Seismological Centre}},
+  year         = {2025},
+  howpublished = {International Seismological Centre},
+  doi          = {10.31905/d808b825},
+  url          = {https://www.isc.ac.uk/iscgem/}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">数据库介绍文献</h3>
+      <p>如需引用 ISC-GEM 目录的详细介绍，可参考以下文献：</p>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Storchak2013,
+  title   = {Public Release of the ISC-GEM Global Instrumental Earthquake
+             Catalogue (1900--2009)},
+  author  = {Storchak, D. A. and Di Giacomo, D. and Bond{\'a}r, I. and
+             Engdahl, E. R. and Harris, J. and Lee, W. H. K. and
+             Villase{\~n}or, A. and Bormann, P.},
+  journal = {Seismological Research Letters},
+  year    = {2013},
+  volume  = {84},
+  number  = {5},
+  pages   = {810--815},
+  doi     = {10.1785/0220130034}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">扩展项目文献</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{DiGiacomo2018,
+  title   = {The ISC-GEM Earthquake Catalogue (1904--2014): status after
+             the Extension Project},
+  author  = {Di Giacomo, D. and Engdahl, E. R. and Storchak, D. A.},
+  journal = {Earth System Science Data},
+  year    = {2018},
+  volume  = {10},
+  pages   = {1877--1899},
+  doi     = {10.5194/essd-10-1877-2018}
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>致谢格式：</strong>在论文致谢中，建议写明
+        “地震目录来自 ISC-GEM 全球仪器地震目录（Version 12.1），
+        由国际地震中心（ISC）编制，全球地震模型基金会（GEM）资助”。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · ISC-GEM 目录
+    </footer>
+
+  </main>
+</div>
+
+<!-- ===== 标签页切换脚本（全局委托，按 .nga-tabs 分组） ===== -->
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nga-tab-btn');
+    if (!btn) return;
+    var tabs = btn.closest('.nga-tabs');
+    if (!tabs) return;
+    var target = btn.getAttribute('data-tab');
+    tabs.querySelectorAll('.nga-tab-btn').forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabs.querySelectorAll('.nga-tab-panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + target);
+    });
+  });
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

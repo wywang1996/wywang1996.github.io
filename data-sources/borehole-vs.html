@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="data-source">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>钻孔剪切波速剖面 · 数据来源 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/projects.css">
+</head>
+<body data-nav="data-sources">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="../data-sources.html" class="nav-back">← 返回数据来源</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/><path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/><path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" type="button">索引</button>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+      <img class="sidebar-avatar" src="../avatar.jpg" alt="wayione">
+      <div>
+        <div class="name">wayione</div>
+        <div class="role">工程力学 · 地震工程</div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Index</div>
+    <ul class="nav-list">
+      <li>
+        <a href="../index.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+          <span>返回主页</span>
+        </a>
+      </li>
+      <li>
+        <a href="../data-sources.html" class="nav-parent">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span>数据来源</span>
+        </a>
+      </li>
+      <li><a href="#overview" class="nav-parent">概述</a></li>
+      <li><a href="#data-format" class="nav-parent">数据格式</a></li>
+      <li><a href="#data-centers" class="nav-parent">数据中心</a></li>
+      <li><a href="#china-borehole" class="nav-parent">中国钻孔数据</a></li>
+      <li><a href="#flowchart" class="nav-parent">获取流程</a></li>
+      <li><a href="#data-files" class="nav-parent">数据文件说明</a></li>
+      <li><a href="#download-notes" class="nav-parent">使用注意事项</a></li>
+      <li><a href="#citation" class="nav-parent">引用格式</a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div>© 2026 wayione</div>
+      <div style="margin-top:4px;">
+        <a href="https://github.com/wywang1996" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="crumb">
+      <a href="../index.html">主页</a>
+      <span class="sep">/</span>
+      <a href="../data-sources.html">数据来源</a>
+      <span class="sep">/</span>
+      <span class="current">钻孔剪切波速剖面</span>
+    </div>
+
+    <header class="page-head">
+      <div class="kicker">Data Source</div>
+      <h1>钻孔剪切波速剖面</h1>
+      <p class="lead">
+        钻孔剪切波速剖面（Borehole Vs Profile）是通过钻孔波速测试获得的
+        剪切波速度随深度变化的曲线，是场地效应评估、土层反应分析和
+        Vs30 计算的<strong>直接实测依据</strong>。相比地形坡度等间接代理方法，
+        钻孔实测 Vs 剖面精度更高，是场地条件研究中最可靠的基础数据。
+      </p>
+      <div class="pill-row">
+        <span class="pill accent">场地参数</span>
+        <span class="pill">钻孔实测</span>
+        <span class="pill blue">Vs 剖面</span>
+        <span class="pill">单孔检层法</span>
+        <span class="pill">CNSDB</span>
+      </div>
+    </header>
+
+    <!-- ===== 概述 ===== -->
+    <section id="overview">
+      <div class="section-head">
+        <span class="section-label">Overview</span>
+        <h2>概述</h2>
+      </div>
+
+      <p>
+        <strong>钻孔剪切波速剖面</strong>是通过在钻孔中开展波速测试（如单孔检层法、
+        跨孔法、井下地震法等）获得的<strong>剪切波速度（Vs）随深度变化</strong>的
+        实测数据。它直接反映了场地土层的刚度特征，
+        是<strong>场地效应评估</strong>、<strong>一维土层反应分析</strong>、
+        <strong>Vs30 计算</strong>和<strong>场地分类</strong>最可靠的实测依据。
+      </p>
+
+      <p>
+        与基于地形坡度等间接代理的 Vs30 外推方法不同，
+        钻孔实测 Vs 剖面具有<strong>更高的精度和可靠性</strong>。
+        然而，钻孔波速测试成本较高、覆盖范围有限，
+        全球范围内实测 Vs 剖面数据分布不均。
+        因此，<strong>整理和汇编已有的钻孔实测数据</strong>
+        成为场地条件研究的重要基础工作。
+      </p>
+
+      <h3 class="sub">主要数据来源</h3>
+      <ul class="plain">
+        <li><strong>中国场地数据库（CNSDB）：</strong>中国地震局工程力学研究所
+            为 1,450 个国家强震动台站建立的场地参数数据库，
+            包含推荐 Vs30 值和场地类别，优先采用钻孔实测波速剖面。</li>
+        <li><strong>中国大陆工程场地钻孔汇编：</strong>中国地震局地球物理研究所
+            收集整理了全国范围内 <strong>7,939 个工程场地钻孔</strong>数据，
+            构建了中国大陆场地资料基础数据库。</li>
+        <li><strong>USGS Vs30 汇编：</strong>美国地质调查局汇编的美国境内
+            Vs30 实测数据，包含井下和地表方法估计，
+            <strong>2,997 个场地</strong>，其中西部 2,141 个。</li>
+        <li><strong>USGS Vs Profile 数据库：</strong>美国社区 Vs 剖面数据库（PDB），
+            以 JSON 格式存储场地坐标、Vs 剖面、岩土数据和 HVSR 曲线。</li>
+        <li><strong>PEER NGA 钻孔数据：</strong>PEER NGA-West2 数据库中
+            包含台站场地的 Vs 剖面测试数据。</li>
+      </ul>
+
+      <div class="callout">
+        <strong>钻孔实测 vs 坡度外推：</strong>
+        钻孔实测 Vs 剖面精度最高，但覆盖有限；
+        地形坡度外推可覆盖全球，但在平坦沉积盆地精度较低。
+        中国 SCK 模型以 <strong>7,939 个实测钻孔</strong>为主要约束，
+        在钻孔位置收敛于实测值，兼顾了精度和覆盖。
+      </div>
+    </section>
+
+    <!-- ===== 数据格式 ===== -->
+    <section id="data-format">
+      <div class="section-head">
+        <span class="section-label">Format</span>
+        <h2>数据格式</h2>
+      </div>
+      <p>
+        钻孔剪切波速剖面的数据格式因测试方法和数据来源而异。
+        点击下方标签查看各格式的详细说明。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="profile" role="tab" aria-selected="true">剖面数据格式</button>
+          <button class="nga-tab-btn" data-tab="las" role="tab" aria-selected="false">LAS 测井格式</button>
+          <button class="nga-tab-btn" data-tab="json" role="tab" aria-selected="false">JSON 数据库格式</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-profile" role="tabpanel">
+          <h3>剖面数据格式</h3>
+          <div class="tagline">深度-Vs 对应关系 · 最常用的交换格式</div>
+          <p>
+            钻孔 Vs 剖面最常见的表示方式是<strong>深度-速度对应表</strong>，
+            每行包含一个深度点及其对应的剪切波速度。
+            可存储为 CSV、Excel 或纯文本格式。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">字段</th>
+                  <th style="width:120px;">单位</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>钻孔编号</strong></td><td>—</td><td>钻孔的唯一标识</td></tr>
+                <tr><td><strong>深度</strong></td><td>m</td><td>测点深度（从孔口起算）</td></tr>
+                <tr><td><strong>剪切波速 Vs</strong></td><td>m/s</td><td>该深度处的剪切波速度</td></tr>
+                <tr><td><strong>压缩波速 Vp</strong></td><td>m/s</td><td>该深度处的压缩波速度（若可得）</td></tr>
+                <tr><td><strong>层厚</strong></td><td>m</td><td>该速度值对应的土层厚度（分层表示时使用）</td></tr>
+                <tr><td><strong>土类名称</strong></td><td>—</td><td>土层类型描述（如填土、粉质黏土、砂岩等）</td></tr>
+                <tr><td><strong>备注</strong></td><td>—</td><td>补充说明</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>数据组织方式：</strong>两种常见形式——<strong>分层表示</strong>
+              （每层给出层厚和该层平均 Vs）和<strong>逐点表示</strong>
+              （每个测点给出深度和 Vs）。使用前应确认数据采用哪种形式。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-las" role="tabpanel">
+          <h3>LAS 测井格式</h3>
+          <div class="tagline">Log ASCII Standard · 地球物理测井标准</div>
+          <p>
+            <strong>LAS（Log ASCII Standard）</strong>是地球物理和石油工业中
+            广泛使用的测井数据标准格式。该格式将测井数据分为五个主要部分：
+            <strong>版本信息、井信息、参数信息、曲线数据和 ASCII 测井值</strong>。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">段落</th>
+                  <th>内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>~Version</strong></td><td>LAS 版本信息</td></tr>
+                <tr><td><strong>~Well</strong></td><td>井信息：井名、位置、起始深度、终止深度、测量间隔</td></tr>
+                <tr><td><strong>~Parameter</strong></td><td>参数信息：测井参数定义</td></tr>
+                <tr><td><strong>~Curve</strong></td><td>曲线信息：曲线名称、单位、描述</td></tr>
+                <tr><td><strong>~ASCII</strong></td><td>数据区：以空格分隔的数值列</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>索引通道：</strong>LAS 文件中第一个通道为索引通道，
+              有效名称仅为 <code>DEPT</code>、<code>DEPTH</code> 或 <code>TIME</code>。
+              读取时需注意该约定。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-json" role="tabpanel">
+          <h3>JSON 数据库格式</h3>
+          <div class="tagline">USGS PDB 数据模型 · 层级化结构</div>
+          <p>
+            USGS 提出的<strong>地震速度剖面数据库（PDB）</strong>数据模型
+            采用 <strong>JSON 格式</strong>，以层级化嵌套结构存储元数据和数据。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px;">层级</th>
+                  <th>内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>位置信息</strong></td><td>经纬度、高程、地表地质、地貌类型、坡度</td></tr>
+                <tr><td><strong>速度剖面</strong></td><td>地球物理方法、记录数据类型、建模的 Vp 和 Vs 随深度变化</td></tr>
+                <tr><td><strong>频散曲线</strong></td><td>面波方法获取的相速度 vs 波长或频率</td></tr>
+                <tr><td><strong>岩土数据</strong></td><td>钻孔柱状图、CPT 触探数据、室内试验结果</td></tr>
+                <tr><td><strong>HVSR 曲线</strong></td><td>水平-竖向谱比随频率的变化</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>最小数据要求：</strong>站点纳入数据库的最低元数据要求是
+              大地坐标和高程，最低数据要求是一条<strong>剪切波速度剖面</strong>。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据中心 ===== -->
+    <section id="data-centers">
+      <div class="section-head">
+        <span class="section-label">Data Centers</span>
+        <h2>数据中心</h2>
+      </div>
+      <p>
+        钻孔剪切波速剖面数据由多个机构托管，中国数据主要由中国地震局系统发布，
+        国际数据通过 USGS 和 PEER 等机构获取。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="china" role="tab" aria-selected="true">中国数据中心</button>
+          <button class="nga-tab-btn" data-tab="usgs" role="tab" aria-selected="false">USGS 数据中心</button>
+          <button class="nga-tab-btn" data-tab="peer" role="tab" aria-selected="false">PEER 数据中心</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-china" role="tabpanel">
+          <h3>中国数据中心</h3>
+          <div class="tagline">中国地震局系统 · CNSDB · 国家地震科学数据中心</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th style="width:180px;">内容</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><a href="https://data.earthquake.cn" target="_blank" rel="noopener noreferrer">国家地震科学数据中心</a></strong></td>
+                  <td>强震动参数数据集</td>
+                  <td>含参考 Vs30 字段，部分数据集提供钻孔波速资料</td>
+                </tr>
+                <tr>
+                  <td><strong><a href="https://www.esdc.ac.cn/" target="_blank" rel="noopener noreferrer">地震科学国际数据中心</a></strong></td>
+                  <td>SCK 模型 Vs30 地图</td>
+                  <td>基于 7,939 个实测钻孔约束，DBF 格式</td>
+                </tr>
+                <tr>
+                  <td><strong><a href="https://seismisite.net/" target="_blank" rel="noopener noreferrer">Seismisite</a></strong></td>
+                  <td>中国大陆 Vs30 地图</td>
+                  <td>SCK 模型 2024 版免费下载</td>
+                </tr>
+                <tr>
+                  <td><strong>CNSDB</strong></td>
+                  <td>1,450 个强震动台站场地参数</td>
+                  <td>开源表格，含推荐 Vs30 值和场地类别</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>中国钻孔数据规模：</strong>中国地震局地球物理研究所
+              已完成全国范围内 <strong>7,000 多个</strong>工程场地钻孔资料的
+              收集整理工作，构建了中国大陆场地资料基础数据库。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-usgs" role="tabpanel">
+          <h3>USGS 数据中心</h3>
+          <div class="tagline">VS30 汇编 · Vs Profile 数据库 · 美国境内</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong><a href="https://earthquake.usgs.gov/data/vs30/" target="_blank" rel="noopener noreferrer">Vs30 数据页面</a></strong></td><td>USGS 地震灾害计划的 Vs30 专题页</td></tr>
+                <tr><td><strong>VS30 汇编数据集</strong></td><td>2,997 个场地实测数据，含井下和地表方法估计</td></tr>
+                <tr><td><strong>Vs Profile 数据库（PDB）</strong></td><td>JSON 格式，含完整 Vs 剖面和岩土数据</td></tr>
+                <tr><td><strong>DOI</strong></td><td>10.5066/F71Z43BT（VS30 汇编）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-peer" role="tabpanel">
+          <h3>PEER 数据中心</h3>
+          <div class="tagline">NGA 数据库 · 台站 Vs 剖面</div>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">入口</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong><a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">PEER NGA-West2</a></strong></td><td>台站场地 Vs 剖面数据</td></tr>
+                <tr><td><strong>ROS RINE 数据集</strong></td><td>南加州台站钻孔波速测试数据</td></tr>
+                <tr><td><strong>PEER 台站页面</strong></td><td>可查看各台站的 Vs 剖面图表</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>入口选择建议：</strong>
+        中国区域数据 → 国家地震科学数据中心或 Seismisite；
+        美国区域数据 → USGS Vs30 页面；
+        台站场地剖面 → PEER NGA 数据库。
+      </div>
+    </section>
+
+    <!-- ===== 中国钻孔数据 ===== -->
+    <section id="china-borehole">
+      <div class="section-head">
+        <span class="section-label">China Borehole</span>
+        <h2>中国钻孔数据</h2>
+      </div>
+      <p>
+        中国拥有丰富的工程钻孔波速测试资料，由中国地震局系统相关团队
+        进行了系统的收集、整理和汇编。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="cnsdb" role="tab" aria-selected="true">CNSDB 场地数据库</button>
+          <button class="nga-tab-btn" data-tab="western" role="tab" aria-selected="false">中国西部台站场地数据</button>
+          <button class="nga-tab-btn" data-tab="cokriging" role="tab" aria-selected="false">SCK 模型钻孔数据</button>
+        </div>
+
+        <div class="nga-tab-panel active" id="tab-cnsdb" role="tabpanel">
+          <h3>CNSDB 场地数据库</h3>
+          <div class="tagline">1,450 个强震动台站 · 多方法综合推荐</div>
+          <p>
+            CNSDB 是中国地震动 Flatfile 项目的一部分，
+            为中国大陆 1,450 个国家强震动台站提供场地参数。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>台站数量</strong></td><td>1,450 个国家强震动台站</td></tr>
+                <tr><td><strong>覆盖省份</strong></td><td>中国大陆 27 个省</td></tr>
+                <tr><td><strong>Vs30 估计方法</strong></td><td>优先采用实测波速剖面；无剖面时用 HVSR 机器学习、地质/地形代理综合估计</td></tr>
+                <tr><td><strong>外推模型</strong></td><td>基于 6,179 个工程钻孔建立的中国专属 Vs30 外推模型</td></tr>
+                <tr><td><strong>场地分类</strong></td><td>按中国抗震设计规范</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>Vs30 分配协议：</strong>CNSDB 的 Vs30 估计强调
+              <strong>最小化偏差和离散度</strong>，
+              优先采用实测波速剖面或现场调查结果。
+            </div>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-western" role="tabpanel">
+          <h3>中国西部台站场地数据</h3>
+          <div class="tagline">678 个台站 · 637 个有钻孔或波速资料</div>
+          <p>
+            中国地震局地球物理研究所谢俊举研究员团队系统整理和汇编了
+            中国西部地区云南、四川、甘肃和新疆共 <strong>678 个强震动台站</strong>
+            的建台报告和场地岩土勘察报告中的场地钻孔和波速测试资料。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>覆盖区域</strong></td><td>云南、四川、甘肃、新疆</td></tr>
+                <tr><td><strong>台站数量</strong></td><td>678 个</td></tr>
+                <tr><td><strong>有钻孔/波速资料</strong></td><td>637 个</td></tr>
+                <tr><td><strong>工作内容</strong></td><td>钻孔岩性和波速资料收集、数字化、台站信息核实、场地资料核实</td></tr>
+                <tr><td><strong>数据分级</strong></td><td>按钻孔岩性和剪切波速数据可靠性和可用性分级</td></tr>
+                <tr><td><strong>数据获取</strong></td><td><a href="https://zenodo.org/" target="_blank" rel="noopener noreferrer">Zenodo</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="nga-tab-panel" id="tab-cokriging" role="tabpanel">
+          <h3>SCK 模型钻孔数据</h3>
+          <div class="tagline">7,939 个实测钻孔 · 中国大陆全境</div>
+          <p>
+            中国地震局地球物理研究所李丽研究员团队使用中国大陆
+            <strong>7,939 个工程场地和强震动台站场地钻孔数据</strong>，
+            更新了基于地形坡度的协同克里金拟合模型（SCK 模型），
+            并绘制了新版中国大陆场地 Vs30 地图。
+          </p>
+          <div class="io-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px;">参数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>钻孔数量</strong></td><td>7,939 个实测钻孔</td></tr>
+                <tr><td><strong>覆盖范围</strong></td><td>中国大陆全境</td></tr>
+                <tr><td><strong>模型方法</strong></td><td>协同克里金（SCK），地形坡度作为辅助参数</td></tr>
+                <tr><td><strong>精度提升</strong></td><td>较 2022 版 SCK 模型拟合精度提高超过 10%</td></tr>
+                <tr><td><strong>数据格式</strong></td><td>DBF</td></tr>
+                <tr><td><strong>共享协议</strong></td><td>CC BY</td></tr>
+              </tbody>
+            </table>
+            <div class="warn-text">
+              <strong>钻孔位置收敛：</strong>在实测钻孔数据位置，
+              地图结果<strong>收敛到与实测数据一致</strong>；
+              在京津冀首都圈、长三角、珠三角等东部钻孔密集区，
+              数据能达到公里级别的完整覆盖。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">中国主要钻孔数据集对比</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">数据集</th>
+              <th style="width:140px;">钻孔数量</th>
+              <th style="width:140px;">覆盖范围</th>
+              <th>主要用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CNSDB</strong></td>
+              <td>1,450 个台站</td>
+              <td>中国大陆 27 省</td>
+              <td>强震动台站场地参数</td>
+            </tr>
+            <tr>
+              <td><strong>中国西部台站数据</strong></td>
+              <td>678 个台站</td>
+              <td>云南、四川、甘肃、新疆</td>
+              <td>西部台站场地参数</td>
+            </tr>
+            <tr>
+              <td><strong>SCK 模型钻孔</strong></td>
+              <td>7,939 个钻孔</td>
+              <td>中国大陆全境</td>
+              <td>Vs30 地图构建</td>
+            </tr>
+            <tr>
+              <td><strong>工程场地钻孔汇编</strong></td>
+              <td>7,000+ 个钻孔</td>
+              <td>中国大陆全境</td>
+              <td>场地资料基础数据库</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== 获取流程 ===== -->
+    <section id="flowchart">
+      <div class="section-head">
+        <span class="section-label">Flowchart</span>
+        <h2>获取流程</h2>
+      </div>
+      <p>
+        钻孔剪切波速剖面数据的获取方式因数据集而异。
+        中国数据通过国家地震科学数据中心或 Seismisite 获取，
+        国际数据通过 USGS 或 PEER 获取。
+      </p>
+
+      <div class="nga-tabs">
+        <div class="nga-tab-btns" role="tablist">
+          <button class="nga-tab-btn active" data-tab="china-flow" role="tab" aria-selected="true">中国数据获取</button>
+          <button class="nga-tab-btn" data-tab="intl-flow" role="tab" aria-selected="false">国际数据获取</button>
+        </div>
+
+        <!-- 中国数据获取 -->
+        <div class="nga-tab-panel active" id="tab-china-flow" role="tabpanel">
+          <h3>中国数据获取</h3>
+          <div class="tagline">国家地震科学数据中心 · Seismisite · Zenodo</div>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">确定目标数据集</div>
+                <div class="flow-desc">
+                  <strong>CNSDB</strong> — 1,450 个台站场地参数；<br>
+                  <strong>SCK 模型 Vs30 地图</strong> — 7,939 个钻孔约束；<br>
+                  <strong>中国西部台站数据</strong> — 678 个台站。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">访问对应平台</div>
+                <div class="flow-desc">
+                  CNSDB → 相关论文和项目页面；<br>
+                  SCK 模型 → <a href="https://seismisite.net/" target="_blank" rel="noopener noreferrer">Seismisite</a> 或 <a href="https://www.esdc.ac.cn/" target="_blank" rel="noopener noreferrer">地震科学国际数据中心</a>；<br>
+                  西部台站数据 → <a href="https://zenodo.org/" target="_blank" rel="noopener noreferrer">Zenodo</a>。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据</div>
+                <div class="flow-desc">
+                  各平台均免费开放下载。CNSDB 为开源表格，
+                  SCK 模型为 DBF 格式，西部台站数据为数字化表格。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">读取与使用</div>
+                <div class="flow-desc">
+                  DBF 文件可用 GIS 软件或 Python 读取；
+                  表格文件用 pandas 或 Excel 读取。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  按各数据集的官方引用格式标注来源和 DOI。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 国际数据获取 -->
+        <div class="nga-tab-panel" id="tab-intl-flow" role="tabpanel">
+          <h3>国际数据获取</h3>
+          <div class="tagline">USGS · PEER · 无需注册</div>
+          <div class="flowchart">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <div class="flow-title">访问数据平台</div>
+                <div class="flow-desc">
+                  <strong>USGS Vs30</strong> → <a href="https://earthquake.usgs.gov/data/vs30/" target="_blank" rel="noopener noreferrer">USGS Vs30 数据页面</a>，美国境内实测 Vs30 汇编；<br>
+                  <strong>USGS PDB</strong> → JSON 格式 Vs 剖面数据库；<br>
+                  <strong>PEER NGA</strong> → <a href="https://ngawest2.berkeley.edu/" target="_blank" rel="noopener noreferrer">PEER NGA-West2</a>，台站 Vs 剖面数据。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <div class="flow-title">选择数据格式</div>
+                <div class="flow-desc">
+                  USGS Vs30 汇编以表格形式提供；
+                  PDB 数据库以 JSON 格式存储。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <div class="flow-title">下载数据</div>
+                <div class="flow-desc">
+                  通过 USGS 数据页面或 ScienceBase 下载。
+                  PEER 数据通过 NGA-West2 网站检索。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-body">
+                <div class="flow-title">读取与使用</div>
+                <div class="flow-desc">
+                  JSON 文件用 Python（json 库）读取；
+                  表格文件用 pandas 读取。
+                </div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-body">
+                <div class="flow-title">标注数据来源</div>
+                <div class="flow-desc">
+                  按 USGS 或 PEER 的引用格式标注来源。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 数据文件说明 ===== -->
+    <section id="data-files">
+      <div class="section-head">
+        <span class="section-label">Data Files</span>
+        <h2>数据文件说明</h2>
+      </div>
+
+      <h3 class="sub">1. 剖面数据字段说明</h3>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:200px;">字段</th>
+              <th style="width:120px;">单位</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>钻孔编号</strong></td><td>—</td><td>钻孔唯一标识</td></tr>
+            <tr><td><strong>深度</strong></td><td>m</td><td>测点深度（从孔口起算）</td></tr>
+            <tr><td><strong>剪切波速 Vs</strong></td><td>m/s</td><td>该深度处的剪切波速度</td></tr>
+            <tr><td><strong>压缩波速 Vp</strong></td><td>m/s</td><td>该深度处的压缩波速度（若可得）</td></tr>
+            <tr><td><strong>层厚</strong></td><td>m</td><td>分层表示时该层的厚度</td></tr>
+            <tr><td><strong>土类名称</strong></td><td>—</td><td>土层类型描述</td></tr>
+            <tr><td><strong>备注</strong></td><td>—</td><td>补充说明</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>中国规范要求：</strong>根据相关标准，
+          剪切波速测试成果数据的数据内容应包括<strong>钻孔编号、深度、剪切波速、备注</strong>。
+        </div>
+      </div>
+
+      <h3 class="sub">2. Vs30 计算方法</h3>
+      <p>
+        Vs30 是从钻孔 Vs 剖面计算得到的<strong>核心场地参数</strong>，
+        表示地表以下 30 m 深度内的平均剪切波速。
+      </p>
+      <div class="io-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">场景</th>
+              <th>计算方法</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>剖面深度 ≥ 30 m</strong></td>
+              <td>直接取 0–30 m 范围内的加权平均：Vs30 = 30 / Σ(di / Vsi)</td>
+            </tr>
+            <tr>
+              <td><strong>剖面深度 < 30 m</strong></td>
+              <td>使用区域外推模型估计。中国采用基于 6,179 个工程钻孔建立的外推模型</td>
+            </tr>
+            <tr>
+              <td><strong>无实测剖面</strong></td>
+              <td>使用 HVSR 机器学习或地质/地形代理估计</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="warn-text">
+          <strong>计算公式：</strong>
+          Vs30 = 30 / Σ(di / Vsi)，其中 di 为第 i 层厚度，Vsi 为该层剪切波速，
+          所有层位之和为 30 m。
+        </div>
+      </div>
+
+      <h3 class="sub">3. 数据种类总览</h3>
+      <div class="split">
+        <div>
+          <div class="split-title">数据内容</div>
+          <div class="chips">
+            <span class="chip">钻孔编号</span>
+            <span class="chip">深度-Vs 剖面</span>
+            <span class="chip">Vp 剖面</span>
+            <span class="chip">层厚与土类</span>
+            <span class="chip">Vs30 值</span>
+            <span class="chip blue">场地类别</span>
+            <span class="chip blue">HVSR 曲线</span>
+            <span class="chip blue">岩土参数</span>
+          </div>
+        </div>
+        <div>
+          <div class="split-title">格式与工具</div>
+          <div class="chips">
+            <span class="chip">CSV</span>
+            <span class="chip">Excel</span>
+            <span class="chip">LAS</span>
+            <span class="chip">JSON</span>
+            <span class="chip">DBF</span>
+            <span class="chip blue">Python</span>
+            <span class="chip blue">QGIS</span>
+            <span class="chip blue">pandas</span>
+            <span class="chip blue">Excel</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">4. 数据质量检查要点</h3>
+      <ol class="steps">
+        <li>
+          <b>确认剖面深度：</b>
+          检查剖面是否覆盖至 30 m 深度。若不足 30 m，
+          需使用外推模型估计 Vs30，并注明所用模型。
+        </li>
+        <li>
+          <b>检查数据分级：</b>
+          部分数据集按数据可靠性和可用性进行了分级。
+          使用前应确认数据所属等级，优先使用高可靠性等级的数据。
+        </li>
+        <li>
+          <b>区分分层与逐点表示：</b>
+          分层表示给出每层厚度和平均 Vs；
+          逐点表示给出每个测点的深度和 Vs。
+          计算 Vs30 时需根据表示方式选择正确方法。
+        </li>
+        <li>
+          <b>核实钻孔位置：</b>
+          确认钻孔坐标与台站坐标一致。
+          部分数据集包含迁址或更名台站，需注意历史记录的对应关系。
+        </li>
+        <li>
+          <b>检查异常值：</b>
+          检查 Vs 随深度是否单调递增（一般情况下），
+          识别可能的测试错误或数据录入错误。
+        </li>
+        <li>
+          <b>版本管理与可复现性：</b>
+          论文中应注明所用数据集版本、钻孔编号和下载日期。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 使用注意事项 ===== -->
+    <section id="download-notes">
+      <div class="section-head">
+        <span class="section-label">Notes</span>
+        <h2>使用注意事项</h2>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>钻孔实测精度最高：</b>
+          钻孔波速测试直接测量土层刚度，
+          精度远高于地形坡度等间接代理方法。
+          场地效应研究和土层反应分析应优先使用实测剖面。
+        </li>
+        <li>
+          <b>剖面深度不足时的处理：</b>
+          若剖面深度不足 30 m，需使用外推模型估计 Vs30。
+          中国采用基于 6,179 个工程钻孔建立的专属外推模型。
+        </li>
+        <li>
+          <b>数据可靠性分级：</b>
+          部分数据集对钻孔资料按可靠性和可用性进行了分级。
+          使用前应确认数据等级，避免使用低质量数据。
+        </li>
+        <li>
+          <b>LAS 格式的索引通道：</b>
+          LAS 文件中第一个通道为索引通道，
+          有效名称仅为 DEPT、DEPTH 或 TIME。
+          读取时需注意该约定。
+        </li>
+        <li>
+          <b>JSON 数据库的最小要求：</b>
+          USGS PDB 要求站点至少提供大地坐标、高程和一条 Vs 剖面。
+          使用前应检查数据完整性。
+        </li>
+        <li>
+          <b>中国数据优先本土来源：</b>
+          中国大陆区域的钻孔数据应优先使用 CNSDB、
+          SCK 模型钻孔数据或中国西部台站数据，
+          其覆盖范围和精度优于国际数据集。
+        </li>
+        <li>
+          <b>许可协议不同：</b>
+          USGS 数据为美国联邦政府公共领域；
+          中国 SCK 模型 2024 版为 CC BY 许可；
+          CNSDB 为开源数据集。
+          使用时须遵守各自条款。
+        </li>
+        <li>
+          <b>版本管理：</b>
+          各数据集持续更新，论文中应注明版本号、钻孔编号和下载日期，
+          确保分析结果可复现。
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 引用格式 ===== -->
+    <section id="citation">
+      <div class="section-head">
+        <span class="section-label">Citation</span>
+        <h2>引用格式</h2>
+      </div>
+      <p>
+        使用钻孔剪切波速剖面数据时，应引用<strong>所使用数据集对应的文献</strong>。
+      </p>
+
+      <h3 class="sub">CNSDB 引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Ren2024,
+  title   = {Site database for national strong motion stations in
+             mainland China},
+  author  = {Ren, Yefei and Ji, Kun and Zhang, Yuting and Yao, Xinxin
+             and Si, Hongjun and Kishida, Tadahiro and Liu, Ye and
+             Song, Jindong and Wen, Ruizhi},
+  journal = {Engineering Geology},
+  year    = {2024},
+  volume  = {340},
+  pages   = {107672},
+  doi     = {10.1016/j.enggeo.2024.107672}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">SCK 模型 2024 版引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@article{Zhou2024,
+  title   = {A 30 Arcsec Resolution VS30 Map for Mainland China Using
+             Refined Topographic Slope-Based Cokriging (SCK) Model},
+  author  = {Zhou, J. and Li, L. and Li, X. and Xi, N. and Tian, X.},
+  journal = {Bulletin of the Seismological Society of America},
+  year    = {2024},
+  volume  = {114},
+  number  = {6},
+  pages   = {3007--3023},
+  doi     = {10.1785/0120240104}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">USGS Vs30 汇编引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@techreport{Yong2015,
+  title       = {Compilation of Vs30 Data for the United States},
+  author      = {Yong, A. and Thompson, E. M. and Wald, D. and
+                 Knudsen, K. L. and Odum, J. K. and Stephenson, W. J. and
+                 Haefner, S.},
+  year        = {2015},
+  institution = {U.S. Geological Survey},
+  number      = {Data Series 978},
+  doi         = {10.3133/ds978}
+}</code></pre>
+      </div>
+
+      <h3 class="sub">USGS Vs Profile 数据库模型引用</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <div class="file-lang"><span>BibTeX</span></div>
+          <button class="copy-btn" type="button">复制</button>
+        </div>
+        <pre><code>@inproceedings{Sadiq2018,
+  title     = {A proposed seismic velocity profile database model},
+  author    = {Sadiq, S. and Ilkan, O. and Ahdi, S. K. and Bozorgnia, Y.
+               and Hashash, Y. and Kwak, D. and Park, D. and Yong, A.
+               and Stewart, J.},
+  booktitle = {11th United States National Conference on Earthquake
+               Engineering},
+  year      = {2018},
+  address   = {Los Angeles, CA}
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <strong>致谢格式：</strong>在论文致谢中，建议写明
+        “钻孔剪切波速剖面数据来自 [数据集名称]（[引用文献]），
+        由 [数据提供机构] 提供”。
+        如使用多个数据集，请逐一列出。
+      </div>
+    </section>
+
+    <a class="back-link" href="../data-sources.html">
+      <span class="arrow">←</span> 返回数据来源
+    </a>
+
+    <footer>
+      © 2026 wayione · 钻孔剪切波速剖面
+    </footer>
+
+  </main>
+</div>
+
+<!-- ===== 标签页切换脚本（全局委托，按 .nga-tabs 分组） ===== -->
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.nga-tab-btn');
+    if (!btn) return;
+    var tabs = btn.closest('.nga-tabs');
+    if (!tabs) return;
+    var target = btn.getAttribute('data-tab');
+    tabs.querySelectorAll('.nga-tab-btn').forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabs.querySelectorAll('.nga-tab-panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + target);
+    });
+  });
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>
