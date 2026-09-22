@@ -21,6 +21,137 @@
 <title>震级能量换算器 · wayione</title>
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/tools.css">
+<style>
+/* =========================================================
+   震级能量换算器专用样式
+   ========================================================= */
+
+/* 参数列表 */
+.param-table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  table-layout: auto;
+}
+.param-table tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background-color .12s ease;
+}
+.param-table tbody tr:last-child { border-bottom: none; }
+.param-table tbody tr:hover { background: var(--bg-blue-soft); }
+.param-table td {
+  padding: 9px 4px;
+  vertical-align: middle;
+}
+.param-table .pk {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: left;
+  letter-spacing: .01em;
+  padding-right: 32px;
+  white-space: nowrap;
+}
+.param-table .pv {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 620;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+
+/* 等效震级列表：eq-row 与 tools.css 的 .scale-item 隔离 */
+.param-table.eq-table tbody tr.eq-row { cursor: default; }
+.param-table.eq-table tbody tr.eq-row.active {
+  background: var(--accent-dim);
+}
+.param-table.eq-table tbody tr.eq-row.active .pk,
+.param-table.eq-table tbody tr.eq-row.active .v {
+  color: var(--accent);
+}
+.param-table.eq-table .sat-mark {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--red);
+  margin-right: 6px;
+  opacity: 0;
+  transition: opacity .2s;
+  vertical-align: middle;
+  line-height: 1;
+}
+.param-table.eq-table .eq-row.over .sat-mark { opacity: 1; }
+.param-table.eq-table .eq-row.over .v { color: var(--red); }
+.param-table.eq-table .v {
+  font-family: var(--mono);
+  font-weight: 620;
+  font-size: 13.5px;
+}
+
+@media (max-width: 620px) {
+  .param-table { width: 100%; }
+  .param-table td { padding: 8px 2px; }
+  .param-table .pk { font-size: 12px; padding-right: 16px; }
+  .param-table .pv { font-size: 12.5px; }
+}
+
+/* 转换参数内部三个分块 */
+.convert-block { margin-bottom: 22px; }
+.convert-block:last-child { margin-bottom: 0; }
+.convert-block-title {
+  font-size: 11px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: var(--accent);
+  font-weight: 650;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+/* 释放能量 */
+.energy-value {
+  font-size: clamp(28px, 5.6vw, 44px);
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -1.5px;
+  line-height: 1.05;
+  color: var(--text);
+  word-break: break-all;
+}
+.energy-value .unit {
+  font-size: .42em;
+  color: var(--dim);
+  font-weight: 600;
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.energy-note {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--dim);
+  font-family: var(--mono);
+  letter-spacing: .3px;
+}
+
+/* 方法与说明中的次级标题 */
+.note-subhead {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+  margin: 18px 0 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed var(--border-soft);
+  letter-spacing: .02em;
+}
+.note-subhead:first-child { margin-top: 0; }
+
+/* 目录项随 panel 显隐 */
+.tool-sidebar .nav-list > li[hidden] { display: none !important; }
+</style>
 </head>
 <body data-nav="magnitude">
 
@@ -52,166 +183,217 @@
 </nav>
 
 <main class="wrap">
+  <div class="tool-layout">
 
-  <header class="page-head">
-    <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
-    <h1>震级能量换算器</h1>
-    <p>输入一个震级，查看它在 ML、mb、MS、Mw 之间的等效值，以及地震释放的能量、TNT 当量和地震矩。含震级饱和预警。</p>
-  </header>
+    <!-- ===== 左侧：本页目录 ===== -->
+    <aside class="tool-sidebar" aria-label="本页目录">
+      <div class="ts-title">本页目录</div>
+      <ul class="nav-list" id="toolToc">
+        <li data-target="s-input"><a href="#s-input" class="nav-parent">输入震级</a></li>
+        <li data-target="s-convert"><a href="#s-convert" class="nav-parent">转换参数</a></li>
+        <li data-target="s-compare"><a href="#s-compare" class="nav-parent">能量量级对比</a></li>
+        <li data-target="s-note"><a href="#s-note" class="nav-parent">方法与说明</a></li>
+      </ul>
+    </aside>
 
-  <!-- 输入 -->
-  <section class="panel">
-    <div class="panel-label">输入震级</div>
-    <div class="input-row">
-      <input type="number" id="magInput" value="7.0" step="0.1" min="0" max="10" inputmode="decimal">
-      <select id="scaleSelect">
-        <option value="Mw">Mw · 矩震级</option>
-        <option value="MS">MS · 面波震级</option>
-        <option value="mb">mb · 体波震级</option>
-        <option value="ML">ML · 近震震级</option>
-      </select>
-    </div>
-    <input type="range" id="magSlider" min="0" max="10" step="0.1" value="7">
-    <div class="presets" id="presets">
-      <button data-v="4">4.0</button>
-      <button data-v="5">5.0</button>
-      <button data-v="6">6.0</button>
-      <button data-v="7">7.0</button>
-      <button data-v="8">8.0</button>
-      <button data-v="9">9.0</button>
-    </div>
-    <div id="satWarn" class="sat-warn" hidden></div>
-  </section>
+    <!-- ===== 右侧：主内容 ===== -->
+    <div class="tool-content">
 
-  <!-- 能量 -->
-  <section class="energy-card">
-    <div class="panel-label" style="color:var(--accent);">释放能量</div>
-    <div class="energy-value" id="energyValue">—<span class="unit">J</span></div>
-    <div class="energy-sub" id="energySub">—</div>
-    <div class="energy-note" id="energyNote">按 log₁₀E = 1.5·Mw + 4.8 估算</div>
-  </section>
+      <header class="page-head">
+        <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
+        <h1>震级能量换算器</h1>
+        <p>输入一个震级，查看它在 ML、mb、MS、Mw 之间的等效值，以及地震释放的能量、TNT 当量和地震矩。含震级饱和预警。</p>
+      </header>
 
-  <!-- 细节 -->
-  <section class="panel">
-    <div class="panel-label">详细参数</div>
-    <div class="mini-grid">
-      <div class="mini">
-        <div class="k">地震矩 M₀</div>
-        <div class="v" id="outMoment">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">TNT 当量</div>
-        <div class="v" id="outTnt">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">≈ 广岛原子弹</div>
-        <div class="v" id="outHiro">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">折合电能</div>
-        <div class="v" id="outKwh">—</div>
-      </div>
-    </div>
-  </section>
+      <!-- 输入 -->
+      <section class="panel" id="s-input">
+        <div class="panel-label">输入震级</div>
+        <div class="input-row">
+          <input type="number" id="magInput" value="7.0" step="0.1" min="0" max="10" inputmode="decimal">
+          <select id="scaleSelect">
+            <option value="Mw">Mw · 矩震级</option>
+            <option value="MS">MS · 面波震级</option>
+            <option value="mb">mb · 体波震级</option>
+            <option value="ML">ML · 近震震级</option>
+          </select>
+        </div>
+        <input type="range" id="magSlider" min="0" max="10" step="0.1" value="7">
+        <div class="presets" id="presets">
+          <button data-v="4">4.0</button>
+          <button data-v="5">5.0</button>
+          <button data-v="6">6.0</button>
+          <button data-v="7">7.0</button>
+          <button data-v="8">8.0</button>
+          <button data-v="9">9.0</button>
+        </div>
+        <div id="satWarn" class="sat-warn" hidden></div>
+      </section>
 
-  <!-- 等效震级 -->
-  <section class="panel">
-    <div class="panel-label">等效震级</div>
-    <div class="scale-grid" id="scaleGrid">
-      <div class="scale-item" data-scale="Mw">
-        <span class="sat-mark" title="已超饱和阈值">▲</span>
-        <div class="k">Mw 矩震级</div><div class="v">—</div>
-      </div>
-      <div class="scale-item" data-scale="MS">
-        <span class="sat-mark" title="已超饱和阈值">▲</span>
-        <div class="k">MS 面波震级</div><div class="v">—</div>
-      </div>
-      <div class="scale-item" data-scale="mb">
-        <span class="sat-mark" title="已超饱和阈值">▲</span>
-        <div class="k">mb 体波震级</div><div class="v">—</div>
-      </div>
-      <div class="scale-item" data-scale="ML">
-        <span class="sat-mark" title="已超饱和阈值">▲</span>
-        <div class="k">ML 近震震级</div><div class="v">—</div>
-      </div>
-    </div>
-    <p class="note">
-      标度换算采用 Scordilis (2006) 等经验关系：<code>ML→Mw</code> 适用 4.5 ≤ ML ≤ 6.5；
-      <code>mb→Mw</code> 适用 3.5 ≤ mb ≤ 6.2；<code>MS→Mw</code> 分段适用 MS ≤ 8.5。
-      超出适用范围时，换算结果仅供量级参考。
-    </p>
-  </section>
+      <!-- 转换参数（顺序展示：释放能量 → 详细参数 → 等效震级） -->
+      <section class="panel" id="s-convert">
+        <div class="panel-label">
+          <span>转换参数</span>
+          <span class="hint" id="convertHint">当前输入：Mw 7.0</span>
+        </div>
 
-  <!-- 饱和阈值 -->
-  <section class="panel">
-    <div class="panel-label">标度饱和阈值</div>
-    <div class="sat-grid">
-      <div class="sat-item no-sat">
-        <span class="sk">Mw</span>
-        <span class="sv">不饱和</span>
-        <span class="sd">基于地震矩，物理量稳定</span>
-      </div>
-      <div class="sat-item">
-        <span class="sk">MS</span>
-        <span class="sv">≈ 8.5</span>
-        <span class="sd">20 s 面波，破裂大于波长后饱和</span>
-      </div>
-      <div class="sat-item">
-        <span class="sk">mb</span>
-        <span class="sv">≈ 6.5</span>
-        <span class="sd">短周期体波，最早发生饱和</span>
-      </div>
-      <div class="sat-item">
-        <span class="sk">ML</span>
-        <span class="sv">≈ 7.0</span>
-        <span class="sd">近震 S 波/Lg 波</span>
-      </div>
-    </div>
-    <p class="note">
-      饱和是指传统震级标度在大震时不再随破裂尺度增大而增大。测定震级所用的地震波波长有限，
-      当断层破裂超过该尺度后振幅趋于"卡住"，从而低估真实地震大小。Mw 不受此限制，是量度
-      地震大小的首选标度。
-    </p>
-  </section>
+        <!-- 1. 释放能量（只保留主数字 + 公式） -->
+        <div class="convert-block">
+          <div class="convert-block-title">释放能量</div>
+          <div class="energy-value" id="energyValue">—<span class="unit">J</span></div>
+          <div class="energy-note" id="energyNote">按 log₁₀E = 1.5·Mw + 4.8 估算</div>
+        </div>
 
-  <!-- 对比 -->
-  <section class="panel">
-    <div class="panel-label">能量量级对比</div>
-    <div class="bars" id="bars"></div>
-    <p class="note">
-      横条长度按对数刻度绘制（10⁹ – 10²⁰ J）。震级每增加 1 级，
-      能量约增大 10<sup>1.5</sup> ≈ 31.6 倍；增加 2 级约 1000 倍。
-    </p>
-  </section>
+        <!-- 2. 详细参数（含 TNT 当量、广岛倍数、电能、地震矩） -->
+        <div class="convert-block">
+          <div class="convert-block-title">详细参数</div>
+          <table class="param-table">
+            <tbody>
+              <tr>
+                <td class="pk">TNT 当量</td>
+                <td class="pv" id="outTnt">—</td>
+              </tr>
+              <tr>
+                <td class="pk">≈ 广岛原子弹</td>
+                <td class="pv" id="outHiro">—</td>
+              </tr>
+              <tr>
+                <td class="pk">折合电能</td>
+                <td class="pv" id="outKwh">—</td>
+              </tr>
+              <tr>
+                <td class="pk">地震矩 M₀</td>
+                <td class="pv" id="outMoment">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-  <!-- 参考表 -->
-  <section class="panel">
-    <div class="panel-label">震级—能量参考表</div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Mw</th>
-            <th>能量 (J)</th>
-            <th>TNT 当量</th>
-            <th>大致印象</th>
-          </tr>
-        </thead>
-        <tbody id="refBody"></tbody>
-      </table>
-    </div>
-    <p class="note">
-      能量按 <code>log₁₀E = 1.5·Mw + 4.8</code>（Gutenberg–Richter）估算，E 单位为焦耳；
-      地震矩按 <code>log₁₀M₀ = 1.5·Mw + 9.1</code>（M₀ 单位 N·m）估算。
-      1 吨 TNT = 4.184×10⁹ J，广岛原子弹约 1.5 万吨 TNT 当量。
-      历史上记录到的最大地震为 1960 年智利地震，Mw ≈ 9.5。
-    </p>
-  </section>
+        <!-- 3. 等效震级 -->
+        <div class="convert-block">
+          <div class="convert-block-title">等效震级</div>
+          <table class="param-table eq-table">
+            <tbody id="scaleGrid">
+              <tr class="eq-row" data-scale="Mw">
+                <td class="pk">Mw 矩震级</td>
+                <td class="pv">
+                  <span class="sat-mark" title="已超饱和阈值">▲</span><span class="v">—</span>
+                </td>
+              </tr>
+              <tr class="eq-row" data-scale="MS">
+                <td class="pk">MS 面波震级</td>
+                <td class="pv">
+                  <span class="sat-mark" title="已超饱和阈值">▲</span><span class="v">—</span>
+                </td>
+              </tr>
+              <tr class="eq-row" data-scale="mb">
+                <td class="pk">mb 体波震级</td>
+                <td class="pv">
+                  <span class="sat-mark" title="已超饱和阈值">▲</span><span class="v">—</span>
+                </td>
+              </tr>
+              <tr class="eq-row" data-scale="ML">
+                <td class="pk">ML 近震震级</td>
+                <td class="pv">
+                  <span class="sat-mark" title="已超饱和阈值">▲</span><span class="v">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="note" style="margin-top:12px;">
+            标度换算采用 Scordilis (2006) 等经验关系：<code>ML→Mw</code> 适用 4.5 ≤ ML ≤ 6.5；
+            <code>mb→Mw</code> 适用 3.5 ≤ mb ≤ 6.2；<code>MS→Mw</code> 分段适用 MS ≤ 8.5。
+            超出适用范围时，换算结果仅供量级参考。
+          </p>
+        </div>
+      </section>
 
-  <footer>
-    © 2026 wayione · 震级能量换算器
-  </footer>
+      <!-- 能量量级对比 -->
+      <section class="panel" id="s-compare">
+        <div class="panel-label">能量量级对比</div>
+        <div class="bars" id="bars"></div>
+        <p class="note">
+          横条长度按对数刻度绘制（10⁹ – 10²⁰ J）。震级每增加 1 级，
+          能量约增大 10<sup>1.5</sup> ≈ 31.6 倍；增加 2 级约 1000 倍。
+        </p>
+      </section>
 
+      <!-- 方法与说明（含饱和阈值 + 参考表） -->
+      <section class="panel" id="s-note">
+        <div class="panel-label">方法与说明</div>
+
+        <div class="note">
+          <div class="note-subhead">标度饱和阈值</div>
+          <div class="sat-grid">
+            <div class="sat-item no-sat">
+              <span class="sk">Mw</span>
+              <span class="sv">不饱和</span>
+              <span class="sd">基于地震矩，物理量稳定</span>
+            </div>
+            <div class="sat-item">
+              <span class="sk">MS</span>
+              <span class="sv">≈ 8.5</span>
+              <span class="sd">20 s 面波，破裂大于波长后饱和</span>
+            </div>
+            <div class="sat-item">
+              <span class="sk">mb</span>
+              <span class="sv">≈ 6.5</span>
+              <span class="sd">短周期体波，最早发生饱和</span>
+            </div>
+            <div class="sat-item">
+              <span class="sk">ML</span>
+              <span class="sv">≈ 7.0</span>
+              <span class="sd">近震 S 波 / Lg 波</span>
+            </div>
+          </div>
+          <p style="margin-top:10px;">
+            饱和是指传统震级标度在大震时不再随破裂尺度增大而增大。测定震级所用的地震波波长有限，
+            当断层破裂超过该尺度后振幅趋于"卡住"，从而低估真实地震大小。Mw 不受此限制，
+            是量度地震大小的首选标度。
+          </p>
+
+          <div class="note-subhead">震级—能量参考表</div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mw</th>
+                  <th>能量 (J)</th>
+                  <th>TNT 当量</th>
+                  <th>大致印象</th>
+                </tr>
+              </thead>
+              <tbody id="refBody"></tbody>
+            </table>
+          </div>
+          <p style="margin-top:10px;">
+            能量按 <code>log₁₀E = 1.5·Mw + 4.8</code>（Gutenberg–Richter）估算，E 单位为焦耳；
+            地震矩按 <code>log₁₀M₀ = 1.5·Mw + 9.1</code>（M₀ 单位 N·m）估算。
+            1 吨 TNT = 4.184×10⁹ J，广岛原子弹约 1.5 万吨 TNT 当量。
+            历史上记录到的最大地震为 1960 年智利地震，Mw ≈ 9.5。
+          </p>
+
+          <div class="note-subhead">标度换算关系</div>
+          <p>
+            标度换算采用 Scordilis (2006) 等经验关系：
+          </p>
+          <ul>
+            <li><code>MS → Mw</code>：MS ≤ 6.1 时 Mw = 0.67·MS + 2.07；MS &gt; 6.1 时 Mw = 0.99·MS + 0.08</li>
+            <li><code>mb → Mw</code>：Mw = 0.85·mb + 1.03（适用 3.5 ≤ mb ≤ 6.2）</li>
+            <li><code>ML → Mw</code>：Mw = 0.85·ML + 0.85（适用 4.5 ≤ ML ≤ 6.5）</li>
+          </ul>
+          <p>
+            以上关系均为统计拟合结果，超出适用范围时换算仅供量级参考，具体地震应优先采用 Mw。
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        © 2026 wayione · 震级能量换算器
+      </footer>
+
+    </div><!-- /.tool-content -->
+
+  </div><!-- /.tool-layout -->
 </main>
 
 <script>
@@ -223,7 +405,6 @@
   var J_PER_KWH = 3.6e6;
   var HIROSHIMA_J = 6.3e13;
 
-  /* 标度饱和阈值（null 表示不饱和） */
   var SATURATION = {
     'Mw': null,
     'MS': 8.5,
@@ -231,16 +412,7 @@
     'ML': 7.0
   };
 
-  /* 接近阈值的缓冲量：进入该范围时给出温和提示 */
   var SAT_BUFFER = 0.5;
-
-  /* 各标度经验关系的适用上限（用于换算说明） */
-  var VALID_RANGE = {
-    'Mw': Infinity,
-    'MS': 8.5,
-    'mb': 6.2,
-    'ML': 6.5
-  };
 
   var REFS = [
     { name: '1 吨 TNT',        j: 1 * J_PER_TON_TNT },
@@ -256,8 +428,8 @@
   var select  = document.getElementById('scaleSelect');
   var presets = document.getElementById('presets');
 
+  var elConvertHint = document.getElementById('convertHint');
   var elEnergyValue = document.getElementById('energyValue');
-  var elEnergySub   = document.getElementById('energySub');
   var elEnergyNote  = document.getElementById('energyNote');
   var elMoment      = document.getElementById('outMoment');
   var elTnt         = document.getElementById('outTnt');
@@ -306,11 +478,11 @@
   }
 
   /* ===== 物理 / 经验公式 ===== */
-  function energyOf(mw) {           // 地震波能量，J
+  function energyOf(mw) {
     return Math.pow(10, 1.5 * mw + 4.8);
   }
 
-  function momentOf(mw) {           // 地震矩，N·m
+  function momentOf(mw) {
     return Math.pow(10, 1.5 * mw + 9.1);
   }
 
@@ -438,22 +610,18 @@
 
     var s = select.value;
 
-    /* 饱和检查与预警 */
     var sat = checkSaturation(v, s);
     renderWarn(sat, s);
 
     var mw = toMw(v, s);
 
-    /* 能量 */
+    var scaleName = { Mw: 'Mw', MS: 'MS', mb: 'mb', ML: 'ML' }[s] || s;
+    elConvertHint.textContent = '当前输入：' + scaleName + ' ' + v.toFixed(2);
+
+    /* 释放能量：只显示主数字 */
     var E = energyOf(mw);
     elEnergyValue.innerHTML = sci(E, 2) + '<span class="unit">J</span>';
 
-    var tnt = E / J_PER_TON_TNT;
-    elEnergySub.innerHTML = '约合 <strong>' + tonnage(tnt) + '</strong> TNT 当量' +
-                            '　·　相当于 <strong>' + times(E / HIROSHIMA_J) +
-                            '</strong> 广岛原子弹';
-
-    /* 能量说明：提示转换路径与饱和影响 */
     if (s === 'Mw') {
       elEnergyNote.textContent = '按 log₁₀E = 1.5·Mw + 4.8 估算';
       elEnergyNote.style.color = '';
@@ -468,29 +636,28 @@
       elEnergyNote.style.color = '';
     }
 
-    /* 细节 */
-    elMoment.textContent = sci(momentOf(mw), 2) + ' N·m';
+    /* 详细参数 */
+    var tnt = E / J_PER_TON_TNT;
     elTnt.textContent    = tonnage(tnt);
     elHiro.textContent   = times(E / HIROSHIMA_J);
     elKwh.textContent    = sci(E / J_PER_KWH, 2) + ' kWh';
+    elMoment.textContent = sci(momentOf(mw), 2) + ' N·m';
 
     /* 等效震级 */
     Array.prototype.forEach.call(elScaleGrid.children, function (item) {
       var key = item.getAttribute('data-scale');
       var val = fromMw(mw, key);
-      item.querySelector('.v').textContent = isFinite(val) ? val.toFixed(2) : '—';
+      var vEl = item.querySelector('.v');
+      if (vEl) vEl.textContent = isFinite(val) ? val.toFixed(2) : '—';
       item.classList.toggle('active', key === s);
 
-      /* 标记该标度的等效值是否已超过饱和阈值 */
       var th = SATURATION[key];
       var over = (th !== null && th !== undefined) && isFinite(val) && val > th;
       item.classList.toggle('over', over);
     });
 
-    /* 对比条 */
     renderBars(E);
 
-    /* 滑块同步 */
     if (Math.abs(parseFloat(slider.value) - v) > 1e-6) slider.value = v;
   }
 
@@ -513,6 +680,31 @@
     slider.value = val;
     update();
   });
+
+  /* ===== 目录动态同步 ===== */
+  function syncSidebar() {
+    document.querySelectorAll('#toolToc > li[data-target]').forEach(function (li) {
+      var id = li.getAttribute('data-target');
+      var panel = document.getElementById(id);
+      if (!panel) { li.hidden = true; return; }
+      li.hidden = !!panel.hidden;
+    });
+  }
+
+  syncSidebar();
+
+  if (typeof MutationObserver !== 'undefined') {
+    var observer = new MutationObserver(function (mutations) {
+      var relevant = false;
+      mutations.forEach(function (m) {
+        if (m.type === 'attributes' && m.attributeName === 'hidden') relevant = true;
+      });
+      if (relevant) syncSidebar();
+    });
+    document.querySelectorAll('.tool-content .panel').forEach(function (p) {
+      observer.observe(p, { attributes: true, attributeFilter: ['hidden'] });
+    });
+  }
 
   /* ===== 初始化 ===== */
   buildRefTable();

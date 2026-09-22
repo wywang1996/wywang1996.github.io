@@ -21,6 +21,10 @@
 <title>波形格式转换器 · wayione</title>
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/tools.css">
+<style>
+/* 目录项随 panel 显隐 */
+.tool-sidebar .nav-list > li[hidden] { display: none !important; }
+</style>
 </head>
 <body data-nav="waveform">
 
@@ -52,199 +56,218 @@
 </nav>
 
 <main class="wrap">
+  <div class="tool-layout">
 
-  <header class="page-head">
-    <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
-    <h1>波形格式转换器</h1>
-    <p>上传地震波形文件，在 SAC、MiniSEED、ASCII/CSV 之间互相转换。解析与转换全部在浏览器本地完成，文件不会上传到任何服务器。</p>
-  </header>
-
-  <section class="panel">
-    <div class="panel-label">
-      <span>上传波形文件</span>
-      <span class="hint">单文件 · 本地处理</span>
-    </div>
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".sac,.mseed,.seed,.ms,.csv,.txt,.dat,.asc">
-      <span class="drop-ico">📂</span>
-      <div class="drop-title">点击选择文件，或拖拽到此处</div>
-      <div class="drop-sub">
-        支持 <strong>.sac</strong> / <strong>.mseed</strong> / <strong>.csv</strong> / <strong>.txt</strong> 等格式
-      </div>
-    </div>
-    <div id="errorBox" class="alert error" hidden></div>
-    <div id="okBox" class="alert ok" hidden></div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-label">
-      <span>示例文件</span>
-      <span class="hint">点击「加载」直接用工具打开，「下载」保存到本地</span>
-    </div>
-    <div class="demo-grid">
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">ASCII</span>
-          <span class="demo-name">两列文本</span>
-        </div>
-        <div class="demo-desc">时间 (s) + 幅值，空格分隔。100 Hz · 20 s 合成地震波形。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="ascii" data-action="load">加载</button>
-          <button type="button" data-demo="ascii" data-action="download">下载</button>
-        </div>
-      </div>
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">CSV</span>
-          <span class="demo-name">逗号分隔</span>
-        </div>
-        <div class="demo-desc">带 <code>time,amplitude</code> 表头。方便 Excel / Pandas 读取。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="csv" data-action="load">加载</button>
-          <button type="button" data-demo="csv" data-action="download">下载</button>
-        </div>
-      </div>
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">SAC</span>
-          <span class="demo-name">二进制格式</span>
-        </div>
-        <div class="demo-desc">632 字节大端头段 + float32 数据。ObsPy / SAC 可直接读取。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="sac" data-action="load">加载</button>
-          <button type="button" data-demo="sac" data-action="download">下载</button>
-        </div>
-      </div>
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">MiniSEED</span>
-          <span class="demo-name">二进制格式</span>
-        </div>
-        <div class="demo-desc">标准 48 字节头段 + blockette 1000，编码为 IEEE float32。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="mseed" data-action="load">加载</button>
-          <button type="button" data-demo="mseed" data-action="download">下载</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="infoPanel" hidden>
-    <div class="panel-label">
-      <span>文件信息</span>
-      <span class="hint">解析结果预览</span>
-    </div>
-
-    <div class="file-info">
-      <span class="ftag" id="fTag">—</span>
-      <span class="fname" id="fName">—</span>
-      <span class="fsize" id="fSize">—</span>
-      <button class="btn-clear" id="btnClear">清除</button>
-    </div>
-
-    <div class="trace-grid">
-      <div class="trace-item">
-        <div class="k">台站 · 台网</div>
-        <div class="v" id="tStation">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">通道 · 位置</div>
-        <div class="v" id="tChannel">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">采样率</div>
-        <div class="v" id="tRate">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">采样点数</div>
-        <div class="v" id="tNpts">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">时间跨度</div>
-        <div class="v small" id="tDuration">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">起始时间</div>
-        <div class="v small" id="tStart">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">幅值范围</div>
-        <div class="v small" id="tRange">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">来源格式</div>
-        <div class="v" id="tFormat">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">字节序</div>
-        <div class="v small" id="tEndian">—</div>
-      </div>
-    </div>
-
-    <div class="wave-wrap">
-      <canvas id="waveCanvas" width="1000" height="260"></canvas>
-      <div class="wave-caption" id="waveCaption">Waveform preview</div>
-    </div>
-  </section>
-
-  <section class="panel" id="outPanel" hidden>
-    <div class="panel-label">
-      <span>选择输出格式</span>
-      <span class="hint">点击卡片切换</span>
-    </div>
-
-    <div class="format-grid" id="formatGrid">
-      <div class="format-item active" data-format="ASCII">
-        <div class="fk">ASCII</div>
-        <div class="fv">两列文本</div>
-        <div class="fd">时间(s) + 幅值，空格分隔，通用性最好</div>
-      </div>
-      <div class="format-item" data-format="CSV">
-        <div class="fk">CSV</div>
-        <div class="fv">逗号分隔</div>
-        <div class="fd">time,amplitude 表头，方便 Excel / Python 读取</div>
-      </div>
-      <div class="format-item" data-format="SAC">
-        <div class="fk">SAC</div>
-        <div class="fv">二进制格式</div>
-        <div class="fd">标准 632 字节头段 + float32 数据，ObsPy / SAC 可读</div>
-      </div>
-    </div>
-
-    <div class="save-row">
-      <button class="btn-primary" id="btnDownload">
-        <span>💾</span>
-        <span>选择位置并保存</span>
-      </button>
-      <div class="save-hint" id="saveHint">
-        <strong>Chrome / Edge</strong> 会弹出「另存为」对话框，可自由选择保存目录和文件名。<br>
-        其他浏览器将直接下载到默认下载目录。
-      </div>
-    </div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-label">支持范围与说明</div>
-    <div class="note">
-      <strong style="color:var(--text);">输入格式支持：</strong>
-      <ul>
-        <li><code>ASCII / CSV</code>：两列（时间 + 幅值）、三列或单列纯幅值文本，自动识别。索引列（0,1,2...）不会被误认为时间列。</li>
-        <li><code>SAC</code>：标准 632 字节头段，自动检测大端 / 小端字节序，解析 delta、npts、台站 / 通道 / 台网名及起始时间。</li>
-        <li><code>MiniSEED</code>：支持未压缩编码（16 / 24 / 32 位整数、IEEE 浮点 / 双精度），自动检测记录长度和数据字节序。</li>
+    <!-- ===== 左侧：本页目录 ===== -->
+    <aside class="tool-sidebar" aria-label="本页目录">
+      <div class="ts-title">本页目录</div>
+      <ul class="nav-list" id="toolToc">
+        <li data-target="s-upload"><a href="#s-upload" class="nav-parent">上传波形文件</a></li>
+        <li data-target="s-demo"><a href="#s-demo" class="nav-parent">示例文件</a></li>
+        <li data-target="s-info" hidden><a href="#s-info" class="nav-parent">文件信息</a></li>
+        <li data-target="s-out" hidden><a href="#s-out" class="nav-parent">选择输出格式</a></li>
+        <li data-target="s-note"><a href="#s-note" class="nav-parent">支持范围与说明</a></li>
       </ul>
-      <strong style="color:var(--text);">MiniSEED 限制：</strong>
-      Steim-1 / Steim-2 / Steim-3 压缩格式暂不支持。如遇到，请先用 ObsPy 转换：
-      <br>
-      <code>obspy> st = read("file.mseed"); st.write("out.sac", format="SAC")</code>
-      <br><br>
-      所有解析与转换均在浏览器本地完成，文件不会离开你的设备。
-    </div>
-  </section>
+    </aside>
 
-  <footer>
-    © 2026 wayione · 波形格式转换器
-  </footer>
+    <!-- ===== 右侧：主内容 ===== -->
+    <div class="tool-content">
 
+      <header class="page-head">
+        <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
+        <h1>波形格式转换器</h1>
+        <p>上传地震波形文件，在 SAC、MiniSEED、ASCII/CSV 之间互相转换。解析与转换全部在浏览器本地完成，文件不会上传到任何服务器。</p>
+      </header>
+
+      <section class="panel" id="s-upload">
+        <div class="panel-label">
+          <span>上传波形文件</span>
+          <span class="hint">单文件 · 本地处理</span>
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".sac,.mseed,.seed,.ms,.csv,.txt,.dat,.asc">
+          <span class="drop-ico">📂</span>
+          <div class="drop-title">点击选择文件，或拖拽到此处</div>
+          <div class="drop-sub">
+            支持 <strong>.sac</strong> / <strong>.mseed</strong> / <strong>.csv</strong> / <strong>.txt</strong> 等格式
+          </div>
+        </div>
+        <div id="errorBox" class="alert error" hidden></div>
+        <div id="okBox" class="alert ok" hidden></div>
+      </section>
+
+      <section class="panel" id="s-demo">
+        <div class="panel-label">
+          <span>示例文件</span>
+          <span class="hint">点击「加载」直接用工具打开，「下载」保存到本地</span>
+        </div>
+        <div class="demo-grid">
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">ASCII</span>
+              <span class="demo-name">两列文本</span>
+            </div>
+            <div class="demo-desc">时间 (s) + 幅值，空格分隔。100 Hz · 20 s 合成地震波形。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="ascii" data-action="load">加载</button>
+              <button type="button" data-demo="ascii" data-action="download">下载</button>
+            </div>
+          </div>
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">CSV</span>
+              <span class="demo-name">逗号分隔</span>
+            </div>
+            <div class="demo-desc">带 <code>time,amplitude</code> 表头。方便 Excel / Pandas 读取。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="csv" data-action="load">加载</button>
+              <button type="button" data-demo="csv" data-action="download">下载</button>
+            </div>
+          </div>
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">SAC</span>
+              <span class="demo-name">二进制格式</span>
+            </div>
+            <div class="demo-desc">632 字节大端头段 + float32 数据。ObsPy / SAC 可直接读取。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="sac" data-action="load">加载</button>
+              <button type="button" data-demo="sac" data-action="download">下载</button>
+            </div>
+          </div>
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">MiniSEED</span>
+              <span class="demo-name">二进制格式</span>
+            </div>
+            <div class="demo-desc">标准 48 字节头段 + blockette 1000，编码为 IEEE float32。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="mseed" data-action="load">加载</button>
+              <button type="button" data-demo="mseed" data-action="download">下载</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="s-info" hidden>
+        <div class="panel-label">
+          <span>文件信息</span>
+          <span class="hint">解析结果预览</span>
+        </div>
+
+        <div class="file-info">
+          <span class="ftag" id="fTag">—</span>
+          <span class="fname" id="fName">—</span>
+          <span class="fsize" id="fSize">—</span>
+          <button class="btn-clear" id="btnClear">清除</button>
+        </div>
+
+        <div class="trace-grid">
+          <div class="trace-item">
+            <div class="k">台站 · 台网</div>
+            <div class="v" id="tStation">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">通道 · 位置</div>
+            <div class="v" id="tChannel">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">采样率</div>
+            <div class="v" id="tRate">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">采样点数</div>
+            <div class="v" id="tNpts">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">时间跨度</div>
+            <div class="v small" id="tDuration">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">起始时间</div>
+            <div class="v small" id="tStart">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">幅值范围</div>
+            <div class="v small" id="tRange">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">来源格式</div>
+            <div class="v" id="tFormat">—</div>
+          </div>
+          <div class="trace-item">
+            <div class="k">字节序</div>
+            <div class="v small" id="tEndian">—</div>
+          </div>
+        </div>
+
+        <div class="wave-wrap">
+          <canvas id="waveCanvas" width="1000" height="260"></canvas>
+          <div class="wave-caption" id="waveCaption">Waveform preview</div>
+        </div>
+      </section>
+
+      <section class="panel" id="s-out" hidden>
+        <div class="panel-label">
+          <span>选择输出格式</span>
+          <span class="hint">点击卡片切换</span>
+        </div>
+
+        <div class="format-grid" id="formatGrid">
+          <div class="format-item active" data-format="ASCII">
+            <div class="fk">ASCII</div>
+            <div class="fv">两列文本</div>
+            <div class="fd">时间(s) + 幅值，空格分隔，通用性最好</div>
+          </div>
+          <div class="format-item" data-format="CSV">
+            <div class="fk">CSV</div>
+            <div class="fv">逗号分隔</div>
+            <div class="fd">time,amplitude 表头，方便 Excel / Python 读取</div>
+          </div>
+          <div class="format-item" data-format="SAC">
+            <div class="fk">SAC</div>
+            <div class="fv">二进制格式</div>
+            <div class="fd">标准 632 字节头段 + float32 数据，ObsPy / SAC 可读</div>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <button class="btn-primary" id="btnDownload">
+            <span>💾</span>
+            <span>选择位置并保存</span>
+          </button>
+          <div class="save-hint" id="saveHint">
+            <strong>Chrome / Edge</strong> 会弹出「另存为」对话框，可自由选择保存目录和文件名。<br>
+            其他浏览器将直接下载到默认下载目录。
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="s-note">
+        <div class="panel-label">支持范围与说明</div>
+        <div class="note">
+          <strong style="color:var(--text);">输入格式支持：</strong>
+          <ul>
+            <li><code>ASCII / CSV</code>：两列（时间 + 幅值）、三列或单列纯幅值文本，自动识别。索引列（0,1,2...）不会被误认为时间列。</li>
+            <li><code>SAC</code>：标准 632 字节头段，自动检测大端 / 小端字节序，解析 delta、npts、台站 / 通道 / 台网名及起始时间。</li>
+            <li><code>MiniSEED</code>：支持未压缩编码（16 / 24 / 32 位整数、IEEE 浮点 / 双精度），自动检测记录长度和数据字节序。</li>
+          </ul>
+          <strong style="color:var(--text);">MiniSEED 限制：</strong>
+          Steim-1 / Steim-2 / Steim-3 压缩格式暂不支持。如遇到，请先用 ObsPy 转换：
+          <br>
+          <code>obspy> st = read("file.mseed"); st.write("out.sac", format="SAC")</code>
+          <br><br>
+          所有解析与转换均在浏览器本地完成，文件不会离开你的设备。
+        </div>
+      </section>
+
+      <footer>
+        © 2026 wayione · 波形格式转换器
+      </footer>
+
+    </div><!-- /.tool-content -->
+
+  </div><!-- /.tool-layout -->
 </main>
 
 <script>
@@ -1214,7 +1237,6 @@
      科研风格波形绘制（跟随主题色）
      ============================================================ */
 
-  /* 读取主题相关的 canvas 颜色 */
   function getCanvasColors() {
     var s = getComputedStyle(document.documentElement);
     function v(name, fallback) {
@@ -1305,7 +1327,6 @@
     var yTicks = niceTicks(yMin, yMax, 5);
     var xTicks = niceTicks(0, xMax, 6);
 
-    /* 网格线 */
     ctx.save();
     ctx.strokeStyle = C.grid;
     ctx.lineWidth = 0.5;
@@ -1330,12 +1351,10 @@
     }
     ctx.restore();
 
-    /* 外框 */
     ctx.strokeStyle = C.border;
     ctx.lineWidth = 0.9;
     ctx.strokeRect(margin.left, margin.top, plotW, plotH);
 
-    /* 波形 */
     ctx.strokeStyle = C.text;
     ctx.lineWidth = 0.6;
     ctx.beginPath();
@@ -1361,7 +1380,6 @@
     }
     ctx.stroke();
 
-    /* 刻度 */
     var tickLen = 5;
     ctx.strokeStyle = C.border;
     ctx.lineWidth = 0.8;
@@ -1401,7 +1419,6 @@
       ctx.fillText(formatTick(tx), xx, margin.top + plotH + 8);
     }
 
-    /* 轴标签 */
     ctx.font = 'italic 12px "Times New Roman", "Songti SC", "SimSun", serif';
     ctx.fillStyle = C.muted;
     ctx.textAlign = 'center';
@@ -1497,8 +1514,8 @@
     $('tFormat').textContent = trace.sourceFormat;
     $('tEndian').textContent = trace.endian || '—';
 
-    $('infoPanel').hidden = false;
-    $('outPanel').hidden = false;
+    $('s-info').hidden = false;
+    $('s-out').hidden = false;
 
     var xMax, xLabel;
     if (trace.sampleRate > 0) {
@@ -1536,8 +1553,8 @@
     state.trace = null;
     state.fileName = '';
     state.fileSize = 0;
-    $('infoPanel').hidden = true;
-    $('outPanel').hidden = true;
+    $('s-info').hidden = true;
+    $('s-out').hidden = true;
     $('fileInput').value = '';
     hideAlerts();
   }
@@ -1782,6 +1799,33 @@
         }
         drawWaveform($('waveCanvas'), trace.data, xMax, xLabel);
       }, 60);
+    });
+  }
+
+  /* ============================================================
+     目录动态同步
+     ============================================================ */
+  function syncSidebar() {
+    document.querySelectorAll('#toolToc > li[data-target]').forEach(function (li) {
+      var id = li.getAttribute('data-target');
+      var panel = document.getElementById(id);
+      if (!panel) { li.hidden = true; return; }
+      li.hidden = !!panel.hidden;
+    });
+  }
+
+  syncSidebar();
+
+  if (typeof MutationObserver !== 'undefined') {
+    var observer = new MutationObserver(function (mutations) {
+      var relevant = false;
+      mutations.forEach(function (m) {
+        if (m.type === 'attributes' && m.attributeName === 'hidden') relevant = true;
+      });
+      if (relevant) syncSidebar();
+    });
+    document.querySelectorAll('.tool-content .panel').forEach(function (p) {
+      observer.observe(p, { attributes: true, attributeFilter: ['hidden'] });
     });
   }
 

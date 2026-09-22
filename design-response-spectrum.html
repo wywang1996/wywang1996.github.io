@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="seismic-spectrum">
+<head>
+<meta charset="UTF-8">
+
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抗震规范谱生成器 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/tools.css">
+<style>
+/* =========================================================
+   抗震规范谱生成器专用样式
+   ========================================================= */
+
+/* 模式切换标签 */
+.mode-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-blue-soft);
+  border: 1px solid var(--border-blue);
+  border-radius: 11px;
+}
+.mode-tab {
+  border: none;
+  background: transparent;
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.mode-tab:hover { color: var(--text); }
+.mode-tab.active {
+  background: var(--panel);
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .1);
+}
+
+/* 参数列表（输入控件） */
+.param-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 0 40px;
+}
+.param-list .param-item {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-soft);
+  min-width: 0;
+}
+.param-list .param-item:last-child { border-bottom: none; }
+.param-list .param-item > label {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: .01em;
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.param-list .param-item > select,
+.param-list .param-item > input[type=number] {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border-blue);
+  border-radius: 9px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg-blue-soft);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  min-width: 0;
+}
+.param-list .param-item > input[type=number]::-webkit-outer-spin-button,
+.param-list .param-item > input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.param-list .param-item > select:focus,
+.param-list .param-item > input[type=number]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.param-list .param-item > input[type=number]:disabled {
+  background: var(--bg);
+  color: var(--dim);
+  cursor: not-allowed;
+}
+.param-list .param-item > select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M2.5 4.5L6 8l3.5-3.5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  padding-right: 30px;
+}
+.param-list .param-item > .check-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+.param-list .param-item > .check-inline input[type=checkbox] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex: none;
+  margin: 0;
+}
+.param-list .param-item > .check-inline span {
+  font-size: 13px;
+  color: var(--text);
+  user-select: none;
+  line-height: 1.4;
+}
+
+/* 参数表格（纯文本信息） */
+.param-table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.param-table tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background-color .12s ease;
+}
+.param-table tbody tr:last-child { border-bottom: none; }
+.param-table tbody tr:hover { background: var(--bg-blue-soft); }
+.param-table td {
+  padding: 9px 4px;
+  vertical-align: middle;
+}
+.param-table .pk {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: left;
+  letter-spacing: .01em;
+  padding-right: 32px;
+  white-space: nowrap;
+}
+.param-table .pv {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 620;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+
+@media (max-width: 620px) {
+  .param-list {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .param-list .param-item {
+    grid-template-columns: 140px 1fr;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .param-list .param-item > label { font-size: 12px; }
+  .param-table .pk { padding-right: 16px; font-size: 12px; }
+  .param-table .pv { font-size: 12.5px; }
+}
+
+/* 控制点表格 */
+.ctrl-table {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border-blue);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--bg-blue-soft);
+}
+.ctrl-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.ctrl-row:last-child { margin-bottom: 0; }
+.ctrl-row .lbl {
+  font-size: 11px;
+  color: var(--dim);
+  font-family: var(--mono);
+  flex: none;
+}
+.ctrl-row input {
+  flex: 1;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-family: var(--mono);
+  border: 1px solid var(--border-blue);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.ctrl-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+/* 图表容器 */
+.chart-wrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 8px;
+}
+#chart {
+  width: 100%;
+  height: 460px;
+  display: block;
+}
+@media (max-width: 620px) {
+  #chart { height: 340px; }
+}
+
+.param-section-title {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: var(--accent);
+  font-weight: 650;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%; bottom: 40px;
+  transform: translate(-50%, 12px);
+  background: #0f172a; color: #f8fafc;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  letter-spacing: .01em;
+  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, .4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s, transform .22s;
+  z-index: 1000;
+  max-width: 90vw;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast .dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body data-nav="seismic-spectrum">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span><span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div class="tool-layout">
+
+    <!-- ===== 左侧：本页目录（自动跟随 panel 显隐） ===== -->
+    <aside class="tool-sidebar" aria-label="本页目录">
+      <div class="ts-title">本页目录</div>
+      <ul class="nav-list" id="toolToc">
+        <li data-target="s-mode"><a href="#s-mode" class="nav-parent">工作模式</a></li>
+        <li data-target="s-code"><a href="#s-code" class="nav-parent">规范查表式</a></li>
+        <li data-target="s-precise" hidden><a href="#s-precise" class="nav-parent">精确参数式</a></li>
+        <li data-target="s-chart"><a href="#s-chart" class="nav-parent">设计谱曲线</a></li>
+        <li data-target="s-params"><a href="#s-params" class="nav-parent">设计谱参数</a></li>
+        <li data-target="s-export"><a href="#s-export" class="nav-parent">导出结果</a></li>
+        <li data-target="s-note"><a href="#s-note" class="nav-parent">方法与说明</a></li>
+      </ul>
+    </aside>
+
+    <!-- ===== 右侧：主内容 ===== -->
+    <div class="tool-content">
+
+      <header class="page-head">
+        <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
+        <h1>抗震规范谱生成器</h1>
+        <p>支持 7 部中国抗震规范的设计谱生成：建筑抗震、公路桥梁、城市桥梁、城轨结构、水运工程、建筑隔震与核电厂。内置规范查表与精确参数两种模式，可导出 SVG 矢量图与 CSV 数据，全部在浏览器本地完成。</p>
+      </header>
+
+      <!-- 工作模式 -->
+      <section class="panel" id="s-mode">
+        <div class="panel-label">
+          <span>工作模式</span>
+          <span class="hint" id="modeHint">从规范下拉中选择设防条件，一键生成曲线</span>
+        </div>
+        <div class="mode-tabs" role="tablist">
+          <button class="mode-tab active" data-mode="code" type="button">规范查表式</button>
+          <button class="mode-tab" data-mode="precise" type="button">精确参数式</button>
+        </div>
+      </section>
+
+      <!-- 规范查表式 -->
+      <section class="panel" id="s-code">
+        <div class="panel-label">
+          <span>规范参数</span>
+          <span class="hint" id="specShort">建筑抗震</span>
+        </div>
+        <div class="param-list" id="paramPanel"></div>
+      </section>
+
+      <!-- 精确参数式 -->
+      <section class="panel" id="s-precise" hidden>
+        <div class="panel-label">
+          <span>精确参数</span>
+          <button class="btn-clear" id="btnSync" type="button" style="font-size:12px;">从规范表导入</button>
+        </div>
+
+        <div class="param-list">
+          <div class="param-item" style="grid-column: 1 / -1;">
+            <label>谱形式</label>
+            <select id="p_spectrumType">
+              <option value="fourSegment">四段式 · 建筑 / 隔震 / 城轨 / 水运（α 无量纲）</option>
+              <option value="bridge">三段式 · 公路 / 城市桥梁（S，单位 g）</option>
+              <option value="npp">控制点插值 · 核电厂（SA，单位 g）</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="pFourSegmentPanel" style="margin-top:16px;">
+          <div class="param-section-title">四段式参数</div>
+          <div class="param-list">
+            <div class="param-item">
+              <label>α max（无量纲）</label>
+              <input type="number" id="p_alpha" value="0.16" min="0.01" max="3" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>T g（s）</label>
+              <input type="number" id="p_tg" value="0.35" min="0.05" max="3" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>阻尼比 ζ</label>
+              <input type="number" id="p_zeta" value="0.05" min="0.02" max="0.30" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>T 上限（s）</label>
+              <input type="number" id="p_tmax" value="6.0" min="1" max="10" step="0.5">
+            </div>
+            <div class="param-item" style="grid-column: 1 / -1;">
+              <label>阻尼调整系数</label>
+              <div class="check-inline">
+                <input type="checkbox" id="p_auto" checked>
+                <span>按规范自动计算 γ / η₁ / η₂</span>
+              </div>
+            </div>
+            <div class="param-item">
+              <label>γ 衰减指数</label>
+              <input type="number" id="p_gamma" value="0.900" min="0.1" max="2" step="0.001" disabled>
+            </div>
+            <div class="param-item">
+              <label>η₁ 斜率调整</label>
+              <input type="number" id="p_eta1" value="0.020" min="0" max="0.5" step="0.001" disabled>
+            </div>
+            <div class="param-item">
+              <label>η₂ 阻尼调整</label>
+              <input type="number" id="p_eta2" value="1.000" min="0.55" max="2" step="0.001" disabled>
+            </div>
+          </div>
+        </div>
+
+        <div id="pBridgePanel" hidden style="margin-top:16px;">
+          <div class="param-section-title">三段式桥梁参数</div>
+          <div class="param-list">
+            <div class="param-item">
+              <label>S max（g）</label>
+              <input type="number" id="pb_Smax" value="0.35" min="0.01" max="3" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>T g（s）</label>
+              <input type="number" id="pb_Tg" value="0.35" min="0.05" max="3" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>上升段斜率 k</label>
+              <input type="number" id="pb_k" value="5.5" min="3" max="10" step="0.1">
+            </div>
+            <div class="param-item">
+              <label>T 上限（s）</label>
+              <input type="number" id="pb_Tmax" value="10.0" min="1" max="20" step="0.5">
+            </div>
+            <div class="param-item">
+              <label>阻尼比 ζ（仅参考）</label>
+              <input type="number" id="pb_zeta" value="0.05" min="0.02" max="0.30" step="0.01">
+            </div>
+          </div>
+        </div>
+
+        <div id="pNppPanel" hidden style="margin-top:16px;">
+          <div class="param-section-title">核电厂 RG 1.60 控制点</div>
+          <div class="param-list">
+            <div class="param-item">
+              <label>PGA（g）</label>
+              <input type="number" id="pn_PGA" value="0.10" min="0.01" max="1" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>阻尼比 ζ</label>
+              <input type="number" id="pn_zeta" value="0.05" min="0.02" max="0.30" step="0.01">
+            </div>
+            <div class="param-item">
+              <label>T 上限（s）</label>
+              <input type="number" id="pn_Tmax" value="5.0" min="1" max="10" step="0.5">
+            </div>
+          </div>
+
+          <div style="margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div class="param-section-title" style="margin:0; padding:0; border:0;">控制点（周期 s，谱值比 SA/PGA）</div>
+            <button class="btn-clear" id="btnResetNppCtrl" type="button" style="font-size:12px;">恢复 RG 1.60</button>
+          </div>
+          <div class="ctrl-table" id="nppCtrlTable" style="margin-top:8px;"></div>
+        </div>
+      </section>
+
+      <!-- 设计谱曲线 -->
+      <section class="panel" id="s-chart">
+        <div class="panel-label">
+          <span>设计谱曲线</span>
+          <span class="hint" id="chartHint">α(T) — 周期 T</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+          <div class="wave-caption" id="chartCaption">图 1  地震影响系数曲线 α(T)</div>
+        </div>
+      </section>
+
+      <!-- 设计谱参数 -->
+      <section class="panel" id="s-params">
+        <div class="panel-label">
+          <span>设计谱参数</span>
+          <span class="hint">当前曲线对应的计算参数</span>
+        </div>
+        <table class="param-table">
+          <tbody id="infoGrid"></tbody>
+        </table>
+      </section>
+
+      <!-- 导出结果 -->
+      <section class="panel" id="s-export">
+        <div class="panel-label">导出结果</div>
+        <div class="save-row">
+          <button class="btn-primary" id="btnSvg">
+            <span>💾</span>
+            <span>导出 SVG 矢量图</span>
+          </button>
+          <button class="btn-clear" id="btnCsv" type="button">导出 CSV</button>
+          <div class="save-hint">
+            <strong>SVG</strong> 为矢量格式，可直接插入 Word / LaTeX / Illustrator，横轴宽度 160 mm，适配 A4 正文宽度；
+            <strong>CSV</strong> 包含 T–α 完整数据点，可直接用 Excel / Pandas 读取。
+          </div>
+        </div>
+      </section>
+
+      <!-- 方法与说明 -->
+      <section class="panel" id="s-note">
+        <div class="panel-label">方法与说明</div>
+        <div class="note">
+          <strong style="color:var(--text);">双模式：</strong>
+          <ul>
+            <li><strong>规范查表式</strong>：从下拉菜单选择设计规范、设防烈度、场地类别等工程条件，自动查表取值并生成曲线。</li>
+            <li><strong>精确参数式</strong>：直接输入 αmax / Smax / Tg / 阻尼比等参数，支持三种谱形（四段式、三段式、控制点插值）自由切换。</li>
+          </ul>
+
+          <strong style="color:var(--text);">内置规范：</strong>
+          <ul>
+            <li>GB/T 50011-2010（2024年版）建筑抗震设计标准（α 无量纲）</li>
+            <li>JTG/T 2231-01-2020 公路桥梁抗震设计规范（S，单位 g）</li>
+            <li>CJJ 166-2011 城市桥梁抗震设计规范（S，单位 g）</li>
+            <li>GB 50909-2014 城市轨道交通结构抗震设计规范（α 无量纲）</li>
+            <li>JTS 146-2012 水运工程抗震设计规范（α 无量纲）</li>
+            <li>GB/T 51408-2021 建筑隔震设计标准（α 无量纲）</li>
+            <li>GB 50267-2019 核电厂抗震设计标准（SA，单位 g）</li>
+          </ul>
+
+          <strong style="color:var(--text);">曲线形式：</strong>
+          <ul>
+            <li><strong>四段式</strong>：直线上升段（T ≤ 0.1s）+ 水平平台段 + 曲线下降段 + 直线下降段，适用于建筑、隔震、城轨、水运。</li>
+            <li><strong>三段式</strong>：上升段（0~0.1s）+ 平台段 + S·Tg/T 下降段，适用于公路 / 城市桥梁。</li>
+            <li><strong>控制点插值</strong>：对数-对数坐标下按控制点插值，适用于核电厂 RG 1.60 标准反应谱。</li>
+          </ul>
+
+          <strong style="color:var(--text);">阻尼调整：</strong>
+          四段式谱按 GB 50011 自动计算 γ、η₁、η₂；核电厂谱按 φ(ζ) = 1/√(20ζ) 调整；隔震结构 γ 固定取 0.9。
+
+          <strong style="color:var(--text);">注意：</strong>
+          <ul>
+            <li>建筑抗震、城轨、水运、隔震规范纵轴为无量纲地震影响系数 α；</li>
+            <li>桥梁规范纵轴为设计加速度反应谱 S，核电厂规范纵轴为谱加速度 SA，单位均为重力加速度 g；</li>
+            <li>所有计算在浏览器本地完成，不上传任何数据。</li>
+          </ul>
+        </div>
+      </section>
+
+      <footer>
+        © 2026 wayione · 抗震规范谱生成器
+      </footer>
+
+    </div><!-- /.tool-content -->
+
+  </div><!-- /.tool-layout -->
+</main>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+
+  /* =========================================================
+     0. 通用工具
+     ========================================================= */
+  function clampNum(v, lo, hi, dflt) {
+    if (typeof v !== 'number' || !isFinite(v)) return dflt;
+    return Math.min(hi, Math.max(lo, v));
+  }
+  function dampingParams(zeta) {
+    const gamma = 0.9 + (0.05 - zeta) / (0.3 + 6 * zeta);
+    let eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+    if (eta1 < 0) eta1 = 0;
+    let eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+    if (eta2 < 0.55) eta2 = 0.55;
+    return { gamma, eta1, eta2 };
+  }
+  function niceTicks(min, max, count) {
+    const raw = (max - min) / count;
+    if (!(raw > 0)) return [min];
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw / mag;
+    let s;
+    if (n <= 1) s = 1; else if (n <= 2) s = 2;
+    else if (n <= 2.5) s = 2.5; else if (n <= 5) s = 5; else s = 10;
+    s *= mag;
+    const out = [];
+    let v = Math.ceil(min / s) * s;
+    let g = 0;
+    while (v <= max + s * 1e-9 && g++ < 200) { out.push(Number(v.toFixed(10))); v += s; }
+    return out;
+  }
+  function niceCeil(v) {
+    if (!(v > 0)) return 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(v)));
+    const n = v / mag;
+    let p;
+    if (n <= 1) p = 1; else if (n <= 1.5) p = 1.5;
+    else if (n <= 2) p = 2; else if (n <= 2.5) p = 2.5;
+    else if (n <= 3) p = 3; else if (n <= 4) p = 4;
+    else if (n <= 5) p = 5; else if (n <= 6) p = 6;
+    else if (n <= 8) p = 8; else p = 10;
+    return p * mag;
+  }
+  function decimalsFor(step) {
+    if (step >= 1) return 0;
+    return Math.min(4, Math.max(0, Math.ceil(-Math.log10(step) - 1e-9)));
+  }
+
+  const SERIF = "'Times New Roman', 'Songti SC', 'SimSun', serif";
+  const CURVE_COLOR_LIGHT = '#0b3d91';
+  const CURVE_COLOR_DARK  = '#f59e0b';
+
+  function themeColors() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const s = getComputedStyle(document.documentElement);
+    return {
+      dark: dark,
+      bg:     s.getPropertyValue('--panel').trim() || '#ffffff',
+      text:   s.getPropertyValue('--text').trim() || '#1a1a1a',
+      grid:   dark ? '#2a2418' : '#e8e8e8',
+      axis:   dark ? '#ece7dc' : '#1a1a1a',
+      curve:  dark ? CURVE_COLOR_DARK : CURVE_COLOR_LIGHT
+    };
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    $('toastMsg').textContent = msg;
+    const t = $('toast');
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* =========================================================
+     1. 谱函数
+     ========================================================= */
+  function fourSegmentSpectrum(T, p) {
+    const a = p.alphaMax, Tg = p.Tg, g = p.gamma, e1 = p.eta1, e2 = p.eta2;
+    let val;
+    if (T < 0) return 0;
+    else if (T <= 0.1) val = (0.45 + (e2 - 0.45) / 0.1 * T) * a;
+    else if (T <= Tg) val = e2 * a;
+    else if (T <= 5 * Tg) val = Math.pow(Tg / T, g) * e2 * a;
+    else if (T <= p.Tmax) val = (e2 * Math.pow(0.2, g) - e1 * (T - 5 * Tg)) * a;
+    else val = 0;
+    return val > 0 ? val : 0;
+  }
+  function bridgeSpectrum(T, p, k) {
+    const S = p.Smax, Tg = p.Tg, Tmax = p.Tmax;
+    if (T < 0) return 0;
+    if (T < 0.1) return S * (k * T + (1 - k * 0.1));
+    if (T <= Tg) return S;
+    if (T <= Tmax) return S * (Tg / T);
+    return 0;
+  }
+  const NPP_CTRL_DEFAULT = [
+    [0.030, 1.00], [0.111, 2.50], [0.400, 2.50], [4.000, 0.50], [5.000, 0.40]
+  ];
+  function nppSpectrum(T, p) {
+    const pga = p.PGA;
+    const dmpF = p.dmpFactor || 1.0;
+    const Tmax = p.Tmax;
+    const pts = (p.ctrlPoints || NPP_CTRL_DEFAULT)
+      .slice().sort((a, b) => a[0] - b[0]);
+    if (T <= 0 || T > Tmax) return 0;
+    if (pts.length < 2) return 0;
+    let ratio;
+    if (T <= pts[0][0]) {
+      ratio = pts[0][1] * (T / pts[0][0]);
+      ratio = Math.max(0, ratio);
+    } else if (T >= pts[pts.length - 1][0]) {
+      ratio = pts[pts.length - 1][1] * (pts[pts.length - 1][0] / T);
+    } else {
+      let i = 0;
+      for (let j = 0; j < pts.length - 1; j++) {
+        if (T >= pts[j][0] && T <= pts[j + 1][0]) { i = j; break; }
+      }
+      const [T1, R1] = pts[i], [T2, R2] = pts[i + 1];
+      const lx = Math.log(T), lx1 = Math.log(T1), lx2 = Math.log(T2);
+      const ly1 = Math.log(R1), ly2 = Math.log(R2);
+      const t = (lx - lx1) / (lx2 - lx1);
+      ratio = Math.exp(ly1 + t * (ly2 - ly1));
+    }
+    return pga * ratio * dmpF;
+  }
+
+  /* =========================================================
+     2. 规范数据库
+     ========================================================= */
+  const SPEC_CODES = [
+    {
+      id: 'GB50011',
+      name: 'GB/T 50011-2010（2024年版）建筑抗震设计标准',
+      short: '建筑抗震',
+      yUnit: 'α',
+      yUnitText: '无量纲',
+      yLabel: '地震影响系数 α（无量纲）',
+      yDecimals: 3,
+      fields: [
+        { key: 'intensity', label: '抗震设防烈度', type: 'select',
+          options: [['6','6 度'],['7','7 度'],['8','8 度'],['9','9 度']], default: '7' },
+        { key: 'accel', label: '设计基本地震加速度', type: 'select',
+          options: v => ({
+            '6': [['0.05','0.05g']],
+            '7': [['0.10','0.10g'],['0.15','0.15g']],
+            '8': [['0.20','0.20g'],['0.30','0.30g']],
+            '9': [['0.40','0.40g']]
+          })[v.intensity] || [],
+          default: '0.10' },
+        { key: 'level', label: '地震影响', type: 'select',
+          options: [['frequent','多遇地震'],['rare','罕遇地震']], default: 'frequent' },
+        { key: 'site', label: '场地类别', type: 'select',
+          options: [['I0','Ⅰ₀'],['I1','Ⅰ₁'],['II','Ⅱ'],['III','Ⅲ'],['IV','Ⅳ']], default: 'II' },
+        { key: 'group', label: '设计地震分组', type: 'select',
+          options: [['1','第一组'],['2','第二组'],['3','第三组']], default: '1' },
+        { key: 'zeta', label: '阻尼比 ζ', type: 'number',
+          default: 0.05, min: 0.02, max: 0.30, step: 0.01, decimals: 2 }
+      ],
+      compute: v => {
+        const A = {
+          frequent: { '6_0.05':0.04,'7_0.10':0.08,'7_0.15':0.12,'8_0.20':0.16,'8_0.30':0.24,'9_0.40':0.32 },
+          rare:     { '6_0.05':0.28,'7_0.10':0.50,'7_0.15':0.72,'8_0.20':0.90,'8_0.30':1.20,'9_0.40':1.40 }
+        };
+        const TG = {
+          '1':{I0:0.20,I1:0.25,II:0.35,III:0.45,IV:0.65},
+          '2':{I0:0.25,I1:0.30,II:0.40,III:0.55,IV:0.75},
+          '3':{I0:0.30,I1:0.35,II:0.45,III:0.65,IV:0.90}
+        };
+        const alphaMax = (A[v.level]||{})[v.intensity+'_'+v.accel] || 0.16;
+        let Tg = (TG[v.group]||{})[v.site] || 0.35;
+        let tgNote = '';
+        if (v.level === 'rare') { Tg = Number((Tg+0.05).toFixed(2)); tgNote = '罕遇+0.05s'; }
+        const zeta = clampNum(v.zeta, 0.02, 0.30, 0.05);
+        const dp = dampingParams(zeta);
+        return { alphaMax, Tg, zeta, gamma: dp.gamma, eta1: dp.eta1, eta2: dp.eta2,
+                 Tmax: 6.0, tgNote, intensity: v.intensity, accel: v.accel,
+                 level: v.level, site: v.site, group: v.group };
+      },
+      note: p => {
+        const lv = p.level === 'rare' ? '罕遇地震' : '多遇地震';
+        let s = `查表：${p.intensity}度 · ${p.accel}g · ${lv} · ${p.site}类 · 第${p.group}组。<br>`;
+        s += `Tg = ${p.Tg.toFixed(2)} s${p.tgNote ? '（'+p.tgNote+'）' : ''}；`;
+        s += p.zeta === 0.05
+          ? 'ζ = 0.05，取 γ=0.9、η₁=0.02、η₂=1.0。'
+          : `ζ=${p.zeta.toFixed(2)}，按规范公式自动调整 γ、η₁、η₂。`;
+        s += `<br>纵轴 α 为无量纲地震影响系数（基底剪力 = α·G）。`;
+        return s;
+      }
+    },
+    {
+      id: 'JTGT2231',
+      name: 'JTG/T 2231-01-2020 公路桥梁抗震设计规范',
+      short: '公路桥梁',
+      yUnit: 'g', yUnitText: '重力加速度 g',
+      yLabel: '设计加速度反应谱 S (g)', yDecimals: 3,
+      fields: [
+        { key: 'Ci', label: '抗震重要性系数 Ci', type: 'select',
+          options: [['0.43','E1·D类(0.43)'],['0.5','E1·C类(0.5)'],['0.7','E1·B类(0.7)'],
+                    ['1.0','E1·A类(1.0)'],['1.3','E2·A类(1.3)'],['1.7','E2·B类(1.7)']],
+          default: '1.0' },
+        { key: 'A', label: '设计基本地震动峰值加速度 A(g)', type: 'select',
+          options: [['0.05','0.05g'],['0.10','0.10g'],['0.15','0.15g'],
+                    ['0.20','0.20g'],['0.30','0.30g'],['0.40','0.40g']],
+          default: '0.10' },
+        { key: 'site', label: '场地类别', type: 'select',
+          options: [['I0','Ⅰ₀'],['I1','Ⅰ₁'],['II','Ⅱ'],['III','Ⅲ'],['IV','Ⅳ']], default: 'II' },
+        { key: 'zeta', label: '阻尼比 ζ', type: 'number',
+          default: 0.05, min: 0.02, max: 0.30, step: 0.01, decimals: 2 }
+      ],
+      compute: v => {
+        const A = parseFloat(v.A);
+        const CsTable = {
+          I0: [0.9,0.9,0.9,0.9], I1: [1.0,1.0,1.0,1.0],
+          II: [1.1,1.1,1.0,1.0], III:[1.3,1.2,1.1,1.0], IV: [1.5,1.4,1.2,1.0]
+        };
+        const col = A <= 0.05 ? 0 : A <= 0.15 ? 1 : A <= 0.30 ? 2 : 3;
+        const Cs = (CsTable[v.site] || CsTable.II)[col];
+        const TgTable = { I0:0.20, I1:0.25, II:0.35, III:0.45, IV:0.65 };
+        const Tg = TgTable[v.site] || 0.35;
+        const zeta = clampNum(v.zeta, 0.02, 0.30, 0.05);
+        let Cd = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+        if (Cd < 0.55) Cd = 0.55;
+        const Ci = parseFloat(v.Ci) || 1.0;
+        const Smax = 2.5 * Ci * Cs * Cd * A;
+        return { Smax, A, Ci, Cs, Cd, Tg, zeta, Tmax: 10.0, site: v.site };
+      },
+      spectrum: (T, p) => bridgeSpectrum(T, p, 5.5),
+      note: p =>
+        `Smax = 2.5·Ci·Cs·Cd·A = 2.5×${p.Ci.toFixed(2)}×${p.Cs.toFixed(2)}×${p.Cd.toFixed(3)}×${p.A.toFixed(2)} = <b>${p.Smax.toFixed(4)} g</b><br>` +
+        `Tg = ${p.Tg.toFixed(2)} s；ζ=${p.zeta.toFixed(2)} → Cd=${p.Cd.toFixed(3)}。<br>` +
+        `纵轴 S 为设计加速度反应谱，单位 g（1 g = 9.81 m/s²）。`
+    },
+    {
+      id: 'CJJ166',
+      name: 'CJJ 166-2011 城市桥梁抗震设计规范',
+      short: '城市桥梁',
+      yUnit: 'g', yUnitText: '重力加速度 g',
+      yLabel: '设计加速度反应谱 S (g)', yDecimals: 3,
+      fields: [
+        { key: 'A', label: '设计地震动峰值加速度 A(g)', type: 'select',
+          options: [['0.05','0.05g'],['0.10','0.10g'],['0.15','0.15g'],
+                    ['0.20','0.20g'],['0.30','0.30g'],['0.40','0.40g']],
+          default: '0.10' },
+        { key: 'site', label: '场地类别', type: 'select',
+          options: [['I','Ⅰ'],['II','Ⅱ'],['III','Ⅲ'],['IV','Ⅳ']], default: 'II' },
+        { key: 'Ci', label: '结构重要性系数 Ci', type: 'select',
+          options: [['0.5','0.5（丁类）'],['0.7','0.7（丙类）'],
+                    ['1.0','1.0（乙类）'],['1.3','1.3（甲类）']],
+          default: '1.0' },
+        { key: 'zeta', label: '阻尼比 ζ', type: 'number',
+          default: 0.05, min: 0.02, max: 0.30, step: 0.01, decimals: 2 }
+      ],
+      compute: v => {
+        const A = parseFloat(v.A);
+        const CsTable = {
+          I: [0.9,0.9,0.9,0.9], II: [1.1,1.1,1.0,1.0],
+          III:[1.3,1.2,1.1,1.0], IV: [1.5,1.4,1.2,1.0]
+        };
+        const col = A <= 0.05 ? 0 : A <= 0.15 ? 1 : A <= 0.30 ? 2 : 3;
+        const Cs = (CsTable[v.site] || CsTable.II)[col];
+        const TgTable = { I:0.25, II:0.35, III:0.45, IV:0.65 };
+        const Tg = TgTable[v.site] || 0.35;
+        const zeta = clampNum(v.zeta, 0.02, 0.30, 0.05);
+        let Cd = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+        if (Cd < 0.55) Cd = 0.55;
+        const Ci = parseFloat(v.Ci) || 1.0;
+        const Smax = 2.25 * Ci * Cs * Cd * A;
+        return { Smax, A, Ci, Cs, Cd, Tg, zeta, Tmax: 10.0, site: v.site };
+      },
+      spectrum: (T, p) => bridgeSpectrum(T, p, 5.0),
+      note: p =>
+        `Smax = 2.25·Ci·Cs·Cd·A = 2.25×${p.Ci.toFixed(2)}×${p.Cs.toFixed(2)}×${p.Cd.toFixed(3)}×${p.A.toFixed(2)} = <b>${p.Smax.toFixed(4)} g</b><br>` +
+        `Tg = ${p.Tg.toFixed(2)} s；ζ=${p.zeta.toFixed(2)} → Cd=${p.Cd.toFixed(3)}。<br>` +
+        `纵轴 S 为设计加速度反应谱，单位 g。`
+    },
+    {
+      id: 'GB50909',
+      name: 'GB 50909-2014 城市轨道交通结构抗震设计规范',
+      short: '城轨结构',
+      yUnit: 'α', yUnitText: '无量纲',
+      yLabel: '地震影响系数 α（无量纲）', yDecimals: 3,
+      fields: [
+        { key: 'intensity', label: '抗震设防烈度', type: 'select',
+          options: [['6','6 度'],['7','7 度'],['8','8 度'],['9','9 度']], default: '7' },
+        { key: 'accel', label: '设计基本地震加速度', type: 'select',
+          options: v => ({
+            '6': [['0.05','0.05g']],
+            '7': [['0.10','0.10g'],['0.15','0.15g']],
+            '8': [['0.20','0.20g'],['0.30','0.30g']],
+            '9': [['0.40','0.40g']]
+          })[v.intensity] || [],
+          default: '0.10' },
+        { key: 'site', label: '场地类别', type: 'select',
+          options: [['I0','Ⅰ₀'],['I1','Ⅰ₁'],['II','Ⅱ'],['III','Ⅲ'],['IV','Ⅳ']], default: 'II' },
+        { key: 'zeta', label: '阻尼比 ζ', type: 'number',
+          default: 0.05, min: 0.02, max: 0.30, step: 0.01, decimals: 2 }
+      ],
+      compute: v => {
+        const ABase = {
+          '6_0.05':0.04,'7_0.10':0.08,'7_0.15':0.12,
+          '8_0.20':0.16,'8_0.30':0.24,'9_0.40':0.32
+        };
+        const alphaMaxBase = ABase[v.intensity+'_'+v.accel] || 0.08;
+        const alphaMax = Number((alphaMaxBase * 2.5 / 2.25).toFixed(4));
+        const TG = { I0:0.25,I1:0.30,II:0.40,III:0.55,IV:0.75 };
+        const Tg = TG[v.site] || 0.40;
+        const zeta = clampNum(v.zeta, 0.02, 0.30, 0.05);
+        const dp = dampingParams(zeta);
+        return { alphaMax, Tg, zeta, gamma: dp.gamma, eta1: dp.eta1, eta2: dp.eta2, Tmax: 6.0 };
+      },
+      note: p =>
+        `按 GB 50909 弹性反应谱法；动力放大系数 βm = 2.5。<br>` +
+        `αmax = ${p.alphaMax.toFixed(4)}，Tg = ${p.Tg.toFixed(2)} s；ζ = ${p.zeta.toFixed(2)} → γ=${p.gamma.toFixed(3)}、η₁=${p.eta1.toFixed(3)}、η₂=${p.eta2.toFixed(3)}。<br>` +
+        `纵轴 α 为无量纲地震影响系数。`
+    },
+    {
+      id: 'JTS146',
+      name: 'JTS 146-2012 水运工程抗震设计规范',
+      short: '水运工程',
+      yUnit: 'α', yUnitText: '无量纲',
+      yLabel: '地震影响系数 α（无量纲）', yDecimals: 3,
+      fields: [
+        { key: 'intensity', label: '抗震设防烈度', type: 'select',
+          options: [['6','6 度'],['7','7 度'],['8','8 度'],['9','9 度']], default: '7' },
+        { key: 'site', label: '场地类别', type: 'select',
+          options: [['I0','Ⅰ₀'],['I1','Ⅰ₁'],['II','Ⅱ'],['III','Ⅲ'],['IV','Ⅳ']], default: 'II' },
+        { key: 'zeta', label: '阻尼比 ζ', type: 'number',
+          default: 0.05, min: 0.02, max: 0.30, step: 0.01, decimals: 2 }
+      ],
+      compute: v => {
+        const alphaMaxTable = { '6':0.04,'7':0.08,'8':0.16,'9':0.32 };
+        const alphaMax = alphaMaxTable[v.intensity] || 0.08;
+        const TG = { I0:0.25,I1:0.30,II:0.40,III:0.55,IV:0.75 };
+        const Tg = TG[v.site] || 0.40;
+        const zeta = clampNum(v.zeta, 0.02, 0.30, 0.05);
+        const dp = dampingParams(zeta);
+        return { alphaMax, Tg, zeta, gamma: dp.gamma, eta1: dp.eta1, eta2: dp.eta2, Tmax: 6.0 };
+      },
+      note: p =>
+        `按 JTS 146 设计反应谱（简化取值）；αmax = ${p.alphaMax.toFixed(3)}，Tg = ${p.Tg.toFixed(2)} s。<br>` +
+        `纵轴 α 为无量纲地震影响系数。<br>` +
+        `<span style="color:var(--warn-soft-text);">⚠ 水运工程场地分类与建筑规范不同，此处为简化取值。</span>`
+    },
+    {
+      id: 'GB51408',
+      name: 'GB/T 51408-2021 建筑隔震设计标准',
+      short: '建筑隔震',
+      yUnit: 'α', yUnitText: '无量纲',
+      yLabel: '地震影响系数 α（无量纲）', yDecimals: 3,
+      fields: [
+        { key: 'intensity', label: '抗震设防烈度', type: 'select',
+          options: [['6','6 度'],['7','7 度'],['8','8 度'],['9','9 度']], default: '8' },
+        { key: 'accel', label: '设计基本地震加速度', type: 'select',
+          options: v => ({
+            '6': [['0.05','0.05g']],
+            '7': [['0.10','0.10g'],['0.15','0.15g']],
+            '8': [['0.20','0.20g'],['0.30','0.30g']],
+            '9': [['0.40','0.40g']]
+          })[v.intensity] || [],
+          default: '0.20' },
+        { key: 'site', label: '场地类别', type: 'select',
+          options: [['I0','Ⅰ₀'],['I1','Ⅰ₁'],['II','Ⅱ'],['III','Ⅲ'],['IV','Ⅳ']], default: 'II' },
+        { key: 'group', label: '设计地震分组', type: 'select',
+          options: [['1','第一组'],['2','第二组'],['3','第三组']], default: '1' },
+        { key: 'zeta', label: '隔震层等效阻尼比 ζ', type: 'number',
+          default: 0.15, min: 0.05, max: 0.40, step: 0.01, decimals: 2 }
+      ],
+      compute: v => {
+        const A = {
+          '6_0.05':0.04,'7_0.10':0.08,'7_0.15':0.12,
+          '8_0.20':0.16,'8_0.30':0.24,'9_0.40':0.32
+        };
+        const alphaMax = A[v.intensity+'_'+v.accel] || 0.16;
+        const TG = {
+          '1':{I0:0.20,I1:0.25,II:0.35,III:0.45,IV:0.65},
+          '2':{I0:0.25,I1:0.30,II:0.40,III:0.55,IV:0.75},
+          '3':{I0:0.30,I1:0.35,II:0.45,III:0.65,IV:0.90}
+        };
+        const Tg = (TG[v.group]||{})[v.site] || 0.35;
+        const zeta = clampNum(v.zeta, 0.05, 0.40, 0.15);
+        const gamma = 0.9;
+        let eta1 = 0.02 + (0.05 - zeta) / (4 + 32 * zeta);
+        if (eta1 < 0) eta1 = 0;
+        let eta2 = 1 + (0.05 - zeta) / (0.08 + 1.6 * zeta);
+        if (eta2 < 0.55) eta2 = 0.55;
+        return { alphaMax, Tg, zeta, gamma, eta1, eta2, Tmax: 6.0 };
+      },
+      note: p =>
+        `隔震结构水平向设计谱；αmax = ${p.alphaMax.toFixed(3)}，Tg = ${p.Tg.toFixed(2)} s。<br>` +
+        `隔震层等效阻尼比 ζ = ${p.zeta.toFixed(2)}，γ 固定取 0.9，η₁=${p.eta1.toFixed(3)}、η₂=${p.eta2.toFixed(3)}。<br>` +
+        `纵轴 α 为无量纲地震影响系数。`
+    },
+    {
+      id: 'GB50267',
+      name: 'GB 50267-2019 核电厂抗震设计标准',
+      short: '核电厂',
+      yUnit: 'g', yUnitText: '重力加速度 g',
+      yLabel: '谱加速度 SA (g)', yDecimals: 3,
+      fields: [
+        { key: 'PGA', label: '设计基准地震动 PGA(g)', type: 'select',
+          options: [['0.05','0.05g'],['0.10','0.10g'],['0.15','0.15g'],
+                    ['0.20','0.20g'],['0.30','0.30g'],['0.50','0.50g']],
+          default: '0.10' },
+        { key: 'zeta', label: '阻尼比 ζ', type: 'number',
+          default: 0.05, min: 0.02, max: 0.30, step: 0.01, decimals: 2 },
+        { key: 'Tmax', label: '周期上限（s）', type: 'number',
+          default: 5.0, min: 1.0, max: 10.0, step: 0.5, decimals: 1 }
+      ],
+      compute: v => {
+        const PGA = parseFloat(v.PGA);
+        const zeta = clampNum(v.zeta, 0.02, 0.30, 0.05);
+        let dmpF = 1 / Math.sqrt(20 * zeta);
+        if (dmpF > 1.8) dmpF = 1.8;
+        if (dmpF < 0.7) dmpF = 0.7;
+        const Tmax = clampNum(v.Tmax, 1.0, 10.0, 5.0);
+        return { PGA, zeta, dmpFactor: dmpF, Tmax,
+                 ctrlPoints: NPP_CTRL_DEFAULT.map(p => p.slice()) };
+      },
+      spectrum: (T, p) => nppSpectrum(T, p),
+      note: p =>
+        `核电厂标准设计反应谱（RG 1.60）。PGA = ${p.PGA.toFixed(2)} g，ζ = ${p.zeta.toFixed(2)}。<br>` +
+        `控制频率 33Hz/9Hz/2.5Hz/0.25Hz，对应周期 0.030/0.111/0.400/4.000 s。<br>` +
+        `纵轴 SA 为谱加速度，单位 g。阻尼调整 φ(ζ) = 1/√(20ζ) = ${p.dmpFactor.toFixed(3)}。`
+    }
+  ];
+  function getSpec(id) {
+    return SPEC_CODES.find(s => s.id === id) || SPEC_CODES[0];
+  }
+
+  /* =========================================================
+     3. 状态
+     ========================================================= */
+  let currentSpec = SPEC_CODES[0];
+  let currentValues = {};
+  let currentMode = 'code';
+  let lastParams = null;
+  let preciseDirty = false;
+  let nppCtrlPoints = NPP_CTRL_DEFAULT.map(p => p.slice());
+
+  function getDefaultValues(spec) {
+    const v = {};
+    spec.fields.forEach(f => { v[f.key] = f.default; });
+    return v;
+  }
+  function resolveOptions(field, values) {
+    if (typeof field.options === 'function') return field.options(values) || [];
+    return field.options || [];
+  }
+
+  /* =========================================================
+     4. 渲染规范参数列表
+     ========================================================= */
+  function renderParamPanel(spec, values) {
+    const panel = $('paramPanel');
+    panel.innerHTML = '';
+
+    const specRow = document.createElement('div');
+    specRow.className = 'param-item';
+    specRow.style.gridColumn = '1 / -1';
+
+    const specLbl = document.createElement('label');
+    specLbl.textContent = '设计规范';
+    specRow.appendChild(specLbl);
+
+    const specSel = document.createElement('select');
+    specSel.id = 'specSelect';
+    SPEC_CODES.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.name + '（' + s.yUnitText + '）';
+      specSel.appendChild(o);
+    });
+    specSel.value = spec.id;
+    specSel.addEventListener('change', () => {
+      currentSpec = getSpec(specSel.value);
+      currentValues = getDefaultValues(currentSpec);
+      renderParamPanel(currentSpec, currentValues);
+      refresh();
+    });
+    specRow.appendChild(specSel);
+    panel.appendChild(specRow);
+
+    spec.fields.forEach(field => {
+      const row = document.createElement('div');
+      row.className = 'param-item';
+
+      const label = document.createElement('label');
+      label.textContent = field.label;
+      row.appendChild(label);
+
+      if (field.type === 'select') {
+        const sel = document.createElement('select');
+        const opts = resolveOptions(field, values);
+        opts.forEach(([val, txt]) => {
+          const o = document.createElement('option');
+          o.value = val;
+          o.textContent = txt;
+          sel.appendChild(o);
+        });
+        if (opts.some(o => o[0] === values[field.key])) {
+          sel.value = values[field.key];
+        } else if (opts.length > 0) {
+          sel.value = opts[0][0];
+          values[field.key] = opts[0][0];
+        }
+        sel.dataset.key = field.key;
+        sel.addEventListener('change', () => {
+          values[field.key] = sel.value;
+          renderParamPanel(spec, values);
+          refresh();
+        });
+        row.appendChild(sel);
+      } else if (field.type === 'number') {
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.value = values[field.key];
+        inp.min = field.min;
+        inp.max = field.max;
+        inp.step = field.step;
+        inp.dataset.key = field.key;
+        inp.addEventListener('input', () => {
+          const n = parseFloat(inp.value);
+          if (isFinite(n)) {
+            values[field.key] = clampNum(n, field.min, field.max, field.default);
+            refresh();
+          }
+        });
+        inp.addEventListener('blur', () => {
+          const n = clampNum(parseFloat(inp.value), field.min, field.max, field.default);
+          inp.value = n.toFixed(field.decimals || 2);
+          values[field.key] = n;
+          refresh();
+        });
+        row.appendChild(inp);
+      }
+
+      panel.appendChild(row);
+    });
+  }
+
+  /* =========================================================
+     5. 参数获取
+     ========================================================= */
+  function computeCodeParams() {
+    const spec = currentSpec;
+    spec.fields.forEach(f => {
+      if (f.type === 'number') {
+        currentValues[f.key] = clampNum(parseFloat(currentValues[f.key]),
+                                        f.min, f.max, f.default);
+      }
+    });
+    const p = spec.compute(currentValues);
+    p.specId = spec.id;
+    p.specShort = spec.short;
+    p.yLabel = spec.yLabel;
+    p.yDecimals = spec.yDecimals;
+    p.yUnit = spec.yUnit;
+    p.yUnitText = spec.yUnitText;
+    return p;
+  }
+
+  function getPreciseParams() {
+    const type = $('p_spectrumType').value;
+
+    if (type === 'bridge') {
+      const Smax = clampNum(parseFloat($('pb_Smax').value), 0.01, 3.0, 0.35);
+      const Tg = clampNum(parseFloat($('pb_Tg').value), 0.05, 3.0, 0.35);
+      const k = clampNum(parseFloat($('pb_k').value), 3.0, 10.0, 5.5);
+      const Tmax = clampNum(parseFloat($('pb_Tmax').value), 1.0, 20.0, 10.0);
+      const zeta = clampNum(parseFloat($('pb_zeta').value), 0.02, 0.30, 0.05);
+      return {
+        specId: 'PRECISE', spectrumType: 'bridge',
+        specShort: '三段式（桥梁）',
+        yLabel: '设计加速度反应谱 S (g)', yDecimals: 3,
+        yUnit: 'g', yUnitText: '重力加速度 g',
+        Smax, Tg, k, Tmax, zeta
+      };
+    }
+    if (type === 'npp') {
+      const PGA = clampNum(parseFloat($('pn_PGA').value), 0.01, 1.0, 0.10);
+      const zeta = clampNum(parseFloat($('pn_zeta').value), 0.02, 0.30, 0.05);
+      const Tmax = clampNum(parseFloat($('pn_Tmax').value), 1.0, 10.0, 5.0);
+      let dmpF = 1 / Math.sqrt(20 * zeta);
+      if (dmpF > 1.8) dmpF = 1.8;
+      if (dmpF < 0.7) dmpF = 0.7;
+      return {
+        specId: 'PRECISE', spectrumType: 'npp',
+        specShort: '控制点插值',
+        yLabel: '谱加速度 SA (g)', yDecimals: 3,
+        yUnit: 'g', yUnitText: '重力加速度 g',
+        PGA, zeta, dmpFactor: dmpF, Tmax,
+        ctrlPoints: nppCtrlPoints.map(p => p.slice())
+      };
+    }
+    const alphaMax = clampNum(parseFloat($('p_alpha').value), 0.01, 3.0, 0.16);
+    const Tg = clampNum(parseFloat($('p_tg').value), 0.05, 3.0, 0.35);
+    const zeta = clampNum(parseFloat($('p_zeta').value), 0.02, 0.30, 0.05);
+    const Tmax = clampNum(parseFloat($('p_tmax').value), 1.0, 10.0, 6.0);
+    const dp = dampingParams(zeta);
+    const auto = $('p_auto').checked;
+    let gamma, eta1, eta2;
+    if (auto) { gamma = dp.gamma; eta1 = dp.eta1; eta2 = dp.eta2; }
+    else {
+      gamma = clampNum(parseFloat($('p_gamma').value), 0.10, 2.0, dp.gamma);
+      eta1 = clampNum(parseFloat($('p_eta1').value), 0.0, 0.5, dp.eta1);
+      eta2 = clampNum(parseFloat($('p_eta2').value), 0.55, 2.0, dp.eta2);
+    }
+    return {
+      specId: 'PRECISE', spectrumType: 'fourSegment',
+      specShort: '四段式',
+      yLabel: '地震影响系数 α（无量纲）', yDecimals: 3,
+      yUnit: 'α', yUnitText: '无量纲',
+      alphaMax, Tg, zeta, gamma, eta1, eta2, Tmax, auto
+    };
+  }
+
+  function computeParams() {
+    return currentMode === 'code' ? computeCodeParams() : getPreciseParams();
+  }
+
+  /* =========================================================
+     6. 谱函数分发
+     ========================================================= */
+  function isBridgeSpec(p) {
+    return p.specId === 'JTGT2231' || p.specId === 'CJJ166' ||
+           (p.specId === 'PRECISE' && p.spectrumType === 'bridge');
+  }
+  function isNppSpec(p) {
+    return p.specId === 'GB50267' ||
+           (p.specId === 'PRECISE' && p.spectrumType === 'npp');
+  }
+  function spectrumValue(T, p) {
+    if (p.specId === 'JTGT2231') return bridgeSpectrum(T, p, 5.5);
+    if (p.specId === 'CJJ166')    return bridgeSpectrum(T, p, 5.0);
+    if (p.specId === 'GB50267')   return nppSpectrum(T, p);
+    if (p.specId === 'PRECISE') {
+      if (p.spectrumType === 'bridge') return bridgeSpectrum(T, p, p.k);
+      if (p.spectrumType === 'npp')    return nppSpectrum(T, p);
+      return fourSegmentSpectrum(T, p);
+    }
+    return fourSegmentSpectrum(T, p);
+  }
+
+  /* =========================================================
+     7. 几何计算
+     ========================================================= */
+  function fmtT(T) {
+    if (T < 0.1) return T.toFixed(3);
+    if (T < 1) return T.toFixed(2);
+    return T.toFixed(1);
+  }
+  function computeMarkers(p, Tmax) {
+    const markers = [];
+    if (isBridgeSpec(p)) {
+      markers.push({ T: 0.1, a: p.Smax, label: '0.1' });
+      if (Math.abs(p.Tg - 0.1) > 0.03) {
+        markers.push({ T: p.Tg, a: p.Smax, label: 'Tg' });
+      }
+    } else if (isNppSpec(p)) {
+      const ctrl = (p.ctrlPoints || NPP_CTRL_DEFAULT)
+        .slice().sort((a, b) => a[0] - b[0]);
+      ctrl.forEach(([T]) => {
+        if (T <= Tmax && T > 0) {
+          const a = spectrumValue(T, p);
+          markers.push({ T, a, label: fmtT(T) });
+        }
+      });
+    } else {
+      const platform = p.eta2 * p.alphaMax;
+      markers.push({ T: 0.1, a: platform, label: '0.1' });
+      if (Math.abs(p.Tg - 0.1) > 0.02) {
+        markers.push({ T: p.Tg, a: platform, label: 'Tg' });
+      }
+      const t5 = 5 * p.Tg;
+      if (t5 <= Tmax && Math.abs(t5 - p.Tg) > 0.05) {
+        markers.push({ T: t5, a: platform * Math.pow(0.2, p.gamma), label: '5Tg' });
+      }
+    }
+    return markers;
+  }
+  function peakText(p) {
+    if (isNppSpec(p)) return 'PGA = ' + p.PGA.toFixed(2) + ' g';
+    if (p.Smax !== undefined) return 'S max = ' + p.Smax.toFixed(4) + ' g';
+    return 'α max = ' + p.alphaMax.toFixed(3) + '（无量纲）';
+  }
+  function computeChartGeometry(p, cssW, cssH) {
+    const M = { l: 78, r: 26, t: 26, b: 58 };
+    const pw = cssW - M.l - M.r;
+    const ph = cssH - M.t - M.b;
+    const Tmax = p.Tmax;
+
+    const N = 1600;
+    const samples = [];
+    let peak = 0;
+    for (let i = 0; i <= N; i++) {
+      const T = Tmax * i / N;
+      const v = spectrumValue(T, p);
+      samples.push([T, v]);
+      if (v > peak) peak = v;
+    }
+    const yTop = niceCeil(peak * 1.06 || 0.1);
+
+    const X = T => M.l + (T / Tmax) * pw;
+    const Y = a => {
+      const aa = Math.max(0, Math.min(a, yTop));
+      return M.t + ph - (aa / yTop) * ph;
+    };
+
+    const xt = niceTicks(0, Tmax, 6);
+    const yt = niceTicks(0, yTop, 5);
+    const xStep = xt.length > 1 ? xt[1] - xt[0] : 1;
+    const yStep = yt.length > 1 ? yt[1] - yt[0] : 0.1;
+    const xDec = decimalsFor(xStep);
+    const yDec = Math.max(p.yDecimals || 3, decimalsFor(yStep));
+
+    const markers = computeMarkers(p, Tmax);
+
+    return { M, pw, ph, Tmax, yTop, X, Y, xt, yt, xDec, yDec,
+             samples, markers, peak, cssW, cssH };
+  }
+
+  /* =========================================================
+     8. Canvas 绘图
+     ========================================================= */
+  function drawChart(p) {
+    const canvas = $('chart');
+    const box = canvas.parentElement;
+    const cssW = box.clientWidth - 16;
+    const cssH = canvas.clientHeight || box.clientHeight - 16;
+    if (cssW < 40 || cssH < 40) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    const C = themeColors();
+    const g = computeChartGeometry(p, cssW, cssH);
+    const { M, pw, ph, X, Y, xt, yt, xDec, yDec, samples, markers } = g;
+
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 0.6;
+    xt.forEach(v => {
+      const x = Math.round(X(v)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(x, M.t); ctx.lineTo(x, M.t + ph); ctx.stroke();
+    });
+    yt.forEach(v => {
+      const y = Math.round(Y(v)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(M.l + pw, y); ctx.stroke();
+    });
+
+    ctx.strokeStyle = C.axis;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(M.l + 0.5, M.t);
+    ctx.lineTo(M.l + 0.5, M.t + ph + 0.5);
+    ctx.lineTo(M.l + pw, M.t + ph + 0.5);
+    ctx.stroke();
+
+    const tickLen = 5;
+    ctx.strokeStyle = C.axis;
+    ctx.lineWidth = 1;
+    xt.forEach(v => {
+      const x = Math.round(X(v)) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x, M.t + ph);
+      ctx.lineTo(x, M.t + ph - tickLen);
+      ctx.stroke();
+    });
+    yt.forEach(v => {
+      const y = Math.round(Y(v)) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(M.l, y);
+      ctx.lineTo(M.l + tickLen, y);
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = C.text;
+    ctx.font = '13px ' + SERIF;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    xt.forEach(v => ctx.fillText(v.toFixed(xDec), X(v), M.t + ph + 8));
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    yt.forEach(v => ctx.fillText(v.toFixed(yDec), M.l - 10, Y(v)));
+
+    ctx.font = '13.5px ' + SERIF;
+    ctx.fillStyle = C.text;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('周期 T (s)', M.l + pw / 2, M.t + ph + 28);
+
+    ctx.save();
+    ctx.translate(22, M.t + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.beginPath();
+    samples.forEach(([T, v], i) => {
+      if (i === 0) ctx.moveTo(X(T), Y(v));
+      else ctx.lineTo(X(T), Y(v));
+    });
+    ctx.strokeStyle = C.curve;
+    ctx.lineWidth = 1.7;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    markers.forEach(m => {
+      const x = X(m.T), y = Y(m.a);
+      ctx.beginPath();
+      ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = C.bg;
+      ctx.fill();
+      ctx.strokeStyle = C.curve;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      ctx.fillStyle = C.curve;
+      ctx.font = '11px ' + SERIF;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(m.label, x, y - 6);
+    });
+
+    ctx.fillStyle = C.text;
+    ctx.font = '12px ' + SERIF;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(peakText(p), M.l + 6, M.t + 6);
+  }
+
+  /* =========================================================
+     9. SVG 导出
+     ========================================================= */
+  function escapeXML(s) {
+    return String(s).replace(/[<>&"']/g, c => ({
+      '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'
+    })[c]);
+  }
+  function buildSVG(p, g) {
+    const { M, pw, ph, X, Y, xt, yt, xDec, yDec, samples, markers, cssW, cssH } = g;
+    const widthMM = 160;
+    const heightMM = widthMM * cssH / cssW;
+
+    const out = [];
+    out.push('<?xml version="1.0" encoding="UTF-8"?>');
+    out.push(
+      `<svg xmlns="http://www.w3.org/2000/svg" ` +
+      `width="${widthMM}mm" height="${heightMM.toFixed(2)}mm" ` +
+      `viewBox="0 0 ${cssW} ${cssH}">`
+    );
+    out.push(`<rect x="0" y="0" width="${cssW}" height="${cssH}" fill="#ffffff"/>`);
+
+    xt.forEach(v => {
+      const x = X(v).toFixed(2);
+      out.push(`<line x1="${x}" y1="${M.t}" x2="${x}" y2="${M.t + ph}" stroke="#e8e8e8" stroke-width="0.6"/>`);
+    });
+    yt.forEach(v => {
+      const y = Y(v).toFixed(2);
+      out.push(`<line x1="${M.l}" y1="${y}" x2="${M.l + pw}" y2="${y}" stroke="#e8e8e8" stroke-width="0.6"/>`);
+    });
+
+    out.push(`<line x1="${M.l}" y1="${M.t}" x2="${M.l}" y2="${M.t + ph}" stroke="#1a1a1a" stroke-width="1"/>`);
+    out.push(`<line x1="${M.l}" y1="${M.t + ph}" x2="${M.l + pw}" y2="${M.t + ph}" stroke="#1a1a1a" stroke-width="1"/>`);
+
+    const tickLen = 5;
+    xt.forEach(v => {
+      const x = X(v).toFixed(2);
+      const yb = M.t + ph;
+      out.push(`<line x1="${x}" y1="${yb}" x2="${x}" y2="${yb - tickLen}" stroke="#1a1a1a" stroke-width="1"/>`);
+      out.push(`<text x="${x}" y="${(yb + 18).toFixed(2)}" text-anchor="middle" font-family="${SERIF}" font-size="13" fill="#1a1a1a">${v.toFixed(xDec)}</text>`);
+    });
+    yt.forEach(v => {
+      const y = Y(v).toFixed(2);
+      out.push(`<line x1="${M.l}" y1="${y}" x2="${M.l + tickLen}" y2="${y}" stroke="#1a1a1a" stroke-width="1"/>`);
+      out.push(`<text x="${(M.l - 10).toFixed(2)}" y="${y}" text-anchor="end" dominant-baseline="middle" font-family="${SERIF}" font-size="13" fill="#1a1a1a">${v.toFixed(yDec)}</text>`);
+    });
+
+    out.push(`<text x="${(M.l + pw / 2).toFixed(2)}" y="${(M.t + ph + 40).toFixed(2)}" text-anchor="middle" font-family="${SERIF}" font-size="13.5" fill="#1a1a1a">周期 T (s)</text>`);
+    const yTitleX = 24, yTitleY = M.t + ph / 2;
+    out.push(
+      `<text x="${yTitleX}" y="${yTitleY.toFixed(2)}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="${SERIF}" font-size="13.5" fill="#1a1a1a" ` +
+      `transform="rotate(-90 ${yTitleX} ${yTitleY.toFixed(2)})">${escapeXML(p.yLabel)}</text>`
+    );
+
+    const dParts = [];
+    samples.forEach(([T, v], i) => {
+      dParts.push((i === 0 ? 'M' : 'L') + X(T).toFixed(2) + ' ' + Y(v).toFixed(2));
+    });
+    out.push(`<path d="${dParts.join(' ')}" fill="none" stroke="#0b3d91" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>`);
+
+    markers.forEach(m => {
+      const x = X(m.T).toFixed(2);
+      const y = Y(m.a).toFixed(2);
+      out.push(`<circle cx="${x}" cy="${y}" r="3.2" fill="#ffffff" stroke="#0b3d91" stroke-width="1.4"/>`);
+      out.push(`<text x="${x}" y="${(Y(m.a) - 7).toFixed(2)}" text-anchor="middle" font-family="${SERIF}" font-size="11" fill="#0b3d91">${escapeXML(m.label)}</text>`);
+    });
+
+    out.push(`<text x="${(M.l + 6).toFixed(2)}" y="${(M.t + 16).toFixed(2)}" font-family="${SERIF}" font-size="12" fill="#333333">${escapeXML(peakText(p))}</text>`);
+
+    out.push('</svg>');
+    return out.join('\n');
+  }
+
+  function exportSVG() {
+    const p = lastParams || computeParams();
+    const canvas = $('chart');
+    const box = canvas.parentElement;
+    const cssW = box.clientWidth - 16;
+    const cssH = canvas.clientHeight || box.clientHeight - 16;
+    if (cssW < 40 || cssH < 40) return;
+
+    const g = computeChartGeometry(p, cssW, cssH);
+    const svg = buildSVG(p, g);
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+
+    const baseName = (p.specId === 'PRECISE'
+      ? 'precise-' + p.spectrumType
+      : p.specId).replace(/\s/g, '');
+    const fname = baseName + '-design-spectrum.svg';
+
+    if (typeof window.showSaveFilePicker === 'function') {
+      window.showSaveFilePicker({
+        suggestedName: fname,
+        types: [{ description: 'SVG 矢量图', accept: { 'image/svg+xml': ['.svg'] } }]
+      }).then(handle => {
+        return handle.createWritable().then(w =>
+          w.write(blob).then(() => w.close())
+        ).then(() => showToast('已保存：' + handle.name));
+      }).catch(err => {
+        if (err && err.name === 'AbortError') { showToast('已取消保存'); return; }
+        downloadBlob(blob, fname);
+        showToast('已下载：' + fname);
+      });
+    } else {
+      downloadBlob(blob, fname);
+      showToast('已下载：' + fname);
+    }
+  }
+
+  function downloadBlob(blob, fname) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  /* =========================================================
+     10. CSV 导出
+     ========================================================= */
+  function exportCSV() {
+    const p = lastParams || computeParams();
+    let colName;
+    if (isNppSpec(p)) colName = 'SA(g)';
+    else if (isBridgeSpec(p)) colName = 'S(g)';
+    else colName = 'alpha(dimensionless)';
+
+    const rows = [`T(s),${colName}`];
+    const N = Math.round(p.Tmax * 1000);
+    for (let i = 0; i <= N; i++) {
+      const T = p.Tmax * i / N;
+      rows.push(T.toFixed(3) + ',' + spectrumValue(T, p).toFixed(6));
+    }
+    const blob = new Blob(['\ufeff' + rows.join('\r\n')],
+                          { type: 'text/csv;charset=utf-8' });
+    const baseName = (p.specId === 'PRECISE'
+      ? 'precise-' + p.spectrumType
+      : p.specId).replace(/\s/g, '');
+    const fname = baseName + '-spectrum.csv';
+
+    if (typeof window.showSaveFilePicker === 'function') {
+      window.showSaveFilePicker({
+        suggestedName: fname,
+        types: [{ description: 'CSV 文件', accept: { 'text/csv': ['.csv'] } }]
+      }).then(handle => {
+        return handle.createWritable().then(w =>
+          w.write(blob).then(() => w.close())
+        ).then(() => showToast('已保存：' + handle.name));
+      }).catch(err => {
+        if (err && err.name === 'AbortError') { showToast('已取消保存'); return; }
+        downloadBlob(blob, fname);
+        showToast('已下载：' + fname);
+      });
+    } else {
+      downloadBlob(blob, fname);
+      showToast('已下载：' + fname);
+    }
+  }
+
+  /* =========================================================
+     11. 信息表格
+     ========================================================= */
+  function updateInfo(p) {
+    const items = [];
+    if (isBridgeSpec(p)) {
+      items.push(['S max (g)', p.Smax.toFixed(4), true]);
+      items.push(['T g (s)', p.Tg.toFixed(2), true]);
+      if (p.k !== undefined) items.push(['上升段斜率 k', p.k.toFixed(1), false]);
+      else if (p.specId === 'JTGT2231') items.push(['上升段斜率 k', '5.5', false]);
+      else if (p.specId === 'CJJ166')   items.push(['上升段斜率 k', '5.0', false]);
+      if (p.Ci !== undefined) items.push(['Ci', p.Ci.toFixed(2), false]);
+      if (p.Cs !== undefined) items.push(['Cs', p.Cs.toFixed(2), false]);
+      if (p.Cd !== undefined) items.push(['Cd', p.Cd.toFixed(3), false]);
+      items.push(['阻尼比 ζ', p.zeta.toFixed(2), false]);
+      items.push(['曲线终点 (s)', p.Tmax.toFixed(1), false]);
+    } else if (isNppSpec(p)) {
+      items.push(['PGA (g)', p.PGA.toFixed(2), true]);
+      items.push(['阻尼比 ζ', p.zeta.toFixed(2), false]);
+      items.push(['阻尼调整 φ', p.dmpFactor.toFixed(3), false]);
+      items.push(['曲线终点 (s)', p.Tmax.toFixed(1), false]);
+    } else {
+      const platform = p.eta2 * p.alphaMax;
+      items.push(['α max（无量纲）', p.alphaMax.toFixed(3), true]);
+      items.push(['T g (s)', p.Tg.toFixed(2), true]);
+      items.push(['平台值 η₂αmax', platform.toFixed(4), false]);
+      items.push(['阻尼比 ζ', p.zeta.toFixed(2), false]);
+      items.push(['衰减指数 γ', p.gamma.toFixed(3), false]);
+      items.push(['斜率调整 η₁', p.eta1.toFixed(3), false]);
+      items.push(['阻尼调整 η₂', p.eta2.toFixed(3), false]);
+      items.push(['曲线终点 (s)', p.Tmax.toFixed(1), false]);
+    }
+
+    $('infoGrid').innerHTML = items.map(it =>
+      `<tr><td class="pk">${it[0]}</td><td class="pv">${it[1]}</td></tr>`
+    ).join('');
+
+    if (currentMode === 'code') {
+      const spec = currentSpec;
+      $('specShort').textContent = spec.short;
+      $('chartHint').textContent = `${spec.short} · T ∈ [0, ${p.Tmax.toFixed(1)}] s · 纵轴：${spec.yUnitText}`;
+      $('chartCaption').textContent = `图 1  ${spec.short}设计谱曲线（${p.yLabel} — 周期 T）`;
+      $('modeHint').textContent = `查表：${spec.note ? '自动取值' : ''} · 纵轴 ${spec.yUnitText}`;
+    } else {
+      $('chartHint').textContent = `${p.specShort} · T ∈ [0, ${p.Tmax.toFixed(1)}] s · 纵轴：${p.yUnitText}`;
+      $('chartCaption').textContent = `图 1  ${p.specShort}设计谱曲线（${p.yLabel} — 周期 T）`;
+      $('modeHint').textContent = `精确参数 · 纵轴 ${p.yUnitText}`;
+    }
+  }
+
+  /* =========================================================
+     12. 刷新
+     ========================================================= */
+  function refresh() {
+    const p = computeParams();
+    lastParams = p;
+    updateInfo(p);
+    drawChart(p);
+  }
+
+  /* =========================================================
+     13. 自动计算同步
+     ========================================================= */
+  function syncAuto() {
+    const on = $('p_auto').checked;
+    ['p_gamma', 'p_eta1', 'p_eta2'].forEach(id => { $(id).disabled = on; });
+    if (on) {
+      const zeta = clampNum(parseFloat($('p_zeta').value), 0.02, 0.30, 0.05);
+      const dp = dampingParams(zeta);
+      $('p_gamma').value = dp.gamma.toFixed(3);
+      $('p_eta1').value = dp.eta1.toFixed(3);
+      $('p_eta2').value = dp.eta2.toFixed(3);
+    }
+  }
+
+  /* =========================================================
+     14. 控制点表格
+     ========================================================= */
+  function renderNppCtrlTable() {
+    const tbl = $('nppCtrlTable');
+    tbl.innerHTML = '';
+    nppCtrlPoints.forEach((pt, idx) => {
+      const row = document.createElement('div');
+      row.className = 'ctrl-row';
+
+      const l1 = document.createElement('span');
+      l1.className = 'lbl';
+      l1.textContent = 'T=';
+      row.appendChild(l1);
+
+      const tInp = document.createElement('input');
+      tInp.type = 'number';
+      tInp.value = pt[0];
+      tInp.step = 0.001;
+      tInp.min = 0.001;
+      tInp.addEventListener('input', () => {
+        const n = parseFloat(tInp.value);
+        if (isFinite(n) && n > 0) {
+          nppCtrlPoints[idx][0] = n;
+          preciseDirty = true;
+          refresh();
+        }
+      });
+      row.appendChild(tInp);
+
+      const l2 = document.createElement('span');
+      l2.className = 'lbl';
+      l2.textContent = 'SA/PGA=';
+      row.appendChild(l2);
+
+      const rInp = document.createElement('input');
+      rInp.type = 'number';
+      rInp.value = pt[1];
+      rInp.step = 0.01;
+      rInp.min = 0;
+      rInp.addEventListener('input', () => {
+        const n = parseFloat(rInp.value);
+        if (isFinite(n) && n >= 0) {
+          nppCtrlPoints[idx][1] = n;
+          preciseDirty = true;
+          refresh();
+        }
+      });
+      row.appendChild(rInp);
+
+      tbl.appendChild(row);
+    });
+  }
+
+  /* =========================================================
+     15. 面板可见性
+     ========================================================= */
+  function updatePrecisePanels() {
+    const t = $('p_spectrumType').value;
+    $('pFourSegmentPanel').hidden = (t !== 'fourSegment');
+    $('pBridgePanel').hidden = (t !== 'bridge');
+    $('pNppPanel').hidden = (t !== 'npp');
+  }
+
+  /* =========================================================
+     16. 从规范表导入
+     ========================================================= */
+  function importFromCode() {
+    if (!currentSpec || !currentValues) {
+      currentSpec = SPEC_CODES[0];
+      currentValues = getDefaultValues(currentSpec);
+    }
+    const cp = computeCodeParams();
+    let imported = '';
+
+    if (cp.specId === 'GB50267') {
+      $('p_spectrumType').value = 'npp';
+      $('pn_PGA').value = cp.PGA.toFixed(2);
+      $('pn_zeta').value = cp.zeta.toFixed(2);
+      $('pn_Tmax').value = cp.Tmax.toFixed(1);
+      nppCtrlPoints = NPP_CTRL_DEFAULT.map(p => p.slice());
+      renderNppCtrlTable();
+      imported = `核电厂 · PGA=${cp.PGA.toFixed(2)}g, ζ=${cp.zeta.toFixed(2)}`;
+    } else if (cp.specId === 'JTGT2231' || cp.specId === 'CJJ166') {
+      $('p_spectrumType').value = 'bridge';
+      $('pb_Smax').value = cp.Smax.toFixed(3);
+      $('pb_Tg').value = cp.Tg.toFixed(2);
+      $('pb_k').value = cp.specId === 'JTGT2231' ? '5.5' : '5.0';
+      $('pb_Tmax').value = cp.Tmax.toFixed(1);
+      $('pb_zeta').value = cp.zeta.toFixed(2);
+      imported = `${cp.specShort} · Smax=${cp.Smax.toFixed(3)}g, Tg=${cp.Tg.toFixed(2)}s`;
+    } else {
+      $('p_spectrumType').value = 'fourSegment';
+      $('p_alpha').value = cp.alphaMax.toFixed(3);
+      $('p_tg').value = cp.Tg.toFixed(2);
+      $('p_zeta').value = cp.zeta.toFixed(2);
+      $('p_tmax').value = cp.Tmax.toFixed(1);
+      syncAuto();
+      imported = `${cp.specShort} · αmax=${cp.alphaMax.toFixed(3)}, Tg=${cp.Tg.toFixed(2)}s`;
+    }
+    updatePrecisePanels();
+    preciseDirty = false;
+    showToast('已导入：' + imported);
+  }
+
+  /* =========================================================
+     17. 模式切换
+     ========================================================= */
+  function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.mode === mode);
+    });
+    $('s-code').hidden = (mode !== 'code');
+    $('s-precise').hidden = (mode !== 'precise');
+    if (mode === 'precise' && !preciseDirty) importFromCode();
+    requestAnimationFrame(refresh);
+  }
+
+  /* =========================================================
+     18. 事件绑定
+     ========================================================= */
+  document.querySelectorAll('.mode-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      if (t.dataset.mode !== currentMode) setMode(t.dataset.mode);
+    });
+  });
+
+  $('p_spectrumType').addEventListener('change', function () {
+    updatePrecisePanels();
+    preciseDirty = true;
+    refresh();
+  });
+
+  ['p_alpha', 'p_tg', 'p_zeta', 'p_gamma', 'p_eta1', 'p_eta2', 'p_tmax'].forEach(id => {
+    const el = $(id);
+    el.addEventListener('input', () => {
+      preciseDirty = true;
+      if (id === 'p_zeta') syncAuto();
+      refresh();
+    });
+    el.addEventListener('change', () => { preciseDirty = true; refresh(); });
+  });
+  $('p_zeta').addEventListener('blur', function () {
+    const v = clampNum(parseFloat(this.value), 0.02, 0.30, 0.05);
+    this.value = v.toFixed(2);
+    syncAuto();
+    refresh();
+  });
+  $('p_auto').addEventListener('change', () => { syncAuto(); refresh(); });
+
+  ['pb_Smax', 'pb_Tg', 'pb_k', 'pb_Tmax', 'pb_zeta'].forEach(id => {
+    const el = $(id);
+    el.addEventListener('input', () => { preciseDirty = true; refresh(); });
+    el.addEventListener('change', () => { preciseDirty = true; refresh(); });
+  });
+
+  ['pn_PGA', 'pn_zeta', 'pn_Tmax'].forEach(id => {
+    const el = $(id);
+    el.addEventListener('input', () => { preciseDirty = true; refresh(); });
+    el.addEventListener('change', () => { preciseDirty = true; refresh(); });
+  });
+
+  $('btnResetNppCtrl').addEventListener('click', () => {
+    nppCtrlPoints = NPP_CTRL_DEFAULT.map(p => p.slice());
+    renderNppCtrlTable();
+    preciseDirty = true;
+    refresh();
+    showToast('控制点已恢复为 RG 1.60 默认值');
+  });
+
+  $('btnSvg').addEventListener('click', exportSVG);
+  $('btnCsv').addEventListener('click', exportCSV);
+
+  $('btnSync').addEventListener('click', () => {
+    importFromCode();
+    refresh();
+  });
+
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      setTimeout(() => { if (lastParams) drawChart(lastParams); }, 60);
+    });
+  }
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (lastParams) drawChart(lastParams); }, 90);
+  });
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => {
+      if (lastParams) drawChart(lastParams);
+    });
+    ro.observe(document.querySelector('.chart-wrap'));
+  }
+
+  /* =========================================================
+     19. 目录动态同步：根据 panel 显隐自动增减目录项
+     ========================================================= */
+  function syncSidebar() {
+    document.querySelectorAll('#toolToc > li[data-target]').forEach(function (li) {
+      var id = li.getAttribute('data-target');
+      var panel = document.getElementById(id);
+      if (!panel) { li.hidden = true; return; }
+      li.hidden = !!panel.hidden;
+    });
+  }
+
+  syncSidebar();
+
+  if (typeof MutationObserver !== 'undefined') {
+    var observer = new MutationObserver(function (mutations) {
+      var relevant = false;
+      mutations.forEach(function (m) {
+        if (m.type === 'attributes' && m.attributeName === 'hidden') {
+          relevant = true;
+        }
+      });
+      if (relevant) syncSidebar();
+    });
+
+    document.querySelectorAll('.tool-content .panel').forEach(function (p) {
+      observer.observe(p, { attributes: true, attributeFilter: ['hidden'] });
+    });
+  }
+
+  /* =========================================================
+     19b. 目录：隐藏面板点击时切到对应模式
+     ========================================================= */
+  const linkCode = document.querySelector('.tool-sidebar a[href="#s-code"]');
+  if (linkCode) {
+    linkCode.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentMode !== 'code') {
+        const btn = document.querySelector('.mode-tab[data-mode="code"]');
+        if (btn) btn.click();
+      }
+      setTimeout(() => {
+        const t = document.getElementById('s-code');
+        if (t && !t.hidden) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    });
+  }
+
+  const linkPrecise = document.querySelector('.tool-sidebar a[href="#s-precise"]');
+  if (linkPrecise) {
+    linkPrecise.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentMode !== 'precise') {
+        const btn = document.querySelector('.mode-tab[data-mode="precise"]');
+        if (btn) btn.click();
+      }
+      setTimeout(() => {
+        const t = document.getElementById('s-precise');
+        if (t && !t.hidden) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    });
+  }
+
+  /* =========================================================
+     20. 初始化
+     ========================================================= */
+  currentSpec = SPEC_CODES[0];
+  currentValues = getDefaultValues(currentSpec);
+  renderParamPanel(currentSpec, currentValues);
+  renderNppCtrlTable();
+  syncAuto();
+  updatePrecisePanels();
+  setMode('code');
+
+})();
+</script>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

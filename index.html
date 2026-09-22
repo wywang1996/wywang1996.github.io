@@ -64,7 +64,7 @@
     <div class="sidebar-title">Index</div>
     <ul class="nav-list">
 
-      <!-- 小工具 (Moved to Top) -->
+      <!-- 小工具（在线 / 离线） -->
       <li>
         <a href="#tools" class="nav-parent">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,13 +73,18 @@
           <span>小工具</span>
         </a>
         <ul class="nav-sub">
+          <li class="nav-group">在线工具</li>
           <li><a href="ground-motion-calc.html">地震动参数计算器</a></li>
+          <li><a href="design-response-spectrum.html">抗震规范谱生成器</a></li>
           <li><a href="magnitude.html">震级能量换算器</a></li>
           <li><a href="waveform.html">波形格式转换器</a></li>
+
+          <li class="nav-group">离线工具</li>
+          <li class="nav-empty">即将上线</li>
         </ul>
       </li>
 
-      <!-- 项目 (Moved to Second) -->
+      <!-- 项目 -->
       <li>
         <a href="#projects" class="nav-parent">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -89,14 +94,14 @@
         </a>
         <ul class="nav-sub">
           <li><a href="data-sources.html" data-nav="data-sources">数据来源</a></li>
-          <li><a href="plotting.html" data-nav="plotting">科研绘图模板</a></li>
+          <li><a href="plotting.html" data-nav="plotting">地震学绘图</a></li>
           <li><a href="ground-motion.html">地震动参数分析</a></li>
           <li><a href="strong-motion.html">强震动数据处理</a></li>
           <li><a href="seismic-hazard.html">地震危险性分析</a></li>
         </ul>
       </li>
 
-      <!-- 笔记（按分类） (Moved to Third) -->
+      <!-- 笔记（按分类） -->
       <li>
         <a href="#notes" class="nav-parent">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -199,67 +204,104 @@
       </div>
     </header>
 
-    <!-- ===== 小工具 (Moved to Top) ===== -->
+    <!-- ===== 小工具 ===== -->
     <section id="tools">
       <div class="section-head">
         <span class="section-label">Tools</span>
         <h2>小工具</h2>
       </div>
-      <div class="grid">
 
-        <a class="card" id="t-pga" href="ground-motion-calc.html">
-          <div class="card-head">
-            <h3>地震动参数计算器</h3>
-            <span class="arrow">→</span>
-          </div>
-          <p class="desc">
-            上传加速度时程（CSV / TXT），自动计算 PGA、PGV、PGD、
-            Arias 强度、有效持时、卓越周期与 5% 阻尼反应谱，
-            支持导出参数汇总 CSV。
-          </p>
-          <div class="tags">
-            <span class="tag">地震动</span>
-            <span class="tag">反应谱</span>
-            <span class="tag blue">浏览器端</span>
-          </div>
-        </a>
+      <!-- 在线工具 -->
+      <div class="notes-group">
+        <div class="notes-group-title">
+          <span>在线工具</span>
+          <span class="count">4</span>
+        </div>
+        <div class="grid">
 
-        <a class="card" id="t-magnitude" href="magnitude.html">
-          <div class="card-head">
-            <h3>震级能量换算器</h3>
-            <span class="arrow">→</span>
-          </div>
-          <p class="desc">
-            在不同震级标度（ML、mb、MS、Mw）之间进行经验换算，
-            估算地震释放能量与地震矩，含震级饱和预警。
-          </p>
-          <div class="tags">
-            <span class="tag">震级</span>
-            <span class="tag">能量</span>
-            <span class="tag blue">换算</span>
-          </div>
-        </a>
+          <a class="card" id="t-ground-motion-calc" href="ground-motion-calc.html">
+            <div class="card-head">
+              <h3>地震动参数计算器</h3>
+              <span class="arrow">→</span>
+            </div>
+            <p class="desc">
+              上传加速度时程（CSV / TXT），自动计算 PGA、PGV、PGD、
+              Arias 强度、有效持时、卓越周期与 5% 阻尼反应谱，
+              支持导出参数汇总 CSV。
+            </p>
+            <div class="tags">
+              <span class="tag">地震动</span>
+              <span class="tag">反应谱</span>
+              <span class="tag blue">浏览器端</span>
+            </div>
+          </a>
 
-        <a class="card" id="t-waveform" href="waveform.html">
-          <div class="card-head">
-            <h3>波形格式转换器</h3>
-            <span class="arrow">→</span>
-          </div>
-          <p class="desc">
-            上传 SAC、MiniSEED、ASCII 等波形文件，在浏览器本地解析、
-            预览波形，并导出为 SAC、MiniSEED、CSV 等格式。
-          </p>
-          <div class="tags">
-            <span class="tag">波形</span>
-            <span class="tag">ObsPy</span>
-            <span class="tag blue">转换</span>
-          </div>
-        </a>
+          <a class="card" id="t-design-spectrum" href="design-response-spectrum.html">
+            <div class="card-head">
+              <h3>抗震规范谱生成器</h3>
+              <span class="arrow">→</span>
+            </div>
+            <p class="desc">
+              支持 7 部中国抗震规范的设计谱生成：建筑抗震、公路桥梁、城市桥梁、
+              城轨结构、水运工程、建筑隔震与核电厂。内置规范查表与精确参数两种模式，
+              可导出科研级 SVG 矢量图与 CSV 数据。
+            </p>
+            <div class="tags">
+              <span class="tag">设计谱</span>
+              <span class="tag">多规范</span>
+              <span class="tag blue">SVG 矢量图</span>
+            </div>
+          </a>
 
+          <a class="card" id="t-magnitude" href="magnitude.html">
+            <div class="card-head">
+              <h3>震级能量换算器</h3>
+              <span class="arrow">→</span>
+            </div>
+            <p class="desc">
+              在不同震级标度（ML、mb、MS、Mw）之间进行经验换算，
+              估算地震释放能量与地震矩，含震级饱和预警。
+            </p>
+            <div class="tags">
+              <span class="tag">震级</span>
+              <span class="tag">能量</span>
+              <span class="tag blue">换算</span>
+            </div>
+          </a>
+
+          <a class="card" id="t-waveform" href="waveform.html">
+            <div class="card-head">
+              <h3>波形格式转换器</h3>
+              <span class="arrow">→</span>
+            </div>
+            <p class="desc">
+              上传 SAC、MiniSEED、ASCII 等波形文件，在浏览器本地解析、
+              预览波形，并导出为 SAC、MiniSEED、CSV 等格式。
+            </p>
+            <div class="tags">
+              <span class="tag">波形</span>
+              <span class="tag">ObsPy</span>
+              <span class="tag blue">转换</span>
+            </div>
+          </a>
+
+        </div>
       </div>
+
+      <!-- 离线工具 -->
+      <div class="notes-group">
+        <div class="notes-group-title">
+          <span>离线工具</span>
+          <span class="count">0</span>
+        </div>
+        <div class="notes-group-empty">
+          即将上线：本地命令行工具与桌面应用，无需联网即可运行，适合批量处理与自动化流程。
+        </div>
+      </div>
+
     </section>
 
-    <!-- ===== 项目 (Moved to Second) ===== -->
+    <!-- ===== 项目 ===== -->
     <section id="projects">
       <div class="section-head">
         <span class="section-label">Projects</span>
@@ -286,16 +328,16 @@
 
         <a class="card" id="p-plotting" href="plotting.html">
           <div class="card-head">
-            <h3>科研绘图模板</h3>
+            <h3>地震学绘图</h3>
             <span class="arrow">→</span>
           </div>
           <p class="desc">
-            基于 Plotly.js 的浏览器端科研绘图模板：函数曲线、数据散点、
-            对数坐标与误差条，支持缩放、悬停读数与高分辨率导出。
+            面向地震学的绘图模板：波形时程、反应谱、震级-频度关系、
+            震中分布与震源机制沙滩球，支持对数坐标、缩放交互与高分辨率导出。
           </p>
           <div class="tags">
+            <span class="tag">地震学</span>
             <span class="tag">Plotly.js</span>
-            <span class="tag">交互式</span>
             <span class="tag blue">导出</span>
           </div>
         </a>
@@ -352,7 +394,7 @@
       </div>
     </section>
 
-    <!-- ===== 笔记（按分类） (Moved to Third) ===== -->
+    <!-- ===== 笔记（按分类） ===== -->
     <section id="notes">
       <div class="section-head">
         <span class="section-label">Notes</span>
@@ -1246,6 +1288,3 @@
 
 </body>
 </html>
-
-
-

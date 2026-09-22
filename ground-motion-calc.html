@@ -21,6 +21,81 @@
 <title>地震动参数计算器 · wayione</title>
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/tools.css">
+<style>
+/* =========================================================
+   参数列表样式
+   ========================================================= */
+
+.param-table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  table-layout: auto;
+}
+.param-table tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background-color .12s ease;
+}
+.param-table tbody tr:last-child {
+  border-bottom: none;
+}
+.param-table tbody tr:hover {
+  background: var(--bg-blue-soft);
+}
+.param-table td {
+  padding: 9px 4px;
+  vertical-align: middle;
+}
+.param-table .pk {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: left;
+  letter-spacing: .01em;
+  padding-right: 28px;
+  white-space: nowrap;
+}
+.param-table .pv {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 620;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+
+@media (max-width: 620px) {
+  .param-table { width: 100%; }
+  .param-table td { padding: 8px 2px; }
+  .param-table .pk { font-size: 12px; padding-right: 16px; }
+  .param-table .pv { font-size: 12.5px; }
+}
+
+/* 详细参数：三栏分组布局 */
+.param-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px 32px;
+}
+.param-col-title {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: var(--accent);
+  font-weight: 650;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+/* 目录项隐藏（用 hidden 属性，兼容 [hidden] !important） */
+.tool-sidebar .nav-list > li[hidden] {
+  display: none;
+}
+</style>
 </head>
 <body data-nav="ground-motion-calc">
 
@@ -52,277 +127,325 @@
 </nav>
 
 <main class="wrap">
+  <div class="tool-layout">
 
-  <header class="page-head">
-    <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
-    <h1>地震动参数计算器</h1>
-    <p>上传 CSV / TXT 加速度时程，自动计算 PGA、PGV、PGD、Arias 强度、有效持时、RMS、平均周期、卓越周期，并绘制加速度波形、Husid 曲线与 5% 阻尼加速度反应谱。全部在浏览器本地完成。</p>
-  </header>
-
-  <!-- 上传 -->
-  <section class="panel">
-    <div class="panel-label">
-      <span>上传加速度时程</span>
-      <span class="hint">CSV / TXT · 本地处理</span>
-    </div>
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".csv,.txt">
-      <span class="drop-ico">📈</span>
-      <div class="drop-title">点击选择文件，或拖拽到此处</div>
-      <div class="drop-sub">
-        <strong>CSV / TXT</strong> 文本文件，支持两种列结构：<br>
-        <span style="display:inline-block;margin-top:4px;">
-          <strong>两列</strong> 时间 加速度 → 自动识别采样率，无需手动输入<br>
-          <strong>单列</strong> 纯加速度 → 需在下方填写采样率（Hz）
-        </span>
-      </div>
-    </div>
-
-    <div class="input-row" style="margin-top:14px; align-items:center;">
-      <select id="unitSelect" class="tool-select">
-        <option value="g">单位：g（重力加速度）</option>
-        <option value="m/s2">单位：m/s²</option>
-        <option value="gal">单位：gal（cm/s²）</option>
-      </select>
-
-      <!-- 采样率：仅在“无时间列”时显示 -->
-      <div id="fsWrap" style="display:none; flex:1; min-width:220px; align-items:center; gap:8px;">
-        <input type="number" id="fsManual" class="tool-input" style="flex:1;"
-               placeholder="采样率 Hz（单列数据必填）" step="any" min="0.01">
-        <span style="font-size:12px; color:var(--dim); white-space:nowrap;">Hz</span>
-      </div>
-    </div>
-
-    <div id="errorBox" class="alert error" hidden></div>
-    <div id="okBox" class="alert ok" hidden></div>
-  </section>
-
-  <!-- 示例：El Centro 三分量 -->
-  <section class="panel">
-    <div class="panel-label">
-      <span>示例文件 · El Centro 1940 三分量</span>
-      <span class="hint">原始 50 Hz · 直接加载，不做降采样</span>
-    </div>
-    <div class="demo-grid">
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">EW</span>
-          <span class="demo-name">elcentro_EW</span>
-        </div>
-        <div class="demo-desc">东西向，PGA ≈ 0.35 g。两列空格分隔，含时间列。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="ew" data-action="load">加载</button>
-          <button type="button" data-demo="ew" data-action="download">下载</button>
-        </div>
-      </div>
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">NS</span>
-          <span class="demo-name">elcentro_NS</span>
-        </div>
-        <div class="demo-desc">南北向，PGA ≈ 0.21 g。两列空格分隔，含时间列。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="ns" data-action="load">加载</button>
-          <button type="button" data-demo="ns" data-action="download">下载</button>
-        </div>
-      </div>
-      <div class="demo-item">
-        <div class="demo-head">
-          <span class="demo-tag">UP</span>
-          <span class="demo-name">elcentro_UP</span>
-        </div>
-        <div class="demo-desc">竖向，PGA ≈ 0.20 g。两列空格分隔，含时间列。</div>
-        <div class="demo-actions">
-          <button type="button" data-demo="up" data-action="load">加载</button>
-          <button type="button" data-demo="up" data-action="download">下载</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 数据概览 -->
-  <section class="panel" id="infoPanel" hidden>
-    <div class="panel-label">
-      <span>数据概览</span>
-      <span class="hint" id="dataHint">已解析</span>
-    </div>
-
-    <div class="file-info">
-      <span class="ftag" id="fTag">—</span>
-      <span class="fname" id="fName">—</span>
-      <span class="fsize" id="fSize">—</span>
-      <button class="btn-clear" id="btnClear">清除</button>
-    </div>
-
-    <div class="trace-grid">
-      <div class="trace-item">
-        <div class="k">采样率</div>
-        <div class="v" id="tRate">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">采样点数</div>
-        <div class="v" id="tNpts">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">时间跨度</div>
-        <div class="v small" id="tDuration">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">峰值加速度 PGA</div>
-        <div class="v" id="tPGA">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">峰值速度 PGV</div>
-        <div class="v" id="tPGV">—</div>
-      </div>
-      <div class="trace-item">
-        <div class="k">峰值位移 PGD</div>
-        <div class="v" id="tPGD">—</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 加速度波形 -->
-  <section class="panel" id="wavePanel" hidden>
-    <div class="panel-label">
-      <span>加速度时程</span>
-      <span class="hint">去趋势后 · 原始单位</span>
-    </div>
-    <div class="wave-wrap">
-      <canvas id="accCanvas" width="1000" height="260"></canvas>
-      <div class="wave-caption">Acceleration time history</div>
-    </div>
-  </section>
-
-  <!-- Husid 曲线 -->
-  <section class="panel" id="husidPanel" hidden>
-    <div class="panel-label">
-      <span>Husid 曲线（累积能量）</span>
-      <span class="hint">5% / 95% 能量点</span>
-    </div>
-    <div class="wave-wrap">
-      <canvas id="husidCanvas" width="1000" height="260"></canvas>
-      <div class="wave-caption">Normalized cumulative squared acceleration</div>
-    </div>
-  </section>
-
-  <!-- 详细参数 -->
-  <section class="panel" id="paramPanel" hidden>
-    <div class="panel-label">详细参数</div>
-    <div class="mini-grid">
-      <div class="mini">
-        <div class="k">PGA · m/s²</div>
-        <div class="v" id="outPgaSI">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">PGA · g</div>
-        <div class="v" id="outPgaG">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">PGV · cm/s</div>
-        <div class="v" id="outPgv">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">PGD · cm</div>
-        <div class="v" id="outPgd">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">Arias 强度 Ia</div>
-        <div class="v" id="outIa">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">有效持时 D5-95</div>
-        <div class="v" id="outD595">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">括号持时</div>
-        <div class="v" id="outDbr">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">RMS 加速度</div>
-        <div class="v" id="outRms">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">平均周期 Tm</div>
-        <div class="v" id="outTm">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">卓越周期 Tp</div>
-        <div class="v" id="outTp">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">峰值时刻 tPGA</div>
-        <div class="v" id="outTpga">—</div>
-      </div>
-      <div class="mini">
-        <div class="k">PGV / PGA</div>
-        <div class="v" id="outRatio">—</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 反应谱 -->
-  <section class="panel" id="spectrumPanel" hidden>
-    <div class="panel-label">
-      <span>加速度反应谱</span>
-      <span class="hint">阻尼比 ζ = 5%</span>
-    </div>
-    <div class="wave-wrap">
-      <canvas id="specCanvas" class="tall" width="1000" height="320"></canvas>
-      <div class="wave-caption">5% damped acceleration response spectrum</div>
-    </div>
-  </section>
-
-  <!-- 导出 -->
-  <section class="panel" id="outPanel" hidden>
-    <div class="panel-label">导出结果</div>
-    <div class="save-row">
-      <button class="btn-primary" id="btnExport">
-        <span>💾</span>
-        <span>下载参数汇总 (CSV)</span>
-      </button>
-      <div class="save-hint">
-        <strong>CSV</strong> 包含所有计算得到的参数，可直接用 Excel / Pandas 读取。
-        时程数据已省略，如需完整时程请使用波形格式转换器。
-      </div>
-    </div>
-  </section>
-
-  <!-- 说明 -->
-  <section class="panel">
-    <div class="panel-label">方法与说明</div>
-    <div class="note">
-      <strong style="color:var(--text);">输入格式：</strong>
-      仅支持 <code>CSV</code> 与 <code>TXT</code> 文本文件，两种结构：
-      <ul>
-        <li><strong>两列</strong>：<code>时间 加速度</code>（逗号 / 空格 / 制表符分隔），自动识别采样率，<strong>无需手动输入</strong>。</li>
-        <li><strong>单列</strong>：每行一个加速度值，<strong>必须手动输入采样率</strong>（Hz）。</li>
+    <!-- ===== 左侧：本页目录（自动跟随 panel 显隐） ===== -->
+    <aside class="tool-sidebar" aria-label="本页目录">
+      <div class="ts-title">本页目录</div>
+      <ul class="nav-list" id="toolToc">
+        <li data-target="s-upload"><a href="#s-upload" class="nav-parent">上传加速度时程</a></li>
+        <li data-target="s-demo"><a href="#s-demo" class="nav-parent">示例文件</a></li>
+        <li data-target="s-info" hidden><a href="#s-info" class="nav-parent">数据概览</a></li>
+        <li data-target="s-wave" hidden><a href="#s-wave" class="nav-parent">加速度时程</a></li>
+        <li data-target="s-husid" hidden><a href="#s-husid" class="nav-parent">Husid 曲线</a></li>
+        <li data-target="s-param" hidden><a href="#s-param" class="nav-parent">详细参数</a></li>
+        <li data-target="s-spectrum" hidden><a href="#s-spectrum" class="nav-parent">加速度反应谱</a></li>
+        <li data-target="s-export" hidden><a href="#s-export" class="nav-parent">导出结果</a></li>
+        <li data-target="s-note"><a href="#s-note" class="nav-parent">方法与说明</a></li>
       </ul>
-      解析时自动跳过 <code>#</code>、<code>%</code>、<code>//</code> 开头的注释行和非数值表头。
+    </aside>
 
-      <strong style="color:var(--text);">计算流程：</strong>
-      <ul>
-        <li><code>去趋势</code>：先减去均值，再去除线性趋势，避免积分后速度 / 位移发散。</li>
-        <li><code>速度 / 位移</code>：对加速度梯形积分得到速度，再积分得到位移（积分前后均去趋势）。</li>
-        <li><code>Arias 强度</code>：I<sub>A</sub> = π/(2g) · ∫ a² dt，单位 m/s。</li>
-        <li><code>有效持时</code>：Husid 曲线从 5% 到 95% 所对应的时间长度。</li>
-        <li><code>括号持时</code>：|a| 首次与末次超过 0.05·PGA 之间的时间长度。</li>
-        <li><code>平均周期</code>：T<sub>m</sub> = 2π · √(∫v²dt / ∫a²dt)。</li>
-        <li><code>卓越周期</code>：傅里叶幅值谱峰值对应的周期，频率分辨率取决于记录长度。</li>
-        <li><code>反应谱</code>：Newmark-β 平均加速度法（γ = 1/2，β = 1/4），周期 0.02–6 s 对数分布。</li>
-      </ul>
+    <!-- ===== 右侧：主内容 ===== -->
+    <div class="tool-content">
 
-      <strong style="color:var(--text);">示例数据：</strong>
-      示例按钮优先从 <code>assets/elcentro_EW.txt</code>、<code>elcentro_NS.txt</code>、<code>elcentro_UP.txt</code>
-      读取原始 <strong>50 Hz</strong> 记录，<strong>直接使用、不做降采样</strong>，反应谱有效周期可覆盖到约 0.05 s。
-      若示例文件缺失，则自动回退到浏览器端合成数据（同为 50 Hz）。
-    </div>
-  </section>
+      <header class="page-head">
+        <div class="crumb"><a href="index.html">wayione</a> / 小工具</div>
+        <h1>地震动参数计算器</h1>
+        <p>上传 CSV / TXT 加速度时程，自动计算 PGA、PGV、PGD、Arias 强度、有效持时、RMS、平均周期、卓越周期，并绘制加速度波形、Husid 曲线与 5% 阻尼加速度反应谱。全部在浏览器本地完成。</p>
+      </header>
 
-  <footer>
-    © 2026 wayione · 地震动参数计算器
-  </footer>
+      <!-- 上传 -->
+      <section class="panel" id="s-upload">
+        <div class="panel-label">
+          <span>上传加速度时程</span>
+          <span class="hint">CSV / TXT · 本地处理</span>
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".csv,.txt">
+          <span class="drop-ico">📈</span>
+          <div class="drop-title">点击选择文件，或拖拽到此处</div>
+          <div class="drop-sub">
+            <strong>CSV / TXT</strong> 文本文件，支持两种列结构：<br>
+            <span style="display:inline-block;margin-top:4px;">
+              <strong>两列</strong> 时间 加速度 → 自动识别采样率，无需手动输入<br>
+              <strong>单列</strong> 纯加速度 → 需在下方填写采样率（Hz）
+            </span>
+          </div>
+        </div>
 
+        <div class="input-row" style="margin-top:14px; align-items:center;">
+          <select id="unitSelect" class="tool-select">
+            <option value="g">单位：g（重力加速度）</option>
+            <option value="m/s2">单位：m/s²</option>
+            <option value="gal">单位：gal（cm/s²）</option>
+          </select>
+
+          <div id="fsWrap" style="display:none; flex:1; min-width:220px; align-items:center; gap:8px;">
+            <input type="number" id="fsManual" class="tool-input" style="flex:1;"
+                   placeholder="采样率 Hz（单列数据必填）" step="any" min="0.01">
+            <span style="font-size:12px; color:var(--dim); white-space:nowrap;">Hz</span>
+          </div>
+        </div>
+
+        <div id="errorBox" class="alert error" hidden></div>
+        <div id="okBox" class="alert ok" hidden></div>
+      </section>
+
+      <!-- 示例 -->
+      <section class="panel" id="s-demo">
+        <div class="panel-label">
+          <span>示例文件 · El Centro 1940 三分量</span>
+          <span class="hint">原始 50 Hz · 直接加载，不做降采样</span>
+        </div>
+        <div class="demo-grid">
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">EW</span>
+              <span class="demo-name">elcentro_EW</span>
+            </div>
+            <div class="demo-desc">东西向，PGA ≈ 0.35 g。两列空格分隔，含时间列。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="ew" data-action="load">加载</button>
+              <button type="button" data-demo="ew" data-action="download">下载</button>
+            </div>
+          </div>
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">NS</span>
+              <span class="demo-name">elcentro_NS</span>
+            </div>
+            <div class="demo-desc">南北向，PGA ≈ 0.21 g。两列空格分隔，含时间列。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="ns" data-action="load">加载</button>
+              <button type="button" data-demo="ns" data-action="download">下载</button>
+            </div>
+          </div>
+          <div class="demo-item">
+            <div class="demo-head">
+              <span class="demo-tag">UP</span>
+              <span class="demo-name">elcentro_UP</span>
+            </div>
+            <div class="demo-desc">竖向，PGA ≈ 0.20 g。两列空格分隔，含时间列。</div>
+            <div class="demo-actions">
+              <button type="button" data-demo="up" data-action="load">加载</button>
+              <button type="button" data-demo="up" data-action="download">下载</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 数据概览 -->
+      <section class="panel" id="s-info" hidden>
+        <div class="panel-label">
+          <span>数据概览</span>
+          <span class="hint" id="dataHint">已解析</span>
+        </div>
+
+        <div class="file-info">
+          <span class="ftag" id="fTag">—</span>
+          <span class="fname" id="fName">—</span>
+          <span class="fsize" id="fSize">—</span>
+          <button class="btn-clear" id="btnClear">清除</button>
+        </div>
+
+        <table class="param-table">
+          <tbody>
+            <tr>
+              <td class="pk">采样率</td>
+              <td class="pv" id="tRate">—</td>
+            </tr>
+            <tr>
+              <td class="pk">采样点数</td>
+              <td class="pv" id="tNpts">—</td>
+            </tr>
+            <tr>
+              <td class="pk">时间跨度</td>
+              <td class="pv" id="tDuration">—</td>
+            </tr>
+            <tr>
+              <td class="pk">峰值加速度 PGA</td>
+              <td class="pv" id="tPGA">—</td>
+            </tr>
+            <tr>
+              <td class="pk">峰值速度 PGV</td>
+              <td class="pv" id="tPGV">—</td>
+            </tr>
+            <tr>
+              <td class="pk">峰值位移 PGD</td>
+              <td class="pv" id="tPGD">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 加速度波形 -->
+      <section class="panel" id="s-wave" hidden>
+        <div class="panel-label">
+          <span>加速度时程</span>
+          <span class="hint">去趋势后 · 原始单位</span>
+        </div>
+        <div class="wave-wrap">
+          <canvas id="accCanvas" width="1000" height="260"></canvas>
+          <div class="wave-caption">Acceleration time history</div>
+        </div>
+      </section>
+
+      <!-- Husid 曲线 -->
+      <section class="panel" id="s-husid" hidden>
+        <div class="panel-label">
+          <span>Husid 曲线（累积能量）</span>
+          <span class="hint">5% / 95% 能量点</span>
+        </div>
+        <div class="wave-wrap">
+          <canvas id="husidCanvas" width="1000" height="260"></canvas>
+          <div class="wave-caption">Normalized cumulative squared acceleration</div>
+        </div>
+      </section>
+
+      <!-- 详细参数 -->
+      <section class="panel" id="s-param" hidden>
+        <div class="panel-label">详细参数</div>
+
+        <div class="param-cols">
+          <div class="param-col">
+            <div class="param-col-title">幅值</div>
+            <table class="param-table">
+              <tbody>
+                <tr>
+                  <td class="pk">PGA · m/s²</td>
+                  <td class="pv" id="outPgaSI">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">PGA · g</td>
+                  <td class="pv" id="outPgaG">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">PGV · cm/s</td>
+                  <td class="pv" id="outPgv">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">PGD · cm</td>
+                  <td class="pv" id="outPgd">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">PGV / PGA</td>
+                  <td class="pv" id="outRatio">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="param-col">
+            <div class="param-col-title">能量与持时</div>
+            <table class="param-table">
+              <tbody>
+                <tr>
+                  <td class="pk">Arias 强度 Ia</td>
+                  <td class="pv" id="outIa">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">有效持时 D5-95</td>
+                  <td class="pv" id="outD595">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">括号持时</td>
+                  <td class="pv" id="outDbr">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">RMS 加速度</td>
+                  <td class="pv" id="outRms">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="param-col">
+            <div class="param-col-title">周期特征</div>
+            <table class="param-table">
+              <tbody>
+                <tr>
+                  <td class="pk">平均周期 Tm</td>
+                  <td class="pv" id="outTm">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">卓越周期 Tp</td>
+                  <td class="pv" id="outTp">—</td>
+                </tr>
+                <tr>
+                  <td class="pk">峰值时刻 tPGA</td>
+                  <td class="pv" id="outTpga">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 反应谱 -->
+      <section class="panel" id="s-spectrum" hidden>
+        <div class="panel-label">
+          <span>加速度反应谱</span>
+          <span class="hint">阻尼比 ζ = 5%</span>
+        </div>
+        <div class="wave-wrap">
+          <canvas id="specCanvas" class="tall" width="1000" height="320"></canvas>
+          <div class="wave-caption">5% damped acceleration response spectrum</div>
+        </div>
+      </section>
+
+      <!-- 导出 -->
+      <section class="panel" id="s-export" hidden>
+        <div class="panel-label">导出结果</div>
+        <div class="save-row">
+          <button class="btn-primary" id="btnExport">
+            <span>💾</span>
+            <span>下载参数汇总 (CSV)</span>
+          </button>
+          <div class="save-hint">
+            <strong>CSV</strong> 包含所有计算得到的参数，可直接用 Excel / Pandas 读取。
+            时程数据已省略，如需完整时程请使用波形格式转换器。
+          </div>
+        </div>
+      </section>
+
+      <!-- 说明 -->
+      <section class="panel" id="s-note">
+        <div class="panel-label">方法与说明</div>
+        <div class="note">
+          <strong style="color:var(--text);">输入格式：</strong>
+          仅支持 <code>CSV</code> 与 <code>TXT</code> 文本文件，两种结构：
+          <ul>
+            <li><strong>两列</strong>：<code>时间 加速度</code>（逗号 / 空格 / 制表符分隔），自动识别采样率，<strong>无需手动输入</strong>。</li>
+            <li><strong>单列</strong>：每行一个加速度值，<strong>必须手动输入采样率</strong>（Hz）。</li>
+          </ul>
+          解析时自动跳过 <code>#</code>、<code>%</code>、<code>//</code> 开头的注释行和非数值表头。
+
+          <strong style="color:var(--text);">计算流程：</strong>
+          <ul>
+            <li><code>去趋势</code>：先减去均值，再去除线性趋势，避免积分后速度 / 位移发散。</li>
+            <li><code>速度 / 位移</code>：对加速度梯形积分得到速度，再积分得到位移（积分前后均去趋势）。</li>
+            <li><code>Arias 强度</code>：I<sub>A</sub> = π/(2g) · ∫ a² dt，单位 m/s。</li>
+            <li><code>有效持时</code>：Husid 曲线从 5% 到 95% 所对应的时间长度。</li>
+            <li><code>括号持时</code>：|a| 首次与末次超过 0.05·PGA 之间的时间长度。</li>
+            <li><code>平均周期</code>：T<sub>m</sub> = 2π · √(∫v²dt / ∫a²dt)。</li>
+            <li><code>卓越周期</code>：傅里叶幅值谱峰值对应的周期，频率分辨率取决于记录长度。</li>
+            <li><code>反应谱</code>：Newmark-β 平均加速度法（γ = 1/2，β = 1/4），周期 0.02–6 s 对数分布。</li>
+          </ul>
+
+          <strong style="color:var(--text);">示例数据：</strong>
+          示例按钮优先从 <code>assets/elcentro_EW.txt</code>、<code>elcentro_NS.txt</code>、<code>elcentro_UP.txt</code>
+          读取原始 <strong>50 Hz</strong> 记录，<strong>直接使用、不做降采样</strong>，反应谱有效周期可覆盖到约 0.05 s。
+          若示例文件缺失，则自动回退到浏览器端合成数据（同为 50 Hz）。
+        </div>
+      </section>
+
+      <footer>
+        © 2026 wayione · 地震动参数计算器
+      </footer>
+
+    </div><!-- /.tool-content -->
+
+  </div><!-- /.tool-layout -->
 </main>
 
 <script>
@@ -330,10 +453,6 @@
   'use strict';
 
   function $(id) { return document.getElementById(id); }
-
-  /* ============================================================
-     工具函数
-     ============================================================ */
 
   var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
               '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
@@ -369,10 +488,6 @@
     return m[1] + 'e' + m[2] + exp;
   }
 
-  /* ============================================================
-     文件保存
-     ============================================================ */
-
   function downloadBlob(blob, fileName) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -407,13 +522,6 @@
       }
     });
   }
-
-  /* ============================================================
-     数据解析
-     返回：{ acc, dt, hasTime, time }
-       hasTime = true  → 文件含时间列，dt 已自动解析
-       hasTime = false → 单列数据，需要用户手动输入采样率
-     ============================================================ */
 
   function parseData(text) {
     var lines = text.split(/\r?\n/);
@@ -494,13 +602,6 @@
     };
   }
 
-  /* ============================================================
-     降采样工具（当前示例未启用，保留备用）
-     ---------------------------------------------------------
-     算法：factor 点居中移动平均（抗混叠）+ 每 factor 点抽取 1 点。
-     如需把示例降到 10 Hz，在 loadDemo 中取消注释即可。
-     ============================================================ */
-
   function decimate(parsed, targetFs) {
     if (!parsed.dt) return parsed;
     var fsSrc = 1 / parsed.dt;
@@ -536,10 +637,6 @@
       decimatedTo: 1 / (parsed.dt * factor)
     };
   }
-
-  /* ============================================================
-     信号处理
-     ============================================================ */
 
   function demeanDetrend(a) {
     var n = a.length;
@@ -732,10 +829,6 @@
     }
     return Sa;
   }
-
-  /* ============================================================
-     Canvas 绘图
-     ============================================================ */
 
   function getCanvasColors() {
     var s = getComputedStyle(document.documentElement);
@@ -1042,10 +1135,6 @@
     ctx.stroke();
   }
 
-  /* ============================================================
-     状态
-     ============================================================ */
-
   var state = {
     fileName: '',
     fileSize: 0,
@@ -1059,8 +1148,7 @@
     Sa: null
   };
 
-  /* 已解析但还缺采样率的文件（单列数据） */
-  var pending = null;   // { parsed, fileName, fileSize }
+  var pending = null;
 
   var G = 9.80665;
 
@@ -1083,7 +1171,6 @@
     $('okBox').hidden = true;
   }
 
-  /* 控制采样率输入框显隐 */
   function updateFsVisibility(hasTime) {
     var wrap = $('fsWrap');
     var input = $('fsManual');
@@ -1095,10 +1182,6 @@
       setTimeout(function () { try { input.focus(); } catch (e) {} }, 0);
     }
   }
-
-  /* ============================================================
-     处理流程
-     ============================================================ */
 
   function unitFactor(unit) {
     if (unit === 'g') return G;
@@ -1199,10 +1282,6 @@
     }
   }
 
-  /* ============================================================
-     渲染
-     ============================================================ */
-
   function renderAll() {
     var p = state.params;
     var dt = state.dt;
@@ -1233,12 +1312,12 @@
     $('outTpga').textContent = p.tPga.toFixed(3) + ' s';
     $('outRatio').textContent = isFinite(p.ratio) ? p.ratio.toFixed(4) + ' s' : '—';
 
-    $('infoPanel').hidden = false;
-    $('wavePanel').hidden = false;
-    $('husidPanel').hidden = false;
-    $('paramPanel').hidden = false;
-    $('spectrumPanel').hidden = false;
-    $('outPanel').hidden = false;
+    $('s-info').hidden = false;
+    $('s-wave').hidden = false;
+    $('s-husid').hidden = false;
+    $('s-param').hidden = false;
+    $('s-spectrum').hidden = false;
+    $('s-export').hidden = false;
 
     requestAnimationFrame(function () {
       var Husid = computeHusid(state.accCorr, dt);
@@ -1263,21 +1342,17 @@
     state.Sa = null;
     pending = null;
 
-    $('infoPanel').hidden = true;
-    $('wavePanel').hidden = true;
-    $('husidPanel').hidden = true;
-    $('paramPanel').hidden = true;
-    $('spectrumPanel').hidden = true;
-    $('outPanel').hidden = true;
+    $('s-info').hidden = true;
+    $('s-wave').hidden = true;
+    $('s-husid').hidden = true;
+    $('s-param').hidden = true;
+    $('s-spectrum').hidden = true;
+    $('s-export').hidden = true;
     $('fileInput').value = '';
     $('fsManual').value = '';
     updateFsVisibility(true);
     hideAlerts();
   }
-
-  /* ============================================================
-     导出
-     ============================================================ */
 
   function buildCSV() {
     var p = state.params;
@@ -1320,13 +1395,6 @@
     });
   }
 
-  /* ============================================================
-     示例数据：优先 fetch 原始文件，失败时合成回退
-     ---------------------------------------------------------
-     原始记录为 50 Hz，直接加载使用，不做降采样。
-     （如需降采样，在 loadDemo 中取消 decimate 调用的注释即可。）
-     ============================================================ */
-
   var DEMO_NAMES = { ew: 'EW', ns: 'NS', up: 'UP' };
   var DEMO_URL   = {
     ew: 'assets/elcentro_EW.txt',
@@ -1334,7 +1402,6 @@
     up: 'assets/elcentro_UP.txt'
   };
 
-  /* 合成回退参数（示例文件缺失时使用，同为 50 Hz） */
   var DEMO_CFG = {
     ew: { fs: 50, dur: 54, pga: 0.35, seed: 19401,
       waves: [
@@ -1418,8 +1485,6 @@
     return 'elcentro_' + DEMO_NAMES[kind] + '.txt';
   }
 
-  /* -------- 加载：fetch → 解析 → 直接计算（不降采样） -------- */
-
   function loadDemo(kind) {
     hideAlerts();
     if (!DEMO_URL[kind]) return;
@@ -1433,11 +1498,6 @@
       })
       .then(function (text) {
         var parsed = parseData(text);
-
-        /* 如需降采样到 10 Hz，取消下面这行的注释：
-         * parsed = decimate(parsed, 10);
-         */
-
         var fsOut = parsed.dt ? (1 / parsed.dt) : null;
         var nOut = parsed.acc.length;
 
@@ -1485,8 +1545,6 @@
     reader.readAsArrayBuffer(blob);
   }
 
-  /* -------- 下载：优先下载原始文件，失败时下载合成数据 -------- */
-
   function downloadDemo(kind) {
     if (!DEMO_URL[kind]) return;
     var url = DEMO_URL[kind];
@@ -1516,10 +1574,6 @@
         });
       });
   }
-
-  /* ============================================================
-     文件读取（CSV / TXT）
-     ============================================================ */
 
   function handleParsed(parsed, fileName, fileSize) {
     var hasTime = !!parsed.dt;
@@ -1567,10 +1621,6 @@
     };
     reader.readAsArrayBuffer(file);
   }
-
-  /* ============================================================
-     事件绑定
-     ============================================================ */
 
   var dropZone = $('dropZone');
   var fileInput = $('fileInput');
@@ -1662,6 +1712,42 @@
                   findEnergyTime(Husid, dt, 0.95));
         drawSpectrum($('specCanvas'), state.periods, state.Sa);
       }, 60);
+    });
+  }
+
+  /* ============================================================
+     本页目录：根据 panel 显隐自动同步
+     ------------------------------------------------------------
+     - 目录项 <li data-target="s-xxx"> 与 panel[id="s-xxx"] 一一对应
+     - 若 panel 存在且可见 → 显示目录项
+     - 若 panel 存在但 hidden → 隐藏目录项
+     - 用 MutationObserver 监听 hidden 属性，自动同步
+     ============================================================ */
+  function syncSidebar() {
+    var items = document.querySelectorAll('#toolToc > li[data-target]');
+    items.forEach(function (li) {
+      var id = li.getAttribute('data-target');
+      var panel = document.getElementById(id);
+      if (!panel) { li.hidden = true; return; }
+      li.hidden = !!panel.hidden;
+    });
+  }
+
+  syncSidebar();
+
+  if (typeof MutationObserver !== 'undefined') {
+    var observer = new MutationObserver(function (mutations) {
+      var relevant = false;
+      mutations.forEach(function (m) {
+        if (m.type === 'attributes' && m.attributeName === 'hidden') {
+          relevant = true;
+        }
+      });
+      if (relevant) syncSidebar();
+    });
+
+    document.querySelectorAll('.tool-content .panel').forEach(function (p) {
+      observer.observe(p, { attributes: true, attributeFilter: ['hidden'] });
     });
   }
 

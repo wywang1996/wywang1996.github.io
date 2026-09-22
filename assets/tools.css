@@ -2,9 +2,10 @@
    tools.css — 小工具页专属样式
    ---------------------------------------------------------
    适用于：
-     magnitude.html            震级能量换算器
-     waveform.html             波形格式转换器
-     ground-motion-calc.html   地震动参数计算器
+     magnitude.html                   震级能量换算器
+     waveform.html                    波形格式转换器
+     ground-motion-calc.html          地震动参数计算器
+     design-response-spectrum.html    抗震规范谱生成器
 
    使用方式（工具页只引这两个 CSS，不引 pages.css / projects.css）：
      <link rel="stylesheet" href="assets/site.css">
@@ -23,7 +24,8 @@
    ========================================================= */
 :where(html[data-page="magnitude"]):root,
 :where(html[data-page="waveform"]):root,
-:where(html[data-page="ground-motion-calc"]):root {
+:where(html[data-page="ground-motion-calc"]):root,
+:where(html[data-page="seismic-spectrum"]):root {
   --bg-nav: rgba(254, 252, 232, 0.92);
   --accent-strong: #92400e;
   --alert-bg: #fff4f0;
@@ -54,7 +56,8 @@
 /* 深色覆盖 */
 [data-theme="dark"]:where(html[data-page="magnitude"]):root,
 [data-theme="dark"]:where(html[data-page="waveform"]):root,
-[data-theme="dark"]:where(html[data-page="ground-motion-calc"]):root {
+[data-theme="dark"]:where(html[data-page="ground-motion-calc"]):root,
+[data-theme="dark"]:where(html[data-page="seismic-spectrum"]):root {
   --bg: #14120d;
   --bg-nav: rgba(20, 18, 13, 0.9);
   --bg-solid: #1c1913;
@@ -98,7 +101,8 @@
 /* 选区颜色 */
 :where(html[data-page="magnitude"],
        html[data-page="waveform"],
-       html[data-page="ground-motion-calc"]) ::selection {
+       html[data-page="ground-motion-calc"],
+       html[data-page="seismic-spectrum"]) ::selection {
   background: rgba(180, 83, 9, 0.16);
 }
 
@@ -108,7 +112,8 @@
    ========================================================= */
 :where(html[data-page="magnitude"],
        html[data-page="waveform"],
-       html[data-page="ground-motion-calc"]) .nav-inner {
+       html[data-page="ground-motion-calc"],
+       html[data-page="seismic-spectrum"]) .nav-inner {
   max-width: 1080px;
   padding: 0 24px;
 }
@@ -116,14 +121,16 @@
 /* logo 圆点用纯色，避免和琥珀色主题冲突 */
 :where(html[data-page="magnitude"],
        html[data-page="waveform"],
-       html[data-page="ground-motion-calc"]) .nav-logo .dot {
+       html[data-page="ground-motion-calc"],
+       html[data-page="seismic-spectrum"]) .nav-logo .dot {
   background: var(--accent);
   box-shadow: none;
 }
 
 :where(html[data-page="magnitude"],
        html[data-page="waveform"],
-       html[data-page="ground-motion-calc"]) .nav-right a {
+       html[data-page="ground-motion-calc"],
+       html[data-page="seismic-spectrum"]) .nav-right a {
   font-size: 13px;
   color: var(--muted);
 }
@@ -133,7 +140,7 @@
    3. 布局 / 面包屑 / 页头
    ========================================================= */
 
-/* 工具页用窄栏容器（.wrap）替代 .layout */
+/* 工具页主容器 */
 .wrap {
   max-width: 1080px;
   margin: 0 auto;
@@ -174,6 +181,7 @@
   padding: 20px 22px;
   margin-bottom: 16px;
   background: var(--panel);
+  scroll-margin-top: calc(var(--nav-h, 58px) + 20px);
 }
 .panel-label {
   font-size: 10.5px;
@@ -185,7 +193,8 @@
   margin-bottom: 13px;
 }
 :where(html[data-page="waveform"]) .panel-label,
-:where(html[data-page="ground-motion-calc"]) .panel-label {
+:where(html[data-page="ground-motion-calc"]) .panel-label,
+:where(html[data-page="seismic-spectrum"]) .panel-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -551,7 +560,8 @@ td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
 }
 :where(html[data-page="magnitude"],
        html[data-page="waveform"],
-       html[data-page="ground-motion-calc"]) .note {
+       html[data-page="ground-motion-calc"],
+       html[data-page="seismic-spectrum"]) .note {
   font-size: 12.5px;
   color: var(--dim);
   line-height: 1.75;
@@ -902,7 +912,8 @@ td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
 }
 
 :where(html[data-page="waveform"],
-       html[data-page="ground-motion-calc"]) [hidden] {
+       html[data-page="ground-motion-calc"],
+       html[data-page="seismic-spectrum"]) [hidden] {
   display: none !important;
 }
 
@@ -937,7 +948,8 @@ td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
 @media (max-width: 960px) {
   :where(html[data-page="magnitude"],
          html[data-page="waveform"],
-         html[data-page="ground-motion-calc"]) .split {
+         html[data-page="ground-motion-calc"],
+         html[data-page="seismic-spectrum"]) .split {
     grid-template-columns: 1fr;
     gap: 14px;
   }
@@ -947,10 +959,12 @@ td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
   .wrap { padding: 24px 18px 70px; }
   :where(html[data-page="magnitude"],
          html[data-page="waveform"],
-         html[data-page="ground-motion-calc"]) .nav-inner { padding: 0 18px; }
+         html[data-page="ground-motion-calc"],
+         html[data-page="seismic-spectrum"]) .nav-inner { padding: 0 18px; }
   :where(html[data-page="magnitude"],
          html[data-page="waveform"],
-         html[data-page="ground-motion-calc"]) .page-head h1 { font-size: 22px; }
+         html[data-page="ground-motion-calc"],
+         html[data-page="seismic-spectrum"]) .page-head h1 { font-size: 22px; }
   .panel { padding: 17px 16px; }
   .energy-card { padding: 22px 20px; }
   .scale-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1013,4 +1027,162 @@ td.mag { font-family: var(--mono); font-weight: 650; color: var(--accent); }
 }
 .wave-wrap canvas.tall {
   height: 320px;
+}
+
+
+/* =========================================================
+   17. 工具页左侧【本页目录】+ 布局
+   ---------------------------------------------------------
+   结构：
+     <main class="wrap">
+       <div class="tool-layout">
+         <aside class="tool-sidebar">
+           <div class="ts-title">本页目录</div>
+           <ul class="nav-list" id="toolToc">
+             <li data-target="s-xxx"><a href="#s-xxx" class="nav-parent">…</a></li>
+             …
+           </ul>
+         </aside>
+         <div class="tool-content">…</div>
+       </div>
+     </main>
+
+   目录项显隐规则：
+     - 若目录项对应 panel 存在且可见 → 显示
+     - 若目录项对应 panel 存在但 hidden → 隐藏
+     - 由页面 JS 通过 MutationObserver 自动同步（见 HTML）
+
+   布局：
+     - 宽屏（>900px）：两栏网格，左侧目录 sticky 固定在视口内
+     - 窄屏（≤900px）：目录折叠为顶部横向滚动标签条
+   ========================================================= */
+
+.tool-layout {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.tool-content {
+  min-width: 0;
+}
+
+/* 左侧本页目录 */
+.tool-sidebar {
+  position: sticky;
+  top: calc(var(--nav-h, 58px) + 24px);
+  max-height: calc(100vh - var(--nav-h, 58px) - 48px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.tool-sidebar::-webkit-scrollbar { width: 4px; }
+.tool-sidebar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* 目录标题 */
+.ts-title {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: var(--dim);
+  font-weight: 650;
+  padding-left: 10px;
+  margin-bottom: 6px;
+}
+
+/* 目录列表 */
+.tool-sidebar .nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.tool-sidebar .nav-list > li {
+  margin-bottom: 1px;
+}
+.tool-sidebar .nav-parent {
+  display: block;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
+  transition: all .15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tool-sidebar .nav-parent:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+  text-decoration: none;
+}
+.tool-sidebar .nav-parent.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+/* 工具页目录不需要图标 */
+.tool-sidebar .nav-parent .ico { display: none; }
+
+/* ---------- 目录项随对应 panel 显隐（关键新增） ----------
+   当 <li data-target="s-xxx" hidden> 存在时，明确隐藏。
+   与 tools.css 第 13 节的 [hidden] { display: none !important }
+   相互补充，覆盖任何被其他规则提升特异性的场景。 */
+.tool-sidebar .nav-list > li[hidden] {
+  display: none !important;
+}
+
+/* ---------- 窄屏：目录折叠为横向滚动标签条 ---------- */
+@media (max-width: 900px) {
+  .tool-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .tool-sidebar {
+    position: static;
+    max-height: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 0 0 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-soft);
+    scrollbar-width: none;
+  }
+  .tool-sidebar::-webkit-scrollbar { display: none; }
+
+  .ts-title { display: none; }
+
+  .tool-sidebar .nav-list {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .tool-sidebar .nav-list > li {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .tool-sidebar .nav-parent {
+    border-left: none;
+    border: 1px solid var(--border-blue);
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--bg-blue-soft);
+    font-size: 12px;
+  }
+  .tool-sidebar .nav-parent.active {
+    border-left: none;
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
 }
