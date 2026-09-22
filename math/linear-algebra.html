@@ -1,0 +1,772 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线性代数 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="linear-algebra">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#matrix">一、矩阵与行列式</a></li>
+      <li><a href="#space">二、向量空间</a></li>
+      <li><a href="#transform">三、线性变换</a></li>
+      <li><a href="#eigen">四、特征值分解</a></li>
+      <li><a href="#quadratic">五、二次型与正定性</a></li>
+      <li><a href="#svd">六、奇异值分解</a></li>
+      <li><a href="#numerical">七、数值线性代数</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 线性代数
+        </div>
+        <h1>线性代数</h1>
+        <p class="lead">
+          从矩阵运算到特征值分解，梳理线性代数的核心概念与工程应用。
+          线性代数是结构工程中最"无处不在"的数学工具——有限元的刚度矩阵、
+          模态分析的振型、地震危险性分析中的协方差矩阵，本质都是线性代数问题。
+        </p>
+        <div class="article-meta">
+          <span>矩阵</span>
+          <span>特征值</span>
+          <span>二次型</span>
+          <span class="blue">有限元基础</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            线性代数是研究<strong>向量空间</strong>与<strong>线性变换</strong>的数学分支。
+            它的核心对象只有两样：向量和矩阵。但正是这两样东西，撑起了整个计算力学的骨架。
+          </p>
+          <p>
+            在结构工程中，线性代数最直接的三个落点是：
+          </p>
+          <ul>
+            <li><strong>有限元</strong>：整体刚度方程 $\mathbf{K}\mathbf{u} = \mathbf{F}$ 是一个大型稀疏线性方程组，$\mathbf{K}$ 的对称正定性决定了求解方法的选择。</li>
+            <li><strong>模态分析</strong>：广义特征值问题 $\mathbf{K}\boldsymbol{\phi} = \omega^2 \mathbf{M}\boldsymbol{\phi}$ 给出结构的固有频率与振型。</li>
+            <li><strong>地震危险性分析</strong>：多变量概率模型中的协方差矩阵、主成分分析、蒙特卡洛抽样，都建立在线性代数之上。</li>
+          </ul>
+          <p>
+            这份笔记按"矩阵 $\to$ 空间 $\to$ 变换 $\to$ 特征值 $\to$ 二次型 $\to$ SVD $\to$ 数值方法"的顺序梳理，
+            每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="matrix">
+          <h2><span class="num">01</span>矩阵与行列式</h2>
+
+          <h3>矩阵运算</h3>
+          <p>
+            一个 $m \times n$ 的矩阵 $\mathbf{A}$ 把 $\mathbb{R}^n$ 中的向量线性映射到 $\mathbb{R}^m$。
+            三种基本运算：
+          </p>
+          <ul>
+            <li><strong>加法</strong>：同型矩阵对应元素相加，满足交换律与结合律。</li>
+            <li><strong>数乘</strong>：标量乘以每个元素。</li>
+            <li><strong>乘法</strong>：$\mathbf{A}\mathbf{B}$ 要求 $\mathbf{A}$ 的列数等于 $\mathbf{B}$ 的行数，<strong>不满足交换律</strong>。</li>
+          </ul>
+
+          $$ (\mathbf{A}\mathbf{B})_{ij} = \sum_{k=1}^{n} A_{ik} B_{kj} $$
+
+          <p>
+            转置、逆、共轭转置是三个常用操作：
+          </p>
+
+          $$ (\mathbf{A}\mathbf{B})^{\mathsf{T}} = \mathbf{B}^{\mathsf{T}} \mathbf{A}^{\mathsf{T}}, \qquad
+             (\mathbf{A}\mathbf{B})^{-1} = \mathbf{B}^{-1} \mathbf{A}^{-1} $$
+
+          <h3>秩与逆</h3>
+          <p>
+            矩阵的<strong>秩</strong> $\mathrm{rank}(\mathbf{A})$ 是列向量张成的空间的维数，
+            也是行空间的维数，满足 $\mathrm{rank}(\mathbf{A}) \le \min(m, n)$。
+            方阵可逆的充要条件是满秩。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>条件</th><th>等价命题</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$\mathbf{A}$ 可逆</td>
+                  <td>$\det \mathbf{A} \ne 0$</td>
+                </tr>
+                <tr>
+                  <td>$\mathbf{A}$ 可逆</td>
+                  <td>$\mathrm{rank}(\mathbf{A}) = n$（满秩）</td>
+                </tr>
+                <tr>
+                  <td>$\mathbf{A}$ 可逆</td>
+                  <td>$\mathbf{A}\mathbf{x} = \mathbf{0}$ 只有零解</td>
+                </tr>
+                <tr>
+                  <td>$\mathbf{A}$ 可逆</td>
+                  <td>所有特征值非零</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>行列式</h3>
+          <p>
+            行列式是方阵的一个标量函数，几何意义是线性变换对体积的伸缩因子。
+            三个最常用的性质：
+          </p>
+
+          $$ \det(\mathbf{A}\mathbf{B}) = \det \mathbf{A} \cdot \det \mathbf{B}, \qquad
+             \det(\mathbf{A}^{\mathsf{T}}) = \det \mathbf{A}, \qquad
+             \det(\mathbf{A}^{-1}) = \frac{1}{\det \mathbf{A}} $$
+
+          <p>
+            对三角矩阵，行列式等于对角线元素之积。这也是 LU 分解求行列式的依据。
+          </p>
+
+          <h3>分块矩阵</h3>
+          <p>
+            在结构分析中，整体刚度矩阵常按子结构分块：
+          </p>
+
+          $$ \mathbf{K} = \begin{bmatrix}
+             \mathbf{K}_{11} & \mathbf{K}_{12} \\
+             \mathbf{K}_{21} & \mathbf{K}_{22}
+             \end{bmatrix} $$
+
+          <p>
+            对分块矩阵做消元（Schur 补）可以得到静力凝聚公式：
+          </p>
+
+          $$ \mathbf{K}_{11}^{\ast} = \mathbf{K}_{11} - \mathbf{K}_{12} \mathbf{K}_{22}^{-1} \mathbf{K}_{21} $$
+
+          <p>
+            这正是子结构分析、模型降阶的数学基础。
+          </p>
+        </section>
+
+        <section id="space">
+          <h2><span class="num">02</span>向量空间</h2>
+
+          <h3>线性相关与基</h3>
+          <p>
+            向量组 $\{\mathbf{v}_1, \ldots, \mathbf{v}_k\}$ 线性相关，是指存在不全为零的系数
+            $c_1, \ldots, c_k$ 使得：
+          </p>
+
+          $$ c_1 \mathbf{v}_1 + c_2 \mathbf{v}_2 + \cdots + c_k \mathbf{v}_k = \mathbf{0} $$
+
+          <p>
+            否则称为线性无关。一个向量空间中最大的线性无关组称为<strong>基</strong>，
+            基中向量的个数称为空间的<strong>维数</strong>。
+          </p>
+
+          <h3>四个基本子空间</h3>
+          <p>
+            对 $m \times n$ 矩阵 $\mathbf{A}$，有四个基本子空间：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>子空间</th><th>定义</th><th>维数</th><th>所在空间</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>列空间 $\mathcal{C}(\mathbf{A})$</td>
+                  <td>$\{\mathbf{A}\mathbf{x}\}$</td>
+                  <td>$r$</td>
+                  <td>$\mathbb{R}^m$</td>
+                </tr>
+                <tr>
+                  <td>行空间 $\mathcal{C}(\mathbf{A}^{\mathsf{T}})$</td>
+                  <td>$\{\mathbf{A}^{\mathsf{T}}\mathbf{y}\}$</td>
+                  <td>$r$</td>
+                  <td>$\mathbb{R}^n$</td>
+                </tr>
+                <tr>
+                  <td>零空间 $\mathcal{N}(\mathbf{A})$</td>
+                  <td>$\{\mathbf{x} : \mathbf{A}\mathbf{x} = \mathbf{0}\}$</td>
+                  <td>$n - r$</td>
+                  <td>$\mathbb{R}^n$</td>
+                </tr>
+                <tr>
+                  <td>左零空间 $\mathcal{N}(\mathbf{A}^{\mathsf{T}})$</td>
+                  <td>$\{\mathbf{y} : \mathbf{A}^{\mathsf{T}}\mathbf{y} = \mathbf{0}\}$</td>
+                  <td>$m - r$</td>
+                  <td>$\mathbb{R}^m$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            其中 $r = \mathrm{rank}(\mathbf{A})$。四个子空间满足正交关系：
+          </p>
+
+          $$ \mathcal{C}(\mathbf{A}) \perp \mathcal{N}(\mathbf{A}^{\mathsf{T}}), \qquad
+             \mathcal{C}(\mathbf{A}^{\mathsf{T}}) \perp \mathcal{N}(\mathbf{A}) $$
+
+          <h3>秩-零化度定理</h3>
+          <p>
+            这是线性代数中最"经济"的公式之一：
+          </p>
+
+          $$ \mathrm{rank}(\mathbf{A}) + \dim \mathcal{N}(\mathbf{A}) = n $$
+
+          <p>
+            直觉：$\mathbf{A}$ 把 $\mathbb{R}^n$ 分成两部分——被"压扁成零"的零空间（维数 $n-r$），
+            和被"映成非零"的有效部分（维数 $r$）。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：在有限元中，如果整体刚度矩阵 $\mathbf{K}$ 的零空间维数大于 6
+              （三个平动 + 三个转动），说明结构存在机构或未约束的自由度，
+              求解会失败。检查 $\mathrm{rank}(\mathbf{K})$ 是诊断模型约束的常用手段。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="transform">
+          <h2><span class="num">03</span>线性变换</h2>
+
+          <h3>矩阵作为变换</h3>
+          <p>
+            选定基之后，每个线性变换都对应一个矩阵。同一个变换，在不同基下对应不同的矩阵，
+            它们之间通过<strong>相似变换</strong>关联：
+          </p>
+
+          $$ \mathbf{A}' = \mathbf{P}^{-1} \mathbf{A} \mathbf{P} $$
+
+          <p>
+            其中 $\mathbf{P}$ 是基变换矩阵（新基向量按列排成的矩阵）。
+          </p>
+
+          <h3>正交变换</h3>
+          <p>
+            如果 $\mathbf{P}$ 是正交矩阵（$\mathbf{P}^{\mathsf{T}}\mathbf{P} = \mathbf{I}$），
+            则相似变换变成正交相似：
+          </p>
+
+          $$ \mathbf{A}' = \mathbf{P}^{\mathsf{T}} \mathbf{A} \mathbf{P} $$
+
+          <p>
+            正交变换保持向量的内积、长度与夹角不变。在结构动力学中，
+            振型矩阵 $\boldsymbol{\Phi}$ 就是一组正交基，用它对 $\mathbf{M}$、$\mathbf{K}$ 做变换，
+            可以把耦合的多自由度方程解耦成一组独立的单自由度方程。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>核心思想</strong>：相似变换不改变特征值，只改变"描述方式"。
+              模态分析的全部工作，就是找到一个合适的基，让运动方程从"耦合"变成"解耦"。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="eigen">
+          <h2><span class="num">04</span>特征值分解</h2>
+
+          <h3>特征方程</h3>
+          <p>
+            对方阵 $\mathbf{A}$，若存在非零向量 $\mathbf{v}$ 和标量 $\lambda$ 满足：
+          </p>
+
+          $$ \mathbf{A}\mathbf{v} = \lambda \mathbf{v} $$
+
+          <p>
+            则称 $\lambda$ 为特征值，$\mathbf{v}$ 为对应的特征向量。
+            求解归结为特征方程：
+          </p>
+
+          $$ \det(\mathbf{A} - \lambda \mathbf{I}) = 0 $$
+
+          <p>
+            这是一个 $n$ 次多项式方程。$n$ 阶方阵恰好有 $n$ 个特征值（含重根，含复数）。
+          </p>
+
+          <h3>对角化</h3>
+          <p>
+            如果 $\mathbf{A}$ 有 $n$ 个线性无关的特征向量，则可以分解为：
+          </p>
+
+          $$ \mathbf{A} = \mathbf{V} \boldsymbol{\Lambda} \mathbf{V}^{-1} $$
+
+          <p>
+            其中 $\boldsymbol{\Lambda} = \mathrm{diag}(\lambda_1, \ldots, \lambda_n)$，
+            $\mathbf{V}$ 的列是特征向量。这个分解让矩阵幂变得极简单：
+          </p>
+
+          $$ \mathbf{A}^k = \mathbf{V} \boldsymbol{\Lambda}^k \mathbf{V}^{-1} $$
+
+          <h3>实对称矩阵谱定理</h3>
+          <p>
+            这是线性代数中最重要的一类特殊情形。若 $\mathbf{A}$ 实对称（$\mathbf{A}^{\mathsf{T}} = \mathbf{A}$），则：
+          </p>
+          <ul>
+            <li>所有特征值都是<strong>实数</strong></li>
+            <li>不同特征值对应的特征向量<strong>相互正交</strong></li>
+            <li>存在正交矩阵 $\mathbf{Q}$ 使 $\mathbf{A} = \mathbf{Q} \boldsymbol{\Lambda} \mathbf{Q}^{\mathsf{T}}$</li>
+          </ul>
+
+          <p>
+            换句话说，任何实对称矩阵都正交相似于对角矩阵。
+            在有限元与结构动力学中，质量矩阵 $\mathbf{M}$ 与刚度矩阵 $\mathbf{K}$ 都是实对称的，
+            这就是模态分析能顺利进行的根本原因。
+          </p>
+
+          <h3>广义特征值问题</h3>
+          <p>
+            结构动力学中的自由振动方程是：
+          </p>
+
+          $$ \mathbf{K} \boldsymbol{\phi} = \omega^2 \mathbf{M} \boldsymbol{\phi} $$
+
+          <p>
+            这是广义特征值问题，不是标准形式。如果 $\mathbf{M}$ 正定，可以化为标准问题：
+          </p>
+
+          $$ \mathbf{M}^{-1} \mathbf{K} \boldsymbol{\phi} = \omega^2 \boldsymbol{\phi} $$
+
+          <p>
+            但 $\mathbf{M}^{-1}\mathbf{K}$ 通常不对称，数值上不推荐这样算。
+            工程上常用 Cholesky 分解 $\mathbf{M} = \mathbf{L}\mathbf{L}^{\mathsf{T}}$ 做变换，
+            保持对称性后再求解。
+          </p>
+
+          <h3>Python 示例：两自由度系统模态分析</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>modal.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+# ---- 两自由度弹簧-质量系统 ----
+#  m1 -- k1 -- m2 -- k2 -- (固定端)
+M = np.array([[2.0, 0.0],
+              [0.0, 1.0]])
+
+K = np.array([[600.0, -200.0],
+              [-200.0,  200.0]])
+
+# ---- 广义特征值问题 K phi = omega^2 M phi ----
+# 化为标准问题：M^{-1} K phi = omega^2 phi
+A = np.linalg.solve(M, K)
+eigvals, eigvecs = np.linalg.eig(A)
+
+# 特征值可能有微小虚部，取实部
+omega2 = np.real(eigvals)
+idx = np.argsort(omega2)
+omega2 = omega2[idx]
+Phi = eigvecs[:, idx]
+
+omega = np.sqrt(omega2)          # 固有圆频率 rad/s
+T = 2 * np.pi / omega            # 自振周期 s
+
+# ---- 关于质量矩阵归一化 ----
+for i in range(Phi.shape[1]):
+    phi = Phi[:, i]
+    Phi[:, i] = phi / np.sqrt(phi @ M @ phi)
+
+print("固有圆频率 omega (rad/s):", omega)
+print("自振周期 T (s):           ", T)
+print("质量归一化振型 Phi:")
+print(Phi)
+
+# 验证：Phi^T M Phi = I,  Phi^T K Phi = diag(omega^2)
+print("\nPhi^T M Phi =\n", Phi.T @ M @ Phi)
+print("\nPhi^T K Phi =\n", Phi.T @ K @ Phi)</code></pre>
+          </div>
+
+          <p>
+            输出会给出两个固有频率与对应的振型，并验证质量归一化与正交性。
+            把自由度从 2 扩展到 2000，代码几乎不变——这就是矩阵方法的威力。
+          </p>
+        </section>
+
+        <section id="quadratic">
+          <h2><span class="num">05</span>二次型与正定性</h2>
+
+          <h3>二次型</h3>
+          <p>
+            对实对称矩阵 $\mathbf{A}$，二次型是一个标量函数：
+          </p>
+
+          $$ q(\mathbf{x}) = \mathbf{x}^{\mathsf{T}} \mathbf{A} \mathbf{x}
+             = \sum_{i=1}^{n} \sum_{j=1}^{n} A_{ij} x_i x_j $$
+
+          <p>
+            在结构力学中，弹性应变能就是位移向量 $\mathbf{u}$ 的二次型：
+          </p>
+
+          $$ U = \frac{1}{2} \mathbf{u}^{\mathsf{T}} \mathbf{K} \mathbf{u} $$
+
+          <h3>正定性判据</h3>
+          <p>
+            若对所有 $\mathbf{x} \ne \mathbf{0}$ 都有 $q(\mathbf{x}) > 0$，则 $\mathbf{A}$ 称为正定矩阵。
+            几个等价的判据：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>判据</th><th>内容</th><th>适用场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>特征值判据</td>
+                  <td>所有 $\lambda_i > 0$</td>
+                  <td>理论分析</td>
+                </tr>
+                <tr>
+                  <td>顺序主子式判据</td>
+                  <td>所有顺序主子式 $> 0$</td>
+                  <td>手算小矩阵</td>
+                </tr>
+                <tr>
+                  <td>Cholesky 判据</td>
+                  <td>存在唯一上三角 $\mathbf{L}$ 使 $\mathbf{A} = \mathbf{L}\mathbf{L}^{\mathsf{T}}$</td>
+                  <td>数值计算</td>
+                </tr>
+                <tr>
+                  <td>合同判据</td>
+                  <td>存在可逆 $\mathbf{P}$ 使 $\mathbf{A} = \mathbf{P}^{\mathsf{T}}\mathbf{P}$</td>
+                  <td>理论推导</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>刚度矩阵的正定性</h3>
+          <p>
+            对经过充分约束的结构，整体刚度矩阵 $\mathbf{K}$ 是<strong>对称正定</strong>的。理由：
+            对任意非零位移 $\mathbf{u}$，弹性应变能 $\frac{1}{2}\mathbf{u}^{\mathsf{T}}\mathbf{K}\mathbf{u} > 0$
+            （否则结构会无能量地变形，即存在机构）。
+          </p>
+          <p>
+            正定性带来两个关键好处：
+          </p>
+          <ul>
+            <li>可以用 <strong>Cholesky 分解</strong>求解 $\mathbf{K}\mathbf{u} = \mathbf{F}$，效率是 LU 的两倍，且数值稳定</li>
+            <li>模态分析中的广义特征值问题有<strong>实数正频率</strong>，不会出现复模态</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>常见误区</strong>：如果模型存在未约束的刚体自由度或机构，
+              $\mathbf{K}$ 变成<strong>半正定</strong>（存在零特征值），
+              直接 Cholesky 会失败。此时需要：
+              ① 补充约束；② 用带移位的分解 $\mathbf{K} + \sigma \mathbf{I}$；
+              ③ 改用时程积分或子空间迭代法。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="svd">
+          <h2><span class="num">06</span>奇异值分解</h2>
+
+          <h3>SVD 定义</h3>
+          <p>
+            任意 $m \times n$ 实矩阵 $\mathbf{A}$ 都可以分解为：
+          </p>
+
+          $$ \mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^{\mathsf{T}} $$
+
+          <p>
+            其中 $\mathbf{U}$（$m \times m$）与 $\mathbf{V}$（$n \times n$）都是正交矩阵，
+            $\boldsymbol{\Sigma}$（$m \times n$）是对角矩阵，对角元 $\sigma_1 \ge \sigma_2 \ge \cdots \ge 0$
+            称为<strong>奇异值</strong>。
+          </p>
+          <p>
+            奇异值与特征值的关系：$\sigma_i = \sqrt{\lambda_i(\mathbf{A}^{\mathsf{T}}\mathbf{A})}$。
+            但 SVD 比特征值分解更通用——它不要求矩阵是方阵，也不要求对称。
+          </p>
+
+          <h3>伪逆与最小二乘</h3>
+          <p>
+            SVD 提供了求伪逆的稳定方法：
+          </p>
+
+          $$ \mathbf{A}^{+} = \mathbf{V} \boldsymbol{\Sigma}^{+} \mathbf{U}^{\mathsf{T}} $$
+
+          <p>
+            其中 $\boldsymbol{\Sigma}^{+}$ 是把非零奇异值取倒数再转置。伪逆给出的解
+            $\mathbf{x} = \mathbf{A}^{+}\mathbf{b}$ 是最小二乘解中范数最小的那个。
+          </p>
+
+          <h3>低秩近似</h3>
+          <p>
+            只保留前 $k$ 个奇异值，可以得到矩阵的最优低秩近似（Eckart–Young 定理）：
+          </p>
+
+          $$ \mathbf{A}_k = \sum_{i=1}^{k} \sigma_i \mathbf{u}_i \mathbf{v}_i^{\mathsf{T}} $$
+
+          <p>
+            在误差的 Frobenius 范数意义下，这是所有秩 $k$ 矩阵中最好的近似。
+            这正是主成分分析（PCA）、图像压缩、降阶模型（ROM）的共同原理。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：在结构模型降阶中，对位移快照矩阵做 SVD，
+              保留前几个奇异值对应的模态，可以在几乎不损失精度的前提下，
+              把上百万自由度的模型压缩到几十个广义坐标。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="numerical">
+          <h2><span class="num">07</span>数值线性代数</h2>
+
+          <h3>三种基本分解</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>分解</th><th>形式</th><th>适用矩阵</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>LU</td>
+                  <td>$\mathbf{A} = \mathbf{L}\mathbf{U}$</td>
+                  <td>一般方阵</td>
+                  <td>解一般线性方程组</td>
+                </tr>
+                <tr>
+                  <td>Cholesky</td>
+                  <td>$\mathbf{A} = \mathbf{L}\mathbf{L}^{\mathsf{T}}$</td>
+                  <td>对称正定</td>
+                  <td>有限元刚度方程</td>
+                </tr>
+                <tr>
+                  <td>QR</td>
+                  <td>$\mathbf{A} = \mathbf{Q}\mathbf{R}$</td>
+                  <td>任意矩阵</td>
+                  <td>最小二乘、特征值算法</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：Cholesky 分解与正定性判断</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>cholesky.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+# ---- 一个 3 阶对称正定矩阵（模拟小型刚度矩阵） ----
+K = np.array([
+    [ 4.0, -1.0,  0.0],
+    [-1.0,  4.0, -1.0],
+    [ 0.0, -1.0,  3.0],
+])
+
+# ---- Cholesky 分解 ----
+L = np.linalg.cholesky(K)
+print("下三角 L =\n", L)
+print("验证 L @ L.T == K:", np.allclose(L @ L.T, K))
+
+# ---- 特征值检查正定性 ----
+eig = np.linalg.eigvalsh(K)   # 对称矩阵专用，返回升序实特征值
+print("\n特征值:", eig)
+print("是否正定:", np.all(eig > 0))
+
+# ---- 条件数（衡量数值稳定性） ----
+cond = np.linalg.cond(K)
+print(f"条件数 κ(K) = {cond:.3f}")
+
+# ---- 解线性方程组 K u = F ----
+F = np.array([1.0, 0.0, 2.0])
+u = np.linalg.solve(K, F)
+print("\n解 u =", u)
+print("残差 ||K u - F|| =", np.linalg.norm(K @ u - F))</code></pre>
+          </div>
+
+          <h3>稀疏矩阵与迭代法</h3>
+          <p>
+            真实有限元模型的 $\mathbf{K}$ 通常有几十万到上百万阶，但每行非零元只有几十个，
+            是高度<strong>稀疏</strong>的。此时：
+          </p>
+          <ul>
+            <li>直接法（Cholesky / LU）要处理填充（fill-in），内存可能爆掉</li>
+            <li>迭代法（共轭梯度 CG、GMRES）只需矩阵-向量乘积，内存友好</li>
+            <li>预处理（不完全 Cholesky、代数多重网格 AMG）能大幅加速收敛</li>
+          </ul>
+
+          <h3>条件数</h3>
+          <p>
+            条件数定义为 $\kappa(\mathbf{A}) = \|\mathbf{A}\| \cdot \|\mathbf{A}^{-1}\|$，
+            对对称正定矩阵等于 $\lambda_{\max} / \lambda_{\min}$。
+          </p>
+
+          $$ \kappa(\mathbf{A}) = \frac{\lambda_{\max}}{\lambda_{\min}}
+             \ge 1, \qquad \kappa(\mathbf{I}) = 1 $$
+
+          <p>
+            条件数越大，解对输入扰动越敏感。<strong>经验规则</strong>：
+            在双精度下，如果 $\kappa(\mathbf{A}) > 10^{15}$，结果基本不可信。
+            结构分析中，如果模型里混入了刚度相差 $10^8$ 倍以上的单元，
+            条件数会急剧恶化，需要做归一化或缩放。
+          </p>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>矩阵</strong>：线性变换的坐标表示，秩决定映射的"有效维度"。</li>
+              <li><strong>向量空间</strong>：四个基本子空间 + 秩-零化度定理，是理解线性方程组结构的钥匙。</li>
+              <li><strong>相似变换</strong>：换基不改变特征值，模态分析本质上就是找一组解耦的基。</li>
+              <li><strong>特征值分解</strong>：实对称矩阵可正交对角化，这是模态分析成立的数学基础。</li>
+              <li><strong>二次型与正定性</strong>：弹性应变能是二次型，$\mathbf{K}$ 对称正定保证解存在且唯一。</li>
+              <li><strong>SVD</strong>：任意矩阵都能分解，是伪逆、最小二乘、降阶模型的统一工具。</li>
+              <li><strong>数值线性代数</strong>：Cholesky 求解有限元方程，条件数决定数值稳定性。</li>
+            </ul>
+          </div>
+
+          <h3>工程落点速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>线性代数概念</th><th>结构工程中的对应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>矩阵乘法 $\mathbf{K}\mathbf{u}$</td>
+                  <td>刚度矩阵作用于位移向量，得到弹性恢复力</td>
+                </tr>
+                <tr>
+                  <td>线性方程组 $\mathbf{K}\mathbf{u} = \mathbf{F}$</td>
+                  <td>静力分析、有限元位移求解</td>
+                </tr>
+                <tr>
+                  <td>广义特征值问题</td>
+                  <td>模态分析：固有频率与振型</td>
+                </tr>
+                <tr>
+                  <td>正交相似变换</td>
+                  <td>振型分解法、方程解耦</td>
+                </tr>
+                <tr>
+                  <td>二次型 $\mathbf{u}^{\mathsf{T}}\mathbf{K}\mathbf{u}$</td>
+                  <td>弹性应变能、能量法</td>
+                </tr>
+                <tr>
+                  <td>Cholesky 分解</td>
+                  <td>大型稀疏刚度方程的高效求解</td>
+                </tr>
+                <tr>
+                  <td>SVD / PCA</td>
+                  <td>地震动主成分分析、模型降阶</td>
+                </tr>
+                <tr>
+                  <td>条件数</td>
+                  <td>病态模型的识别与预处理</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Strang, <em>Introduction to Linear Algebra</em> — 最直观的入门教材</li>
+            <li>Strang, <em>Linear Algebra and Its Applications</em> — 应用导向，含大量工程例子</li>
+            <li>Golub &amp; Van Loan, <em>Matrix Computations</em> — 数值线性代数的标准参考</li>
+            <li>Trefethen &amp; Bau, <em>Numerical Linear Algebra</em> — 精炼深刻，适合进阶</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 从线代到有限元的桥梁</li>
+            <li>Bathe &amp; Wilson, <em>Numerical Methods in Finite Element Analysis</em> — 经典数值方法</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

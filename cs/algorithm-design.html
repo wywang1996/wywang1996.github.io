@@ -1,0 +1,2087 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>算法设计与分析 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="algorithm-design">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#paradigm">一、算法设计范式</a></li>
+      <li><a href="#divide">二、分治法</a></li>
+      <li><a href="#greedy">三、贪心算法</a></li>
+      <li><a href="#dp">四、动态规划</a></li>
+      <li><a href="#backtrack">五、回溯与分支限界</a></li>
+      <li><a href="#randomized">六、随机化算法</a></li>
+      <li><a href="#np">七、NP 完全性</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 算法设计与分析
+        </div>
+        <h1>算法设计与分析</h1>
+        <p class="lead">
+          从分治到动态规划，覆盖贪心、回溯、分支限界与 NP 完全性。
+          算法设计是科学计算、优化求解与高性能实现的方法论基础，
+          决定了同一问题在"可行"与"不可行"之间的分界线。
+        </p>
+        <div class="article-meta">
+          <span>分治</span>
+          <span>动态规划</span>
+          <span>贪心</span>
+          <span class="blue">优化求解</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            算法设计研究<strong>如何为问题构造高效的求解方法</strong>。
+            与数据结构（研究数据的组织）互补，
+            两者共同构成程序的核心。
+          </p>
+
+          <p>
+            在工程计算与地震学中，算法设计的意义体现在三个方面：
+          </p>
+          <ul>
+            <li><strong>可行性</strong>：同一问题，不同算法的复杂度可能相差数个量级——从"秒级"到"不可行"。</li>
+            <li><strong>规模上限</strong>：$O(n^2)$ 算法在 $n=10^6$ 时需要数小时，而 $O(n \log n)$ 只需不到一秒。</li>
+            <li><strong>工程约束</strong>：实时处理（地震预警）、大规模数据（地震目录）、高精度数值（PSHA）都对算法提出苛刻要求。</li>
+          </ul>
+
+          <p>
+            典型的工程场景：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>朴素算法</th><th>优化算法</th><th>差距</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地震目录去重</td>
+                  <td>$O(n^2)$</td>
+                  <td>哈希 + 排序 $O(n \log n)$</td>
+                  <td>10⁶ 倍</td>
+                </tr>
+                <tr>
+                  <td>最近台站查询</td>
+                  <td>$O(n)$ 扫描</td>
+                  <td>kd 树 $O(\log n)$</td>
+                  <td>10³ 倍</td>
+                </tr>
+                <tr>
+                  <td>矩阵-向量乘法</td>
+                  <td>稠密 $O(n^2)$</td>
+                  <td>CSR 稀疏 $O(\text{nnz})$</td>
+                  <td>10~1000 倍</td>
+                </tr>
+                <tr>
+                  <td>反应谱计算</td>
+                  <td>重复积分 $O(n \cdot m)$</td>
+                  <td>递推 + 缓存 $O(n)$</td>
+                  <td>10 倍</td>
+                </tr>
+                <tr>
+                  <td>地震重定位</td>
+                  <td>全网格搜索 $O(G)$</td>
+                  <td>共轭梯度 $O(k \cdot \text{nnz})$</td>
+                  <td>10²~10³ 倍</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            这份笔记按"范式 $\to$ 分治 $\to$ 贪心 $\to$ 动态规划 $\to$ 回溯 $\to$ 随机化 $\to$ NP $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="paradigm">
+          <h2><span class="num">01</span>算法设计范式</h2>
+
+          <h3>五大范式</h3>
+          <p>
+            算法设计有五种基本范式，大多数算法都是这些范式的组合或变体：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>范式</th><th>核心思想</th><th>典型问题</th><th>复杂度特征</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>分治</td>
+                  <td>分解 → 求解 → 合并</td>
+                  <td>归并排序、FFT、快速排序</td>
+                  <td>$T(n) = aT(n/b) + f(n)$</td>
+                </tr>
+                <tr>
+                  <td>贪心</td>
+                  <td>局部最优 → 全局最优</td>
+                  <td>最小生成树、霍夫曼编码</td>
+                  <td>通常 $O(n \log n)$</td>
+                </tr>
+                <tr>
+                  <td>动态规划</td>
+                  <td>最优子结构 + 重叠子问题</td>
+                  <td>最短路径、背包问题</td>
+                  <td>状态数 × 状态转移</td>
+                </tr>
+                <tr>
+                  <td>回溯</td>
+                  <td>逐步构造 + 剪枝</td>
+                  <td>八皇后、数独、SAT</td>
+                  <td>最坏指数，实际远小</td>
+                </tr>
+                <tr>
+                  <td>随机化</td>
+                  <td>引入随机性</td>
+                  <td>快速排序、素数测试、MCMC</td>
+                  <td>期望或高概率界</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>问题建模</h3>
+          <p>
+            算法设计的第一步是<strong>建模</strong>——
+            把实际问题抽象成标准形式：
+          </p>
+          <ul>
+            <li><strong>图论建模</strong>：台站网络 → 加权图；事件序列 → DAG。</li>
+            <li><strong>优化建模</strong>：台站选址 → 集合覆盖；资源分配 → 线性规划。</li>
+            <li><strong>序列建模</strong>：波形对齐 → 最长公共子序列；走时反演 → 动态规划。</li>
+            <li><strong>搜索建模</strong>：震源参数反演 → 高维搜索；断层分段 → 组合优化。</li>
+          </ul>
+
+          <p>
+            同一个问题，不同的建模方式导致完全不同的算法选择。
+            这是算法设计中最考验经验的部分。
+          </p>
+
+          <h3>正确性证明</h3>
+          <p>
+            算法不仅要"能跑"，还要"跑对"。常用的证明方法：
+          </p>
+          <ul>
+            <li><strong>循环不变式</strong>：证明循环每次迭代后某种性质成立。</li>
+            <li><strong>数学归纳法</strong>：对递归算法特别有效。</li>
+            <li><strong>交换论证</strong>：证明贪心选择可交换为最优解。</li>
+            <li><strong>反证法</strong>：假设存在更优解，导出矛盾。</li>
+          </ul>
+
+          <h3>复杂度分析</h3>
+          <p>
+            递归算法的时间复杂度由<strong>主定理</strong>（Master Theorem）给出：
+          </p>
+
+          $$ T(n) = a T(n/b) + f(n) $$
+
+          <p>
+            其中 $a \ge 1$、$b > 1$，$f(n)$ 是分解与合并的代价。主定理分三种情形：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>情形</th><th>条件</th><th>结果</th><th>示例</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>$f(n) = O(n^{\log_b a - \epsilon})$</td>
+                  <td>$T(n) = \Theta(n^{\log_b a})$</td>
+                  <td>归并排序（a=2, b=2，$n^{\log_2 2} = n$）</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>$f(n) = \Theta(n^{\log_b a})$</td>
+                  <td>$T(n) = \Theta(n^{\log_b a} \log n)$</td>
+                  <td>归并排序（$f(n) = n$）</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>$f(n) = \Omega(n^{\log_b a + \epsilon})$</td>
+                  <td>$T(n) = \Theta(f(n))$</td>
+                  <td>二分查找（a=1, b=2，$f(n) = 1$）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>算法设计的"分水岭"</strong>：
+              $O(n \log n)$ 与 $O(n^2)$ 的差距，就是"可行"与"不可行"的分水岭。
+              在 $n = 10^6$ 时，前者不到一秒，后者数小时。
+              在 $n = 10^9$ 时，前者需数分钟，后者完全不可行。
+              因此，算法设计的第一目标通常是<strong>把复杂度降到 $O(n \log n)$ 或以下</strong>。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="divide">
+          <h2><span class="num">02</span>分治法</h2>
+
+          <h3>三步法</h3>
+          <p>
+            分治法（Divide and Conquer）把问题分成三个步骤：
+          </p>
+          <ol class="steps">
+            <li><strong>分</strong>：把原问题划分为若干子问题。</li>
+            <li><strong>治</strong>：递归求解子问题。</li>
+            <li><strong>合</strong>：把子问题的解合并成原问题的解。</li>
+          </ol>
+
+          <h3>经典例子</h3>
+
+          <h4>1. 归并排序</h4>
+          <p>
+            把数组二分，递归排序两半，再线性合并。
+            时间 $T(n) = 2T(n/2) + O(n) = O(n \log n)$。
+          </p>
+
+          <h4>2. 快速排序</h4>
+          <p>
+            选 pivot，划分数组，递归排序两边。
+            平均 $O(n \log n)$，最坏 $O(n^2)$。
+          </p>
+
+          <h4>3. 二分查找</h4>
+          <p>
+            在有序数组上每次排除一半，$T(n) = T(n/2) + O(1) = O(\log n)$。
+          </p>
+
+          <h4>4. 快速傅里叶变换（FFT）</h4>
+          <p>
+            FFT 是分治法最成功的应用之一。
+            DFT 的定义：
+          </p>
+
+          $$ X_k = \sum_{n=0}^{N-1} x_n e^{-i 2\pi kn / N} $$
+
+          <p>
+            直接计算需要 $O(N^2)$。FFT 利用单位根的对称性，把 $N$ 点 DFT
+            分解为两个 $N/2$ 点 DFT：
+          </p>
+
+          $$ T(N) = 2 T(N/2) + O(N) = O(N \log N) $$
+
+          <p>
+            对 $N = 10^6$，FFT 比朴素 DFT 快约 5 万倍。
+            这是信号处理、地震数据处理、频谱分析的基础。
+          </p>
+
+          <h4>5. 快速矩阵乘法（Strassen）</h4>
+          <p>
+            朴素矩阵乘法是 $O(n^3)$。
+            Strassen 算法把 $2 \times 2$ 分块乘法从 8 次降到 7 次：
+          </p>
+
+          $$ T(n) = 7 T(n/2) + O(n^2) = O(n^{\log_2 7}) \approx O(n^{2.807}) $$
+
+          <p>
+            对 $n = 10^3$，Strassen 比朴素算法快约 5 倍。
+            实际实现中因常数因子大，通常只用在大规模问题上。
+          </p>
+
+          <h4>6. 最近点对问题</h4>
+          <p>
+            给定平面上 $n$ 个点，找距离最近的一对。
+            朴素方法 $O(n^2)$。
+            分治方法：按 x 坐标分成两半，
+            递归求两半的最近点对，
+            再检查跨越中线的点对（只需检查 $O(1)$ 个邻居），
+            总复杂度 $O(n \log n)$。
+          </p>
+
+          <p>
+            这个问题在地震目录分析中有直接应用：
+            找相距最近的地震事件、识别重复事件、台站分布均匀性评估。
+          </p>
+
+          <h3>Python 示例：归并排序与最近点对</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>divide_conquer.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import math
+import numpy as np
+
+
+def merge_sort(arr):
+    """归并排序：分治典范"""
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    return _merge(left, right)
+
+
+def _merge(a, b):
+    result = []
+    i = j = 0
+    while i < len(a) and j < len(b):
+        if a[i] <= b[j]:
+            result.append(a[i])
+            i += 1
+        else:
+            result.append(b[j])
+            j += 1
+    result.extend(a[i:])
+    result.extend(b[j:])
+    return result
+
+
+def closest_pair(points):
+    """
+    最近点对（分治）。
+    points: [(x, y), ...]
+    返回：(距离, 点1, 点2)
+    """
+    # 按 x 排序
+    px = sorted(points, key=lambda p: p[0])
+    py = sorted(points, key=lambda p: p[1])
+    return _closest(px, py)
+
+
+def _dist(p1, p2):
+    return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
+
+
+def _closest(px, py):
+    n = len(px)
+    if n <= 3:
+        best = (float("inf"), None, None)
+        for i in range(n):
+            for j in range(i + 1, n):
+                d = _dist(px[i], px[j])
+                if d < best[0]:
+                    best = (d, px[i], px[j])
+        return best
+
+    mid = n // 2
+    mid_x = px[mid][0]
+
+    left_x = px[:mid]
+    right_x = px[mid:]
+    left_y = [p for p in py if p[0] <= mid_x]
+    right_y = [p for p in py if p[0] > mid_x]
+
+    dl = _closest(left_x, left_y)
+    dr = _closest(right_x, right_y)
+    d_best = dl if dl[0] < dr[0] else dr
+
+    # 检查跨越中线的点
+    strip = [p for p in py if abs(p[0] - mid_x) < d_best[0]]
+    for i in range(len(strip)):
+        for j in range(i + 1, min(i + 8, len(strip))):
+            d = _dist(strip[i], strip[j])
+            if d < d_best[0]:
+                d_best = (d, strip[i], strip[j])
+    return d_best
+
+
+if __name__ == "__main__":
+    # ---- 归并排序 ----
+    rng = np.random.default_rng(42)
+    arr = rng.integers(0, 1000, size=20).tolist()
+    print(f"原始数组: {arr}")
+    sorted_arr = merge_sort(arr)
+    print(f"归并排序: {sorted_arr}")
+    assert sorted_arr == sorted(arr)
+
+    # ---- 最近点对 ----
+    n = 200
+    pts = [(float(x), float(y)) for x, y in rng.uniform(0, 100, (n, 2))]
+
+    d, p1, p2 = closest_pair(pts)
+    print(f"\n最近点对距离: {d:.4f}")
+    print(f"  点 1: {p1}")
+    print(f"  点 2: {p2}")
+
+    # 朴素验证
+    d_naive = min(
+        _dist(pts[i], pts[j])
+        for i in range(n) for j in range(i + 1, n)
+    )
+    print(f"  朴素验证: {d_naive:.4f}")
+    assert abs(d - d_naive) < 1e-9</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：归并排序稳定输出有序结果，
+            最近点对的分治算法与 $O(n^2)$ 朴素方法结果一致。
+          </p>
+        </section>
+
+        <section id="greedy">
+          <h2><span class="num">03</span>贪心算法</h2>
+
+          <h3>核心思想</h3>
+          <p>
+            贪心算法在每一步都选择<strong>当前看起来最优的方案</strong>，
+            并希望通过一系列局部最优达到全局最优。
+          </p>
+
+          <p>
+            贪心算法的关键不在于"贪心"，
+            而在于证明<strong>贪心选择性质</strong>与<strong>最优子结构</strong>：
+          </p>
+          <ul>
+            <li><strong>贪心选择性质</strong>：每一步的局部最优选择能导致全局最优解。</li>
+            <li><strong>最优子结构</strong>：问题的最优解包含子问题的最优解。</li>
+          </ul>
+
+          <p>
+            两个性质都满足时，贪心算法就是正确的。
+            反之，贪心可能得到次优解——此时需要动态规划。
+          </p>
+
+          <h3>经典问题</h3>
+
+          <h4>1. 活动选择问题</h4>
+          <p>
+            给定若干活动，每个活动有开始与结束时间，
+            选择最多的互不重叠的活动。
+            贪心策略：<strong>按结束时间排序</strong>，依次选择不与已选活动冲突的活动。
+          </p>
+          <p>
+            时间复杂度 $O(n \log n)$（主要是排序）。
+          </p>
+
+          <h4>2. 霍夫曼编码</h4>
+          <p>
+            用变长编码压缩数据，高频字符用短码。
+            贪心策略：反复取频率最小的两个节点合并，构建哈夫曼树。
+          </p>
+          <p>
+            时间复杂度 $O(n \log n)$（用最小堆）。
+            霍夫曼编码是无损压缩的经典算法，
+            在数据传输、文件压缩、地震数据存储中广泛使用。
+          </p>
+
+          <h4>3. 最小生成树（Prim 与 Kruskal）</h4>
+          <p>
+            加权连通无向图的最小生成树。
+            两种贪心算法：
+          </p>
+          <ul>
+            <li><strong>Prim</strong>：从一点开始，每次加入离树最近的节点。</li>
+            <li><strong>Kruskal</strong>：按边权从小到大加边，用并查集判环。</li>
+          </ul>
+
+          <h4>4. Dijkstra 最短路径</h4>
+          <p>
+            对非负权图，从源点出发，每次取距离最小的未访问节点，
+            用优先队列维护。
+          </p>
+          <p>
+            Dijkstra 本质上是贪心算法：
+            每次选择当前距离最小的节点，
+            并保证这个距离是最终最短距离。
+          </p>
+
+          <h4>5. 分数背包问题</h4>
+          <p>
+            物品可以分割，选择价值密度最高的物品直到装满。
+            贪心策略：按价值/重量比排序。
+          </p>
+          <p>
+            注意：<strong>0/1 背包不能用贪心</strong>，
+            因为不可分割导致贪心选择可能非最优，必须用动态规划。
+          </p>
+
+          <h3>贪心 vs 动态规划</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>贪心</th><th>动态规划</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>决策方式</td>
+                  <td>自顶向下，每步最优</td>
+                  <td>自底向上，逐步累积</td>
+                </tr>
+                <tr>
+                  <td>是否回溯</td>
+                  <td>不回溯</td>
+                  <td>可"重做"决策</td>
+                </tr>
+                <tr>
+                  <td>适用条件</td>
+                  <td>贪心选择性质 + 最优子结构</td>
+                  <td>最优子结构 + 重叠子问题</td>
+                </tr>
+                <tr>
+                  <td>时间复杂度</td>
+                  <td>通常更低</td>
+                  <td>通常更高</td>
+                </tr>
+                <tr>
+                  <td>正确性</td>
+                  <td>需要证明</td>
+                  <td>由最优子结构保证</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：霍夫曼编码</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>huffman.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import heapq
+from collections import Counter
+
+
+class HuffmanNode:
+    def __init__(self, char=None, freq=0):
+        self.char = char
+        self.freq = freq
+        self.left = None
+        self.right = None
+
+    def __lt__(self, other):
+        return self.freq < other.freq
+
+
+def build_huffman_tree(text):
+    """构建霍夫曼树"""
+    freq = Counter(text)
+    heap = [HuffmanNode(ch, f) for ch, f in freq.items()]
+    heapq.heapify(heap)
+
+    while len(heap) > 1:
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+        merged = HuffmanNode(freq=left.freq + right.freq)
+        merged.left = left
+        merged.right = right
+        heapq.heappush(heap, merged)
+    return heap[0] if heap else None
+
+
+def generate_codes(node, prefix="", codes=None):
+    """遍历霍夫曼树生成编码表"""
+    if codes is None:
+        codes = {}
+    if node is None:
+        return codes
+    if node.char is not None:
+        codes[node.char] = prefix
+    generate_codes(node.left, prefix + "0", codes)
+    generate_codes(node.right, prefix + "1", codes)
+    return codes
+
+
+def huffman_encode(text):
+    """霍夫曼编码"""
+    if not text:
+        return "", {}
+    root = build_huffman_tree(text)
+    codes = generate_codes(root)
+    encoded = "".join(codes[ch] for ch in text)
+    return encoded, codes
+
+
+def huffman_decode(encoded, codes):
+    """霍夫曼解码"""
+    reverse = {v: k for k, v in codes.items()}
+    result = []
+    buf = ""
+    for bit in encoded:
+        buf += bit
+        if buf in reverse:
+            result.append(reverse[buf])
+            buf = ""
+    return "".join(result)
+
+
+if __name__ == "__main__":
+    # 一个典型文本
+    text = "ABRACADABRA" * 100
+    print(f"原文长度: {len(text)} 字符")
+
+    encoded, codes = huffman_encode(text)
+    print(f"编码后长度: {len(encoded)} 比特")
+    print(f"压缩率: {len(encoded) / (len(text) * 8):.3f}")
+
+    print(f"\n编码表:")
+    for ch, code in sorted(codes.items()):
+        freq = text.count(ch)
+        print(f"  {ch!r}: {code}  (频率 {freq})")
+
+    # 验证解码
+    decoded = huffman_decode(encoded, codes)
+    assert decoded == text
+    print(f"\n✓ 解码结果与原文一致")</code></pre>
+          </div>
+
+          <p>
+            霍夫曼编码的无损压缩效率取决于字符频率分布：
+            分布越不均匀，压缩率越高。
+            在地震数据存储中，如果波形样本分布集中，
+            霍夫曼编码可以获得 2~3 倍的压缩。
+          </p>
+        </section>
+
+        <section id="dp">
+          <h2><span class="num">04</span>动态规划</h2>
+
+          <h3>核心思想</h3>
+          <p>
+            动态规划（Dynamic Programming，DP）通过<strong>保存子问题的解</strong>避免重复计算。
+            它要求问题具有两个性质：
+          </p>
+          <ul>
+            <li><strong>最优子结构</strong>：最优解包含子问题的最优解。</li>
+            <li><strong>重叠子问题</strong>：递归过程中同一个子问题被多次求解。</li>
+          </ul>
+
+          <h3>两种实现方式</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方式</th><th>方向</th><th>特点</th><th>例子</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>记忆化搜索</td>
+                  <td>自顶向下</td>
+                  <td>递归 + 缓存</td>
+                  <td>斐波那契、LCS</td>
+                </tr>
+                <tr>
+                  <td>递推</td>
+                  <td>自底向上</td>
+                  <td>迭代填表</td>
+                  <td>0/1 背包、编辑距离</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>DP 的设计步骤</h3>
+          <ol class="steps">
+            <li><strong>定义状态</strong>：$dp[i]$ 表示什么？</li>
+            <li><strong>确定转移方程</strong>：$dp[i]$ 如何由子状态推出？</li>
+            <li><strong>确定初值</strong>：最小的子问题是什么？</li>
+            <li><strong>确定计算顺序</strong>：子问题先于父问题。</li>
+            <li><strong>优化空间</strong>：能否只用几个变量或滚动数组？</li>
+          </ol>
+
+          <h3>经典问题</h3>
+
+          <h4>1. 0/1 背包</h4>
+          <p>
+            给定 $n$ 个物品，每个有重量 $w_i$ 与价值 $v_i$，
+            背包容量 $W$。选择若干物品使总价值最大。
+          </p>
+
+          $$ dp[i][j] = \max(dp[i-1][j], \; dp[i-1][j-w_i] + v_i) $$
+
+          <p>
+            时间复杂度 $O(nW)$，空间可优化到 $O(W)$（滚动数组）。
+          </p>
+
+          <h4>2. 最长公共子序列（LCS）</h4>
+          <p>
+            两个序列的最长公共子序列：
+          </p>
+
+          $$ dp[i][j] = \begin{cases}
+             dp[i-1][j-1] + 1, & a_i = b_j \\
+             \max(dp[i-1][j], dp[i][j-1]), & a_i \ne b_j
+             \end{cases} $$
+
+          <p>
+            应用：序列比对、DNA 分析、波形匹配。
+          </p>
+
+          <h4>3. 编辑距离</h4>
+          <p>
+            把字符串 A 变成字符串 B 所需的最少操作数：
+          </p>
+
+          $$ dp[i][j] = \min\begin{cases}
+             dp[i-1][j] + 1 & \text{删除} \\
+             dp[i][j-1] + 1 & \text{插入} \\
+             dp[i-1][j-1] + \delta(a_i, b_j) & \text{替换}
+             \end{cases} $$
+
+          <p>
+            应用：拼写纠错、语音识别、序列相似度。
+          </p>
+
+          <h4>4. 最短路径的 DP 视角</h4>
+          <p>
+            Floyd-Warshall 算法本质上是 DP：
+          </p>
+
+          $$ D^{(k)}[i][j] = \min(D^{(k-1)}[i][j], \;
+             D^{(k-1)}[i][k] + D^{(k-1)}[k][j]) $$
+
+          <p>
+            状态 $D^{(k)}[i][j]$ 表示只经过前 $k$ 个中间节点的最短路径。
+            时间 $O(V^3)$，空间 $O(V^2)$。
+          </p>
+
+          <h4>5. 维特比算法</h4>
+          <p>
+            隐马尔可夫模型（HMM）中的最优路径解码，
+            本质是序列上的动态规划：
+          </p>
+
+          $$ \delta_t(j) = \max_i [\delta_{t-1}(i) \cdot a_{ij}] \cdot b_j(o_t) $$
+
+          <p>
+            其中 $a_{ij}$ 是状态转移概率，$b_j(o_t)$ 是发射概率。
+            维特比算法在语音识别、P 波自动拾取、
+            GPS 轨迹平滑中有广泛应用。
+          </p>
+
+          <h3>DP 与状态空间</h3>
+          <p>
+            DP 的复杂度由<strong>状态数</strong>与<strong>状态转移代价</strong>共同决定：
+          </p>
+
+          $$ T = O(\text{状态数} \times \text{转移代价}) $$
+
+          <p>
+            对多维状态（如 $dp[i][j][k]$），状态数可能爆炸。
+            此时需要寻找状态压缩、降维或近似方法。
+          </p>
+
+          <h3>Python 示例：0/1 背包与编辑距离</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>dp_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+def knapsack_01(weights, values, capacity):
+    """
+    0/1 背包问题的动态规划解法。
+    返回 (最大价值, 选择的物品索引)。
+    """
+    n = len(weights)
+    # dp[j] 表示容量为 j 时的最大价值
+    dp = [0] * (capacity + 1)
+    # 记录选择（用于回溯方案）
+    choice = [[False] * (capacity + 1) for _ in range(n)]
+
+    for i in range(n):
+        w, v = weights[i], values[i]
+        # 逆序更新，避免同一物品被多次选择
+        for j in range(capacity, w - 1, -1):
+            if dp[j - w] + v > dp[j]:
+                dp[j] = dp[j - w] + v
+                choice[i][j] = True
+
+    # 回溯选择的物品
+    selected = []
+    j = capacity
+    for i in range(n - 1, -1, -1):
+        if choice[i][j]:
+            selected.append(i)
+            j -= weights[i]
+    selected.reverse()
+
+    return dp[capacity], selected
+
+
+def edit_distance(a, b):
+    """
+    编辑距离（Levenshtein 距离）。
+    """
+    m, n = len(a), len(b)
+    # 二维 DP（也可以用滚动数组优化到 O(n)）
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            cost = 0 if a[i-1] == b[j-1] else 1
+            dp[i][j] = min(
+                dp[i-1][j] + 1,        # 删除
+                dp[i][j-1] + 1,        # 插入
+                dp[i-1][j-1] + cost,   # 替换
+            )
+    return dp[m][n]
+
+
+def lcs_length(a, b):
+    """最长公共子序列长度"""
+    m, n = len(a), len(b)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if a[i-1] == b[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+            else:
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+    return dp[m][n]
+
+
+if __name__ == "__main__":
+    # ---- 0/1 背包 ----
+    weights = [2, 3, 4, 5, 9]
+    values = [3, 4, 5, 8, 10]
+    capacity = 20
+
+    max_val, selected = knapsack_01(weights, values, capacity)
+    print(f"0/1 背包（容量 {capacity}）：")
+    print(f"  最大价值: {max_val}")
+    print(f"  选择物品索引: {selected}")
+    print(f"  对应重量: {[weights[i] for i in selected]}")
+    print(f"  对应价值: {[values[i] for i in selected]}")
+
+    # ---- 编辑距离 ----
+    a, b = "kitten", "sitting"
+    d = edit_distance(a, b)
+    print(f"\n编辑距离('{a}', '{b}') = {d}")
+
+    # ---- LCS ----
+    s1, s2 = "ABCBDAB", "BDCABA"
+    length = lcs_length(s1, s2)
+    print(f"\nLCS 长度('{s1}', '{s2}') = {length}")
+
+    # ---- 地震目录：识别相似事件 ----
+    # 用 LCS 长度作为波形相似度的简单指标
+    event_a = "PnnSSPnnSS"
+    event_b = "PnnnSSPnnSS"
+    print(f"\n事件 A: {event_a}")
+    print(f"事件 B: {event_b}")
+    print(f"LCS 长度: {lcs_length(event_a, event_b)}")
+    print(f"（可用于事件相似度与重复事件检测）")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+            0/1 背包得到最大价值与选择方案，
+            编辑距离与 LCS 是序列比对的基础。
+            在地震目录分析、波形匹配、事件去重中，这些 DP 算法都有直接应用。
+          </p>
+        </section>
+
+        <section id="backtrack">
+          <h2><span class="num">05</span>回溯与分支限界</h2>
+
+          <h3>回溯法</h3>
+          <p>
+            回溯法把问题看成<strong>决策树的搜索</strong>：
+            在每一步做出选择，
+            若选择导致无解则撤销（回溯）到上一步，
+            尝试其他选择。
+          </p>
+
+          <p>
+            回溯法的三个要素：
+          </p>
+          <ul>
+            <li><strong>解空间</strong>：所有可能解构成的树。</li>
+            <li><strong>约束函数</strong>：判断部分解是否违反约束。</li>
+            <li><strong>限界函数</strong>：判断部分解是否还能优于当前最优解。</li>
+          </ul>
+
+          <h3>经典问题</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>搜索空间</th><th>复杂度</th><th>应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>N 皇后</td>
+                  <td>棋盘放置</td>
+                  <td>$O(N!)$，剪枝后远小</td>
+                  <td>组合优化教学</td>
+                </tr>
+                <tr>
+                  <td>数独</td>
+                  <td>数字填充</td>
+                  <td>指数级，剪枝后实用</td>
+                  <td>约束满足</td>
+                </tr>
+                <tr>
+                  <td>图的着色</td>
+                  <td>颜色分配</td>
+                  <td>NP 完全</td>
+                  <td>频率分配、调度</td>
+                </tr>
+                <tr>
+                  <td>旅行商问题</td>
+                  <td>路径排列</td>
+                  <td>$O(n!)$</td>
+                  <td>路径规划</td>
+                </tr>
+                <tr>
+                  <td>子集和</td>
+                  <td>元素选择</td>
+                  <td>$O(2^n)$</td>
+                  <td>密码学、载荷分配</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>剪枝策略</h3>
+          <p>
+            剪枝是回溯法的核心——
+            没有剪枝的回溯就是穷举：
+          </p>
+          <ul>
+            <li><strong>可行性剪枝</strong>：当前部分解已违反约束，不再继续。</li>
+            <li><strong>最优性剪枝</strong>：当前部分解的下界已超过当前最优解，不再继续。</li>
+            <li><strong>对称性剪枝</strong>：利用问题的对称性，避免搜索等价解。</li>
+            <li><strong>启发式排序</strong>：优先搜索可能好的分支（如按价值密度排序）。</li>
+          </ul>
+
+          <h3>分支限界法</h3>
+          <p>
+            分支限界法是回溯法的<strong>广度优先</strong>版本：
+          </p>
+          <ul>
+            <li>用优先队列管理活节点。</li>
+            <li>优先扩展"最有希望"的节点（如下界最小）。</li>
+            <li>当发现某节点的下界超过当前最优解时，剪枝整棵子树。</li>
+          </ul>
+
+          <p>
+            回溯 vs 分支限界的区别：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>回溯</th><th>分支限界</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>搜索方式</td>
+                  <td>深度优先</td>
+                  <td>广度优先 / 最佳优先</td>
+                </tr>
+                <tr>
+                  <td>存储</td>
+                  <td>当前路径（栈）</td>
+                  <td>活节点表（队列/堆）</td>
+                </tr>
+                <tr>
+                  <td>目标</td>
+                  <td>找所有解 / 任一解</td>
+                  <td>找最优解</td>
+                </tr>
+                <tr>
+                  <td>典型问题</td>
+                  <td>N 皇后、数独</td>
+                  <td>0/1 背包、TSP</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>工程应用</h3>
+          <ul>
+            <li><strong>地震台站选址</strong>：从候选点中选 $k$ 个使覆盖最优。</li>
+            <li><strong>断层分段方案</strong>：从多种分段组合中找最优。</li>
+            <li><strong>震源参数反演</strong>：在多维参数空间中搜索最优解。</li>
+            <li><strong>波形对齐</strong>：在多个候选时移中搜索最佳匹配。</li>
+          </ul>
+
+          <h3>Python 示例：N 皇后与子集和</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>backtracking.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">def solve_n_queens(n):
+    """
+    N 皇后问题的回溯解法。
+    返回所有解的列表（每个解是每行皇后所在列）。
+    """
+    solutions = []
+    cols = set()
+    diag1 = set()   # i - j 相同的主对角线
+    diag2 = set()   # i + j 相同的副对角线
+    board = []
+
+    def backtrack(row):
+        if row == n:
+            solutions.append(board[:])
+            return
+        for col in range(n):
+            if col in cols or (row - col) in diag1 or (row + col) in diag2:
+                continue
+            cols.add(col)
+            diag1.add(row - col)
+            diag2.add(row + col)
+            board.append(col)
+            backtrack(row + 1)
+            board.pop()
+            cols.remove(col)
+            diag1.remove(row - col)
+            diag2.remove(row + col)
+
+    backtrack(0)
+    return solutions
+
+
+def subset_sum(nums, target):
+    """
+    子集和问题的回溯解法。
+    返回所有和为 target 的子集。
+    """
+    nums = sorted(nums)
+    results = []
+    subset = []
+
+    def backtrack(start, current_sum):
+        if current_sum == target:
+            results.append(subset[:])
+            return
+        if current_sum > target:
+            return
+        for i in range(start, len(nums)):
+            # 剪枝：若加上当前元素已经超过 target，后面的也一定超过
+            if current_sum + nums[i] > target:
+                break
+            # 剪枝：跳过相邻重复元素
+            if i > start and nums[i] == nums[i-1]:
+                continue
+            subset.append(nums[i])
+            backtrack(i + 1, current_sum + nums[i])
+            subset.pop()
+
+    backtrack(0, 0)
+    return results
+
+
+def knapsack_branch_bound(weights, values, capacity):
+    """
+    分支限界法求解 0/1 背包。
+    返回最优价值。
+    """
+    import heapq
+    n = len(weights)
+    # 按价值密度降序排列
+    items = sorted(
+        [(values[i] / weights[i], weights[i], values[i], i) for i in range(n)],
+        reverse=True
+    )
+    sorted_w = [it[1] for it in items]
+    sorted_v = [it[2] for it in items]
+
+    # 上界函数：线性松弛（允许分数物品）
+    def upper_bound(idx, cur_w, cur_v):
+        bound = cur_v
+        j = idx
+        total_w = cur_w
+        while j < n and total_w + sorted_w[j] <= capacity:
+            total_w += sorted_w[j]
+            bound += sorted_v[j]
+            j += 1
+        if j < n:
+            bound += (capacity - total_w) * sorted_v[j] / sorted_w[j]
+        return bound
+
+    # 优先队列按上界降序
+    pq = [(-upper_bound(0, 0, 0), 0, 0, 0)]   # (-bound, idx, w, v)
+    best = 0
+
+    while pq:
+        neg_bound, idx, cur_w, cur_v = heapq.heappop(pq)
+        if -neg_bound <= best:
+            continue
+        if idx == n:
+            best = max(best, cur_v)
+            continue
+
+        # 分支 1：选第 idx 个
+        if cur_w + sorted_w[idx] <= capacity:
+            new_w = cur_w + sorted_w[idx]
+            new_v = cur_v + sorted_v[idx]
+            ub = upper_bound(idx + 1, new_w, new_v)
+            heapq.heappush(pq, (-ub, idx + 1, new_w, new_v))
+
+        # 分支 2：不选第 idx 个
+        ub = upper_bound(idx + 1, cur_w, cur_v)
+        if ub > best:
+            heapq.heappush(pq, (-ub, idx + 1, cur_w, cur_v))
+
+    return best
+
+
+if __name__ == "__main__":
+    # ---- N 皇后 ----
+    n = 8
+    solutions = solve_n_queens(n)
+    print(f"{n} 皇后共有 {len(solutions)} 个解")
+    print(f"第一个解（每行皇后所在列）：{solutions[0]}")
+
+    # ---- 子集和 ----
+    nums = [2, 3, 5, 7, 8, 10]
+    target = 15
+    subsets = subset_sum(nums, target)
+    print(f"\n和为 {target} 的子集：")
+    for s in subsets:
+        print(f"  {s}")
+
+    # ---- 分支限界 0/1 背包 ----
+    w = [10, 20, 30, 25, 15]
+    v = [60, 100, 120, 90, 50]
+    cap = 50
+    best_val = knapsack_branch_bound(w, v, cap)
+    print(f"\n分支限界 0/1 背包最大价值: {best_val}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>8 皇后有 92 个解，回溯法能在毫秒级找到全部。</li>
+            <li>子集和用剪枝过滤掉大量不可能的分支。</li>
+            <li>分支限界法结合上界剪枝，能高效求解小规模背包。</li>
+          </ul>
+        </section>
+
+        <section id="randomized">
+          <h2><span class="num">06</span>随机化算法</h2>
+
+          <h3>为什么引入随机性</h3>
+          <p>
+            随机化算法在运行过程中使用随机数。
+            看似"不稳定"，但往往能带来：
+          </p>
+          <ul>
+            <li><strong>更简单的实现</strong>：避免复杂的确定性构造。</li>
+            <li><strong>更好的平均性能</strong>：避免最坏情况。</li>
+            <li><strong>更优的复杂度</strong>：如素性测试、最小割。</li>
+            <li><strong>更强的对抗鲁棒性</strong>：防止输入恶意构造。</li>
+          </ul>
+
+          <h3>两类随机化算法</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>特点</th><th>典型算法</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>拉斯维加斯</td>
+                  <td>结果总是正确，时间随机</td>
+                  <td>随机化快速排序</td>
+                </tr>
+                <tr>
+                  <td>蒙特卡洛</td>
+                  <td>时间固定，结果可能错误</td>
+                  <td>Miller-Rabin 素性测试</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>经典算法</h3>
+
+          <h4>1. 随机化快速排序</h4>
+          <p>
+            随机选 pivot，避免输入导致的最坏情况。
+            对任意输入，期望复杂度 $O(n \log n)$。
+          </p>
+
+          <h4>2. Miller-Rabin 素性测试</h4>
+          <p>
+            概率性判断一个数是否为素数。
+            单次测试的错误概率 &lt; 1/4，
+            重复 $k$ 次后错误概率 &lt; $(1/4)^k$。
+          </p>
+          <p>
+            对 64 位整数，用几个固定基底，
+            可以做到"错误概率小于宇宙射线干扰"的确定性判断。
+            这在密码学中是基础算法。
+          </p>
+
+          <h4>3. 随机化最小割（Karger）</h4>
+          <p>
+            随机选择边并收缩，重复多次。
+            一次成功的概率 $\ge 2/n^2$，
+            重复 $O(n^2 \log n)$ 次即可高概率找到最小割。
+          </p>
+
+          <h4>4. 水库抽样</h4>
+          <p>
+            从大小未知的数据流中均匀抽取 $k$ 个样本。
+            算法：
+          </p>
+          <ol class="steps">
+            <li>取前 $k$ 个元素，存入水库。</li>
+            <li>对第 $i$ 个元素（$i > k$），以 $k/i$ 的概率替换水库中的随机一个。</li>
+            <li>遍历结束后，水库中即为均匀样本。</li>
+          </ol>
+
+          <p>
+            水库抽样在地震数据流处理、
+            大数据统计采样中有广泛应用。
+          </p>
+
+          <h4>5. 蒙特卡洛方法</h4>
+          <p>
+            用随机抽样估计确定性问题的解。
+            经典例子：用随机撒点估计 $\pi$。
+          </p>
+
+          $$ \pi \approx \frac{4 m}{n} $$
+
+          <p>
+            其中 $n$ 是总点数，$m$ 是落在单位圆内的点数。
+            误差 $O(1/\sqrt{n})$，与维度无关——
+            这是蒙特卡洛最大的优势。
+          </p>
+
+          <p>
+            在 PSHA、可靠度、随机振动中，
+            蒙特卡洛是标准方法。
+          </p>
+
+          <h3>随机化在数值计算中</h3>
+          <ul>
+            <li><strong>随机 SVD</strong>：用随机投影加速大规模矩阵分解。</li>
+            <li><strong>随机梯度下降（SGD）</strong>：机器学习优化。</li>
+            <li><strong>随机化数值线性代数</strong>：小规模近似代替精确计算。</li>
+            <li><strong>MCMC</strong>：贝叶斯反演、参数估计。</li>
+          </ul>
+
+          <h3>Python 示例：随机化快速排序与水库抽样</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>randomized.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import random
+import numpy as np
+
+
+def randomized_quicksort(arr, rng=None):
+    """
+    随机化快速排序：随机选 pivot。
+    期望复杂度 O(n log n)。
+    """
+    if rng is None:
+        rng = random.Random(42)
+    if len(arr) <= 1:
+        return arr
+    pivot = rng.choice(arr)
+    left = [x for x in arr if x < pivot]
+    mid = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return (randomized_quicksort(left, rng)
+            + mid
+            + randomized_quicksort(right, rng))
+
+
+def reservoir_sample(stream, k, seed=42):
+    """
+    水库抽样：从流中均匀抽取 k 个样本。
+    """
+    rng = random.Random(seed)
+    reservoir = []
+    for i, item in enumerate(stream):
+        if i < k:
+            reservoir.append(item)
+        else:
+            j = rng.randint(0, i)
+            if j < k:
+                reservoir[j] = item
+    return reservoir
+
+
+def miller_rabin(n, k=20, seed=42):
+    """
+    Miller-Rabin 素性测试。
+    k 次测试后错误概率 < 4^(-k)。
+    """
+    if n < 2:
+        return False
+    if n in (2, 3):
+        return True
+    if n % 2 == 0:
+        return False
+
+    # 把 n-1 写成 2^r * d
+    r, d = 0, n - 1
+    while d % 2 == 0:
+        r += 1
+        d //= 2
+
+    rng = random.Random(seed)
+    for _ in range(k):
+        a = rng.randint(2, n - 2)
+        x = pow(a, d, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+
+def monte_carlo_pi(n, seed=42):
+    """蒙特卡洛估算 π"""
+    rng = np.random.default_rng(seed)
+    x = rng.uniform(-1, 1, n)
+    y = rng.uniform(-1, 1, n)
+    inside = (x**2 + y**2) <= 1.0
+    return 4.0 * np.sum(inside) / n
+
+
+if __name__ == "__main__":
+    # ---- 随机化快速排序 ----
+    rng = random.Random(2026)
+    arr = [rng.randint(0, 1000) for _ in range(20)]
+    print(f"原始数组: {arr}")
+    sorted_arr = randomized_quicksort(arr, rng)
+    print(f"随机化排序: {sorted_arr}")
+    assert sorted_arr == sorted(arr)
+
+    # ---- 水库抽样 ----
+    stream = list(range(1000))
+    sample = reservoir_sample(stream, k=10, seed=42)
+    print(f"\n水库抽样（k=10）: {sorted(sample)}")
+    # 统计均值应接近 500
+    print(f"  样本均值: {np.mean(sample):.1f}（理论值 ≈ 499.5）")
+
+    # ---- Miller-Rabin ----
+    print(f"\nMiller-Rabin 素性测试:")
+    for n in [97, 100, 561, 7919, 999983]:
+        result = miller_rabin(n)
+        # 用简单方法验证
+        def is_prime_simple(x):
+            if x < 2:
+                return False
+            for i in range(2, int(x**0.5) + 1):
+                if x % i == 0:
+                    return False
+            return True
+        print(f"  {n}: MR = {result}, 验证 = {is_prime_simple(n)}")
+
+    # ---- 蒙特卡洛估算 π ----
+    print(f"\n蒙特卡洛估算 π:")
+    for n in [1000, 10000, 100000, 1000000]:
+        pi_est = monte_carlo_pi(n)
+        err = abs(pi_est - np.pi)
+        print(f"  n = {n:>8}: π ≈ {pi_est:.6f}, 误差 {err:.6f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>随机化快速排序正常工作。</li>
+            <li>水库抽样的样本均值接近理论值。</li>
+            <li>Miller-Rabin 正确判断素性。</li>
+            <li>蒙特卡洛估算 π 的误差随 $n$ 增大按 $O(1/\sqrt{n})$ 减小。</li>
+          </ul>
+        </section>
+
+        <section id="np">
+          <h2><span class="num">07</span>NP 完全性</h2>
+
+          <h3>复杂度类</h3>
+          <p>
+            计算复杂度理论把问题按难度分为若干类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类别</th><th>含义</th><th>典型问题</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P</td>
+                  <td>多项式时间可解</td>
+                  <td>排序、最短路、线性规划</td>
+                </tr>
+                <tr>
+                  <td>NP</td>
+                  <td>多项式时间可验证</td>
+                  <td>SAT、TSP、图着色</td>
+                </tr>
+                <tr>
+                  <td>NP 完全</td>
+                  <td>NP 中最难的问题</td>
+                  <td>SAT、3-SAT、背包</td>
+                </tr>
+                <tr>
+                  <td>NP 困难</td>
+                  <td>至少与 NP 完全一样难</td>
+                  <td>TSP 优化、整数规划</td>
+                </tr>
+                <tr>
+                  <td>EXP</td>
+                  <td>指数时间可解</td>
+                  <td>大多数博弈问题</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            核心开放问题：<strong>P = NP？</strong>
+            至今未解决，是数学与计算机科学最重要的悬赏问题之一。
+          </p>
+
+          <h3>NP 完全性证明</h3>
+          <p>
+            证明一个问题是 NP 完全的标准步骤：
+          </p>
+          <ol class="steps">
+            <li>证明问题属于 NP（解可以在多项式时间验证）。</li>
+            <li>选一个已知的 NP 完全问题。</li>
+            <li>构造多项式时间的归约。</li>
+            <li>证明归约正确（原问题的解 ⇔ 新问题的解）。</li>
+          </ol>
+
+          <p>
+            第一个 NP 完全问题是 Cook-Levin 定理证明的 SAT（布尔可满足性）。
+            之后通过归约，证明了数千个问题都是 NP 完全的。
+          </p>
+
+          <h3>经典 NP 完全问题</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>描述</th><th>工程对应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SAT / 3-SAT</td>
+                  <td>布尔公式可满足性</td>
+                  <td>逻辑验证、约束求解</td>
+                </tr>
+                <tr>
+                  <td>旅行商（TSP）</td>
+                  <td>访问所有城市的最短回路</td>
+                  <td>台站巡测路线规划</td>
+                </tr>
+                <tr>
+                  <td>背包</td>
+                  <td>容量限制下的最优选择</td>
+                  <td>资源分配</td>
+                </tr>
+                <tr>
+                  <td>图着色</td>
+                  <td>相邻节点不同色</td>
+                  <td>频率分配、调度</td>
+                </tr>
+                <tr>
+                  <td>集合覆盖</td>
+                  <td>最少集合覆盖全集</td>
+                  <td>台站选址、传感器布设</td>
+                </tr>
+                <tr>
+                  <td>最大团</td>
+                  <td>最大完全子图</td>
+                  <td>社交网络分析</td>
+                </tr>
+                <tr>
+                  <td>子集和</td>
+                  <td>子集和等于目标</td>
+                  <td>载荷分配</td>
+                </tr>
+                <tr>
+                  <td>顶点覆盖</td>
+                  <td>最少顶点覆盖所有边</td>
+                  <td>网络监控</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>应对 NP 完全问题</h3>
+          <p>
+            面对 NP 完全问题，工程上有四种应对策略：
+          </p>
+
+          <h4>1. 近似算法</h4>
+          <p>
+            牺牲精确性，换取多项式时间。
+            例如：
+          </p>
+          <ul>
+            <li>顶点覆盖：2-近似（简单贪心）。</li>
+            <li>TSP（满足三角不等式）：1.5-近似（Christofides 算法）。</li>
+            <li>集合覆盖：$O(\log n)$-近似（贪心）。</li>
+          </ul>
+
+          <h4>2. 参数化算法</h4>
+          <p>
+            当某个参数较小时，复杂度为 $f(k) \cdot n^{O(1)}$。
+            例如顶点覆盖的复杂度为 $O(2^k \cdot n)$，
+            其中 $k$ 是覆盖大小。
+          </p>
+
+          <h4>3. 启发式算法</h4>
+          <p>
+            不做最优性保证，但实际表现好：
+          </p>
+          <ul>
+            <li>模拟退火</li>
+            <li>遗传算法</li>
+            <li>蚁群算法</li>
+            <li>禁忌搜索</li>
+          </ul>
+
+          <h4>4. 精确算法（小规模）</h4>
+          <p>
+            对规模较小的问题，可以用分支限界、
+            整数规划（ILP）、SAT 求解器求精确解。
+          </p>
+
+          <h3>工程中的 NP 完全问题</h3>
+          <ul>
+            <li><strong>台站选址</strong>：集合覆盖或 $k$-中位问题。</li>
+            <li><strong>传感器布设</strong>：最大覆盖或最小成本覆盖。</li>
+            <li><strong>任务调度</strong>：多机调度、时间窗约束。</li>
+            <li><strong>路径规划</strong>：巡检路线、应急路径。</li>
+            <li><strong>参数反演</strong>：组合搜索、模型选择。</li>
+            <li><strong>断层分段方案选择</strong>：组合优化。</li>
+          </ul>
+
+          <h3>Python 示例：贪心近似与模拟退火</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>np_approx.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import random
+import math
+import numpy as np
+
+
+def greedy_set_cover(universe, sets):
+    """
+    贪心算法求解集合覆盖。
+    近似比 O(log n)。
+    universe: 全集（集合）
+    sets: 可用集合列表（每个是集合）
+    """
+    uncovered = set(universe)
+    chosen = []
+
+    while uncovered:
+        # 选覆盖最多未覆盖元素的集合
+        best = max(sets, key=lambda s: len(s & uncovered))
+        if not (best & uncovered):
+            break
+        chosen.append(best)
+        uncovered -= best
+
+    return chosen
+
+
+def simulated_annealing_tsp(dist_matrix, n_iter=10000, seed=42):
+    """
+    模拟退火求解 TSP。
+    dist_matrix: 距离矩阵
+    """
+    rng = random.Random(seed)
+    n = len(dist_matrix)
+
+    def total_distance(tour):
+        return sum(dist_matrix[tour[i]][tour[(i+1) % n]] for i in range(n))
+
+    # 初始解：随机排列
+    current = list(range(n))
+    rng.shuffle(current)
+    current_cost = total_distance(current)
+    best = current[:]
+    best_cost = current_cost
+
+    T = 100.0        # 初始温度
+    cooling = 0.995
+
+    for _ in range(n_iter):
+        # 生成邻居：2-opt 交换
+        i, j = sorted(rng.sample(range(n), 2))
+        new_tour = current[:i] + current[i:j+1][::-1] + current[j+1:]
+        new_cost = total_distance(new_tour)
+
+        delta = new_cost - current_cost
+        if delta < 0 or rng.random() < math.exp(-delta / T):
+            current = new_tour
+            current_cost = new_cost
+            if current_cost < best_cost:
+                best = current[:]
+                best_cost = current_cost
+        T *= cooling
+
+    return best, best_cost
+
+
+def vertex_cover_greedy(edges, vertices):
+    """
+    贪心 2-近似顶点覆盖。
+    """
+    edges = set(edges)
+    cover = set()
+
+    while edges:
+        # 选一条边
+        u, v = next(iter(edges))
+        cover.add(u)
+        cover.add(v)
+        # 删除所有与 u 或 v 关联的边
+        edges = {e for e in edges if u not in e and v not in e}
+
+    return cover
+
+
+if __name__ == "__main__":
+    # ---- 集合覆盖：台站选址 ----
+    # 假设有 6 个候选台站，需要覆盖 5 个目标区域
+    universe = {1, 2, 3, 4, 5}
+    sets = [
+        {1, 2, 3},        # 台站 A
+        {2, 4},           # 台站 B
+        {3, 4, 5},        # 台站 C
+        {1, 5},           # 台站 D
+        {4, 5},           # 台站 E
+    ]
+    chosen = greedy_set_cover(universe, sets)
+    print("集合覆盖（台站选址）：")
+    print(f"  选择的集合: {chosen}")
+    covered = set().union(*chosen)
+    print(f"  覆盖: {covered}, 是否全覆盖: {covered == universe}")
+
+    # ---- TSP：巡检路线 ----
+    n = 8
+    rng = np.random.default_rng(42)
+    coords = rng.uniform(0, 100, (n, 2))
+
+    # 计算距离矩阵
+    dist = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            dist[i][j] = math.hypot(coords[i,0] - coords[j,0],
+                                     coords[i,1] - coords[j,1])
+
+    tour, cost = simulated_annealing_tsp(dist, n_iter=5000)
+    print(f"\nTSP（{n} 个巡检点）：")
+    print(f"  最优路径: {tour}")
+    print(f"  路径长度: {cost:.2f}")
+
+    # ---- 顶点覆盖 ----
+    edges = [(1,2), (2,3), (3,4), (4,5), (5,1), (1,3)]
+    vertices = {1,2,3,4,5}
+    cover = vertex_cover_greedy(edges, vertices)
+    print(f"\n顶点覆盖：")
+    print(f"  边: {edges}")
+    print(f"  覆盖顶点: {cover}")
+    print(f"  顶点数: {len(cover)}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+            贪心集合覆盖能快速找到较小覆盖，
+            模拟退火 TSP 找到近似最优路径，
+            贪心顶点覆盖给出不超过 2 倍最优的解。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>NP 完全性对工程实践的意义</strong>：
+              当面对一个问题时，第一件事是判断它是否 NP 完全：
+              ① 如果是 P 问题——找精确高效算法；
+              ② 如果是 NP 完全——不要试图找精确高效算法（除非 P=NP）；
+              ③ 转而寻找近似算法、启发式算法或利用问题特性。
+              这个判断能避免大量无效的算法设计努力。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>地震学中的算法</h3>
+          <p>
+            地震学的各个分支都依赖算法设计：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>算法类型</th><th>关键技术</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P 波自动拾取</td>
+                  <td>序列分析 + 分类</td>
+                  <td>STA/LTA、AIC、机器学习</td>
+                </tr>
+                <tr>
+                  <td>震源定位</td>
+                  <td>优化 + 反演</td>
+                  <td>网格搜索、梯度下降、模拟退火</td>
+                </tr>
+                <tr>
+                  <td>震源机制反演</td>
+                  <td>非线性优化</td>
+                  <td>遗传算法、MCMC</td>
+                </tr>
+                <tr>
+                  <td>波形反演</td>
+                  <td>迭代优化</td>
+                  <td>共轭梯度、L-BFGS、伴随方法</td>
+                </tr>
+                <tr>
+                  <td>地震目录去重</td>
+                  <td>哈希 + 排序</td>
+                  <td>空间索引、相似度</td>
+                </tr>
+                <tr>
+                  <td>地震丛集识别</td>
+                  <td>聚类</td>
+                  <td>DBSCAN、图聚类</td>
+                </tr>
+                <tr>
+                  <td>地震动模拟</td>
+                  <td>数值方法</td>
+                  <td>有限差分、谱元法</td>
+                </tr>
+                <tr>
+                  <td>PSHA 积分</td>
+                  <td>数值积分</td>
+                  <td>网格离散、蒙特卡洛</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>算法设计在数值计算中的体现</h3>
+          <p>
+            数值计算的核心算法本质上都是算法设计的产物：
+          </p>
+          <ul>
+            <li><strong>FFT</strong>：分治法，从 $O(n^2)$ 降到 $O(n \log n)$。</li>
+            <li><strong>共轭梯度</strong>：Krylov 子空间迭代，适合大规模稀疏系统。</li>
+            <li><strong>多重网格</strong>：分治思想，加速 PDE 求解。</li>
+            <li><strong>快速多极子（FMM）</strong>：层次分解，把 $N$ 体问题从 $O(N^2)$ 降到 $O(N)$。</li>
+            <li><strong>稀疏矩阵重排序</strong>：贪心 + 图算法，减少填充。</li>
+          </ul>
+
+          <h3>算法在机器学习中的角色</h3>
+          <p>
+            现代地震学大量使用机器学习，其核心也是算法：
+          </p>
+          <ul>
+            <li><strong>随机梯度下降（SGD）</strong>：大规模优化。</li>
+            <li><strong>反向传播</strong>：动态规划（链式法则的复用）。</li>
+            <li><strong>k-means 聚类</strong>：贪心迭代优化。</li>
+            <li><strong>主成分分析（PCA）</strong>：随机 SVD 或幂迭代。</li>
+            <li><strong>决策树</strong>：递归分治 + 贪心分裂。</li>
+            <li><strong>随机森林</strong>：集成随机化算法。</li>
+            <li><strong>MCMC</strong>：马尔可夫链蒙特卡洛。</li>
+          </ul>
+
+          <h3>实时算法与地震预警</h3>
+          <p>
+            地震预警对算法有极高要求：
+          </p>
+          <ul>
+            <li><strong>低延迟</strong>：秒级完成震相拾取、定位、震级估计。</li>
+            <li><strong>在线处理</strong>：数据流算法（环形缓冲区、滑动窗口）。</li>
+            <li><strong>鲁棒性</strong>：单台站错误不影响整体判断。</li>
+            <li><strong>可更新</strong>：随信息累积不断更新估计。</li>
+          </ul>
+
+          <p>
+            典型算法：
+          </p>
+          <ul>
+            <li>STA/LTA（在线）</li>
+            <li>τc、Pd（P 波特征参数在线估计）</li>
+            <li>网格搜索 + 梯度下降（快速定位）</li>
+            <li>贝叶斯更新（震级持续修正）</li>
+          </ul>
+
+          <h3>算法选择的工程权衡</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>考量</th><th>典型选择</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>问题规模</td>
+                  <td>$n$ 大小决定复杂度可行性</td>
+                  <td>小规模用精确算法，大规模用近似</td>
+                </tr>
+                <tr>
+                  <td>精度要求</td>
+                  <td>绝对精确 vs 可接受误差</td>
+                  <td>精确 vs 近似算法</td>
+                </tr>
+                <tr>
+                  <td>时间预算</td>
+                  <td>实时 vs 离线</td>
+                  <td>快速算法 vs 高精度算法</td>
+                </tr>
+                <tr>
+                  <td>内存预算</td>
+                  <td>能否一次装入内存</td>
+                  <td>内存算法 vs 外部算法</td>
+                </tr>
+                <tr>
+                  <td>实现复杂度</td>
+                  <td>简单可靠 vs 复杂高效</td>
+                  <td>先用简单算法，再优化热点</td>
+                </tr>
+                <tr>
+                  <td>并行性</td>
+                  <td>能否利用多核/GPU</td>
+                  <td>数据并行、任务并行</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>算法设计与你的项目</strong>：
+              你主页上的三个项目都会用到这份笔记的内容：
+              ① <strong>强震动数据处理</strong>：滤波（FFT 分治）、
+              去尖峰（贪心+阈值）、基线校正（最小二乘）；
+              ② <strong>地震动参数分析</strong>：反应谱计算（递推）、
+              批量对比（排序+二分）、参数提取（DP 或贪心）；
+              ③ <strong>地震危险性分析</strong>：PSHA 积分（数值积分）、
+              解聚分析（分组+排序）、蒙特卡洛（随机化算法）。
+              理解这些算法，可以让你在性能优化时有明确的方向。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>算法设计范式</strong>：分治、贪心、DP、回溯、随机化；主定理分析递归复杂度。</li>
+              <li><strong>分治法</strong>：分解-求解-合并；归并排序、FFT、Strassen、最近点对。</li>
+              <li><strong>贪心算法</strong>：局部最优 → 全局最优；需证明贪心选择性质与最优子结构。</li>
+              <li><strong>动态规划</strong>：最优子结构 + 重叠子问题；状态定义、转移方程、初值、顺序。</li>
+              <li><strong>回溯与分支限界</strong>：决策树搜索 + 剪枝；DFS 回溯 vs 优先队列分支限界。</li>
+              <li><strong>随机化算法</strong>：拉斯维加斯（结果正确）vs 蒙特卡洛（结果可能错）；水库抽样、Miller-Rabin。</li>
+              <li><strong>NP 完全性</strong>：P vs NP；近似算法、参数化算法、启发式方法应对难解问题。</li>
+              <li><strong>工程应用</strong>：地震学定位、反演、目录处理、实时预警；机器学习与数值计算。</li>
+            </ul>
+          </div>
+
+          <h3>算法范式速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题特征</th><th>推荐范式</th><th>典型复杂度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>可分解为独立子问题</td>
+                  <td>分治</td>
+                  <td>$O(n \log n)$</td>
+                </tr>
+                <tr>
+                  <td>局部最优 = 全局最优</td>
+                  <td>贪心</td>
+                  <td>$O(n \log n)$</td>
+                </tr>
+                <tr>
+                  <td>子问题重叠 + 最优子结构</td>
+                  <td>动态规划</td>
+                  <td>多项式（状态数×转移）</td>
+                </tr>
+                <tr>
+                  <td>逐步构造 + 剪枝</td>
+                  <td>回溯 / 分支限界</td>
+                  <td>最坏指数，实际远小</td>
+                </tr>
+                <tr>
+                  <td>需要快速近似</td>
+                  <td>随机化 / 近似算法</td>
+                  <td>多项式</td>
+                </tr>
+                <tr>
+                  <td>NP 完全</td>
+                  <td>启发式 / 近似</td>
+                  <td>多项式近似比</td>
+                </tr>
+                <tr>
+                  <td>连续优化</td>
+                  <td>梯度下降 / 牛顿法</td>
+                  <td>依赖收敛速度</td>
+                </tr>
+                <tr>
+                  <td>高维积分</td>
+                  <td>蒙特卡洛</td>
+                  <td>$O(1/\sqrt{n})$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>数据结构</strong>（计算机）：算法与数据结构是孪生兄弟；图算法依赖图数据结构。</li>
+            <li><strong>数字信号处理</strong>（计算机）：FFT 是分治法的典型应用。</li>
+            <li><strong>数值分析</strong>（数学）：迭代法、插值、数值积分本质都是算法。</li>
+            <li><strong>线性代数</strong>（数学）：Strassen、稀疏矩阵、特征值算法。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：随机化算法、蒙特卡洛的理论基础。</li>
+            <li><strong>复变函数与积分变换</strong>（数学）：FFT 与傅里叶变换的算法实现。</li>
+            <li><strong>偏微分方程</strong>（数学）：有限差分、有限元求解的算法设计。</li>
+            <li><strong>工程地震学</strong>（地震学）：PSHA 积分、GMPE 回归、蒙特卡洛。</li>
+            <li><strong>地震预警</strong>（地震学）：实时算法、在线处理。</li>
+            <li><strong>强震动观测</strong>（地震学）：数据流处理、质控算法。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Cormen, Leiserson, Rivest &amp; Stein, <em>Introduction to Algorithms</em> (CLRS) — 算法权威教材</li>
+            <li>Kleinberg &amp; Tardos, <em>Algorithm Design</em> — 算法设计方法论经典</li>
+            <li>Dasgupta, Papadimitriou &amp; Vazirani, <em>Algorithms</em> — 简洁深刻的入门书</li>
+            <li>Motwani &amp; Raghavan, <em>Randomized Algorithms</em> — 随机化算法权威</li>
+            <li>Vazirani, <em>Approximation Algorithms</em> — 近似算法经典</li>
+            <li>Garey &amp; Johnson, <em>Computers and Intractability: A Guide to the Theory of NP-Completeness</em> — NP 完全性权威指南</li>
+            <li>Press et al., <em>Numerical Recipes</em> — 数值算法实用参考</li>
+            <li>Golub &amp; Van Loan, <em>Matrix Computations</em> — 矩阵算法</li>
+            <li>Boyd &amp; Vandenberghe, <em>Convex Optimization</em> — 凸优化算法</li>
+            <li>Goodfellow, Bengio &amp; Courville, <em>Deep Learning</em> — 机器学习算法</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

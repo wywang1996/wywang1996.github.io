@@ -1,0 +1,1475 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震预警 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="earthquake-early-warning">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#principle">一、预警原理</a></li>
+      <li><a href="#types">二、预警类型</a></li>
+      <li><a href="#network">三、台网与算法</a></li>
+      <li><a href="#magnitude">四、震级快速估计</a></li>
+      <li><a href="#ground-motion">五、地震动预测</a></li>
+      <li><a href="#dissemination">六、信息发布</a></li>
+      <li><a href="#challenges">七、挑战与局限</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 地震预警
+        </div>
+        <h1>地震预警</h1>
+        <p class="lead">
+          从 P 波到 S 波的时间差，覆盖预警原理、台网架构、
+          震源参数快速估计与预警信息发布。
+          地震预警是目前唯一能在地震波到达之前向目标区域发出警报的技术，
+          也是减轻地震灾害的实时防线。
+        </p>
+        <div class="article-meta">
+          <span>P 波</span>
+          <span>实时处理</span>
+          <span>震级估计</span>
+          <span class="blue">防灾减灾</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            地震预警（Earthquake Early Warning，EEW）利用地震波的<strong>传播时间差</strong>，
+            在地震发生后、破坏性地震动到达目标区域之前，
+            通过电磁波（光速）向公众、机构和关键设施发出警报。
+          </p>
+          <p>
+            它的核心物理原理只有一条：
+          </p>
+
+          $$ v_P > v_S, \qquad v_{\text{电磁波}} \gg v_S $$
+
+          <p>
+            P 波（纵波）速度约 6 km/s，S 波（横波）约 3.5 km/s，
+            而电磁波以光速传播。因此在震中附近检测到 P 波后，
+            可以赶在破坏性 S 波到达之前向远处目标发出警报。
+          </p>
+
+          <h3>预警时间的来源</h3>
+          <p>
+            对距离震中 $D$ 的目标，预警时间可粗略估计为：
+          </p>
+
+          $$ t_{\text{warn}} = \frac{D}{v_S} - \frac{D}{v_P} - t_{\text{proc}} - t_{\text{comm}} $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$\dfrac{D}{v_S}$：S 波到达目标的时间。</li>
+            <li>$\dfrac{D}{v_P}$：P 波从震源到达目标的时间。</li>
+            <li>$t_{\text{proc}}$：系统处理时间（震相拾取、定位、震级估计）。</li>
+            <li>$t_{\text{comm}}$：通信与发布延迟。</li>
+          </ul>
+
+          <p>
+            对 100 km 外的目标，$D/v_S - D/v_P$ 约为：
+          </p>
+
+          $$ \frac{100}{3.5} - \frac{100}{6} \approx 28.6 - 16.7 = 11.9 \text{ s} $$
+
+          <p>
+            扣除处理与通信延迟，实际预警时间约 5~10 s。
+            这个时间虽然短，但足以：
+          </p>
+          <ul>
+            <li>高速列车减速或紧急制动</li>
+            <li>电梯在最近楼层停靠开门</li>
+            <li>燃气管线自动关闭</li>
+            <li>精密设备停机或切换保护模式</li>
+            <li>手术室暂停手术、人员躲避</li>
+            <li>核电站切换到安全状态</li>
+          </ul>
+
+          <h3>与地震预测的区别</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>地震预测</th><th>地震预警</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>时间</td>
+                  <td>地震发生之前（天、月、年）</td>
+                  <td>地震发生后、地震动到达前（秒）</td>
+                </tr>
+                <tr>
+                  <td>依据</td>
+                  <td>前兆异常、统计模型</td>
+                  <td>已发生的地震波</td>
+                </tr>
+                <tr>
+                  <td>确定性</td>
+                  <td>尚无可靠方法</td>
+                  <td>物理原理明确，可工程实现</td>
+                </tr>
+                <tr>
+                  <td>现状</td>
+                  <td>仍在探索</td>
+                  <td>多国已业务化运行</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            地震预警不是"预测地震"，而是"地震已经发生，抢在破坏性波到达之前报警"。
+            这个区别非常重要——它让预警成为一项<strong>可实现的工程系统</strong>。
+          </p>
+        </section>
+
+        <section id="principle">
+          <h2><span class="num">01</span>预警原理</h2>
+
+          <h3>P 波与 S 波</h3>
+          <p>
+            地震发生时，震源向外辐射多种波：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>波型</th><th>质点运动</th><th>典型速度</th><th>破坏性</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P 波（纵波）</td>
+                  <td>沿传播方向压缩-膨胀</td>
+                  <td>5.5~7.0 km/s（地壳）</td>
+                  <td>较弱</td>
+                </tr>
+                <tr>
+                  <td>S 波（横波）</td>
+                  <td>垂直传播方向剪切</td>
+                  <td>3.0~4.0 km/s（地壳）</td>
+                  <td>强</td>
+                </tr>
+                <tr>
+                  <td>面波（Love、Rayleigh）</td>
+                  <td>地表椭圆/水平</td>
+                  <td>略小于 S 波</td>
+                  <td>强、衰减慢</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            工程结构的主要破坏来自 S 波与面波。
+            P 波虽然先到，但幅值小，通常不造成破坏。
+            这正是地震预警可利用的"时间窗"。
+          </p>
+
+          <h3>时间差原理</h3>
+          <p>
+            设震源到目标的距离为 $D$，
+            P 波与 S 波的到时差为：
+          </p>
+
+          $$ \Delta t = D \left( \frac{1}{v_S} - \frac{1}{v_P} \right) $$
+
+          <p>
+            近似地，取 $v_P = 6$ km/s，$v_S = 3.5$ km/s：
+          </p>
+
+          $$ \Delta t \approx D \times 0.119 \text{ s/km} \approx \frac{D}{8.4} \text{ s} $$
+
+          <p>
+            即<strong>距离每增加 8.4 km，预警时间增加 1 秒</strong>。
+            这就是为什么预警对远场更有效——
+            距离越远，预警时间越长，但地震动衰减也越大。
+          </p>
+
+          <h3>预警盲区</h3>
+          <p>
+            震中附近区域无法获得有效预警，称为<strong>预警盲区</strong>。
+            盲区半径约为：
+          </p>
+
+          $$ R_{\text{blind}} \approx v_S \cdot (t_{\text{detect}} + t_{\text{proc}}) $$
+
+          <p>
+            若系统在 P 波到达后 $t_{\text{detect}} \approx 3$ s 检测到，
+            处理需要 $t_{\text{proc}} \approx 2$ s，
+            则盲区半径约为 $3.5 \times 5 = 17.5$ km。
+            盲区内的破坏性地震动可能已经到达，来不及预警。
+          </p>
+
+          <p>
+            减小盲区的方向：
+          </p>
+          <ul>
+            <li><strong>密集台网</strong>：缩短 P 波检测时间。</li>
+            <li><strong>快速算法</strong>：缩短处理延迟。</li>
+            <li><strong>前沿预警</strong>：用最先触发台站向其后方向发送预警。</li>
+            <li><strong>多源联合</strong>：结合多种观测（GPS、强震、烈度计）。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>预警是"空间换时间"</strong>：震中附近盲区内的目标无法获得预警，
+              但震中以外数十到数百公里的区域可以。这就决定了预警系统必须
+              <strong>沿断层走向和主要城市方向布设密集台网</strong>，
+              才能让最重要的目标区域获得最大预警时间。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="types">
+          <h2><span class="num">02</span>预警类型</h2>
+
+          <h3>三种技术路线</h3>
+          <p>
+            地震预警系统按运行方式分为三类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>原理</th><th>优点</th><th>缺点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>区域预警（Front-detection）</td>
+                  <td>震中附近台站检测 P 波后，向远处目标发布</td>
+                  <td>预警时间较长、技术成熟</td>
+                  <td>盲区内无预警</td>
+                </tr>
+                <tr>
+                  <td>现场预警（On-site）</td>
+                  <td>目标场地自身布设传感器，检测 P 波后本地报警</td>
+                  <td>适用于关键设施、无通信依赖</td>
+                  <td>预警时间很短（几秒）</td>
+                </tr>
+                <tr>
+                  <td>混合预警</td>
+                  <td>区域 + 现场结合，多级预警</td>
+                  <td>兼顾覆盖范围与响应速度</td>
+                  <td>系统复杂、成本高</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>区域预警</h3>
+          <p>
+            区域预警是主流方式，典型系统包括：
+          </p>
+          <ul>
+            <li><strong>日本 JMA EEW</strong>：2007 年业务化，全球最成熟的系统。</li>
+            <li><strong>墨西哥 SASMEX</strong>：1991 年投入使用，全球最早。</li>
+            <li><strong>台湾地区 CWB EEW</strong>：覆盖全岛，秒级发布。</li>
+            <li><strong>美国 ShakeAlert</strong>：加州、俄勒冈、华盛顿，2019 年公开。</li>
+            <li><strong>中国国家地震烈度速报与预警工程</strong>：2020 年代逐步建成。</li>
+          </ul>
+
+          <p>
+            区域预警的关键挑战：<strong>盲区</strong>与<strong>误报</strong>。
+            盲区内无法预警，误报会降低公众信任。
+          </p>
+
+          <h3>现场预警</h3>
+          <p>
+            现场预警在目标场地（如核电站、高速铁路、医院）布设加速度计或地震计，
+            检测 P 波后直接触发保护动作。典型预警时间 1~5 s。
+          </p>
+          <p>
+            典型应用：
+          </p>
+          <ul>
+            <li><strong>高速铁路</strong>：P 波检测后触发减速或制动。</li>
+            <li><strong>核电站</strong>：切换控制棒、停堆。</li>
+            <li><strong>电梯</strong>：最近楼层停靠开门。</li>
+            <li><strong>精密制造</strong>：设备停机、阀门关闭。</li>
+          </ul>
+
+          <h3>预警级别</h3>
+          <p>
+            各国预警系统的分级不同。日本 JMA 分为：
+          </p>
+          <ul>
+            <li><strong>緊急地震速報（予報）</strong>：预测震度 3 以上。</li>
+            <li><strong>緊急地震速報（警報）</strong>：预测震度 5 弱以上。</li>
+          </ul>
+          <p>
+            中国按预警震级分为：
+          </p>
+          <ul>
+            <li><strong>红色</strong>：预测震级 ≥ 7.0，或预估烈度 ≥ 7 度。</li>
+            <li><strong>橙色</strong>：预测震级 6.0~7.0，或预估烈度 5~6 度。</li>
+            <li><strong>黄色</strong>：预测震级 5.0~6.0，或预估烈度 3~4 度。</li>
+            <li><strong>蓝色</strong>：预测震级 < 5.0。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>预警不是越早越好</strong>：过早发布意味着震源参数估计不准，
+              可能误报或低估。预警系统必须在<strong>及时性</strong>与<strong>准确性</strong>之间权衡。
+              日本 JMA 采用"先发后修"策略：先用少量台站快速发布第一报，
+              随后用更多台站不断更新。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="network">
+          <h2><span class="num">03</span>台网与算法</h2>
+
+          <h3>台网架构</h3>
+          <p>
+            典型地震预警系统的架构：
+          </p>
+          <ol class="steps">
+            <li><strong>观测层</strong>：密集布设强震仪、地震计、烈度计。</li>
+            <li><strong>传输层</strong>：实时数据流（低延迟、高可靠）。</li>
+            <li><strong>处理层</strong>：震相拾取、定位、震级估计、地震动预测。</li>
+            <li><strong>决策层</strong>：判断是否发布、分级、更新。</li>
+            <li><strong>发布层</strong>：通过广播、手机、专用终端发布。</li>
+          </ol>
+
+          <h3>台站密度要求</h3>
+          <p>
+            台站间距决定了震源参数估计的速度与精度：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>台站间距</th><th>典型盲区半径</th><th>应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>~100 km</td>
+                  <td>~50 km</td>
+                  <td>区域预警（初期）</td>
+                </tr>
+                <tr>
+                  <td>~50 km</td>
+                  <td>~25 km</td>
+                  <td>区域预警（成熟）</td>
+                </tr>
+                <tr>
+                  <td>~20 km</td>
+                  <td>~10 km</td>
+                  <td>国家预警工程</td>
+                </tr>
+                <tr>
+                  <td>~10 km</td>
+                  <td>~5 km</td>
+                  <td>城市预警、重点区域</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            日本 K-NET / KiK-net 台站间距约 20 km，
+            加州 ShakeAlert 台站间距约 10~20 km，
+            中国国家预警工程台站间距约 15~20 km。
+          </p>
+
+          <h3>震相拾取</h3>
+          <p>
+            实时 P 波拾取是预警的第一步。常用算法：
+          </p>
+          <ul>
+            <li><strong>STA/LTA</strong>：短时平均/长时平均比，超过阈值则触发。</li>
+            <li><strong>AIC（Akaike Information Criterion）</strong>：基于信息准则的最优分割点。</li>
+            <li><strong>AR-AIC</strong>：自回归 + AIC，精度更高。</li>
+            <li><strong>机器学习拾取</strong>：如 PhaseNet、EQTransformer、GPD，深度学习拾取。</li>
+          </ul>
+
+          <p>
+            STA/LTA 是最基础的方法，计算量小、适合实时系统。
+            机器学习方法精度更高，但需要 GPU 或专门硬件。
+          </p>
+
+          <h3>定位方法</h3>
+          <p>
+            预警系统使用至少 3 个台站的 P 波到时，通过三角定位确定震源位置。
+            简化的定位方程：
+          </p>
+
+          $$ (x_i - x_0)^2 + (y_i - y_0)^2 = v_P^2 (t_i - t_0)^2 $$
+
+          <p>
+            其中 $(x_i, y_i, t_i)$ 是第 $i$ 个台站的位置与到时，
+            $(x_0, y_0, t_0)$ 是震源位置与发震时刻。
+            求解该方程组即可定位。
+          </p>
+
+          <p>
+            对预警系统，定位必须在 1~3 s 内完成，
+            因此通常采用简化的<strong>网格搜索</strong>或<strong>迭代最小二乘</strong>，
+            而不是完整的三维反演。
+          </p>
+
+          <h3>日本 JMA 的处理流程</h3>
+          <p>
+            JMA 的紧急地震速报流程：
+          </p>
+          <ul>
+            <li>P 波到达第 1 个台站后立即触发。</li>
+            <li>用 1 个台站做初步震级估计（$M_{\text{est}}$ 基于 $\tau_c$ 或 $P_d$）。</li>
+            <li>用 2~3 个台站做初步定位。</li>
+            <li>第 1 报发布（通常在地震发生后 3~5 s）。</li>
+            <li>持续更新：用更多台站、更长时间窗，提高精度。</li>
+            <li>如果预测震度超过阈值，升级为"警报"。</li>
+          </ul>
+
+          <h3>Python 示例：STA/LTA 实时触发</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>sta_lta.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+def sta_lta(data, fs, sta_len=0.5, lta_len=10.0, threshold=4.0):
+    """
+    短时平均/长时平均（STA/LTA）触发检测。
+    data:     输入波形
+    fs:       采样率 Hz
+    sta_len:  短时窗长 s
+    lta_len:  长时窗长 s
+    threshold: 触发阈值
+    返回：
+      trigger_idx: 触发点索引
+      ratio:       每个采样点的 STA/LTA 比
+    """
+    n = len(data)
+    n_sta = int(sta_len * fs)
+    n_lta = int(lta_len * fs)
+
+    # 用能量（平方）代替幅值，更稳健
+    energy = data ** 2
+
+    # 累积和加速计算
+    csum = np.cumsum(energy)
+    csum = np.concatenate([[0], csum])
+
+    ratio = np.zeros(n)
+
+    # 从 LTA 窗口填满的位置开始
+    for i in range(n_lta, n):
+        sta = (csum[i] - csum[i - n_sta]) / n_sta
+        lta = (csum[i] - csum[i - n_lta]) / n_lta
+        if lta > 0:
+            ratio[i] = sta / lta
+
+    # 找第一次超过阈值的位置
+    trigger_idx = None
+    for i in range(n_lta, n):
+        if ratio[i] > threshold:
+            trigger_idx = i
+            break
+
+    return trigger_idx, ratio
+
+
+def estimate_tau_c(data, fs, p_idx, window=3.0):
+    """
+    用 τc 方法估计震级（简化）。
+    τc 定义为积分：
+        τc = 2π · sqrt(∫u² dt / ∫(du/dt)² dt)
+    震级经验关系（示意）：
+        M ≈ a · log10(τc) + b
+    """
+    n_win = int(window * fs)
+    seg = data[p_idx : p_idx + n_win]
+    if len(seg) < 10:
+        return None
+
+    dt = 1.0 / fs
+    u2 = np.sum(seg**2) * dt
+    du = np.diff(seg) / dt
+    du2 = np.sum(du**2) * dt
+
+    if du2 <= 0:
+        return None
+
+    tau_c = 2 * np.pi * np.sqrt(u2 / du2)
+    return tau_c
+
+
+if __name__ == "__main__":
+    # ---- 合成一段含 P 波的地震记录 ----
+    rng = np.random.default_rng(42)
+    fs = 100.0
+    t = np.arange(0, 30, 1.0 / fs)
+
+    # 背景噪声
+    data = 0.001 * rng.normal(size=len(t))
+
+    # P 波在 t = 5 s 到达
+    p_arrival = 5.0
+    p_idx = int(p_arrival * fs)
+    p_wave = 0.05 * np.exp(-((t - p_arrival) ** 2) / (2 * 0.3**2)) \
+             * np.sin(2 * np.pi * 5.0 * t)
+    data += p_wave * (t >= p_arrival)
+
+    # S 波在 t = 8 s 到达（幅值更大）
+    s_arrival = 8.0
+    s_wave = 0.5 * np.exp(-((t - s_arrival) ** 2) / (2 * 0.8**2)) \
+             * np.sin(2 * np.pi * 2.0 * t)
+    data += s_wave * (t >= s_arrival)
+
+    # ---- STA/LTA 检测 ----
+    trig_idx, ratio = sta_lta(data, fs, sta_len=0.5, lta_len=5.0, threshold=4.0)
+
+    if trig_idx is not None:
+        trig_time = trig_idx / fs
+        delay = trig_time - p_arrival
+        print(f"P 波实际到时: {p_arrival:.3f} s")
+        print(f"STA/LTA 触发时刻: {trig_time:.3f} s")
+        print(f"触发延迟: {delay:.3f} s")
+
+        # ---- τc 估计 ----
+        tau_c = estimate_tau_c(data, fs, trig_idx, window=3.0)
+        if tau_c:
+            print(f"\nτc = {tau_c:.4f} s")
+            # 经验关系（示意）：M ≈ 3.0 * log10(τc) + 5.0
+            M_est = 3.0 * np.log10(tau_c) + 5.0
+            print(f"估计震级（示意）: M ≈ {M_est:.2f}")
+    else:
+        print("未触发")
+
+    # ---- 绘图 ----
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
+
+    axes[0].plot(t, data, linewidth=0.7)
+    if trig_idx is not None:
+        axes[0].axvline(trig_idx / fs, color="red", linestyle="--",
+                        label=f"STA/LTA 触发 t={trig_idx/fs:.2f}s")
+        axes[0].axvline(p_arrival, color="green", linestyle=":",
+                        label="P 波到时")
+        axes[0].axvline(s_arrival, color="orange", linestyle=":",
+                        label="S 波到时")
+        axes[0].legend()
+    axes[0].set_ylabel("加速度")
+    axes[0].set_title("波形与 P/S 波到时")
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(t, ratio, linewidth=0.7)
+    axes[1].axhline(4.0, color="red", linestyle="--", label="阈值 = 4")
+    axes[1].set_xlabel("t / s")
+    axes[1].set_ylabel("STA/LTA")
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：STA/LTA 在 P 波到达后约 0.3~0.5 s 触发，
+            这对预警系统来说是可接受的处理延迟。
+          </p>
+        </section>
+
+        <section id="magnitude">
+          <h2><span class="num">04</span>震级快速估计</h2>
+
+          <h3>为什么震级估计最难</h3>
+          <p>
+            震级估计是地震预警中最难、最关键的环节。
+            原因：
+          </p>
+          <ul>
+            <li><strong>时间不足</strong>：通常只能用 P 波到达后 3~10 s 的数据。</li>
+            <li><strong>信息有限</strong>：大地震需要几十秒甚至几分钟才能完全破裂。</li>
+            <li><strong>震级饱和</strong>：传统震级标度（$M_L$、$m_b$、$M_S$）在大震时饱和。</li>
+            <li><strong>更新策略</strong>：震级估计必须随破裂过程持续更新。</li>
+          </ul>
+
+          <h3>常用方法</h3>
+
+          <h4>1. τc 方法</h4>
+          <p>
+            τc 是 P 波到达后前 3 秒波形的"特征周期"，定义为：
+          </p>
+
+          $$ \tau_c = 2\pi \sqrt{\frac{\int_0^{\tau_0} u^2(t) \, dt}
+             {\int_0^{\tau_0} \dot{u}^2(t) \, dt}} $$
+
+          <p>
+            其中 $u(t)$ 是位移（由加速度积分），$\dot{u}(t)$ 是速度，
+            $\tau_0$ 是积分窗长（通常 3 s）。
+          </p>
+
+          <p>
+            τc 与震级有经验关系：
+          </p>
+
+          $$ \log_{10} M_0 = a \log_{10} \tau_c + b $$
+
+          <p>
+            其中 $M_0$ 是地震矩，$a$、$b$ 由区域数据回归得到。
+            τc 方法适合 3~7 级地震，大震时需要更长的窗。
+          </p>
+
+          <h4>2. Pd 方法</h4>
+          <p>
+            Pd 是 P 波到达后前 3 秒的峰值位移：
+          </p>
+
+          $$ P_d = \max_{0 < t < 3\text{s}} |u(t)| $$
+
+          <p>
+            与震级的关系：
+          </p>
+
+          $$ \log_{10} P_d = A + B \cdot M + C \cdot \log_{10} R $$
+
+          <p>
+            其中 $R$ 是震中距。Pd 方法对近场大震敏感，
+            是 ShakeAlert 系统的核心方法之一。
+          </p>
+
+          <h4>3. 卓越周期方法</h4>
+          <p>
+            用 P 波前几秒的卓越周期 $\tau_p$ 估计震级：
+          </p>
+
+          $$ \tau_p = \frac{\sum_i A_i^2 / f_i}{\sum_i A_i^2} $$
+
+          <p>
+            其中 $A_i$ 与 $f_i$ 是第 $i$ 个频率成分的幅值与频率。
+          </p>
+
+          <h4>4. 幅值-距离联合方法</h4>
+          <p>
+            结合多个台站的 P 波幅值：
+          </p>
+
+          $$ M = \log_{10} A + \log_{10} R + C $$
+
+          <p>
+            这类方法适合震中距较大、台站较多的情况。
+          </p>
+
+          <h3>震级饱和问题</h3>
+          <p>
+            短时间窗内的震级估计存在<strong>饱和</strong>：
+            当实际震级超过某一水平时，估计值不再增长。
+            原因：大震的破裂持续时间长，
+            前几秒的波形只反映了最初破裂段，
+            不足以反映整个地震的规模。
+          </p>
+
+          <p>
+            典型饱和现象：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>饱和震级</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>τc（3 s 窗）</td>
+                  <td>≈ 7.0</td>
+                  <td>超过 7 级后估计偏低</td>
+                </tr>
+                <tr>
+                  <td>Pd（3 s 窗）</td>
+                  <td>≈ 7.0</td>
+                  <td>同上</td>
+                </tr>
+                <tr>
+                  <td>传统 $M_L$</td>
+                  <td>≈ 6.5</td>
+                  <td>短周期饱和</td>
+                </tr>
+                <tr>
+                  <td>$m_b$</td>
+                  <td>≈ 6.0</td>
+                  <td>体波饱和</td>
+                </tr>
+                <tr>
+                  <td>$M_S$</td>
+                  <td>≈ 8.0</td>
+                  <td>面波饱和</td>
+                </tr>
+                <tr>
+                  <td>$M_w$</td>
+                  <td>无饱和</td>
+                  <td>需长时间记录</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            减小饱和的方向：
+          </p>
+          <ul>
+            <li><strong>延长时间窗</strong>：从 3 s 逐渐延长到 10~20 s。</li>
+            <li><strong>多台站联合</strong>：用多台站数据共同估计。</li>
+            <li><strong>多点破裂模型</strong>：考虑破裂传播方向。</li>
+            <li><strong>机器学习</strong>：用神经网络从波形直接估计 $M_w$。</li>
+          </ul>
+
+          <h3>2011 年东日本地震的教训</h3>
+          <p>
+            2011 年 3 月 11 日东日本 Mw9.0 地震，
+            JMA 紧急地震速报系统面临严峻挑战：
+          </p>
+          <ul>
+            <li>第一报估计震级 4.3（严重低估）。</li>
+            <li>第二报估计 5.9，第三报 6.8。</li>
+            <li>最终估计 8.4，仍低于实际 Mw9.0。</li>
+            <li>大范围地区预测震度偏低，预警效果受限。</li>
+          </ul>
+
+          <p>
+            这次事件推动了预警算法的重大改进：
+          </p>
+          <ul>
+            <li>引入多台站联合震级估计。</li>
+            <li>改进 τc、Pd 的区域关系。</li>
+            <li>加入机器学习方法。</li>
+            <li>考虑破裂方向性对远场地震动的影响。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>震级估计的哲学</strong>：地震预警必须在<strong>有限信息</strong>下做<strong>快速决策</strong>。
+              这不是"精确测量"问题，而是"及时判断"问题。
+              预警系统的价值不在于精确预测震级，而在于<strong>在破坏性波到达前给出足够好的估计</strong>，
+              让关键设施有时间采取保护动作。宁可保守（高估），也不宜低估（漏报）。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="ground-motion">
+          <h2><span class="num">05</span>地震动预测</h2>
+
+          <h3>从震级到地震动</h3>
+          <p>
+            得到震源位置与震级后，预警系统需要预测目标场地的地震动强度。
+            常用指标：
+          </p>
+          <ul>
+            <li><strong>PGA</strong>：峰值加速度。</li>
+            <li><strong>烈度</strong>：日本气象厅震度、中国地震烈度。</li>
+            <li><strong>反应谱</strong>：结构工程关心的参数。</li>
+            <li><strong>MMI</strong>：改进麦加利烈度，美国常用。</li>
+          </ul>
+
+          <h3>地震动预测方程（GMPE）</h3>
+          <p>
+            标准 GMPE 形式：
+          </p>
+
+          $$ \ln Y = f(M, R, V_{S30}, \ldots) + \varepsilon $$
+
+          <p>
+            其中 $Y$ 是地震动参数，$M$ 是震级，$R$ 是距离，
+            $V_{S30}$ 是场地参数，$\varepsilon$ 是残差。
+          </p>
+
+          <p>
+            预警系统使用简化版 GMPE，通常只依赖 $M$ 与 $R$，
+            有时加入场地类别修正。例如：
+          </p>
+
+          $$ \log_{10} \mathrm{PGA} = a M - b \log_{10}(R + c) - d R + e $$
+
+          <h3>烈度预测</h3>
+          <p>
+            日本 JMA 用<strong>计测震度</strong>表示地震动强度，
+            与实际震度对应：
+          </p>
+
+          $$ I_{\text{JMA}} = 2 \log_{10} a_{\max} + 0.94 - 1.5 $$
+
+          <p>
+            其中 $a_{\max}$ 是峰值加速度（gal）。
+            计测震度 5 弱对应约 100 gal，
+            6 强对应约 400 gal，7 对应约 800 gal。
+          </p>
+
+          <p>
+            中国地震烈度与 PGA 对应关系：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>烈度</th><th>PGA 范围（gal）</th><th>典型现象</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ⅵ 度</td>
+                  <td>63~125</td>
+                  <td>轻微破坏</td>
+                </tr>
+                <tr>
+                  <td>Ⅶ 度</td>
+                  <td>125~250</td>
+                  <td>中等破坏</td>
+                </tr>
+                <tr>
+                  <td>Ⅷ 度</td>
+                  <td>250~500</td>
+                  <td>严重破坏</td>
+                </tr>
+                <tr>
+                  <td>Ⅸ 度</td>
+                  <td>500~1000</td>
+                  <td>局部倒塌</td>
+                </tr>
+                <tr>
+                  <td>Ⅹ 度</td>
+                  <td>&gt; 1000</td>
+                  <td>大面积倒塌</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>场地效应修正</h3>
+          <p>
+            预警系统的地震动预测需要考虑场地放大。常用方法：
+          </p>
+
+          $$ \mathrm{PGA}_{\text{site}} = \mathrm{PGA}_{\text{rock}}
+             \times \mathrm{AF}(V_{S30}) $$
+
+          <p>
+            其中 $\mathrm{AF}$ 是放大因子，$V_{S30}$ 是地表 30 m 平均剪切波速。
+            软土场地放大因子可达 2~4 倍。
+          </p>
+
+          <p>
+            预警系统通常预设每个台站或每个格网的场地类别，
+            用查表方式快速应用放大因子。
+          </p>
+
+          <h3>不确定性与误报</h3>
+          <p>
+            预警系统的地震动预测存在较大不确定性：
+          </p>
+          <ul>
+            <li><strong>震级不确定性</strong>：特别是大震的饱和问题。</li>
+            <li><strong>定位不确定性</strong>：台站少时误差可达 10~20 km。</li>
+            <li><strong>GMPE 残差</strong>：标准差可达 0.3~0.5（对数单位）。</li>
+            <li><strong>场地效应</strong>：缺乏场地资料时误差大。</li>
+          </ul>
+
+          <p>
+            降低误报的策略：
+          </p>
+          <ul>
+            <li><strong>多参数联合判断</strong>：震级、位置、烈度多指标。</li>
+            <li><strong>动态更新</strong>：随信息积累提高估计。</li>
+            <li><strong>概率表达</strong>：给出预测的概率分布而非单值。</li>
+            <li><strong>设置阈值</strong>：仅对超过阈值的预测发布预警。</li>
+          </ul>
+
+          <h3>Python 示例：简易地震动预测</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>gmpe_eew.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+def gmpe_simple(M, R, vs30=500.0):
+    """
+    简化的地震动预测方程（示意）。
+    输入：
+      M:     震级
+      R:     震中距 km
+      vs30:  地表 30 m 平均剪切波速 m/s
+    返回：
+      PGA:   峰值加速度（gal = cm/s²）
+    """
+    # 基础 PGA（基岩）
+    log_pga_rock = 0.5 * M - 1.0 * np.log10(R + 10) - 0.002 * R + 1.5
+    pga_rock = 10 ** log_pga_rock
+
+    # 场地放大因子（简化）
+    # 软土 vs30 < 200 放大 2 倍，硬土 vs30 > 500 放大 1 倍
+    af = np.clip(1000.0 / vs30, 1.0, 3.0)
+
+    return pga_rock * af
+
+
+def pga_to_intensity(pga_gal):
+    """
+    用简化关系估计中国地震烈度：
+      I = 3.3 * log10(PGA) - 1.0
+    其中 PGA 单位 gal。
+    """
+    if pga_gal <= 0:
+        return 0.0
+    return 3.3 * np.log10(pga_gal) - 1.0
+
+
+def pga_to_jma_intensity(pga_gal):
+    """
+    用简化关系估计日本计测震度：
+      I_JMA = 2 * log10(PGA) + 0.94 - 1.5
+    """
+    if pga_gal <= 0:
+        return 0.0
+    return 2.0 * np.log10(pga_gal) + 0.94 - 1.5
+
+
+if __name__ == "__main__":
+    print("不同震级与距离的 PGA 预测：")
+    print(f"{'M':>4}{'R (km)':>8}{'PGA (gal)':>12}{'烈度':>8}{'JMA':>8}")
+    print("-" * 45)
+
+    for M in [5.0, 6.0, 7.0, 8.0]:
+        for R in [10, 30, 100, 200]:
+            pga = gmpe_simple(M, R, vs30=300)
+            I = pga_to_intensity(pga)
+            I_jma = pga_to_jma_intensity(pga)
+            print(f"{M:>4.1f}{R:>8}{pga:>12.1f}{I:>8.1f}{I_jma:>8.1f}")
+        print()
+
+    # ---- 预警时间计算 ----
+    print("预警时间估算（假设震中距 D）：")
+    print(f"{'D (km)':>10}{'Δt_P-S (s)':>15}{'剩余预警时间 (s)':>20}")
+    print("-" * 48)
+
+    vP, vS = 6.0, 3.5    # km/s
+    t_proc = 3.0         # 处理延迟 s
+
+    for D in [30, 50, 100, 200]:
+        dt_ps = D * (1/vS - 1/vP)
+        t_warn = dt_ps - t_proc
+        print(f"{D:>10}{dt_ps:>15.2f}{max(0, t_warn):>20.2f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>震级每增加 1 级，PGA 约增大 3 倍。</li>
+            <li>距离每增加 10 倍，PGA 约降低 3~5 倍。</li>
+            <li>100 km 外的目标预警时间约 8~9 s（扣除处理延迟）。</li>
+          </ul>
+        </section>
+
+        <section id="dissemination">
+          <h2><span class="num">06</span>信息发布</h2>
+
+          <h3>发布渠道</h3>
+          <p>
+            预警信息必须<strong>快速、广泛、可靠</strong>地送达目标用户：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>渠道</th><th>延迟</th><th>覆盖</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>电视/广播</td>
+                  <td>1~5 s</td>
+                  <td>广泛</td>
+                  <td>公众预警</td>
+                </tr>
+                <tr>
+                  <td>手机 App</td>
+                  <td>1~3 s</td>
+                  <td>个人</td>
+                  <td>公众预警</td>
+                </tr>
+                <tr>
+                  <td>手机小区广播</td>
+                  <td>1~5 s</td>
+                  <td>区域</td>
+                  <td>无 App 依赖</td>
+                </tr>
+                <tr>
+                  <td>专用终端</td>
+                  <td>0.5~2 s</td>
+                  <td>机构</td>
+                  <td>高铁、核电、医院</td>
+                </tr>
+                <tr>
+                  <td>专线/API</td>
+                  <td>0.1~1 s</td>
+                  <td>关键设施</td>
+                  <td>自动化控制</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>预警信息内容</h3>
+          <p>
+            标准预警信息包含：
+          </p>
+          <ul>
+            <li><strong>发震时刻</strong>：年-月-日 时:分:秒。</li>
+            <li><strong>震中位置</strong>：经纬度、地名。</li>
+            <li><strong>震级</strong>：估计震级（不断更新）。</li>
+            <li><strong>震源深度</strong>：km。</li>
+            <li><strong>预测烈度</strong>：目标区域预测的地震烈度。</li>
+            <li><strong>预警级别</strong>：红/橙/黄/蓝。</li>
+            <li><strong>预计到达时间</strong>：S 波到达目标区域的时间。</li>
+            <li><strong>更新次数</strong>：第几报。</li>
+          </ul>
+
+          <h3>用户响应</h3>
+          <p>
+            不同用户对预警的响应不同：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>用户</th><th>可用时间</th><th>典型响应</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>公众</td>
+                  <td>5~30 s</td>
+                  <td>躲避、远离玻璃、打开门</td>
+                </tr>
+                <tr>
+                  <td>高速铁路</td>
+                  <td>10~30 s</td>
+                  <td>减速、制动、切断供电</td>
+                </tr>
+                <tr>
+                  <td>电梯</td>
+                  <td>3~10 s</td>
+                  <td>最近楼层停靠、开门</td>
+                </tr>
+                <tr>
+                  <td>燃气</td>
+                  <td>3~10 s</td>
+                  <td>自动关闭阀门</td>
+                </tr>
+                <tr>
+                  <td>核电站</td>
+                  <td>10~60 s</td>
+                  <td>切换控制棒、停堆</td>
+                </tr>
+                <tr>
+                  <td>手术室</td>
+                  <td>5~30 s</td>
+                  <td>暂停手术、固定设备</td>
+                </tr>
+                <tr>
+                  <td>数据中心</td>
+                  <td>5~20 s</td>
+                  <td>切换备用电源、保护硬盘</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>误报与漏报</h3>
+          <p>
+            预警系统面临两类错误：
+          </p>
+          <ul>
+            <li><strong>误报（False Alarm）</strong>：预测有强震但实际没有。
+              后果：公众失去信任、自动系统误动作。</li>
+            <li><strong>漏报（Missed Alarm）</strong>：有强震但未发出预警。
+              后果：失去预警的意义。</li>
+          </ul>
+
+          <p>
+            系统设计需要在两者之间权衡。通常设置：
+          </p>
+          <ul>
+            <li>误报率 &lt; 10%。</li>
+            <li>漏报率 &lt; 5%。</li>
+            <li>预警发布时间 &lt; 5 s。</li>
+          </ul>
+
+          <h3>日本 JMA 的实践</h3>
+          <p>
+            JMA 紧急地震速报运行十余年，积累了丰富经验：
+          </p>
+          <ul>
+            <li>每月发布数次预警（多为小震）。</li>
+            <li>误报率较低，但每次误报都引起公众讨论。</li>
+            <li>2011 年东日本地震后升级为"多台站联合处理"。</li>
+            <li>针对大震的震级饱和问题持续改进。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>预警的"狼来了"问题</strong>：如果预警系统频繁误报，
+              公众可能逐渐忽视预警，甚至拒绝响应。
+              这对系统的长期有效性是致命的。
+              因此预警系统的设计必须<strong>宁可漏报小震，不可误报大震</strong>，
+              并且持续优化算法与用户体验。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="challenges">
+          <h2><span class="num">07</span>挑战与局限</h2>
+
+          <h3>物理局限</h3>
+          <ul>
+            <li><strong>预警盲区</strong>：震中附近无法获得有效预警。</li>
+            <li><strong>震级饱和</strong>：大震的震级估计需要时间。</li>
+            <li><strong>不确定的破裂过程</strong>：多点破裂、超剪切破裂难以预测。</li>
+            <li><strong>地震动的空间变化</strong>：不同场地、不同方向差异大。</li>
+          </ul>
+
+          <h3>技术挑战</h3>
+          <ul>
+            <li><strong>台网密度</strong>：密集台网成本高、维护困难。</li>
+            <li><strong>通信延迟</strong>：偏远地区、海底台站的通信瓶颈。</li>
+            <li><strong>算法速度</strong>：复杂算法难以在秒级完成。</li>
+            <li><strong>误报控制</strong>：在速度与准确性之间权衡。</li>
+            <li><strong>系统可靠性</strong>：地震本身可能破坏通信设施。</li>
+          </ul>
+
+          <h3>社会挑战</h3>
+          <ul>
+            <li><strong>公众教育</strong>：让公众理解预警的局限，不恐慌也不忽视。</li>
+            <li><strong>责任界定</strong>：误报造成的损失谁负责？</li>
+            <li><strong>成本分摊</strong>：谁为预警系统付费？</li>
+            <li><strong>跨境协作</strong>：跨国地震预警的协调。</li>
+          </ul>
+
+          <h3>新兴方向</h3>
+          <ul>
+            <li><strong>机器学习</strong>：用深度学习从波形直接估计震级、位置。</li>
+            <li><strong>GNSS 预警</strong>：用 GPS 位移数据补充传统地震仪。</li>
+            <li><strong>DAS（分布式声传感）</strong>：光纤传感提供密集观测。</li>
+            <li><strong>智能手机众包</strong>：利用手机加速度计形成超级密集台网。</li>
+            <li><strong>低成本 MEMS 台网</strong>：降低台网密度瓶颈。</li>
+            <li><strong>多灾种耦合预警</strong>：地震 + 海啸 + 滑坡联合预警。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>地震预警的未来</strong>：从"单一台网预警"走向
+              "<strong>多源、密集、智能、协同</strong>"。
+              手机众包、低成本 MEMS 台站、GNSS、DAS 都是重要发展方向。
+              最终目标是把预警盲区缩到最小，
+              并让预警信息成为像天气预报一样普及的公共服务。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>典型应用场景</h3>
+
+          <h4>1. 高速铁路</h4>
+          <p>
+            高铁在高速运行中，脱轨风险大。预警系统可以在 S 波到达前：
+          </p>
+          <ul>
+            <li>自动减速或紧急制动。</li>
+            <li>切断牵引供电，减少火险。</li>
+            <li>通知沿线信号系统进入安全模式。</li>
+            <li>对隧道、桥梁段加强监控。</li>
+          </ul>
+          <p>
+            日本新干线、中国高铁都在推进 EEW 联动。
+            日本新干线在 2011 年东日本地震中实现了全部列车安全停车。
+          </p>
+
+          <h4>2. 核电站</h4>
+          <p>
+            核电站一旦受损，后果极其严重。EEW 可触发：
+          </p>
+          <ul>
+            <li>控制棒快速插入（停堆）。</li>
+            <li>应急柴油发电机启动准备。</li>
+            <li>冷却系统切换至安全模式。</li>
+            <li>关键阀门关闭。</li>
+          </ul>
+
+          <h4>3. 医院</h4>
+          <p>
+            医院有手术、生命维持设备、影像设备。EEW 可以：
+          </p>
+          <ul>
+            <li>暂停手术操作。</li>
+            <li>切换生命维持设备电源。</li>
+            <li>固定或保护大型医疗设备。</li>
+            <li>通知病房人员避难。</li>
+          </ul>
+
+          <h4>4. 工业设施</h4>
+          <p>
+            化工厂、石化厂、半导体厂：
+          </p>
+          <ul>
+            <li>停止关键工艺过程。</li>
+            <li>关闭危险化学品阀门。</li>
+            <li>保护精密设备、光刻机。</li>
+            <li>切换备用电源。</li>
+          </ul>
+
+          <h4>5. 城市基础设施</h4>
+          <ul>
+            <li><strong>燃气</strong>：自动关闭主管道阀门。</li>
+            <li><strong>电力</strong>：切换备用电源、隔离敏感设备。</li>
+            <li><strong>供水</strong>：保护水泵、关闭关键阀门。</li>
+            <li><strong>通信</strong>：切换备用基站，保障应急通信。</li>
+            <li><strong>电梯</strong>：最近楼层停靠。</li>
+          </ul>
+
+          <h4>6. 公共安全</h4>
+          <ul>
+            <li>向公众手机推送预警。</li>
+            <li>地铁、机场暂停运营。</li>
+            <li>大型活动（体育赛事、演唱会）应急响应。</li>
+            <li>学校、幼儿园紧急避险。</li>
+          </ul>
+
+          <h3>系统集成</h3>
+          <p>
+            预警系统的工程集成需要考虑：
+          </p>
+          <ul>
+            <li><strong>接口标准化</strong>：API、协议、数据格式。</li>
+            <li><strong>响应时间</strong>：从触发到动作的端到端延迟。</li>
+            <li><strong>可靠性</strong>：双通道、冗余设计。</li>
+            <li><strong>自检机制</strong>：定期测试、演练。</li>
+            <li><strong>可追溯性</strong>：每次预警的日志与记录。</li>
+          </ul>
+
+          <h3>效益评估</h3>
+          <p>
+            预警系统的经济与社会效益：
+          </p>
+          <ul>
+            <li><strong>减轻人员伤亡</strong>：公众及时避险。</li>
+            <li><strong>减少财产损失</strong>：关键设施自动保护。</li>
+            <li><strong>保障生命线</strong>：减少次生灾害。</li>
+            <li><strong>社会心理安慰</strong>：减轻恐慌、提高应对能力。</li>
+          </ul>
+          <p>
+            日本、墨西哥、美国加州的实践表明，
+            预警系统的社会效益远超其建设和运行成本。
+          </p>
+
+          <h3>与其它技术的结合</h3>
+          <ul>
+            <li><strong>与结构健康监测结合</strong>：结构台阵触发后评估损伤。</li>
+            <li><strong>与地震危险性分析结合</strong>：预警后快速更新危险性估计。</li>
+            <li><strong>与快速震害评估结合</strong>：预警 + 震后快速评估，形成完整链条。</li>
+            <li><strong>与应急响应结合</strong>：预警自动触发应急指挥系统。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>预警系统的工程价值</strong>：它把地震工程从"事后分析"扩展到"实时响应"。
+              传统地震工程关注震后评估与设计改进，
+              而预警系统让工程师可以在<strong>地震波到达前的几秒到几十秒</strong>内
+              主动保护结构、设备与人员。
+              这是地震工程从"被动防御"到"主动防护"的转变。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>预警原理</strong>：利用 P 波与 S 波的速度差，抢在破坏性波到达前报警。</li>
+              <li><strong>预警时间</strong>：$t_{\text{warn}} = D/v_S - D/v_P - t_{\text{proc}} - t_{\text{comm}}$；距离每增加 8.4 km 增加约 1 s。</li>
+              <li><strong>预警盲区</strong>：震中附近无法有效预警，盲区半径取决于台网密度与算法速度。</li>
+              <li><strong>三类系统</strong>：区域预警、现场预警、混合预警，各有适用场景。</li>
+              <li><strong>震相拾取</strong>：STA/LTA、AIC、机器学习；实时性要求极高。</li>
+              <li><strong>震级估计</strong>：τc、Pd、卓越周期方法；存在饱和问题，大震估计偏低。</li>
+              <li><strong>地震动预测</strong>：简化 GMPE + 场地放大因子；转换为烈度或震度。</li>
+              <li><strong>信息发布</strong>：多渠道、低延迟、标准化；误报与漏报需权衡。</li>
+              <li><strong>工程应用</strong>：高铁、核电、医院、工业、城市基础设施的自动保护。</li>
+            </ul>
+          </div>
+
+          <h3>关键参数速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>参数</th><th>典型值</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P 波速度 $v_P$</td>
+                  <td>5.5~7.0 km/s</td>
+                  <td>地壳内</td>
+                </tr>
+                <tr>
+                  <td>S 波速度 $v_S$</td>
+                  <td>3.0~4.0 km/s</td>
+                  <td>约为 $v_P$ 的 0.58 倍</td>
+                </tr>
+                <tr>
+                  <td>预警时间梯度</td>
+                  <td>约 1 s / 8.4 km</td>
+                  <td>$(1/v_S - 1/v_P)^{-1}$</td>
+                </tr>
+                <tr>
+                  <td>系统处理延迟</td>
+                  <td>3~5 s</td>
+                  <td>震相拾取 + 定位 + 震级估计</td>
+                </tr>
+                <tr>
+                  <td>发布延迟</td>
+                  <td>0.5~2 s</td>
+                  <td>专用通道更快</td>
+                </tr>
+                <tr>
+                  <td>盲区半径</td>
+                  <td>10~50 km</td>
+                  <td>取决于台网密度</td>
+                </tr>
+                <tr>
+                  <td>τc 窗长</td>
+                  <td>3 s</td>
+                  <td>标准估计窗</td>
+                </tr>
+                <tr>
+                  <td>τc 饱和震级</td>
+                  <td>≈ 7.0</td>
+                  <td>大震估计偏低</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>定量地震学</strong>（地震学）：P 波、S 波、震源物理、震级标度。</li>
+            <li><strong>强震动观测</strong>（地震学）：台网、仪器、实时数据流。</li>
+            <li><strong>地震动谱分析入门</strong>（地震学）：地震动参数与频谱。</li>
+            <li><strong>地震工程</strong>（地震学）：预警后的结构响应与保护。</li>
+            <li><strong>土动力学</strong>（地震学）：场地放大对地震动预测的影响。</li>
+            <li><strong>数字信号处理</strong>（计算机）：STA/LTA、滤波、实时处理。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：误报率、漏报率、贝叶斯更新。</li>
+            <li><strong>数值分析</strong>（数学）：快速定位算法、实时数值优化。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Kanamori, "Real-time seismology and earthquake damage mitigation" (2005) — 实时地震学综述</li>
+            <li>Allen &amp; Melgar, "Earthquake early warning: Advances, scientific challenges, and societal needs" (2019) — EEW 权威综述</li>
+            <li>Hoshiba 等, "Outline of the 2011 off the Pacific coast of Tohoku Earthquake (Mw 9.0) — Earthquake Early Warning information" (2011) — 东日本地震预警分析</li>
+            <li>Wu &amp; Kanamori, "Experiment on an onsite early warning method for the Taiwan early warning system" (2005) — 现场预警方法</li>
+            <li>Nakamura, "Onsite seismic warning system" — 现场预警开创性工作</li>
+            <li>Böse, Wenzel &amp; Erdik (eds.), <em>Early Warning for Geological Disasters</em> — 综述文集</li>
+            <li>中国国家地震烈度速报与预警工程相关技术规范</li>
+            <li>JMA 緊急地震速報 相关技术文档</li>
+            <li>ShakeAlert 系统技术报告（USGS）</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

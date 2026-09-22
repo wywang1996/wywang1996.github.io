@@ -1,0 +1,1905 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工程地震学 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="engineering-seismology">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#hazard">一、地震危险性分析</a></li>
+      <li><a href="#source">二、震源模型</a></li>
+      <li><a href="#gmpe">三、地震动预测方程</a></li>
+      <li><a href="#psha">四、PSHA 方法</a></li>
+      <li><a href="#uhs">五、一致危险性谱</a></li>
+      <li><a href="#selection">六、设计地震动选取</a></li>
+      <li><a href="#simulation">七、地震动模拟</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 工程地震学
+        </div>
+        <h1>工程地震学</h1>
+        <p class="lead">
+          从地震危险性分析到地震动预测方程，覆盖 PSHA、GMPE、
+          一致危险性谱与设计地震动选取。
+          它是连接地震学与结构抗震设计的桥梁——
+          把"地球如何振动"翻译成"结构需要抵抗多大的作用"。
+        </p>
+        <div class="article-meta">
+          <span>PSHA</span>
+          <span>GMPE</span>
+          <span>UHS</span>
+          <span class="blue">设计地震动</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            工程地震学研究<strong>为工程目的如何表征地震作用</strong>。
+            它处于地震学与结构工程的交界处：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>学科</th><th>关注问题</th><th>输出</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地震学</td>
+                  <td>震源如何破裂？波如何传播？</td>
+                  <td>震源参数、地球结构</td>
+                </tr>
+                <tr>
+                  <td><strong>工程地震学</strong></td>
+                  <td><strong>场地未来可能遭遇多大的地震动？</strong></td>
+                  <td><strong>设计地震动参数、反应谱、时程</strong></td>
+                </tr>
+                <tr>
+                  <td>结构工程</td>
+                  <td>结构如何抵抗地震作用？</td>
+                  <td>构件尺寸、配筋、构造</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            工程地震学的核心任务是回答三个问题：
+          </p>
+          <ul>
+            <li><strong>多大？</strong>——场地未来可能遭遇的地震动强度（PGA、谱加速度）。</li>
+            <li><strong>多频繁？</strong>——不同强度地震动的发生概率（年超越概率）。</li>
+            <li><strong>什么形状？</strong>——地震动的频谱与持时特性（反应谱、时程）。</li>
+          </ul>
+
+          <p>
+            在工程实践中，这三个问题由以下工具回答：
+          </p>
+          <ul>
+            <li><strong>地震危险性分析</strong>（PSHA / DSHA）：给出场地地震动参数的概率分布。</li>
+            <li><strong>地震动预测方程</strong>（GMPE）：从震级、距离、场地预测地震动。</li>
+            <li><strong>地震动模拟</strong>：合成与设计谱匹配的地震动时程。</li>
+          </ul>
+
+          <p>
+            这份笔记按"危险性 $\to$ 震源 $\to$ GMPE $\to$ PSHA $\to$ UHS $\to$ 选波 $\to$ 模拟 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="hazard">
+          <h2><span class="num">01</span>地震危险性分析</h2>
+
+          <h3>两种方法</h3>
+          <p>
+            地震危险性分析分为两大类：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>全称</th><th>核心思想</th><th>输出</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>DSHA</td>
+                  <td>确定性地震危险性分析</td>
+                  <td>假定特定震源发生特定地震，计算场地地震动</td>
+                  <td>单一地震动值（"最坏情况"）</td>
+                </tr>
+                <tr>
+                  <td>PSHA</td>
+                  <td>概率地震危险性分析</td>
+                  <td>考虑所有可能震源、震级、距离的概率分布</td>
+                  <td>年超越概率曲线、一致危险性谱</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>DSHA 的基本流程</h3>
+          <ol class="steps">
+            <li>确定场地附近的活动断层与地震构造区。</li>
+            <li>对每个震源，确定"最大可信地震"（MCE）或"特征地震"。</li>
+            <li>假定震源发生该地震，计算场地到震源的距离。</li>
+            <li>用 GMPE 或衰减关系计算场地地震动。</li>
+            <li>取所有震源计算结果的最大值作为设计地震动。</li>
+          </ol>
+
+          <p>
+            DSHA 的优点是简单直观，缺点是：
+          </p>
+          <ul>
+            <li>没有概率概念，无法区分"经常发生的小震"与"极少发生的大震"。</li>
+            <li>不考虑不同震源的相对贡献。</li>
+            <li>结果对"最大可信地震"的选取高度敏感。</li>
+          </ul>
+
+          <h3>PSHA 的基本思想</h3>
+          <p>
+            PSHA 由 Cornell（1968）提出，McGuire（1976）实现为计算机程序。
+            它的基本公式是：
+          </p>
+
+          $$ \lambda(Y > y) = \sum_{i} \nu_i \iiint
+             P[Y > y \mid m, r] \, f_M(m) \, f_R(r) \, dm \, dr $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$\lambda(Y > y)$：场地地震动 $Y$ 超过阈值 $y$ 的<strong>年发生率</strong>。</li>
+            <li>$\nu_i$：第 $i$ 个震源的年发生率。</li>
+            <li>$f_M(m)$：震级概率密度。</li>
+            <li>$f_R(r)$：距离概率密度。</li>
+            <li>$P[Y > y \mid m, r]$：给定震级与距离时，地震动超过 $y$ 的条件概率（由 GMPE 给出）。</li>
+          </ul>
+
+          <h3>年超越概率与重现期</h3>
+          <p>
+            年超越概率 $\lambda$ 与重现期 $T_R$ 的关系：
+          </p>
+
+          $$ T_R = \frac{1}{\lambda} $$
+
+          <p>
+            例如年超越概率 $0.0021$（即 1/475）对应重现期 475 年，
+            这正是"50 年超越概率 10%"的由来：
+          </p>
+
+          $$ 1 - (1 - 0.0021)^{50} \approx 0.10 $$
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>50 年超越概率</th><th>年超越概率</th><th>重现期</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>63%</td>
+                  <td>0.02</td>
+                  <td>50 年</td>
+                  <td>多遇地震（小震）</td>
+                </tr>
+                <tr>
+                  <td>10%</td>
+                  <td>0.0021</td>
+                  <td>475 年</td>
+                  <td>设防地震（中震）</td>
+                </tr>
+                <tr>
+                  <td>2%</td>
+                  <td>0.0004</td>
+                  <td>2475 年</td>
+                  <td>罕遇地震（大震）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>DSHA 与 PSHA 的选择</strong>：
+              核电站、大坝等高安全要求设施通常两者并用——
+              PSHA 给出概率水平的设计地震动，DSHA 给出 MCE 作为上限校核。
+              普通建筑的设计地震动则直接由 PSHA 给出（规范中的"地震影响系数"）。
+              中国、美国、欧洲规范的设防地震动都基于 PSHA。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="source">
+          <h2><span class="num">02</span>震源模型</h2>
+
+          <h3>震源类型</h3>
+          <p>
+            PSHA 中需要把所有可能产生地震的源都建模。常见震源类型：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>几何</th><th>特点</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>断层源</td>
+                  <td>三维面</td>
+                  <td>已知活动断层，破裂位置受限</td>
+                  <td>圣安德烈斯断层、龙门山断裂</td>
+                </tr>
+                <tr>
+                  <td>区域源（面源）</td>
+                  <td>二维多边形</td>
+                  <td>地震分散在区域内，不集中在断层</td>
+                  <td>地震活动性弱的区域</td>
+                </tr>
+                <tr>
+                  <td>点源</td>
+                  <td>单点</td>
+                  <td>简化的震源</td>
+                  <td>初步分析</td>
+                </tr>
+                <tr>
+                  <td>网格源</td>
+                  <td>密集点集</td>
+                  <td>近似面源</td>
+                  <td>计算优化</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>震级-频度关系</h3>
+          <p>
+            古登堡-里希特（Gutenberg-Richter）关系描述地震发生频率与震级的关系：
+          </p>
+
+          $$ \log_{10} N(M) = a - b M $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$N(M)$：震级 $\ge M$ 的地震年发生次数。</li>
+            <li>$a$：地震活动性水平（截距）。</li>
+            <li>$b$：震级分布斜率，通常 $b \approx 1.0$，反映大小地震的相对比例。</li>
+          </ul>
+
+          <p>
+            $b$ 值的物理意义：$b = 1$ 时，震级每降低 1 级，地震次数增加 10 倍。
+            这意味着小震比大震频繁得多。
+          </p>
+
+          <h3>震级分布</h3>
+          <p>
+            在 PSHA 中，震级需要设上限 $M_{\max}$。常用的截断 GR 分布：
+          </p>
+
+          $$ f_M(m) = \frac{\beta e^{-\beta(m - M_{\min})}}
+             {1 - e^{-\beta(M_{\max} - M_{\min})}}, \quad
+             M_{\min} \le m \le M_{\max} $$
+
+          <p>
+            其中 $\beta = b \ln 10$，$M_{\min}$ 与 $M_{\max}$ 分别是震级下限与上限。
+          </p>
+
+          <p>
+            特征地震模型：某些断层上，大地震的发生频率比 GR 关系预测的更高，
+            形成"特征地震"现象。这是对一些断层（如圣安德烈斯断层南部）的观测结论。
+          </p>
+
+          <h3>距离分布</h3>
+          <p>
+            对点源或面源，距离分布由几何关系决定：
+          </p>
+
+          $$ f_R(r) = \frac{2r}{R_{\max}^2 - R_{\min}^2}, \quad
+             R_{\min} \le r \le R_{\max} $$
+
+          <p>
+            对断层源，距离分布要考虑破裂面的几何——
+            采用<strong>等效随机破裂</strong>（ERS）模型：
+            假定破裂等概率地发生在断层面的任意位置，
+            由此得到距离的概率密度。
+          </p>
+
+          <h3>逻辑树</h3>
+          <p>
+            PSHA 中的输入参数（$b$ 值、$M_{\max}$、GMPE 选择、场地参数）
+            都存在不确定性。工程上用<strong>逻辑树</strong>来表达：
+          </p>
+          <ul>
+            <li>每个参数有若干"分支"，各分支有对应权重。</li>
+            <li>所有分支的组合给出多条 PSHA 结果。</li>
+            <li>用加权平均得到"中值"危险性与"分位数"危险性（如 15%、85%）。</li>
+          </ul>
+
+          <p>
+            现代 PSHA 平台（OpenQuake、CRISIS）都支持逻辑树。
+            一个典型的 PSHA 逻辑树有数百到数千个分支。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>震源模型的哲学</strong>：地震是罕见的随机事件，
+              人类无法精确预测下一次地震。
+              因此 PSHA 采用<strong>概率建模</strong>——
+              把"未来是否发生"转化为"每年发生的概率"，
+              把"在哪里发生"转化为"距离的概率分布"。
+              这是工程地震学的基本方法论。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="gmpe">
+          <h2><span class="num">03</span>地震动预测方程</h2>
+
+          <h3>GMPE 的作用</h3>
+          <p>
+            地震动预测方程（Ground Motion Prediction Equation，GMPE），
+            也称衰减关系，是从震级、距离、场地条件预测地震动参数的经验公式：
+          </p>
+
+          $$ \ln Y = f(M, R, V_{S30}, \ldots) + \varepsilon $$
+
+          <p>
+            其中 $Y$ 是地震动参数（PGA、PGV、谱加速度 $S_a(T)$），
+            $\varepsilon$ 是残差，通常假设正态分布。
+          </p>
+
+          <h3>典型形式</h3>
+          <p>
+            一个简化的 GMPE 形式：
+          </p>
+
+          $$ \ln Y = c_1 + c_2 M + c_3 \ln(R + c_4) + c_5 R + c_6 \ln(V_{S30}/760) + \varepsilon $$
+
+          <p>
+            各项含义：
+          </p>
+          <ul>
+            <li>$c_1$：常数项，标定整体水平。</li>
+            <li>$c_2 M$：震级项，地震动随震级增加。</li>
+            <li>$c_3 \ln(R + c_4)$：几何衰减，近场平缓远场快速衰减。</li>
+            <li>$c_5 R$：非弹性衰减，远场加速衰减。</li>
+            <li>$c_6 \ln(V_{S30}/760)$：场地项，以 760 m/s 为参考。</li>
+            <li>$\varepsilon$：残差，标准差 $\sigma$ 反映预测不确定性。</li>
+          </ul>
+
+          <h3>距离的定义</h3>
+          <p>
+            不同 GMPE 使用不同的距离定义，必须与数据匹配：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>符号</th><th>含义</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$R_{\text{epi}}$</td>
+                  <td>震中距（地表投影）</td>
+                  <td>点源</td>
+                </tr>
+                <tr>
+                  <td>$R_{\text{hyp}}$</td>
+                  <td>震源距（三维直线距离）</td>
+                  <td>点源</td>
+                </tr>
+                <tr>
+                  <td>$R_{\text{jb}}$</td>
+                  <td>Joyner-Boore 距离（到破裂面地表投影）</td>
+                  <td>有限断层</td>
+                </tr>
+                <tr>
+                  <td>$R_{\text{rup}}$</td>
+                  <td>到破裂面的最近距离</td>
+                  <td>有限断层，近场</td>
+                </tr>
+                <tr>
+                  <td>$R_x$</td>
+                  <td>到断层走向的垂直距离</td>
+                  <td>方向性研究</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            距离定义不一致是 GMPE 使用中最常见的错误来源。
+            必须仔细阅读原始文献，使用与拟合数据一致的距离定义。
+          </p>
+
+          <h3>残差结构</h3>
+          <p>
+            GMPE 的残差不是纯随机噪声，具有明显的结构：
+          </p>
+
+          $$ \varepsilon = \varepsilon_{\text{event}} + \varepsilon_{\text{path}} + \varepsilon_{\text{site}} + \varepsilon_{\text{measurement}} $$
+
+          <p>
+            常用分解：
+          </p>
+          <ul>
+            <li><strong>事件间残差</strong> $\eta$：同一次地震不同台站的共同偏差。</li>
+            <li><strong>事件内残差</strong> $\varepsilon$：不同台站之间的差异。</li>
+            <li><strong>场地残差</strong>：相同 $V_{S30}$ 场地的系统差异。</li>
+          </ul>
+
+          <p>
+            标准总残差：
+          </p>
+
+          $$ \sigma_{\text{total}} = \sqrt{\tau^2 + \phi^2} $$
+
+          <p>
+            其中 $\tau$ 是事件间标准差，$\phi$ 是事件内标准差。
+            典型值：$\tau \approx 0.3 \sim 0.5$，$\phi \approx 0.4 \sim 0.6$（对数单位）。
+          </p>
+
+          <p>
+            考虑残差相关性的 PSHA 需要事件间与事件内残差分别处理。
+            这就是为什么一致危险性谱（UHS）需要"解聚"分析——
+            找到对危险性贡献最大的震级-距离组合。
+          </p>
+
+          <h3>主流 GMPE</h3>
+          <p>
+            全球与区域 GMPE 的经典代表：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>GMPE</th><th>区域</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Pezeshk et al.</td>
+                  <td>中东部美国</td>
+                  <td>适合稳定大陆区</td>
+                </tr>
+                <tr>
+                  <td>Boore &amp; Atkinson (BA08)</td>
+                  <td>北美</td>
+                  <td>广泛使用</td>
+                </tr>
+                <tr>
+                  <td>Campbell &amp; Bozorgnia (CB14)</td>
+                  <td>全球</td>
+                  <td>NGA-West2 项目</td>
+                </tr>
+                <tr>
+                  <td>Chiou &amp; Youngs (CY14)</td>
+                  <td>全球</td>
+                  <td>NGA-West2 项目，含方向性</td>
+                </tr>
+                <tr>
+                  <td>Abrahamson et al. (ASK14)</td>
+                  <td>全球</td>
+                  <td>NGA-West2 项目</td>
+                </tr>
+                <tr>
+                  <td>Zhao et al.</td>
+                  <td>日本</td>
+                  <td>考虑火山前弧与深部界面</td>
+                </tr>
+                <tr>
+                  <td>Si &amp; Midorikawa</td>
+                  <td>日本</td>
+                  <td>适合浅壳地震</td>
+                </tr>
+                <tr>
+                  <td>第五代地震区划图</td>
+                  <td>中国</td>
+                  <td>中国区域 GMPE</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：简单 GMPE 与残差模拟</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>gmpe_residual.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def gmpe_simple(M, R, Vs30=760.0,
+                c1=-1.0, c2=1.0, c3=-1.2, c4=10.0,
+                c5=-0.002, c6=-0.3):
+    """
+    简化的 GMPE（示意，不用于实际工程）：
+        ln(PGA) = c1 + c2·M + c3·ln(R + c4) + c5·R + c6·ln(Vs30/760)
+    返回 ln(PGA)，单位 m/s²
+    """
+    return c1 + c2 * M + c3 * np.log(R + c4) + c5 * R + c6 * np.log(Vs30 / 760.0)
+
+
+def simulate_gmpe_residual(M, R, Vs30=760.0, tau=0.4, phi=0.5, n_samples=10000):
+    """
+    模拟 GMPE 残差：
+      ε = η + ε_内
+      η ~ N(0, τ²)  事件间
+      ε_内 ~ N(0, φ²) 事件内
+    """
+    rng = np.random.default_rng(42)
+
+    # 中值预测
+    ln_median = gmpe_simple(M, R, Vs30)
+
+    # 事件间残差（同一次地震的所有台站共享）
+    eta = rng.normal(0, tau, n_samples)
+
+    # 事件内残差（各台站独立）
+    eps_inner = rng.normal(0, phi, n_samples)
+
+    # 总残差
+    ln_total = ln_median + eta + eps_inner
+
+    return np.exp(ln_total), ln_median
+
+
+if __name__ == "__main__":
+    # ---- GMPE 曲线：不同震级 ----
+    R_arr = np.logspace(0, 2.5, 100)
+
+    plt.figure(figsize=(12, 5))
+
+    plt.subplot(1, 2, 1)
+    for M in [5.0, 6.0, 7.0, 8.0]:
+        ln_pga = gmpe_simple(M, R_arr, Vs30=760)
+        plt.plot(R_arr, np.exp(ln_pga), label=f"M = {M}")
+    plt.xlabel("距离 R / km")
+    plt.ylabel("PGA / (m/s²)")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.title("GMPE 中值预测（基岩）")
+    plt.legend()
+    plt.grid(True, which="both", alpha=0.3)
+
+    # ---- 场地效应 ----
+    plt.subplot(1, 2, 2)
+    M, R = 6.5, 30.0
+    Vs30_arr = np.logspace(np.log10(150), np.log10(1200), 100)
+    ln_pga = gmpe_simple(M, R, Vs30_arr)
+    plt.plot(Vs30_arr, np.exp(ln_pga))
+    plt.xlabel("Vs30 / (m/s)")
+    plt.ylabel("PGA / (m/s²)")
+    plt.xscale("log")
+    plt.title(f"场地效应（M={M}, R={R} km）")
+    plt.grid(True, which="both", alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 残差分布 ----
+    pga_samples, ln_median = simulate_gmpe_residual(M=6.5, R=30.0)
+
+    print(f"M = 6.5, R = 30 km, Vs30 = 760 m/s")
+    print(f"中值 PGA = {np.exp(ln_median):.4f} m/s²")
+    print(f"16% 分位 = {np.percentile(pga_samples, 16):.4f} m/s²")
+    print(f"50% 分位 = {np.percentile(pga_samples, 50):.4f} m/s²")
+    print(f"84% 分位 = {np.percentile(pga_samples, 84):.4f} m/s²")
+
+    ln_samples = np.log(pga_samples)
+    print(f"\n对数残差标准差 σ = {np.std(ln_samples):.4f}")
+    print(f"（理论 σ = sqrt(τ² + φ²) = sqrt(0.4² + 0.5²) = {np.sqrt(0.4**2 + 0.5**2):.4f}）")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>PGA 随震级增大、随距离减小。</li>
+            <li>软土（$V_{S30}$ 小）的 PGA 显著高于基岩。</li>
+            <li>残差呈对数正态分布，标准差与 $\sqrt{\tau^2 + \phi^2}$ 一致。</li>
+          </ul>
+        </section>
+
+        <section id="psha">
+          <h2><span class="num">04</span>PSHA 方法</h2>
+
+          <h3>完整公式</h3>
+          <p>
+            对第 $i$ 个震源，地震动 $Y$ 超过阈值 $y$ 的年发生率：
+          </p>
+
+          $$ \lambda_i(Y > y) = \nu_i \int_{M_{\min}}^{M_{\max}}
+             \int_{R_{\min}}^{R_{\max}}
+             P[Y > y \mid m, r] \, f_M(m) \, f_R(r) \, dr \, dm $$
+
+          <p>
+            对多个震源求和：
+          </p>
+
+          $$ \lambda(Y > y) = \sum_i \lambda_i(Y > y) $$
+
+          <p>
+            条件概率 $P[Y > y \mid m, r]$ 由 GMPE 的对数正态假设给出：
+          </p>
+
+          $$ P[Y > y \mid m, r] = 1 - \Phi\!\left(
+             \frac{\ln y - \ln \bar{Y}(m, r)}{\sigma} \right) $$
+
+          <p>
+            其中 $\bar{Y}(m, r)$ 是 GMPE 的中值预测，
+            $\sigma$ 是总对数标准差，$\Phi$ 是标准正态累积分布函数。
+          </p>
+
+          <h3>数值实现</h3>
+          <p>
+            上述积分通常没有解析解，需要数值离散：
+          </p>
+          <ul>
+            <li>把震级范围分成若干区间（如 $M_{\min}$ 到 $M_{\max}$，步长 0.1）。</li>
+            <li>把距离范围分成若干区间。</li>
+            <li>在每个 $(m_j, r_k)$ 网格点计算贡献。</li>
+            <li>加权求和得到年发生率。</li>
+          </ul>
+
+          <p>
+            现代实现（OpenQuake、CRISIS）用更精细的算法：
+          </p>
+          <ul>
+            <li><strong>等效随机破裂</strong>：处理有限断层源。</li>
+            <li><strong>自适应网格</strong>：在贡献大的区域加密。</li>
+            <li><strong>截断正态</strong>：处理残差的有界性。</li>
+          </ul>
+
+          <h3>危险性曲线</h3>
+          <p>
+            对一系列阈值 $y$（如 PGA = 0.01g, 0.02g, ..., 1.0g），
+            计算对应的 $\lambda(Y > y)$，
+            得到<strong>危险性曲线</strong>：$\lambda$ 随 $y$ 的变化。
+          </p>
+
+          <p>
+            双对数坐标下，危险性曲线通常近似为直线：
+          </p>
+
+          $$ \log \lambda = a - b \log y $$
+
+          <p>
+            这是 PSHA 结果的基本形式，也是场地地震危险性最直接的表达。
+          </p>
+
+          <h3>地震动参数的完整危险性</h3>
+          <p>
+            对多个周期分别做 PSHA，得到：
+          </p>
+          <ul>
+            <li>PGA 的危险性曲线</li>
+            <li>$S_a(0.2\text{ s})$ 的危险性曲线</li>
+            <li>$S_a(1.0\text{ s})$ 的危险性曲线</li>
+            <li>……</li>
+          </ul>
+
+          <p>
+            对每个周期，取相同超越概率（如 10%/50 年）对应的值，
+            组合成<strong>一致危险性谱</strong>（UHS）。
+          </p>
+
+          <h3>Python 示例：简化的 PSHA 计算</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>psha_simple.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+
+def gmpe_ln_pga(M, R, Vs30=760.0,
+                c1=-1.0, c2=1.0, c3=-1.2, c4=10.0,
+                c5=-0.002, c6=-0.3):
+    """简化 GMPE，返回中值 ln(PGA)"""
+    return c1 + c2 * M + c3 * np.log(R + c4) + c5 * R + c6 * np.log(Vs30 / 760.0)
+
+
+def psha_point_source(y_arr, nu=0.01, M_range=(4.5, 7.5),
+                       R_range=(5.0, 200.0), sigma=0.6, Vs30=760.0,
+                       n_M=30, n_R=40):
+    """
+    简化 PSHA：单个点源。
+    y_arr:  PGA 阈值数组（m/s²）
+    nu:     震源年发生率
+    M_range, R_range: 震级与距离范围
+    sigma:  GMPE 总对数标准差
+    """
+    # 网格离散
+    M_edges = np.linspace(M_range[0], M_range[1], n_M + 1)
+    R_edges = np.linspace(R_range[0], R_range[1], n_R + 1)
+    M_mid = 0.5 * (M_edges[:-1] + M_edges[1:])
+    R_mid = 0.5 * (R_edges[:-1] + R_edges[1:])
+
+    # 震级分布（截断 GR，b=1）
+    b = 1.0
+    beta = b * np.ln10 if hasattr(np, 'ln10') else b * np.log(10)
+    fM = beta * np.exp(-beta * (M_mid - M_range[0])) / \
+         (1 - np.exp(-beta * (M_range[1] - M_range[0])))
+    dM = M_edges[1] - M_edges[0]
+    fM = fM * dM
+
+    # 距离分布（点源，面积均匀，f_R(r) ∝ 2r）
+    fR = 2 * R_mid / (R_range[1]**2 - R_range[0]**2)
+    dR = R_edges[1] - R_edges[0]
+    fR = fR * dR
+
+    # 危险性曲线
+    lambda_arr = np.zeros(len(y_arr))
+    for i, y in enumerate(y_arr):
+        ln_y = np.log(y)
+        total = 0.0
+        for j, m in enumerate(M_mid):
+            for k, r in enumerate(R_mid):
+                ln_median = gmpe_ln_pga(m, r, Vs30)
+                # P[Y > y | m, r] = 1 - Φ((ln y - ln median) / σ)
+                prob = 1.0 - norm.cdf((ln_y - ln_median) / sigma)
+                total += prob * fM[j] * fR[k]
+        lambda_arr[i] = nu * total
+
+    return lambda_arr
+
+
+if __name__ == "__main__":
+    # ---- 参数 ----
+    nu = 0.01         # 年发生率
+    T_return = 475.0  # 重现期
+    lambda_target = 1.0 / T_return
+
+    # ---- 计算危险性曲线 ----
+    y_arr = np.logspace(np.log10(0.001), np.log10(2.0), 50)
+    lambda_arr = psha_point_source(y_arr, nu=nu, sigma=0.6)
+
+    # ---- 找设计 PGA（λ = 1/475） ----
+    idx = np.argmin(np.abs(lambda_arr - lambda_target))
+    PGA_design = y_arr[idx]
+    print(f"震源年发生率 ν = {nu}")
+    print(f"重现期 T_R = {T_return} 年 → λ = {lambda_target:.6f}")
+    print(f"设计 PGA（475 年重现期）= {PGA_design:.4f} m/s² "
+          f"= {PGA_design/9.81:.4f} g")
+
+    # ---- 绘图 ----
+    plt.figure(figsize=(10, 5))
+    plt.loglog(y_arr, lambda_arr, "b-", label="危险性曲线")
+    plt.axhline(lambda_target, color="red", linestyle="--",
+                label=f"λ = 1/475")
+    plt.axvline(PGA_design, color="green", linestyle=":",
+                label=f"PGA = {PGA_design:.3f} m/s²")
+    plt.xlabel("PGA / (m/s²)")
+    plt.ylabel("年超越概率 λ")
+    plt.title("PSHA 危险性曲线（简化点源）")
+    plt.legend()
+    plt.grid(True, which="both", alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 参数研究：σ 的影响 ----
+    print("\nσ 对设计 PGA 的影响：")
+    print(f"{'σ':>6}{'设计 PGA (m/s²)':>20}")
+    for sigma in [0.4, 0.5, 0.6, 0.7, 0.8]:
+        lam = psha_point_source(y_arr, nu=nu, sigma=sigma)
+        idx = np.argmin(np.abs(lam - lambda_target))
+        print(f"{sigma:>6.1f}{y_arr[idx]:>20.4f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到危险性曲线随 $\sigma$ 增大而"抬高"——
+            残差标准差越大，相同 PGA 水平的超越概率越高，
+            对应的设计 PGA 也越大。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>PSHA 的核心思想</strong>：把所有"不确定性"
+              都转化为"概率"，然后积分。
+              震源位置不确定 → 距离的概率分布；
+              震级不确定 → 震级的概率分布；
+              地震动预测不确定 → GMPE 的残差分布。
+              最终的输出是<strong>年超越概率曲线</strong>——
+              这是工程地震学最核心的产物。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="uhs">
+          <h2><span class="num">05</span>一致危险性谱</h2>
+
+          <h3>定义</h3>
+          <p>
+            一致危险性谱（Uniform Hazard Spectrum，UHS）
+            是在每个周期上取相同超越概率对应的谱加速度，
+            组合成的反应谱。
+          </p>
+
+          <p>
+            具体步骤：
+          </p>
+          <ol class="steps">
+            <li>对每个周期 $T_i$，用 PSHA 计算 $S_a(T_i)$ 的危险性曲线。</li>
+            <li>对每个周期，取目标超越概率（如 10%/50 年）对应的 $S_a$ 值。</li>
+            <li>把所有这些 $(T_i, S_a(T_i))$ 连成曲线，就是 UHS。</li>
+          </ol>
+
+          <h3>UHS 的特点</h3>
+          <p>
+            UHS 的关键特征：
+          </p>
+          <ul>
+            <li><strong>每个周期</strong>的年超越概率相同（"一致"）。</li>
+            <li>通常对应"50 年超越概率 2%"或"10%"等目标。</li>
+            <li>是抗震设计谱的<strong>基础</strong>（规范设计谱由 UHS 简化得到）。</li>
+          </ul>
+
+          <h3>UHS 的"解聚"问题</h3>
+          <p>
+            UHS 有一个重要的局限：
+            <strong>不同周期上，贡献最大的震级-距离组合可能不同</strong>。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>周期</th><th>主导震级</th><th>主导距离</th><th>物理意义</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>短周期（0.1~0.3 s）</td>
+                  <td>小震（M 5~6）</td>
+                  <td>近场（10~30 km）</td>
+                  <td>高频，由小震近场贡献</td>
+                </tr>
+                <tr>
+                  <td>中周期（0.5~1.0 s）</td>
+                  <td>中震（M 6~7）</td>
+                  <td>中距（30~80 km）</td>
+                  <td>过渡区</td>
+                </tr>
+                <tr>
+                  <td>长周期（> 2 s）</td>
+                  <td>大震（M 7~8）</td>
+                  <td>远场（> 80 km）</td>
+                  <td>低频，由大震远场贡献</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            这意味着 UHS 并不对应"某一个真实地震"的谱，
+            而是多个不同地震的组合。
+            对需要一致地震动输入的工程问题（如非线性时程分析），
+            必须做<strong>解聚分析</strong>找出主导的震级-距离组合，
+            再选取或合成对应的地震动。
+          </p>
+
+          <h3>条件均值谱（CMS）</h3>
+          <p>
+            为解决 UHS 的"非一致性"问题，Baker（2011）提出条件均值谱（CMS）：
+            给定某周期 $T^*$ 的谱加速度 $S_a(T^*)$，
+            其他周期的条件均值谱为：
+          </p>
+
+          $$ \mu_{\ln S_a(T_i) \mid S_a(T^*)} = \mu_{\ln S_a(T_i)}
+             + \rho(T_i, T^*) \sigma_{\ln S_a(T_i)}
+             \cdot \frac{\ln S_a(T^*) - \mu_{\ln S_a(T^*)}}{\sigma_{\ln S_a(T^*)}} $$
+
+          <p>
+            其中 $\rho(T_i, T^*)$ 是两个周期之间的相关系数。
+            CMS 给出的是"结构主要周期确定时的条件谱"，
+            更符合结构响应的物理意义。
+          </p>
+
+          <p>
+            CMS 在现代性能化抗震设计中得到广泛应用，
+           特别是作为非线性时程分析的输入谱。
+          </p>
+
+          <h3>Python 示例：简化的 UHS 计算</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>uhs.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+
+def gmpe_ln_sa(M, R, T, Vs30=760.0):
+    """
+    简化的谱加速度 GMPE（示意）。
+    ln(Sa) = c0(T) + c1(T)·M + c2(T)·ln(R + c3(T)) + c4(T)·R + c5(T)·ln(Vs30/760)
+    其中系数随周期变化（此处简化形式）。
+    """
+    # 周期相关的系数（简化）
+    c0 = -2.0 - 0.5 * np.log(T) if T > 0.1 else -2.0
+    c1 = 1.0
+    c2 = -1.0
+    c3 = 10.0
+    c4 = -0.002
+    c5 = -0.4
+    return c0 + c1 * M + c2 * np.log(R + c3) + c4 * R + c5 * np.log(Vs30 / 760.0)
+
+
+def psha_sa(y_arr, T, nu=0.01, M_range=(4.5, 7.5),
+            R_range=(5.0, 200.0), sigma=0.6, Vs30=760.0,
+            n_M=25, n_R=30):
+    """对给定周期 T 计算 Sa 的危险性曲线"""
+    M_edges = np.linspace(M_range[0], M_range[1], n_M + 1)
+    R_edges = np.linspace(R_range[0], R_range[1], n_R + 1)
+    M_mid = 0.5 * (M_edges[:-1] + M_edges[1:])
+    R_mid = 0.5 * (R_edges[:-1] + R_edges[1:])
+
+    b = 1.0
+    beta = b * np.log(10)
+    fM = beta * np.exp(-beta * (M_mid - M_range[0])) / \
+         (1 - np.exp(-beta * (M_range[1] - M_range[0])))
+    fM *= (M_edges[1] - M_edges[0])
+
+    fR = 2 * R_mid / (R_range[1]**2 - R_range[0]**2)
+    fR *= (R_edges[1] - R_edges[0])
+
+    lambda_arr = np.zeros(len(y_arr))
+    for i, y in enumerate(y_arr):
+        ln_y = np.log(y)
+        total = 0.0
+        for j, m in enumerate(M_mid):
+            for k, r in enumerate(R_mid):
+                ln_med = gmpe_ln_sa(m, r, T, Vs30)
+                prob = 1.0 - norm.cdf((ln_y - ln_med) / sigma)
+                total += prob * fM[j] * fR[k]
+        lambda_arr[i] = nu * total
+    return lambda_arr
+
+
+def compute_uhs(periods, T_return=475.0, nu=0.01):
+    """对多个周期计算 UHS"""
+    lambda_target = 1.0 / T_return
+    Sa_uhs = np.zeros(len(periods))
+
+    for i, T in enumerate(periods):
+        # 阈值网格（周期相关，长周期 Sa 更大）
+        y_arr = np.logspace(np.log10(0.001), np.log10(5.0), 60)
+        lam = psha_sa(y_arr, T, nu=nu)
+        idx = np.argmin(np.abs(lam - lambda_target))
+        Sa_uhs[i] = y_arr[idx]
+
+    return Sa_uhs
+
+
+if __name__ == "__main__":
+    periods = np.array([0.1, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0])
+    Sa_uhs = compute_uhs(periods, T_return=475.0, nu=0.01)
+
+    print("一致危险性谱（T_R = 475 年）：")
+    print(f"{'T (s)':>8}{'Sa (m/s²)':>15}")
+    for T, Sa in zip(periods, Sa_uhs):
+        print(f"{T:>8.2f}{Sa:>15.4f}")
+
+    # ---- 绘图 ----
+    plt.figure(figsize=(10, 5))
+    plt.plot(periods, Sa_uhs, "o-", label="UHS (475 年)")
+    plt.xlabel("周期 T / s")
+    plt.ylabel("谱加速度 Sa / (m/s²)")
+    plt.title("一致危险性谱（示意）")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.grid(True, which="both", alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            UHS 的典型形状：短周期下降、中周期平台、长周期快速衰减，
+            与规范设计谱的三段式一致。
+          </p>
+        </section>
+
+        <section id="selection">
+          <h2><span class="num">06</span>设计地震动选取</h2>
+
+          <h3>三种设计地震动</h3>
+          <p>
+            工程设计中常见三种设计地震动：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>来源</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>规范设计谱</td>
+                  <td>规范给定的标准化谱</td>
+                  <td>常规结构设计</td>
+                </tr>
+                <tr>
+                  <td>场地设计谱</td>
+                  <td>PSHA + 场地反应分析</td>
+                  <td>重要结构、特殊场地</td>
+                </tr>
+                <tr>
+                  <td>设计地震动时程</td>
+                  <td>实际记录 + 人工合成</td>
+                  <td>时程分析</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>选波的三条准则</h3>
+          <p>
+            选取实际强震记录作为设计地震动时，需满足：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>准则</th><th>要求</th><th>常用判据</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>幅值匹配</td>
+                  <td>PGA / PGV 与设计水平一致</td>
+                  <td>PGA 差 &lt; 20%</td>
+                </tr>
+                <tr>
+                  <td>频谱匹配</td>
+                  <td>在结构主要周期段，谱形状与设计谱匹配</td>
+                  <td>SSE &lt; 10%</td>
+                </tr>
+                <tr>
+                  <td>持时匹配</td>
+                  <td>有效持时覆盖结构主要响应时段</td>
+                  <td>$t_{5-95}$ 与目标一致</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            频谱匹配常用指标是<strong>SSE（Sum of Squared Errors）</strong>：
+          </p>
+
+          $$ \mathrm{SSE} = \sum_i \left[ \ln S_a^{\text{记录}}(T_i)
+             - \ln S_a^{\text{目标}}(T_i) \right]^2 $$
+
+          <p>
+            通常在结构主要周期段（如 $0.2T_1$ 到 $2T_1$）计算，
+            越小越好。
+          </p>
+
+          <h3>选波数量</h3>
+          <p>
+            各国规范对选波数量的要求：
+          </p>
+          <ul>
+            <li><strong>中国 GB 50011</strong>：至少 2 组实际 + 1 组人工，共 3 组。取包络。</li>
+            <li><strong>美国 ASCE 7</strong>：至少 3 组，取最大值；至少 7 组，取平均值。</li>
+            <li><strong>欧洲 EC8</strong>：至少 3 组，取最大值；至少 7 组，取平均值。</li>
+          </ul>
+
+          <p>
+            为什么 7 组？统计上，7 组样本的平均值标准误差约为样本标准差的 38%，
+            已经接近工程可接受水平。这是统计推断与工程实践的折中。
+          </p>
+
+          <h3>幅值调整</h3>
+          <p>
+            选出记录后，需要调整幅值以匹配设计水平。常用方法：
+          </p>
+          <ul>
+            <li><strong>单一缩放系数</strong>：把整条记录乘以 $k$，使 PGA 或某个周期 $S_a$ 匹配目标。简单、常用。</li>
+            <li><strong>频谱匹配</strong>：在频域内调整，使整个反应谱匹配目标。更精细，但可能引入非物理成分。</li>
+            <li><strong>小波调整</strong>：用时频分析调整，保持时域特性。</li>
+          </ul>
+
+          <p>
+            常用的单一缩放系数：
+          </p>
+
+          $$ k = \frac{S_a^{\text{目标}}(T_1)}
+             {S_a^{\text{记录}}(T_1)} $$
+
+          <p>
+            其中 $T_1$ 是结构第一阶自振周期。
+            这种调整使记录在结构主要周期处与设计谱匹配。
+          </p>
+
+          <h3>人工合成地震动</h3>
+          <p>
+            当实际记录不足或需要特定谱形时，人工合成。常用方法：
+          </p>
+          <ul>
+            <li><strong>三角级数法</strong>：用正弦波叠加，迭代调整幅值谱与相位。</li>
+            <li><strong>随机振动法</strong>：用目标功率谱生成平稳随机过程，乘以包络函数。</li>
+            <li><strong>经验格林函数法</strong>：用小震记录作为经验格林函数，通过叠加合成大震。</li>
+            <li><strong>物理模拟法</strong>：用震源模型 + 波传播模拟合成（如有限断层模型）。</li>
+          </ul>
+
+          <p>
+            三角级数法的基本形式：
+          </p>
+
+          $$ a(t) = f(t) \sum_{k=1}^{n} A_k \cos(\omega_k t + \varphi_k) $$
+
+          <p>
+            其中 $f(t)$ 是包络函数（如指数上升-下降型），
+            $A_k$ 由目标谱确定，$\varphi_k$ 是随机相位。
+          </p>
+
+          <h3>Python 示例：选波与频谱匹配</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>selection.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def target_spectrum(T, PGA=0.3, Tg=0.4):
+    """
+    简化设计谱（三段式）。
+    T:    周期数组 s
+    PGA:  峰值加速度 g
+    Tg:   特征周期 s
+    """
+    Sa = np.zeros_like(T)
+    for i, Ti in enumerate(T):
+        if Ti < 0.1:
+            Sa[i] = PGA * (0.45 + 5.5 * Ti)
+        elif Ti <= Tg:
+            Sa[i] = PGA * 2.25
+        elif Ti <= 5 * Tg:
+            Sa[i] = PGA * 2.25 * (Tg / Ti)
+        else:
+            Sa[i] = PGA * 2.25 * (Tg / (5 * Tg)) * (5 * Tg / Ti)
+    return Sa
+
+
+def sdof_sa(ag, dt, T, zeta=0.05):
+    """计算一条记录的 Sa(T)"""
+    from scipy.integrate import solve_ivp
+
+    omega = 2 * np.pi / T
+    c = 2 * zeta * omega
+
+    def rhs(t, y):
+        u, v = y
+        # 线性插值 ag(t)
+        idx = int(t / dt)
+        idx = min(idx, len(ag) - 1)
+        return [v, -c * v - omega**2 * u - ag[idx]]
+
+    sol = solve_ivp(rhs, [0, len(ag) * dt], [0, 0],
+                    max_step=dt, dense_output=True)
+    n = len(ag)
+    t_arr = np.arange(n) * dt
+    u_arr = sol.sol(t_arr)[0]
+    a_rel = np.gradient(np.gradient(u_arr, dt), dt)
+    a_abs = a_rel + ag
+    return np.max(np.abs(a_abs))
+
+
+def compute_spectrum(ag, dt, periods, zeta=0.05):
+    """计算记录的反应谱"""
+    Sa = np.zeros_like(periods)
+    for i, T in enumerate(periods):
+        Sa[i] = sdof_sa(ag, dt, T, zeta)
+    return Sa
+
+
+def select_and_scale(records, dt, periods, target_Sa, T1=1.0):
+    """
+    从若干记录中选出与目标谱最匹配的一条，并缩放。
+    records: 记录列表 [(name, ag), ...]
+    T1:      结构主要周期 s
+    """
+    # 找目标周期 T1 对应的目标 Sa
+    idx_T1 = np.argmin(np.abs(periods - T1))
+    Sa_target_T1 = target_Sa[idx_T1]
+
+    results = []
+    for name, ag in records:
+        Sa = compute_spectrum(ag, dt, periods)
+        # 缩放系数
+        k = Sa_target_T1 / Sa[idx_T1]
+        ag_scaled = ag * k
+        Sa_scaled = Sa * k
+
+        # SSE（在 0.2T1 ~ 2T1 范围）
+        mask = (periods >= 0.2 * T1) & (periods <= 2 * T1)
+        sse = np.sum((np.log(Sa_scaled[mask]) -
+                      np.log(target_Sa[mask]))**2)
+        results.append({
+            "name": name,
+            "scale": k,
+            "sse": sse,
+            "Sa": Sa_scaled,
+            "ag": ag_scaled,
+        })
+
+    results.sort(key=lambda x: x["sse"])
+    return results
+
+
+if __name__ == "__main__":
+    # ---- 生成几条"记录" ----
+    rng = np.random.default_rng(42)
+    dt = 0.01
+    t = np.arange(0, 40, dt)
+
+    records = []
+    for name, f_dom in [("A", 1.0), ("B", 2.0), ("C", 3.5)]:
+        ag = np.zeros_like(t)
+        for f, amp in [(0.5, 0.5), (f_dom, 1.0), (5.0, 0.4)]:
+            ag += amp * np.sin(2 * np.pi * f * t + rng.uniform(0, 2*np.pi))
+        envelope = np.exp(-((t - 12) ** 2) / (2 * 5.0**2))
+        ag *= envelope
+        ag *= 3.0
+        records.append((name, ag))
+
+    # ---- 目标谱 ----
+    periods = np.logspace(np.log10(0.05), np.log10(4.0), 60)
+    target_Sa = target_spectrum(periods, PGA=0.3, Tg=0.4)
+
+    # ---- 选波 ----
+    results = select_and_scale(records, dt, periods, target_Sa, T1=1.0)
+
+    print("选波结果（按 SSE 排序）：")
+    print(f"{'记录':>6}{'缩放系数':>12}{'SSE':>12}")
+    for r in results:
+        print(f"{r['name']:>6}{r['scale']:>12.4f}{r['sse']:>12.4f}")
+
+    # ---- 绘图 ----
+    plt.figure(figsize=(12, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(periods, target_Sa, "k--", linewidth=2, label="目标谱")
+    for r in results:
+        plt.plot(periods, r["Sa"], label=f"记录 {r['name']} (k={r['scale']:.2f})")
+    plt.xlabel("周期 T / s")
+    plt.ylabel("Sa / g")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.title("选波与频谱匹配")
+    plt.legend()
+    plt.grid(True, which="both", alpha=0.3)
+
+    plt.subplot(1, 2, 2)
+    plt.plot(t, results[0]["ag"])
+    plt.xlabel("t / s")
+    plt.ylabel("加速度 / (m/s²)")
+    plt.title(f"最优记录 {results[0]['name']} 的加速度时程")
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：三条记录被自动缩放并排序，
+            SSE 最小的记录在结构主要周期段与目标谱匹配最好。
+          </p>
+        </section>
+
+        <section id="simulation">
+          <h2><span class="num">07</span>地震动模拟</h2>
+
+          <h3>为什么需要模拟</h3>
+          <p>
+            在以下情形，实际记录不足或不适用，需要模拟地震动：
+          </p>
+          <ul>
+            <li>缺少近场大震记录（如 Mw > 7 的断层距 &lt; 20 km 记录）。</li>
+            <li>需要特定震级-距离-场地组合的记录。</li>
+            <li>需要大量样本进行概率分析。</li>
+            <li>需要与目标谱精确匹配的时程。</li>
+            <li>研究震源或路径效应对地震动的影响。</li>
+          </ul>
+
+          <h3>模拟方法分类</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方法</th><th>原理</th><th>优点</th><th>缺点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>经验格林函数法</td>
+                  <td>小震记录叠加合成大震</td>
+                  <td>保留真实路径与场地效应</td>
+                  <td>需要合适的小震记录</td>
+                </tr>
+                <tr>
+                  <td>随机振动法</td>
+                  <td>白噪声过滤 + 包络</td>
+                  <td>简单、快速</td>
+                  <td>缺少物理相位信息</td>
+                </tr>
+                <tr>
+                  <td>确定性方法</td>
+                  <td>震源 + 波传播数值模拟</td>
+                  <td>物理机制清晰</td>
+                  <td>需要三维速度结构，计算量大</td>
+                </tr>
+                <tr>
+                  <td>混合方法</td>
+                  <td>低频确定性 + 高频随机</td>
+                  <td>覆盖全频段</td>
+                  <td>方法复杂，参数多</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>随机振动法（Boore 方法）</h3>
+          <p>
+            随机振动法是最广泛使用的地震动模拟方法之一。
+            基本流程：
+          </p>
+          <ol class="steps">
+            <li>生成白噪声时程。</li>
+            <li>用震源谱 $S(f)$、路径效应 $P(f)$、场地效应 $G(f)$ 过滤。</li>
+            <li>乘以时间包络函数。</li>
+            <li>调整幅值使与目标 PGA 一致。</li>
+          </ol>
+
+          <p>
+            震源谱通常用 $\omega^2$ 模型：
+          </p>
+
+          $$ S(f) = \frac{M_0}{1 + (f / f_c)^2} $$
+
+          <p>
+            其中 $M_0$ 是地震矩，$f_c$ 是拐角频率：
+          </p>
+
+          $$ f_c = 4.9 \times 10^6 \cdot V_s \cdot
+             \left(\frac{\Delta\sigma}{M_0}\right)^{1/3} $$
+
+          <p>
+            $\Delta\sigma$ 是应力降（bar），$M_0$ 单位 dyn·cm。
+          </p>
+
+          <p>
+            路径效应：
+          </p>
+
+          $$ P(f) = \frac{1}{R} \exp\!\left(-\frac{\pi f R}{Q(f) V_s}\right) $$
+
+          <p>
+            其中 $Q(f)$ 是品质因子，反映介质的非弹性衰减。
+          </p>
+
+          <h3>经验格林函数法</h3>
+          <p>
+            用小震记录作为经验格林函数，通过叠加合成大震：
+          </p>
+
+          $$ A_{\text{main}}(t) = \sum_{i} \sum_{j}
+             \frac{r_{\text{small}}}{r_{\text{main}}}
+             \cdot A_{\text{small}}(t - \Delta t_{ij}) $$
+
+          <p>
+            其中 $\Delta t_{ij}$ 是子源相对于破裂起始的时间延迟。
+            该方法能保留真实的路径与场地效应，
+            广泛用于近场大震模拟。
+          </p>
+
+          <h3>确定性方法</h3>
+          <p>
+            从震源模型出发，用数值方法求解波传播方程，
+            合成地表地震动。常用：
+          </p>
+          <ul>
+            <li><strong>有限差分法</strong>：规则网格，适合大规模模拟。</li>
+            <li><strong>谱元法</strong>：高精度，适合复杂几何。</li>
+            <li><strong>边界元法</strong>：适合分层介质。</li>
+            <li><strong>有限断层模型</strong>：把断层离散为子断层，叠加各子源的贡献。</li>
+          </ul>
+
+          <h3>Python 示例：随机振动法模拟</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>simulation.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def envelope(t, t_rise=2.0, t_flat=8.0, t_decay=5.0):
+    """
+    时间包络函数（Jennings 型）：
+      - 0 到 t_rise：指数上升
+      - t_rise 到 t_flat：常数 1
+      - 之后：指数衰减
+    """
+    env = np.zeros_like(t)
+    env[t < t_rise] = (t[t < t_rise] / t_rise) ** 2
+    env[(t >= t_rise) & (t < t_flat)] = 1.0
+    env[t >= t_flat] = np.exp(-(t[t >= t_flat] - t_flat) / t_decay)
+    return env
+
+
+def source_spectrum(f, M0, fc):
+    """ω² 震源谱"""
+    return M0 / (1 + (f / fc)**2)
+
+
+def path_effect(f, R, Q0=300.0, Vs=3500.0):
+    """路径效应：几何衰减 + 非弹性衰减"""
+    return np.exp(-np.pi * f * R / (Q0 * Vs)) / R
+
+
+def simulate_stochastic(Mw, R, Vs30=500.0, dt=0.01, t_end=30.0,
+                        stress_drop=100.0, Q0=300.0, Vs=3500.0,
+                        seed=42):
+    """
+    随机振动法模拟地震动（简化版）。
+    Mw:  矩震级
+    R:   距离 km
+    stress_drop: 应力降 bar
+    """
+    rng = np.random.default_rng(seed)
+    n = int(t_end / dt)
+    t = np.arange(n) * dt
+
+    # 地震矩（dyn·cm）
+    M0 = 10 ** (1.5 * (Mw + 10.7))
+
+    # 拐角频率（简化）
+    fc = 4.9e6 * Vs * (stress_drop / M0) ** (1/3)
+
+    # 频率轴
+    freqs = np.fft.rfftfreq(n, d=dt)
+    omega = 2 * np.pi * freqs
+
+    # 震源谱
+    S = source_spectrum(freqs, M0, fc)
+
+    # 路径效应
+    P = path_effect(freqs, R, Q0, Vs)
+
+    # 场地效应（简化：高频放大）
+    site_amp = 1.0 + 0.5 * np.exp(-freqs / 5.0) * (Vs30 / 500.0)**(-0.3)
+
+    # 总谱
+    total_spec = S * P * site_amp
+
+    # 生成白噪声，在频域滤波
+    white = rng.normal(0, 1, len(freqs))
+    filtered = white * np.sqrt(total_spec)
+
+    # IFFT
+    ag = np.fft.irfft(filtered, n=n)
+
+    # 归一化
+    ag = ag / np.std(ag)
+
+    # 应用时间包络
+    env = envelope(t, t_rise=2.0, t_flat=8.0, t_decay=5.0)
+    ag = ag * env
+
+    # 归一化到目标 PGA（由 GMPE 给出，这里简化）
+    target_pga = 10 ** (0.5 * Mw - 1.0 * np.log10(R + 10) - 0.002 * R + 1.5) / 100.0
+    ag = ag / np.max(np.abs(ag)) * target_pga
+
+    return t, ag
+
+
+if __name__ == "__main__":
+    # ---- 模拟不同震级与距离 ----
+    fig, axes = plt.subplots(2, 2, figsize=(13, 7))
+    axes = axes.flatten()
+
+    cases = [(6.0, 20.0), (6.5, 30.0), (7.0, 50.0), (7.5, 100.0)]
+
+    for ax, (Mw, R) in zip(axes, cases):
+        t, ag = simulate_stochastic(Mw, R, seed=int(Mw * 10 + R))
+        pga = np.max(np.abs(ag))
+        ax.plot(t, ag, linewidth=0.7)
+        ax.set_title(f"Mw = {Mw}, R = {R} km\nPGA = {pga:.3f} m/s²")
+        ax.set_xlabel("t / s")
+        ax.set_ylabel("加速度 / (m/s²)")
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 参数研究：应力降对 PGA 的影响 ----
+    print("应力降对 PGA 的影响（Mw=6.5, R=30 km）：")
+    print(f"{'应力降 (bar)':>15}{'PGA (m/s²)':>15}")
+    for ds in [30, 50, 100, 200]:
+        t, ag = simulate_stochastic(6.5, 30, stress_drop=ds, seed=1)
+        print(f"{ds:>15}{np.max(np.abs(ag)):>15.4f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>震级越大、距离越近，PGA 越高。</li>
+            <li>应力降越大，高频成分越丰富，PGA 越高。</li>
+            <li>包络形状决定了地震动的"三段式"特征。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>模拟与记录的互补关系</strong>：
+              实际记录是<strong>最真实</strong>的地震动样本，
+              但数量有限、覆盖面有限；
+              模拟地震动可以<strong>按需生成</strong>任意震级-距离-场地组合，
+              但物理真实性依赖模型假设。
+              工程实践中通常两者结合：
+              记录用于标定与验证，模拟用于补充与扩展。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>规范中的工程地震学</h3>
+          <p>
+            各国抗震设计规范都包含工程地震学的核心成果：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>规范</th><th>设计地震动</th><th>来源</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>中国 GB 50011</td>
+                  <td>地震影响系数曲线</td>
+                  <td>全国地震区划图 + 场地分类</td>
+                </tr>
+                <tr>
+                  <td>美国 ASCE 7</td>
+                  <td>MCER 谱</td>
+                  <td>USGS 全国地震危险性图</td>
+                </tr>
+                <tr>
+                  <td>欧洲 EC8</td>
+                  <td>Type 1 / Type 2 谱</td>
+                  <td>欧洲地震危险性图</td>
+                </tr>
+                <tr>
+                  <td>日本 BSL</td>
+                  <td>设计谱 + 地震波</td>
+                  <td>J-SHIS 全国危险性图</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>地震区划图</h3>
+          <p>
+            地震区划图是工程地震学最直接的产物，
+            把全国地震危险性以地图形式呈现：
+          </p>
+          <ul>
+            <li><strong>中国地震动参数区划图</strong>（GB 18306）：给出全国各地的 PGA、反应谱特征周期。</li>
+            <li><strong>USGS National Seismic Hazard Maps</strong>：给出 50 年超越概率 2%、10% 的 PGA、Sa。</li>
+            <li><strong>欧洲 ESRM20</strong>：2020 版欧洲地震危险性模型。</li>
+            <li><strong>全球地震危险性图</strong>（GSHAP、GEM）：全球尺度的危险性评估。</li>
+          </ul>
+
+          <h3>重大工程场地地震安全性评价</h3>
+          <p>
+            核电站、大坝、超高层、跨海大桥等重大工程必须做场地地震安全性评价。
+            工作流程：
+          </p>
+          <ol class="steps">
+            <li>区域地震构造与地震活动性研究。</li>
+            <li>近场地震构造与断层活动性鉴定。</li>
+            <li>地震危险性分析（PSHA + DSHA）。</li>
+            <li>场地地震动参数确定（含场地效应）。</li>
+            <li>设计地震动时程合成。</li>
+            <li>地震地质灾害评估（液化、滑坡、地表破裂）。</li>
+          </ol>
+
+          <h3>工程应用场景</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>工程类型</th><th>关键地震动参数</th><th>特殊要求</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>高层建筑</td>
+                  <td>PGA、长周期谱</td>
+                  <td>考虑长周期地震动、SSI</td>
+                </tr>
+                <tr>
+                  <td>大跨桥梁</td>
+                  <td>多点多维地震动</td>
+                  <td>空间相干性、行波效应</td>
+                </tr>
+                <tr>
+                  <td>核电站</td>
+                  <td>PGA、UHS、MCE</td>
+                  <td>超高安全裕度、DSHA + PSHA</td>
+                </tr>
+                <tr>
+                  <td>大坝</td>
+                  <td>PGA、PGA 竖向分量</td>
+                  <td>动水压力、坝-水-地基耦合</td>
+                </tr>
+                <tr>
+                  <td>地铁隧道</td>
+                  <td>地下地震动、相对位移</td>
+                  <td>地下结构响应、横向剪切</td>
+                </tr>
+                <tr>
+                  <td>生命线工程</td>
+                  <td>PGV、PGA</td>
+                  <td>网络可靠性、多系统耦合</td>
+                </tr>
+                <tr>
+                  <td>海上平台</td>
+                  <td>PGA、PGV、谱</td>
+                  <td>海床地震动、土-桩-结构</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与地震工程的分工</h3>
+          <p>
+            工程地震学与地震工程的分工：
+          </p>
+          <ul>
+            <li><strong>工程地震学</strong>：给出"设计地震动"——
+              场地未来可能遭遇的地震动参数与时程。</li>
+            <li><strong>地震工程</strong>：根据设计地震动，计算结构响应，
+              进行抗震设计。</li>
+          </ul>
+
+          <p>
+            两者衔接点是<strong>设计地震动</strong>：
+          </p>
+
+          $$ \text{地震危险性} \xrightarrow{\text{工程地震学}}
+             \text{设计地震动} \xrightarrow{\text{地震工程}}
+             \text{结构响应与设计} $$
+
+          <h3>未来方向</h3>
+          <ul>
+            <li><strong>物理 GMPE</strong>：从统计回归走向物理模拟驱动。</li>
+            <li><strong>机器学习</strong>：用深度学习改进 GMPE 与危险性分析。</li>
+            <li><strong>多源数据融合</strong>：强震记录 + GPS + InSAR + DAS。</li>
+            <li><strong>实时危险性更新</strong>：与地震预警结合，震后快速更新危险性。</li>
+            <li><strong>气候变化与地震</strong>：考虑海平面上升、冰川消融对地震危险性的影响。</li>
+            <li><strong>城市尺度危险性</strong>：从场地点估计走向城市尺度的空间危险性。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程地震学与你的项目</strong>：
+              你主页上的"地震危险性分析"项目正好对应这份笔记。
+              项目如果实现了 PSHA、GMPE 或 UHS 的功能，
+              可以把这份笔记作为<strong>理论文档</strong>，
+              从项目页面链接到对应章节。
+              "地震动参数分析"项目也可以与 GMPE 章节关联。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>地震危险性分析</strong>：DSHA 给出最坏情况，PSHA 给出概率曲线；工程中两者常并用。</li>
+              <li><strong>震源模型</strong>：断层源、面源、点源；GR 关系 + 截断分布 + 距离分布 + 逻辑树。</li>
+              <li><strong>GMPE</strong>：从 $M$、$R$、$V_{S30}$ 预测地震动；残差分解为事件间与事件内。</li>
+              <li><strong>PSHA 公式</strong>：年发生率 = 年发生率 × 震级分布 × 距离分布 × 条件超越概率。</li>
+              <li><strong>重现期</strong>：$\lambda = 1/T_R$；50 年 10% 对应 475 年重现期。</li>
+              <li><strong>一致危险性谱</strong>：每个周期相同超越概率；不同周期的主导震级-距离不同。</li>
+              <li><strong>设计地震动选取</strong>：幅值、频谱、持时三准则；7 条记录取平均。</li>
+              <li><strong>地震动模拟</strong>：随机振动法、经验格林函数法、确定性方法、混合方法。</li>
+              <li><strong>工程应用</strong>：规范设计谱、地震区划图、场地地震安全性评价、重大工程。</li>
+            </ul>
+          </div>
+
+          <h3>关键公式速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>公式</th><th>含义</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$\log_{10} N(M) = a - bM$</td>
+                  <td>古登堡-里希特关系</td>
+                  <td>震级频度分布</td>
+                </tr>
+                <tr>
+                  <td>$\lambda(Y > y) = \sum_i \nu_i \iint P \cdot f_M \cdot f_R$</td>
+                  <td>PSHA 主公式</td>
+                  <td>危险性曲线</td>
+                </tr>
+                <tr>
+                  <td>$T_R = 1/\lambda$</td>
+                  <td>重现期与年超越概率</td>
+                  <td>设防水平转换</td>
+                </tr>
+                <tr>
+                  <td>$\ln Y = f(M, R, V_{S30}) + \varepsilon$</td>
+                  <td>GMPE 形式</td>
+                  <td>地震动预测</td>
+                </tr>
+                <tr>
+                  <td>$\sigma_{\text{total}} = \sqrt{\tau^2 + \phi^2}$</td>
+                  <td>总残差标准差</td>
+                  <td>GMPE 不确定性</td>
+                </tr>
+                <tr>
+                  <td>$\mu_{\ln S_a(T_i) \mid S_a(T^*)}$</td>
+                  <td>条件均值谱</td>
+                  <td>CMS 计算</td>
+                </tr>
+                <tr>
+                  <td>$\mathrm{SSE} = \sum (\ln S_a^{\text{rec}} - \ln S_a^{\text{target}})^2$</td>
+                  <td>频谱匹配误差</td>
+                  <td>选波评价</td>
+                </tr>
+                <tr>
+                  <td>$f_c = 4.9\times10^6 V_s (\Delta\sigma/M_0)^{1/3}$</td>
+                  <td>拐角频率</td>
+                  <td>随机振动法模拟</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>定量地震学</strong>（地震学）：震源物理、矩震级、震源谱。</li>
+            <li><strong>地震动谱分析入门</strong>（地震学）：反应谱与傅里叶谱。</li>
+            <li><strong>强震动观测</strong>（地震学）：GMPE 拟合的数据来源。</li>
+            <li><strong>土动力学</strong>（地震学）：场地效应、$V_{S30}$、放大因子。</li>
+            <li><strong>地震工程</strong>（地震学）：设计地震动的工程应用。</li>
+            <li><strong>地震预警</strong>（地震学）：实时 GMPE 与地震动预测。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：概率积分、逻辑树、残差分析。</li>
+            <li><strong>偏微分方程</strong>（数学）：波传播数值模拟。</li>
+            <li><strong>数值分析</strong>（数学）：PSHA 数值积分、模拟算法。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Cornell, "Engineering seismic risk analysis" (1968) — PSHA 开山之作</li>
+            <li>McGuire, <em>Seismic Hazard and Risk Analysis</em> — PSHA 权威教材</li>
+            <li>Baker, <em>Seismic Hazard and Risk Analysis</em> — 现代 PSHA 教材</li>
+            <li>Boore &amp; Atkinson, "Ground-motion prediction equations for the average horizontal component of PGA, PGV, and 5%-damped PSA" (2008) — 经典 GMPE</li>
+            <li>Abrahamson, Silva &amp; Kamai, "Summary of the ASK14 ground motion relation" (2014) — NGA-West2 GMPE</li>
+            <li>Baker, "Conditional mean spectrum" (2011) — CMS 方法</li>
+            <li>Kramer, <em>Geotechnical Earthquake Engineering</em> — 岩土地震工程</li>
+            <li>Reiter, <em>Earthquake Hazard Analysis</em> — PSHA 入门</li>
+            <li>Wang, <em>Engineering Seismology</em> — 工程地震学教材</li>
+            <li>GB 18306《中国地震动参数区划图》</li>
+            <li>USGS National Seismic Hazard Maps 技术文档</li>
+            <li>OpenQuake 技术文档（GEM Foundation）</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

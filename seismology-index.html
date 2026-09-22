@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="category">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震学 · 笔记 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span><span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="category-wrap">
+
+  <div class="crumb">
+    <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 地震学
+  </div>
+
+  <header class="category-head">
+    <h1>地震学</h1>
+    <p>从地震地质到地震预警，覆盖工程地震学、强震动观测、土动力学与场地安全性评价。</p>
+    <div class="meta">
+      <span>9 篇</span>
+      <span>地震动谱分析入门</span>
+      <span>定量地震学</span>
+      <span>地震地质</span>
+      <span>工程地震学</span>
+      <span>场地地震安全性评价</span>
+      <span>地震工程</span>
+      <span>强震动观测</span>
+      <span>土动力学</span>
+      <span>地震预警</span>
+    </div>
+  </header>
+
+  <div class="category-grid">
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/spectral-analysis.html">地震动谱分析入门</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从傅里叶谱到反应谱的基本概念与计算方法。</p>
+      <div class="subnotes">
+        <a href="seismology/spectral-analysis.html#fourier">傅里叶谱</a>
+        <a href="seismology/spectral-analysis.html#response">反应谱</a>
+        <a href="seismology/spectral-analysis.html#psa-psv">谱加速度与谱速度</a>
+        <a href="seismology/spectral-analysis.html#damping">阻尼比影响</a>
+      </div>
+      <div class="tags">
+        <span class="tag">反应谱</span>
+        <span class="tag">傅里叶谱</span>
+        <span class="tag blue">谱分析</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/quant-seismo.html">定量地震学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">地震震源物理与波传播的定量描述。</p>
+      <div class="subnotes">
+        <a href="seismology/quant-seismo.html#moment">震源矩张量</a>
+        <a href="seismology/quant-seismo.html#radiation">辐射图型</a>
+        <a href="seismology/quant-seismo.html#magnitude">震级标度关系</a>
+        <a href="seismology/quant-seismo.html#attenuation">地震波衰减</a>
+        <a href="seismology/quant-seismo.html#site">场地响应</a>
+        <a href="seismology/quant-seismo.html#inversion">波形反演</a>
+      </div>
+      <div class="tags">
+        <span class="tag">震源</span>
+        <span class="tag">矩张量</span>
+        <span class="tag blue">波形反演</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/earthquake-geology.html">地震地质</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从活动断层到古地震，覆盖断层活动性鉴定、滑动速率、地震复发间隔与构造地貌，是地震危险性分析的地质基础。</p>
+      <div class="subnotes">
+        <a href="seismology/earthquake-geology.html#fault">活动断层</a>
+        <a href="seismology/earthquake-geology.html#paleoseismology">古地震</a>
+        <a href="seismology/earthquake-geology.html#slip-rate">滑动速率</a>
+        <a href="seismology/earthquake-geology.html#recurrence">复发间隔</a>
+        <a href="seismology/earthquake-geology.html#tectonic">构造地貌</a>
+        <a href="seismology/earthquake-geology.html#segmentation">断层分段</a>
+        <a href="seismology/earthquake-geology.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">活动断层</span>
+        <span class="tag">古地震</span>
+        <span class="tag blue">地震危险性</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/engineering-seismology.html">工程地震学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从地震危险性分析到地震动预测方程，覆盖 PSHA、GMPE、一致危险性谱与设计地震动选取，是连接地震学与结构抗震设计的桥梁。</p>
+      <div class="subnotes">
+        <a href="seismology/engineering-seismology.html#hazard">地震危险性分析</a>
+        <a href="seismology/engineering-seismology.html#source">震源模型</a>
+        <a href="seismology/engineering-seismology.html#gmpe">地震动预测方程</a>
+        <a href="seismology/engineering-seismology.html#psha">PSHA 方法</a>
+        <a href="seismology/engineering-seismology.html#uhs">一致危险性谱</a>
+        <a href="seismology/engineering-seismology.html#selection">设计地震动选取</a>
+        <a href="seismology/engineering-seismology.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">PSHA</span>
+        <span class="tag">GMPE</span>
+        <span class="tag blue">设计地震动</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/site-seismic-safety-evaluation.html">场地地震安全性评价</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从法规框架到工作流程，覆盖地震危险性分析、场地效应评估、设计地震动确定与地震地质灾害评估，是重大工程抗震设防的法定环节。</p>
+      <div class="subnotes">
+        <a href="seismology/site-seismic-safety-evaluation.html#regulation">法规框架</a>
+        <a href="seismology/site-seismic-safety-evaluation.html#workflow">工作流程</a>
+        <a href="seismology/site-seismic-safety-evaluation.html#hazard">地震危险性分析</a>
+        <a href="seismology/site-seismic-safety-evaluation.html#site">场地效应评估</a>
+        <a href="seismology/site-seismic-safety-evaluation.html#design">设计地震动</a>
+        <a href="seismology/site-seismic-safety-evaluation.html#geohazard">地震地质灾害</a>
+        <a href="seismology/site-seismic-safety-evaluation.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">地震安全性评价</span>
+        <span class="tag">设计地震动</span>
+        <span class="tag blue">重大工程</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/earthquake-engineering.html">地震工程</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从地震动输入到结构响应，覆盖反应谱、振型分解、抗震设计、隔震消能与性能化设计，是结构抗震分析与设计的核心方法论。</p>
+      <div class="subnotes">
+        <a href="seismology/earthquake-engineering.html#input">地震动输入</a>
+        <a href="seismology/earthquake-engineering.html#sdof">反应谱</a>
+        <a href="seismology/earthquake-engineering.html#mdof">振型分解</a>
+        <a href="seismology/earthquake-engineering.html#design">抗震设计</a>
+        <a href="seismology/earthquake-engineering.html#isolation">隔震与消能</a>
+        <a href="seismology/earthquake-engineering.html#site">场地效应</a>
+        <a href="seismology/earthquake-engineering.html#performance">性能化设计</a>
+      </div>
+      <div class="tags">
+        <span class="tag">反应谱</span>
+        <span class="tag">抗震设计</span>
+        <span class="tag blue">隔震消能</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/strong-motion-observation.html">强震动观测</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从台网布设到数据质量控制，覆盖强震仪原理、记录格式、基线校正、滤波与去噪，是地震工程数据获取与处理的基础环节。</p>
+      <div class="subnotes">
+        <a href="seismology/strong-motion-observation.html#network">台网与仪器</a>
+        <a href="seismology/strong-motion-observation.html#format">数据格式</a>
+        <a href="seismology/strong-motion-observation.html#qc">质量控制</a>
+        <a href="seismology/strong-motion-observation.html#baseline">基线校正</a>
+        <a href="seismology/strong-motion-observation.html#filter">滤波与去噪</a>
+        <a href="seismology/strong-motion-observation.html#derived">积分与导出</a>
+        <a href="seismology/strong-motion-observation.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">强震仪</span>
+        <span class="tag">数据格式</span>
+        <span class="tag blue">信号处理</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/soil-dynamics.html">土动力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从土的动力特性到场地地震反应，覆盖动剪切模量、阻尼比、液化判别、一维土层反应分析与土-结构相互作用，是场地效应评估与岩土地震工程的理论基础。</p>
+      <div class="subnotes">
+        <a href="seismology/soil-dynamics.html#properties">土的动力特性</a>
+        <a href="seismology/soil-dynamics.html#wave">土中波的传播</a>
+        <a href="seismology/soil-dynamics.html#site">场地地震反应</a>
+        <a href="seismology/soil-dynamics.html#liquefaction">液化</a>
+        <a href="seismology/soil-dynamics.html#ssi">土-结构相互作用</a>
+        <a href="seismology/soil-dynamics.html#lab">室内试验</a>
+        <a href="seismology/soil-dynamics.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">动剪切模量</span>
+        <span class="tag">场地效应</span>
+        <span class="tag blue">液化</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="seismology/earthquake-early-warning.html">地震预警</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从 P 波到 S 波的时间差，覆盖预警原理、台网架构、震源参数快速估计与预警信息发布，是减轻地震灾害的实时防线。</p>
+      <div class="subnotes">
+        <a href="seismology/earthquake-early-warning.html#principle">预警原理</a>
+        <a href="seismology/earthquake-early-warning.html#types">预警类型</a>
+        <a href="seismology/earthquake-early-warning.html#network">台网与算法</a>
+        <a href="seismology/earthquake-early-warning.html#magnitude">震级快速估计</a>
+        <a href="seismology/earthquake-early-warning.html#ground-motion">地震动预测</a>
+        <a href="seismology/earthquake-early-warning.html#dissemination">信息发布</a>
+        <a href="seismology/earthquake-early-warning.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">P 波</span>
+        <span class="tag">实时处理</span>
+        <span class="tag blue">防灾减灾</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

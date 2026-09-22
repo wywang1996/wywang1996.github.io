@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="category">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>力学 · 笔记 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span><span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="category-wrap">
+
+  <div class="crumb">
+    <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 力学
+  </div>
+
+  <header class="category-head">
+    <h1>力学</h1>
+    <p>从理论力学到有限元方法，覆盖固体力学、结构动力学、板壳与流体力学的完整知识体系。</p>
+    <div class="meta">
+      <span>11 篇</span>
+      <span>理论力学</span>
+      <span>材料力学</span>
+      <span>流体力学</span>
+      <span>结构力学</span>
+      <span>弹性力学</span>
+      <span>振动力学</span>
+      <span>结构动力学</span>
+      <span>塑性力学</span>
+      <span>断裂力学</span>
+      <span>板壳理论</span>
+      <span>有限元方法</span>
+    </div>
+  </header>
+
+  <div class="category-grid">
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/theoretical-mechanics.html">理论力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从静力学到分析力学，覆盖牛顿力学、拉格朗日方程与哈密顿正则方程。</p>
+      <div class="subnotes">
+        <a href="mechanics/theoretical-mechanics.html#statics">静力学基础</a>
+        <a href="mechanics/theoretical-mechanics.html#kinetics">质点动力学</a>
+        <a href="mechanics/theoretical-mechanics.html#lagrange">拉格朗日力学</a>
+        <a href="mechanics/theoretical-mechanics.html#hamilton">哈密顿力学</a>
+      </div>
+      <div class="tags">
+        <span class="tag">经典力学</span>
+        <span class="tag">拉格朗日</span>
+        <span class="tag blue">结构动力学</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/material-mechanics.html">材料力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从杆件基本变形到复杂应力状态，覆盖强度、刚度与稳定性的计算与校核。</p>
+      <div class="subnotes">
+        <a href="mechanics/material-mechanics.html#axial">轴向拉压</a>
+        <a href="mechanics/material-mechanics.html#torsion">圆轴扭转</a>
+        <a href="mechanics/material-mechanics.html#bending">弯曲</a>
+        <a href="mechanics/material-mechanics.html#stress">强度理论</a>
+        <a href="mechanics/material-mechanics.html#buckling">压杆稳定</a>
+      </div>
+      <div class="tags">
+        <span class="tag">应力分析</span>
+        <span class="tag">强度理论</span>
+        <span class="tag blue">结构设计</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/fluid-mechanics.html">流体力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从流体物性到 N-S 方程，覆盖静力学、伯努利方程、边界层与量纲分析。</p>
+      <div class="subnotes">
+        <a href="mechanics/fluid-mechanics.html#hydrostatics">流体静力学</a>
+        <a href="mechanics/fluid-mechanics.html#bernoulli">伯努利方程</a>
+        <a href="mechanics/fluid-mechanics.html#ns">N-S 方程</a>
+        <a href="mechanics/fluid-mechanics.html#boundary">边界层</a>
+        <a href="mechanics/fluid-mechanics.html#similarity">量纲分析</a>
+      </div>
+      <div class="tags">
+        <span class="tag">连续介质</span>
+        <span class="tag">N-S 方程</span>
+        <span class="tag blue">边界层</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/structural-mechanics.html">结构力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从几何组成到矩阵位移法，覆盖静定与超静定结构的内力与位移分析。</p>
+      <div class="subnotes">
+        <a href="mechanics/structural-mechanics.html#geometry">几何组成</a>
+        <a href="mechanics/structural-mechanics.html#virtual">虚功原理</a>
+        <a href="mechanics/structural-mechanics.html#force">力法</a>
+        <a href="mechanics/structural-mechanics.html#displacement">位移法</a>
+        <a href="mechanics/structural-mechanics.html#matrix">矩阵位移法</a>
+      </div>
+      <div class="tags">
+        <span class="tag">静定结构</span>
+        <span class="tag">超静定</span>
+        <span class="tag blue">有限元雏形</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/elasticity.html">弹性力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从应力张量到变分原理，覆盖平面问题、极坐标解法与有限元基础。</p>
+      <div class="subnotes">
+        <a href="mechanics/elasticity.html#stress">应力分析</a>
+        <a href="mechanics/elasticity.html#plane">平面问题</a>
+        <a href="mechanics/elasticity.html#polar">极坐标解法</a>
+        <a href="mechanics/elasticity.html#energy">能量原理</a>
+        <a href="mechanics/elasticity.html#fem">到有限元</a>
+      </div>
+      <div class="tags">
+        <span class="tag">应力张量</span>
+        <span class="tag">变分原理</span>
+        <span class="tag blue">有限元基础</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/vibration.html">振动力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从单自由度到多自由度、从离散到连续，覆盖自由振动、受迫振动与模态分析。</p>
+      <div class="subnotes">
+        <a href="mechanics/vibration.html#sdof">单自由度</a>
+        <a href="mechanics/vibration.html#duhamel">Duhamel 积分</a>
+        <a href="mechanics/vibration.html#mdof">多自由度</a>
+        <a href="mechanics/vibration.html#modal">模态分析</a>
+        <a href="mechanics/vibration.html#continuous">连续系统</a>
+      </div>
+      <div class="tags">
+        <span class="tag">单自由度</span>
+        <span class="tag">模态分析</span>
+        <span class="tag blue">结构动力学</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/structural-dynamics.html">结构动力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从运动方程到反应谱、时程分析与 Pushover，覆盖结构抗震分析的完整方法。</p>
+      <div class="subnotes">
+        <a href="mechanics/structural-dynamics.html#spectrum">地震反应谱</a>
+        <a href="mechanics/structural-dynamics.html#design">设计反应谱</a>
+        <a href="mechanics/structural-dynamics.html#modal">振型分解</a>
+        <a href="mechanics/structural-dynamics.html#timestep">时程分析</a>
+        <a href="mechanics/structural-dynamics.html#pushover">Pushover</a>
+      </div>
+      <div class="tags">
+        <span class="tag">反应谱</span>
+        <span class="tag">时程分析</span>
+        <span class="tag blue">抗震设计</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/plasticity.html">塑性力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从屈服准则到极限分析，覆盖弹塑性本构、塑性铰与结构的延性设计。</p>
+      <div class="subnotes">
+        <a href="mechanics/plasticity.html#yield">屈服准则</a>
+        <a href="mechanics/plasticity.html#hardening">加载与硬化</a>
+        <a href="mechanics/plasticity.html#constitutive">弹塑性本构</a>
+        <a href="mechanics/plasticity.html#limit">极限分析</a>
+        <a href="mechanics/plasticity.html#seismic">抗震应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">屈服准则</span>
+        <span class="tag">极限分析</span>
+        <span class="tag blue">延性设计</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/fracture-mechanics.html">断裂力学</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从裂纹尖端应力场到 J 积分，覆盖应力强度因子、能量释放率与疲劳裂纹扩展。</p>
+      <div class="subnotes">
+        <a href="mechanics/fracture-mechanics.html#stress">裂纹尖端应力场</a>
+        <a href="mechanics/fracture-mechanics.html#g">能量释放率</a>
+        <a href="mechanics/fracture-mechanics.html#j">J 积分</a>
+        <a href="mechanics/fracture-mechanics.html#fatigue">疲劳扩展</a>
+        <a href="mechanics/fracture-mechanics.html#seismic">抗震应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">应力强度因子</span>
+        <span class="tag">J 积分</span>
+        <span class="tag blue">损伤评估</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/plate-shell.html">板壳理论</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从 Kirchhoff 薄板到 Mindlin 中厚板，覆盖板的弯曲、振动、屈曲与壳的薄膜理论。</p>
+      <div class="subnotes">
+        <a href="mechanics/plate-shell.html#kirchhoff">薄板弯曲</a>
+        <a href="mechanics/plate-shell.html#mindlin">中厚板</a>
+        <a href="mechanics/plate-shell.html#vibration">板的振动</a>
+        <a href="mechanics/plate-shell.html#cylinder">圆柱壳</a>
+        <a href="mechanics/plate-shell.html#fem">板壳单元</a>
+      </div>
+      <div class="tags">
+        <span class="tag">薄板弯曲</span>
+        <span class="tag">圆柱壳</span>
+        <span class="tag blue">板壳单元</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="mechanics/fem.html">有限元方法</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从离散化到非线性，覆盖等参单元、板壳单元、动力学与 Newton-Raphson 求解。</p>
+      <div class="subnotes">
+        <a href="mechanics/fem.html#element">单元刚度矩阵</a>
+        <a href="mechanics/fem.html#isoparametric">等参单元</a>
+        <a href="mechanics/fem.html#plate-shell">板壳单元</a>
+        <a href="mechanics/fem.html#dynamics">动力学</a>
+        <a href="mechanics/fem.html#nonlinear">非线性</a>
+      </div>
+      <div class="tags">
+        <span class="tag">等参单元</span>
+        <span class="tag">动力学</span>
+        <span class="tag blue">数值实现</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

@@ -6,6 +6,7 @@
      data-page="spectral-analysis" 地震动谱分析入门
      data-page="quant-seismo"      定量地震学
      data-page="dsp"               数字信号处理
+     data-page="category"          笔记分类页（math/mechanics/cs/seismology -index）
 
    使用方式（笔记页只引这两个 CSS，不引 projects.css / tools.css）：
      <link rel="stylesheet" href="assets/site.css">
@@ -82,7 +83,8 @@
 :where(html[data-page="note"],
        html[data-page="spectral-analysis"],
        html[data-page="dsp"],
-       html[data-page="quant-seismo"]) .crumb {
+       html[data-page="quant-seismo"],
+       html[data-page="category"]) .crumb {
   font-size: 12.5px;
   font-family: var(--mono);
   color: var(--text-dim);
@@ -91,13 +93,15 @@
 :where(html[data-page="note"],
        html[data-page="spectral-analysis"],
        html[data-page="dsp"],
-       html[data-page="quant-seismo"]) .crumb a {
+       html[data-page="quant-seismo"],
+       html[data-page="category"]) .crumb a {
   color: var(--accent-2);
 }
 :where(html[data-page="note"],
        html[data-page="spectral-analysis"],
        html[data-page="dsp"],
-       html[data-page="quant-seismo"]) .crumb a:hover {
+       html[data-page="quant-seismo"],
+       html[data-page="category"]) .crumb a:hover {
   text-decoration: underline;
 }
 
@@ -359,6 +363,19 @@ ul.plain li::before {
   line-height: 1.5;
 }
 
+/* TOC 当前项高亮（特异性高于上面的 .dsp-wrap .toc a） */
+.dsp-wrap .toc a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 550;
+  border-radius: 0 6px 6px 0;
+}
+[data-theme="dark"] .dsp-wrap .toc a.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
 
 /* =========================================================
    10. 通用文章组件（所有笔记页共享）
@@ -597,4 +614,137 @@ h2 .num {
 
   :where(html[data-page="note"]) .article-body h2 { font-size: 18px; }
   :where(html[data-page="note"]) .article-body h3 { font-size: 15.5px; }
+}
+
+
+/* =========================================================
+   13. 笔记分类页
+   ---------------------------------------------------------
+   适用于：
+     math-index.html
+     mechanics-index.html
+     cs-index.html
+     seismology-index.html
+
+   使用方式：
+     <html lang="zh-CN" data-page="category">
+     <body>
+       ...
+       <div class="category-wrap">
+         <div class="crumb">...</div>
+         <header class="category-head">
+           <h1>数学</h1>
+           <p>...</p>
+           <div class="meta">
+             <span>5 篇</span>
+             <span>线性代数</span>
+             ...
+           </div>
+         </header>
+         <div class="category-grid">
+           <div class="card">...</div>
+           ...
+         </div>
+       </div>
+   ========================================================= */
+
+/* 分类页主容器 */
+.category-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* 分类页头部 */
+.category-head {
+  padding: 4px 0 22px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 22px;
+}
+.category-head h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -.4px;
+  margin-bottom: 8px;
+}
+.category-head p {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  max-width: 720px;
+  margin-bottom: 0;
+}
+
+/* ★ meta 词条：每个词一个胶囊 */
+.category-head .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.category-head .meta span {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--bg-elevated, #f8fafc);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.category-head .meta span:hover {
+  border-color: rgba(219, 39, 119, 0.35);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+/* 第一个 span（篇数）突出显示 */
+.category-head .meta span:first-child {
+  font-weight: 650;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(219, 39, 119, 0.2);
+}
+[data-theme="dark"] .category-head .meta span:first-child {
+  border-color: rgba(244, 114, 182, 0.28);
+}
+
+/* 分类页卡片网格 */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.category-grid .card {
+  min-height: auto;
+  position: relative;
+}
+.category-grid .card .desc {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+.category-grid .card .subnotes {
+  flex: none;
+  position: relative;
+  z-index: 1;
+}
+/* 让标题链接的伪元素覆盖整张卡片，
+   使点卡片任意位置都能进入笔记页 */
+.category-grid .card .card-head h3 a::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 0;
+}
+
+/* 分类页响应式 */
+@media (max-width: 620px) {
+  .category-wrap { padding: 24px 18px 60px; }
+  .category-head h1 { font-size: 22px; }
+  .category-grid { grid-template-columns: 1fr; }
 }

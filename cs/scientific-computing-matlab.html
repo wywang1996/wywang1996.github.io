@@ -1,0 +1,1830 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科学计算与 MATLAB · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="scientific-computing-matlab">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#language">一、语言特性</a></li>
+      <li><a href="#matrix">二、矩阵与数组</a></li>
+      <li><a href="#function">三、函数与脚本</a></li>
+      <li><a href="#numeric">四、数值计算</a></li>
+      <li><a href="#plot">五、可视化</a></li>
+      <li><a href="#toolbox">六、工具箱</a></li>
+      <li><a href="#simulink">七、Simulink 与建模</a></li>
+      <li><a href="#vs-python">八、与 Python 对比</a></li>
+      <li><a href="#application">九、工程应用</a></li>
+      <li><a href="#summary">十、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 科学计算与 MATLAB
+        </div>
+        <h1>科学计算与 MATLAB</h1>
+        <p class="lead">
+          从矩阵运算到 Simulink 建模，覆盖 MATLAB 语言特性、数值计算、
+          信号处理与工程可视化。MATLAB 在结构动力学、信号处理、
+          控制系统与地震数据处理中有着广泛的应用，
+          与 Python 科学计算栈构成互补的工具链。
+        </p>
+        <div class="article-meta">
+          <span>矩阵运算</span>
+          <span>Simulink</span>
+          <span>信号处理</span>
+          <span class="blue">工程仿真</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            MATLAB（MATrix LABoratory）起源于 1980 年代的数值线性代数教学工具，
+            如今已发展为工程与科研领域的<strong>标准计算环境</strong>。
+            它以矩阵为基本数据类型，配套了丰富的工具箱与可视化能力。
+          </p>
+
+          <p>
+            MATLAB 在工程中的定位：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>MATLAB 的角色</th><th>典型工具箱</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>数值算法原型</td>
+                  <td>快速实现与验证</td>
+                  <td>基础 MATLAB</td>
+                </tr>
+                <tr>
+                  <td>信号处理</td>
+                  <td>主力工具</td>
+                  <td>Signal Processing Toolbox</td>
+                </tr>
+                <tr>
+                  <td>控制系统</td>
+                  <td>标准环境</td>
+                  <td>Control System Toolbox</td>
+                </tr>
+                <tr>
+                  <td>系统建模与仿真</td>
+                  <td>图形化平台</td>
+                  <td>Simulink</td>
+                </tr>
+                <tr>
+                  <td>优化</td>
+                  <td>求解器丰富</td>
+                  <td>Optimization Toolbox</td>
+                </tr>
+                <tr>
+                  <td>统计与机器学习</td>
+                  <td>功能齐全</td>
+                  <td>Statistics and Machine Learning Toolbox</td>
+                </tr>
+                <tr>
+                  <td>图像处理</td>
+                  <td>成熟工具箱</td>
+                  <td>Image Processing Toolbox</td>
+                </tr>
+                <tr>
+                  <td>并行计算</td>
+                  <td>内置支持</td>
+                  <td>Parallel Computing Toolbox</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            对地震工程师来说，MATLAB 的三大价值：
+          </p>
+          <ul>
+            <li><strong>矩阵计算零摩擦</strong>：语法天然支持矩阵运算，代码简洁。</li>
+            <li><strong>工具链完整</strong>：从数据处理、算法开发到 GUI 部署的完整支持。</li>
+            <li><strong>Simulink</strong>：图形化建模环境，适合动态系统仿真与控制设计。</li>
+          </ul>
+
+          <p>
+            这份笔记按"语言 $\to$ 矩阵 $\to$ 函数 $\to$ 数值 $\to$ 可视化 $\to$ 工具箱 $\to$ Simulink $\to$ 对比 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="language">
+          <h2><span class="num">01</span>语言特性</h2>
+
+          <h3>基本语法</h3>
+          <p>
+            MATLAB 的语法以矩阵为核心，几乎所有操作都是矩阵操作：
+          </p>
+
+          <pre><code class="language-matlab">% 注释
+% 变量无需声明，动态类型
+a = 3.14;
+name = 'wayione';
+flag = true;
+
+% 分号抑制输出，逗号或无符号则输出
+x = 10;   % 不输出
+y = 20    % 输出到命令行
+
+% 续行用三个点
+total = 1 + 2 + 3 + 4 + ...
+        5 + 6 + 7;</code></pre>
+
+          <h3>数据类型</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>说明</th><th>示例</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>double</td>
+                  <td>双精度浮点（默认）</td>
+                  <td><code>3.14</code></td>
+                </tr>
+                <tr>
+                  <td>single</td>
+                  <td>单精度浮点</td>
+                  <td><code>single(3.14)</code></td>
+                </tr>
+                <tr>
+                  <td>int8/16/32/64</td>
+                  <td>各种整数</td>
+                  <td><code>int32(100)</code></td>
+                </tr>
+                <tr>
+                  <td>logical</td>
+                  <td>逻辑</td>
+                  <td><code>true</code>、<code>false</code></td>
+                </tr>
+                <tr>
+                  <td>char</td>
+                  <td>字符</td>
+                  <td><code>'abc'</code></td>
+                </tr>
+                <tr>
+                  <td>string</td>
+                  <td>字符串（R2016b+）</td>
+                  <td><code>"abc"</code></td>
+                </tr>
+                <tr>
+                  <td>cell</td>
+                  <td>异构容器</td>
+                  <td><code>{1, 'a', [1 2]}</code></td>
+                </tr>
+                <tr>
+                  <td>struct</td>
+                  <td>结构体</td>
+                  <td><code>s.a = 1; s.b = 'x'</code></td>
+                </tr>
+                <tr>
+                  <td>table</td>
+                  <td>表格（R2013b+）</td>
+                  <td><code>table(x, y)</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>控制流</h3>
+          <pre><code class="language-matlab">% if-elseif-else
+if x > 0
+    disp('正数');
+elseif x < 0
+    disp('负数');
+else
+    disp('零');
+end
+
+% for 循环（支持向量化）
+for i = 1:10
+    disp(i);
+end
+
+% while
+while x > 0
+    x = x - 1;
+end
+
+% switch-case
+switch n
+    case 1
+        disp('one');
+    case 2
+        disp('two');
+    otherwise
+        disp('other');
+end</code></pre>
+
+          <h3>向量化优先</h3>
+          <p>
+            MATLAB 与 Python 一样，<strong>向量化优先于循环</strong>：
+          </p>
+
+          <pre><code class="language-matlab">% 慢：循环
+n = 1e7;
+a = rand(n, 1);
+b = rand(n, 1);
+c = zeros(n, 1);
+tic;
+for i = 1:n
+    c(i) = a(i) + b(i);
+end
+toc
+
+% 快：向量化
+tic;
+c = a + b;
+toc
+
+% 通常快 50~100 倍</code></pre>
+
+          <h3>常见陷阱</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>陷阱</th><th>说明</th><th>对策</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>循环中数组扩容</td>
+                  <td>每次循环重新分配内存</td>
+                  <td>预分配 <code>zeros(n,1)</code></td>
+                </tr>
+                <tr>
+                  <td>未预分配</td>
+                  <td>性能急剧下降</td>
+                  <td>循环前预估大小</td>
+                </tr>
+                <tr>
+                  <td>全局变量</td>
+                  <td>难以调试</td>
+                  <td>用函数参数传递</td>
+                </tr>
+                <tr>
+                  <td>字符串与 char 混用</td>
+                  <td>比较行为不同</td>
+                  <td>统一用 string 或 char</td>
+                </tr>
+                <tr>
+                  <td>1-based 索引</td>
+                  <td>与 Python 0-based 不同</td>
+                  <td>注意换算</td>
+                </tr>
+                <tr>
+                  <td>列优先存储</td>
+                  <td>与 C 行优先不同</td>
+                  <td>沿列遍历更快</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>MATLAB 的哲学</strong>：一切皆为矩阵。
+              这种设计让 MATLAB 的语法极简——
+              一个 <code>A * B</code> 可能是标量乘、矩阵乘或逐元素乘（需 <code>.*</code>），
+              取决于操作数。
+              理解这一点，就理解了 MATLAB 的精髓。
+              同时它也是 MATLAB 与 Python/NumPy 最大的语义差异所在：
+              NumPy 用 <code>@</code> 显式区分矩阵乘与逐元素乘，
+              MATLAB 用 <code>*</code> 与 <code>.*</code> 区分。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="matrix">
+          <h2><span class="num">02</span>矩阵与数组</h2>
+
+          <h3>创建矩阵</h3>
+          <pre><code class="language-matlab">% 直接构造
+A = [1 2 3; 4 5 6; 7 8 9];
+
+% 范围
+v = 1:5;           % [1 2 3 4 5]
+w = 1:0.5:3;       % [1 1.5 2 2.5 3]
+
+% 特殊矩阵
+Z = zeros(3, 4);
+O = ones(2, 5);
+I = eye(3);
+R = rand(3, 3);
+N = randn(100, 1);   % 标准正态
+
+% 线性等距
+x = linspace(0, 1, 100);</code></pre>
+
+          <h3>索引</h3>
+          <pre><code class="language-matlab">A = magic(4);   % 4x4 魔方矩阵
+
+A(2, 3)        % 第 2 行第 3 列
+A(1, :)        % 第 1 行
+A(:, 2)        % 第 2 列
+A(2:3, 1:2)    % 子矩阵
+A(end, end)    % 右下角
+
+% 逻辑索引
+B = A(A > 8);  % 大于 8 的元素
+
+% 线性索引（列优先）
+A(5)           % 第 5 个元素</code></pre>
+
+          <h3>矩阵运算</h3>
+          <pre><code class="language-matlab">A = [1 2; 3 4];
+B = [5 6; 7 8];
+
+% 矩阵乘
+C = A * B;
+
+% 逐元素乘
+D = A .* B;
+
+% 矩阵幂
+E = A^2;        % A * A
+
+% 逐元素幂
+F = A .^ 2;
+
+% 转置
+G = A';
+
+% 求逆
+H = inv(A);
+
+% 解线性方程组
+b = [1; 2];
+x = A \ b;      % 推荐，比 inv(A)*b 更快更稳
+
+% 特征值
+[V, D] = eig(A);
+
+% 奇异值分解
+[U, S, V] = svd(A);
+
+% 行列式
+det_A = det(A);
+
+% 秩
+r = rank(A);</code></pre>
+
+          <h3>数组操作</h3>
+          <pre><code class="language-matlab">% 拼接
+A = [1 2];
+B = [3 4];
+C = [A, B];       % 水平拼接 → [1 2 3 4]
+D = [A; B];       % 垂直拼接 → 2x2
+
+% 重塑
+M = reshape(1:12, 3, 4);
+
+% 重复
+R1 = repmat(A, 2, 3);
+R2 = repelem(A, 2);   % R2015a+
+
+% 翻转
+F = flip(A);
+
+% 排序
+S = sort([3 1 4 1 5]);
+
+% 求和
+s = sum(A);
+s_all = sum(A(:));    % 所有元素
+
+% 累积和
+c = cumsum(A);
+
+% 沿维度求和
+M = reshape(1:12, 3, 4);
+sum_col = sum(M, 1);    % 每列和 → 1x4
+sum_row = sum(M, 2);    % 每行和 → 3x1</code></pre>
+
+          <h3>结构体与元胞</h3>
+          <pre><code class="language-matlab">% 结构体
+event.magnitude = 6.5;
+event.depth = 15.0;
+event.station = 'ST01';
+
+% 结构体数组
+events(1).mag = 5.5;
+events(2).mag = 6.0;
+
+% 元胞数组：异构容器
+c = {1, 'hello', [1 2 3]};
+c{1}       % 提取内容
+c(1)       % 提取元胞</code></pre>
+
+          <h3>表格（table）</h3>
+          <pre><code class="language-matlab">% 创建表
+T = table(...
+    [5.5; 6.0; 4.8], ...
+    [10; 20; 15], ...
+    {'ST01'; 'ST02'; 'ST03'}, ...
+    'VariableNames', {'Magnitude', 'Depth', 'Station'});
+
+% 访问列
+T.Magnitude
+T{:, 'Magnitude'}
+
+% 条件筛选
+T(T.Magnitude > 5, :)
+
+% 排序
+sortrows(T, 'Magnitude', 'descend')
+
+% 分组统计
+groupsummary(T, 'Station', 'mean', 'Magnitude')</code></pre>
+        </section>
+
+        <section id="function">
+          <h2><span class="num">03</span>函数与脚本</h2>
+
+          <h3>脚本与函数的区别</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>特点</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>脚本</td>
+                  <td>无输入输出，共享工作区</td>
+                  <td>数据处理、绘图</td>
+                </tr>
+                <tr>
+                  <td>函数</td>
+                  <td>有独立作用域，输入输出明确</td>
+                  <td>算法实现、复用</td>
+                </tr>
+                <tr>
+                  <td>实时脚本（.mlx）</td>
+                  <td>代码 + 输出 + 说明</td>
+                  <td>教学、报告</td>
+                </tr>
+                <tr>
+                  <td>类</td>
+                  <td>面向对象</td>
+                  <td>复杂应用</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>函数定义</h3>
+          <pre><code class="language-matlab">function [pga, pgv] = compute_peaks(acc, dt)
+% COMPUTE_PEAKS 计算峰值加速度与速度
+%
+% 输入：
+%   acc - 加速度时程 (m/s^2)
+%   dt  - 采样间隔 (s)
+%
+% 输出：
+%   pga - 峰值加速度 (m/s^2)
+%   pgv - 峰值速度 (m/s)
+
+    pga = max(abs(acc));
+    vel = cumsum(acc) * dt;
+    pgv = max(abs(vel));
+end</code></pre>
+
+          <h3>函数文件结构</h3>
+          <p>
+            一个典型的 MATLAB 项目结构：
+          </p>
+
+          <pre><code>project/
+├── main.m                    % 主脚本
+├── +mypackage/               % 包（命名空间）
+│   ├── process.m
+│   └── plot.m
+├── data/
+│   ├── input.mat
+│   └── output.mat
+├── functions/
+│   ├── compute_pga.m
+│   ├── filter_wave.m
+│   └── response_spectrum.m
+└── results/
+    └── figures/</code></pre>
+
+          <h3>可变参数</h3>
+          <pre><code class="language-matlab">function y = myfunc(a, b, varargin)
+% 可变参数
+    if nargin < 2
+        b = 10;
+    end
+
+    % 解析可选参数
+    p = inputParser;
+    addParameter(p, 'Method', 'default');
+    addParameter(p, 'Tolerance', 1e-6);
+    parse(p, varargin{:});
+
+    method = p.Results.Method;
+    tol = p.Results.Tolerance;
+
+    y = a + b;
+end</code></pre>
+
+          <h3>匿名函数与函数句柄</h3>
+          <pre><code class="language-matlab">% 匿名函数
+f = @(x) x.^2 + 2*x + 1;
+y = f(3);       % 16
+
+% 函数句柄
+h = @sin;
+y = h(pi/2);
+
+% 用于优化
+x = fminbnd(f, -5, 5);
+
+% 用于积分
+I = integral(@(x) exp(-x.^2), 0, Inf);</code></pre>
+
+          <h3>调试</h3>
+          <ul>
+            <li><strong>断点</strong>：在编辑器左侧点击设置。</li>
+            <li><strong>dbstop if error</strong>：出错时自动进入调试。</li>
+            <li><strong>dbstep</strong>：单步执行。</li>
+            <li><strong>dbcont</strong>：继续执行。</li>
+            <li><strong>whos</strong>：查看工作区变量。</li>
+            <li><strong>profile on / off</strong>：性能分析。</li>
+          </ul>
+        </section>
+
+        <section id="numeric">
+          <h2><span class="num">04</span>数值计算</h2>
+
+          <h3>线性代数</h3>
+          <pre><code class="language-matlab">% 线性方程组
+A = rand(100);
+b = rand(100, 1);
+x = A \ b;           % 推荐
+x2 = inv(A) * b;     % 不推荐（慢且不稳）
+
+% LU 分解
+[L, U, P] = lu(A);
+
+% Cholesky 分解（对称正定）
+S = A * A';
+R = chol(S);         % R' * R = S
+
+% QR 分解
+[Q, R] = qr(A);
+
+% 特征值分解
+[V, D] = eig(A);
+
+% 对称矩阵专用
+S = A + A';
+[V, D] = eig(S);     % 自动用对称算法
+
+% 奇异值分解
+[U, S, V] = svd(A);
+
+% 广义特征值
+B = rand(100);
+[V, D] = eig(A, B);</code></pre>
+
+          <h3>稀疏矩阵</h3>
+          <pre><code class="language-matlab">% 创建稀疏矩阵
+n = 10000;
+main = 2 * ones(n, 1);
+off = -ones(n-1, 1);
+K = spdiags([off, main, off], -1:1, n, n);
+
+% 稀疏求解
+F = ones(n, 1);
+u = K \ F;           % 自动用稀疏求解器
+
+% 稀疏特征值（前 6 阶）
+eigs(K, 6, 'sm');
+
+% 转换为稠密
+K_full = full(K);
+
+% 检查稀疏性
+nnz(K)               % 非零元素数
+issparse(K)          % 是否稀疏</code></pre>
+
+          <h3>优化</h3>
+          <pre><code class="language-matlab">% 无约束优化
+f = @(x) (x(1)-1)^2 + (x(2)-2.5)^2;
+x0 = [0, 0];
+[x_opt, fval] = fminsearch(f, x0);
+
+% 有约束优化（需要 Optimization Toolbox）
+% [x, fval] = fmincon(f, x0, A, b, Aeq, beq, lb, ub);
+
+% 最小二乘
+xdata = linspace(0, 5, 100);
+ydata = 2.5 * exp(-0.8 * xdata) + 0.5 + 0.05 * randn(size(xdata));
+model = @(p, x) p(1) * exp(-p(2) * x) + p(3);
+p0 = [2, 1, 0.5];
+p_opt = lsqcurvefit(model, p0, xdata, ydata);
+disp(p_opt);</code></pre>
+
+          <h3>数值积分与微分方程</h3>
+          <pre><code class="language-matlab">% 定积分
+I = integral(@(x) exp(-x.^2), 0, Inf);
+% 理论值 sqrt(pi)/2 ≈ 0.8862
+
+% 二重积分
+f = @(x, y) x.^2 + y.^2;
+I2 = integral2(f, 0, 1, 0, 1);
+
+% ODE：阻尼振子
+% dy/dt = [v; (-c*v - k*x)/m]
+m = 1.0; c = 0.5; k = 100.0;
+odefun = @(t, y) [y(2); (-c*y(2) - k*y(1))/m];
+
+tspan = [0, 5];
+y0 = [1; 0];
+[t, y] = ode45(odefun, tspan, y0);
+
+% 绘图
+plot(t, y(:, 1));
+xlabel('t / s');
+ylabel('位移 / m');</code></pre>
+
+          <h3>信号处理</h3>
+          <pre><code class="language-matlab">% 滤波器设计（Signal Processing Toolbox）
+fs = 100;   % 采样率
+fc = 10;    % 截止频率
+[b, a] = butter(4, fc/(fs/2), 'low');
+
+% 滤波
+x = randn(1000, 1);
+y = filtfilt(b, a, x);      % 零相位
+
+% 频谱
+N = length(x);
+X = fft(x);
+f = (0:N-1) * fs / N;
+Pxx = abs(X).^2 / N;
+plot(f(1:N/2), 10*log10(Pxx(1:N/2)));
+
+% 短时傅里叶变换
+spectrogram(x, 128, 120, 128, fs, 'yaxis');
+
+% 小波变换（Wavelet Toolbox）
+% [cfs, frequencies] = cwt(x, fs);</code></pre>
+        </section>
+
+        <section id="plot">
+          <h2><span class="num">05</span>可视化</h2>
+
+          <h3>二维绘图</h3>
+          <pre><code class="language-matlab">x = linspace(0, 2*pi, 100);
+
+% 折线
+figure;
+plot(x, sin(x), 'b-', 'LineWidth', 1.5);
+hold on;
+plot(x, cos(x), 'r--', 'LineWidth', 1.5);
+hold off;
+
+% 标签与图例
+xlabel('x');
+ylabel('y');
+title('三角函数');
+legend('sin', 'cos', 'Location', 'best');
+grid on;
+
+% 轴范围
+xlim([0, 2*pi]);
+ylim([-1.2, 1.2]);
+
+% 导出
+exportgraphics(gcf, 'figure.pdf', 'ContentType', 'vector');</code></pre>
+
+          <h3>常用图类型</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>函数</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>折线</td>
+                  <td>plot</td>
+                  <td>时序、频域</td>
+                </tr>
+                <tr>
+                  <td>散点</td>
+                  <td>scatter</td>
+                  <td>相关性</td>
+                </tr>
+                <tr>
+                  <td>直方图</td>
+                  <td>histogram</td>
+                  <td>分布</td>
+                </tr>
+                <tr>
+                  <td>误差条</td>
+                  <td>errorbar</td>
+                  <td>置信区间</td>
+                </tr>
+                <tr>
+                  <td>等值线</td>
+                  <td>contour / contourf</td>
+                  <td>二维标量场</td>
+                </tr>
+                <tr>
+                  <td>伪彩图</td>
+                  <td>imagesc / pcolor</td>
+                  <td>矩阵、热图</td>
+                </tr>
+                <tr>
+                  <td>三维曲面</td>
+                  <td>surf / mesh</td>
+                  <td>三维场</td>
+                </tr>
+                <tr>
+                  <td>对数图</td>
+                  <td>semilogx / loglog</td>
+                  <td>衰减关系</td>
+                </tr>
+                <tr>
+                  <td>极坐标</td>
+                  <td>polarplot</td>
+                  <td>方位分布</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>子图与布局</h3>
+          <pre><code class="language-matlab">figure;
+
+% 2x2 子图
+subplot(2, 2, 1);
+plot(x, sin(x));
+title('sin');
+
+subplot(2, 2, 2);
+plot(x, cos(x));
+title('cos');
+
+subplot(2, 2, 3);
+histogram(randn(1000));
+title('hist');
+
+subplot(2, 2, 4);
+scatter(randn(100), randn(100));
+title('scatter');
+
+% 新版 tiledlayout（推荐）
+figure;
+t = tiledlayout(2, 2, 'TileSpacing', 'compact');
+nexttile;
+plot(x, sin(x));
+nexttile;
+plot(x, cos(x));
+nexttile;
+histogram(randn(1000));
+nexttile;
+scatter(randn(100), randn(100));
+title(t, '多子图布局');</code></pre>
+
+          <h3>出版级配置</h3>
+          <pre><code class="language-matlab">% 全局配置
+set(groot, 'DefaultAxesFontName', 'Times New Roman');
+set(groot, 'DefaultAxesFontSize', 10);
+set(groot, 'DefaultLineLineWidth', 1.0);
+set(groot, 'DefaultAxesGridLineStyle', ':');
+set(groot, 'DefaultAxesGridAlpha', 0.3);
+
+% 使用
+figure('Position', [100, 100, 800, 500]);
+plot(x, sin(x));
+xlabel('x');
+ylabel('y');
+grid on;
+
+% 高分辨率导出
+print('-dpdf', '-r300', 'figure.pdf');
+% 或
+exportgraphics(gcf, 'figure.pdf', 'Resolution', 300);</code></pre>
+
+          <h3>地震波形可视化示例</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>wave_plot.m</span>
+                <span class="lang">MATLAB</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-matlab">% 合成三分量地震波形
+dt = 0.01;
+t = (0:dt:40-dt)';
+rng(42);
+
+synth_wave = @(t, t0, f, w, a) a * exp(-((t - t0).^2)/(2*w^2)) .* sin(2*pi*f*t);
+
+% P 波 5s，S 波 9s
+z = 0.05 * synth_wave(t, 5.0, 5.0, 0.3, 1.0) + ...
+    0.80 * synth_wave(t, 9.0, 2.0, 1.5, 1.0) + ...
+    0.01 * randn(size(t));
+n = 0.50 * synth_wave(t, 9.2, 1.5, 1.8, 1.0) + ...
+    0.01 * randn(size(t));
+e = 0.50 * synth_wave(t, 9.1, 1.8, 1.6, 1.0) + ...
+    0.01 * randn(size(t));
+
+% 绘图
+figure('Position', [100, 100, 900, 600]);
+tiledlayout(3, 1, 'TileSpacing', 'none');
+
+labels = {'Z (垂直)', 'N (南北)', 'E (东西)'};
+data = {z, n, e};
+
+for i = 1:3
+    nexttile;
+    plot(t, data{i}, 'k-', 'LineWidth', 0.6);
+    hold on;
+    xline(5.0, 'g--', 'LineWidth', 1.0, 'Label', 'P');
+    xline(9.0, 'r--', 'LineWidth', 1.0, 'Label', 'S');
+    hold off;
+    ylabel(labels{i});
+    grid on;
+    if i < 3
+        xticklabels([]);
+    end
+end
+xlabel('t / s');
+title('三分量地震波形（合成）');</code></pre>
+          </div>
+        </section>
+
+        <section id="toolbox">
+          <h2><span class="num">06</span>工具箱</h2>
+
+          <h3>主要工具箱</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>工具箱</th><th>功能</th><th>工程用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Signal Processing</td>
+                  <td>滤波器、频谱、小波</td>
+                  <td>地震信号处理</td>
+                </tr>
+                <tr>
+                  <td>Control System</td>
+                  <td>传递函数、状态空间</td>
+                  <td>结构控制、隔震系统</td>
+                </tr>
+                <tr>
+                  <td>Optimization</td>
+                  <td>线代、非线性、整数规划</td>
+                  <td>参数反演、优化设计</td>
+                </tr>
+                <tr>
+                  <td>Statistics and ML</td>
+                  <td>分布拟合、回归、分类</td>
+                  <td>危险性分析、GMPE</td>
+                </tr>
+                <tr>
+                  <td>Curve Fitting</td>
+                  <td>曲线拟合与插值</td>
+                  <td>衰减关系拟合</td>
+                </tr>
+                <tr>
+                  <td>Wavelet</td>
+                  <td>小波分析</td>
+                  <td>地震动时频分析</td>
+                </tr>
+                <tr>
+                  <td>Partial Differential Equation</td>
+                  <td>PDE 求解器</td>
+                  <td>波动方程求解</td>
+                </tr>
+                <tr>
+                  <td>Parallel Computing</td>
+                  <td>并行与 GPU</td>
+                  <td>大规模计算</td>
+                </tr>
+                <tr>
+                  <td>Mapping</td>
+                  <td>地理数据可视化</td>
+                  <td>地震分布图</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>信号处理示例</h3>
+          <pre><code class="language-matlab">% 设计滤波器
+fs = 100;
+fc = 10;
+[b, a] = butter(4, fc/(fs/2), 'low');
+
+% 查看幅频响应
+fvtool(b, a);
+
+% 应用滤波
+x = randn(10000, 1);
+y = filtfilt(b, a, x);
+
+% 功率谱
+[Pxx, f] = pwelch(x, [], [], [], fs);
+semilogy(f, Pxx);
+
+% 短时傅里叶
+spectrogram(x, 256, 250, 256, fs, 'yaxis');
+
+% 小波时频
+% cwt(x, fs);</code></pre>
+
+          <h3>曲线拟合示例</h3>
+          <pre><code class="language-matlab">% 拟合 GMPE 形式：
+% ln(PGA) = c1 + c2*M + c3*ln(R+c4) + c5*R
+rng(42);
+n = 200;
+
+M = 4 + 3.5 * rand(n, 1);
+R = 10 + 190 * rand(n, 1);
+lnPGA = 1.5 + 0.8*M - 1.2*log(R + 10) - 0.002*R + 0.4*randn(n, 1);
+
+% 用 fitlm 做多元线性回归
+X = [ones(n,1), M, log(R + 10), R];
+mdl = fitlm(X(:, 2:end), lnPGA);
+disp(mdl);
+
+% 或使用 lsqcurvefit
+model = @(c, X) c(1) + c(2)*X(:,1) + c(3)*log(X(:,2) + 10) + c(4)*X(:,2);
+X_data = [M, R];
+c0 = [1, 1, -1, 0];
+c_opt = lsqcurvefit(model, c0, X_data, lnPGA);
+disp('拟合系数:');
+disp(c_opt);</code></pre>
+
+          <h3>优化示例</h3>
+          <pre><code class="language-matlab">% 无约束优化
+rosen = @(x) 100*(x(2)-x(1)^2)^2 + (1-x(1))^2;
+x0 = [-1.2, 1];
+[x_opt, fval] = fminsearch(rosen, x0);
+fprintf('x = [%.4f, %.4f], f = %.4e\n', x_opt(1), x_opt(2), fval);
+
+% 曲线拟合（非线性最小二乘）
+% 用于 GMPE 非线性形式、震源参数反演
+% lsqcurvefit / lsqnonlin
+
+% 全局优化
+% ga / particleswarm（Global Optimization Toolbox）</code></pre>
+        </section>
+
+        <section id="simulink">
+          <h2><span class="num">07</span>Simulink 与建模</h2>
+
+          <h3>Simulink 概述</h3>
+          <p>
+            Simulink 是 MATLAB 的图形化建模与仿真环境，
+            用<strong>模块 + 连线</strong>描述动态系统，无需手写方程。
+          </p>
+
+          <p>典型应用场景：</p>
+          <ul>
+            <li>结构动力学系统的时程仿真。</li>
+            <li>隔震与消能装置的响应仿真。</li>
+            <li>控制系统设计与验证。</li>
+            <li>多物理场耦合系统。</li>
+            <li>地震动输入与结构响应的仿真。</li>
+            <li>硬件在环（HIL）测试。</li>
+          </ul>
+
+          <h3>基本模块</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类别</th><th>典型模块</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>信号源</td>
+                  <td>Sine Wave、Step、From File</td>
+                  <td>激励输入</td>
+                </tr>
+                <tr>
+                  <td>数学运算</td>
+                  <td>Gain、Sum、Product</td>
+                  <td>构建方程</td>
+                </tr>
+                <tr>
+                  <td>积分</td>
+                  <td>Integrator、Derivative</td>
+                  <td>求解 ODE</td>
+                </tr>
+                <tr>
+                  <td>状态空间</td>
+                  <td>State-Space</td>
+                  <td>线性系统</td>
+                </tr>
+                <tr>
+                  <td>传递函数</td>
+                  <td>Transfer Fcn</td>
+                  <td>频域模型</td>
+                </tr>
+                <tr>
+                  <td>显示与记录</td>
+                  <td>Scope、To Workspace</td>
+                  <td>结果观察</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>单自由度体系的 Simulink 模型</h3>
+          <p>
+            对运动方程：
+          </p>
+
+          $$ m \ddot{u} + c \dot{u} + k u = -m \ddot{u}_g(t) $$
+
+          <p>
+            Simulink 模型结构：
+          </p>
+          <ol class="steps">
+            <li>地面加速度 $\ddot{u}_g(t)$ 作为输入信号。</li>
+            <li>求和器计算 $(-m \ddot{u}_g - c \dot{u} - k u) / m$ 得到 $\ddot{u}$。</li>
+            <li>积分器 1 得到 $\dot{u}$。</li>
+            <li>积分器 2 得到 $u$。</li>
+            <li>反馈回路用 Gain 模块乘以 $-c$、$-k$。</li>
+            <li>Scope 观察响应时程。</li>
+          </ol>
+
+          <h3>MATLAB 与 Simulink 的交互</h3>
+          <pre><code class="language-matlab">% 从 MATLAB 脚本运行 Simulink 模型
+mdl = 'sdof_model';
+load_system(mdl);
+
+% 设置参数
+set_param([mdl, '/Mass'], 'Gain', '1');
+set_param([mdl, '/Stiffness'], 'Gain', '100');
+set_param([mdl, '/Damping'], 'Gain', '0.5');
+
+% 设置仿真时间
+set_param(mdl, 'StopTime', '20');
+
+% 运行仿真
+simOut = sim(mdl);
+
+% 提取结果
+u = simOut.get('yout');
+
+% 绘图
+plot(u.time, u.signals.values);
+xlabel('t / s');
+ylabel('位移 / m');</code></pre>
+
+          <h3>状态空间模型</h3>
+          <pre><code class="language-matlab">% 连续时间状态空间模型
+% dx/dt = A x + B u
+% y = C x + D u
+
+% 单自由度体系
+m = 1.0; c = 0.5; k = 100.0;
+A = [0, 1; -k/m, -c/m];
+B = [0; 1/m];
+C = [1, 0];
+D = 0;
+
+sys = ss(A, B, C, D);
+
+% 阶跃响应
+figure;
+step(sys);
+
+% 频率响应
+figure;
+bode(sys);
+
+% 极点
+pole(sys);   % 复固有频率
+
+% 转换为传递函数
+tf_sys = tf(sys);
+disp(tf_sys);
+
+% 离散化
+sys_d = c2d(sys, 0.01, 'zoh');</code></pre>
+
+          <h3>控制系统设计</h3>
+          <pre><code class="language-matlab">% 结构控制的简单示例：LQR 控制
+m = 1.0; c = 0.1; k = 100.0;
+A = [0, 1; -k/m, -c/m];
+B = [0; 1/m];
+Q = diag([100, 1]);   % 状态权重
+R = 0.01;              % 控制权重
+
+K = lqr(A, B, Q, R);
+
+% 闭环系统
+A_cl = A - B*K;
+sys_cl = ss(A_cl, B, [1, 0], 0);
+
+figure;
+step(sys_cl);
+title('闭环系统的阶跃响应');</code></pre>
+        </section>
+
+        <section id="vs-python">
+          <h2><span class="num">08</span>与 Python 对比</h2>
+
+          <h3>语言特性对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>MATLAB</th><th>Python</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>索引</td>
+                  <td>1-based</td>
+                  <td>0-based</td>
+                </tr>
+                <tr>
+                  <td>矩阵乘</td>
+                  <td><code>*</code></td>
+                  <td><code>@</code></td>
+                </tr>
+                <tr>
+                  <td>逐元素乘</td>
+                  <td><code>.*</code></td>
+                  <td><code>*</code></td>
+                </tr>
+                <tr>
+                  <td>转置</td>
+                  <td><code>A'</code>（共轭转置）</td>
+                  <td><code>A.T</code>（普通转置）</td>
+                </tr>
+                <tr>
+                  <td>切片</td>
+                  <td><code>A(1:5)</code></td>
+                  <td><code>A[0:5]</code></td>
+                </tr>
+                <tr>
+                  <td>函数定义</td>
+                  <td>独立文件 / 脚本内</td>
+                  <td>任意位置</td>
+                </tr>
+                <tr>
+                  <td>面向对象</td>
+                  <td>支持（较复杂）</td>
+                  <td>原生支持</td>
+                </tr>
+                <tr>
+                  <td>包管理</td>
+                  <td>工具箱 + Add-On</td>
+                  <td>pip / conda</td>
+                </tr>
+                <tr>
+                  <td>性能</td>
+                  <td>内置优化，JIT</td>
+                  <td>依赖 NumPy / Numba</td>
+                </tr>
+                <tr>
+                  <td>许可</td>
+                  <td>商业（需购买）</td>
+                  <td>开源</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>功能对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>功能</th><th>MATLAB</th><th>Python</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>矩阵运算</td>
+                  <td>原生支持，语法简洁</td>
+                  <td>NumPy，<code>@</code> 语法</td>
+                </tr>
+                <tr>
+                  <td>信号处理</td>
+                  <td>Signal Processing Toolbox</td>
+                  <td>SciPy.signal</td>
+                </tr>
+                <tr>
+                  <td>优化</td>
+                  <td>Optimization Toolbox</td>
+                  <td>SciPy.optimize</td>
+                </tr>
+                <tr>
+                  <td>机器学习</td>
+                  <td>Statistics and ML Toolbox</td>
+                  <td>scikit-learn、PyTorch</td>
+                </tr>
+                <tr>
+                  <td>深度学习</td>
+                  <td>Deep Learning Toolbox</td>
+                  <td>PyTorch、TensorFlow</td>
+                </tr>
+                <tr>
+                  <td>符号计算</td>
+                  <td>Symbolic Math Toolbox</td>
+                  <td>SymPy</td>
+                </tr>
+                <tr>
+                  <td>系统建模</td>
+                  <td>Simulink（成熟）</td>
+                  <td>Modelica、SimPy（较分散）</td>
+                </tr>
+                <tr>
+                  <td>地震学工具</td>
+                  <td>GISMO、SeisLab</td>
+                  <td>ObsPy（生态更完整）</td>
+                </tr>
+                <tr>
+                  <td>可视化</td>
+                  <td>内置，出版级</td>
+                  <td>Matplotlib（灵活）</td>
+                </tr>
+                <tr>
+                  <td>部署</td>
+                  <td>MATLAB Compiler</td>
+                  <td>PyInstaller、Docker</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>互补使用</h3>
+          <p>
+            MATLAB 与 Python 并非对立，很多团队同时使用：
+          </p>
+          <ul>
+            <li><strong>MATLAB 做原型</strong>，Python 做部署。</li>
+            <li><strong>MATLAB 做信号处理</strong>（工具箱成熟），
+              Python 做深度学习（生态完整）。</li>
+            <li><strong>MATLAB 的 Simulink 做系统仿真</strong>，
+              Python 做数据分析与可视化。</li>
+            <li>通过 <code>matlab.engine</code> 在 Python 中调用 MATLAB。</li>
+            <li>通过 <code>py.</code> 前缀在 MATLAB 中调用 Python。</li>
+          </ul>
+
+          <h3>MATLAB 调用 Python</h3>
+          <pre><code class="language-matlab">% MATLAB 中调用 Python
+pyenv('Version', '3.10');   % 指定 Python 版本
+
+% 调用 numpy
+np = py.importlib.import_module('numpy');
+arr = np.array([1, 2, 3]);
+
+% 调用 obspy
+obspy = py.importlib.import_module('obspy');
+st = obspy.read('data.mseed');
+
+% 调用自定义模块
+sys = py.importlib.import_module('my_module');
+result = sys.my_function(10);</code></pre>
+
+          <h3>Python 调用 MATLAB</h3>
+          <pre><code class="language-python"># Python 中调用 MATLAB（需要 MATLAB Engine API）
+import matlab.engine
+
+eng = matlab.engine.start_matlab()
+
+# 调用 MATLAB 函数
+result = eng.sqrt(4.0)
+print(result)   # 2.0
+
+# 传数组
+x = matlab.double([1, 2, 3, 4])
+y = eng.sum(x)
+
+# 调用自定义脚本
+eng.cd(r'C:\path\to\project')
+eng.my_script(nargout=0)
+
+# 关闭
+eng.quit()</code></pre>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>选择建议</strong>：
+              ① <strong>选 MATLAB</strong>：有许可、需要 Simulink、
+              用成熟工具箱（信号/控制/优化）、追求零配置。
+              ② <strong>选 Python</strong>：需要深度学习、开源、
+              部署灵活、与 Web/云集成。
+              ③ <strong>两者都用</strong>：MATLAB 做信号处理与控制设计，
+              Python 做数据科学、机器学习与部署。
+              关键是<strong>团队熟悉度与长期维护成本</strong>，
+              而非单纯的技术优劣。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">09</span>工程应用</h2>
+
+          <h3>地震数据处理</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>process_wave.m</span>
+                <span class="lang">MATLAB</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-matlab">function [pga, pgv, pgd, ia, t_d] = process_wave(acc, dt)
+% PROCESS_WAVE 处理单条强震记录
+%
+% 输入：
+%   acc - 加速度时程 (m/s^2)
+%   dt  - 采样间隔 (s)
+%
+% 输出：
+%   pga - 峰值加速度
+%   pgv - 峰值速度
+%   pgd - 峰值位移
+%   ia  - Arias 强度
+%   t_d - 有效持时
+
+    % 1. 去趋势
+    acc = detrend(acc, 'linear');
+
+    % 2. 带通滤波（0.1~25 Hz）
+    fs = 1 / dt;
+    [b, a] = butter(4, [0.1, 25]/(fs/2), 'bandpass');
+    acc = filtfilt(b, a, acc);
+
+    % 3. 积分
+    vel = cumsum(acc) * dt;
+    disp_ = cumsum(vel) * dt;
+
+    % 4. 峰值
+    pga = max(abs(acc));
+    pgv = max(abs(vel));
+    pgd = max(abs(disp_));
+
+    % 5. Arias 强度
+    g = 9.81;
+    ia = pi / (2 * g) * sum(acc.^2) * dt;
+
+    % 6. 有效持时（5%~95%）
+    cum_ia = cumsum(acc.^2);
+    total = cum_ia(end);
+    t5 = find(cum_ia >= 0.05 * total, 1) * dt;
+    t95 = find(cum_ia >= 0.95 * total, 1) * dt;
+    t_d = t95 - t5;
+
+    % 7. 绘图
+    figure;
+    t = (0:length(acc)-1)' * dt;
+    tiledlayout(3, 1);
+
+    nexttile; plot(t, acc); ylabel('a (m/s^2)'); grid on;
+    nexttile; plot(t, vel); ylabel('v (m/s)'); grid on;
+    nexttile; plot(t, disp_); ylabel('d (m)'); grid on;
+    xlabel('t / s');
+end</code></pre>
+          </div>
+
+          <h3>反应谱计算</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>response_spectrum.m</span>
+                <span class="lang">MATLAB</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-matlab">function [T, Sa] = response_spectrum(acc, dt, periods, zeta)
+% RESPONSE_SPECTRUM 计算加速度反应谱
+%
+% 用 Newmark-β 平均加速度法
+
+    if nargin < 4
+        zeta = 0.05;
+    end
+
+    n_periods = length(periods);
+    Sa = zeros(n_periods, 1);
+
+    for i = 1:n_periods
+        T = periods(i);
+        if T <= 0.01
+            Sa(i) = max(abs(acc));
+            continue;
+        end
+        omega = 2 * pi / T;
+        Sa(i) = sdof_max_acc(acc, dt, omega, zeta);
+    end
+end
+
+function a_max = sdof_max_acc(acc, dt, omega, zeta)
+% 单自由度体系的绝对加速度峰值（Newmark-β 法）
+
+    n = length(acc);
+    m = 1.0;
+    c = 2 * m * omega * zeta;
+    k = m * omega^2;
+
+    gamma = 0.5;
+    beta = 0.25;
+
+    u = 0; v = 0;
+    a = -acc(1) - 2*zeta*omega*v - omega^2*u;
+
+    K_eff = k + gamma/(beta*dt)*c + 1/(beta*dt^2)*m;
+
+    a_max = 0;
+    for i = 1:n-1
+        P_eff = -m*acc(i+1) + ...
+                m * (1/(beta*dt^2)*u + 1/(beta*dt)*v + ...
+                     (1/(2*beta)-1)*a) + ...
+                c * (gamma/(beta*dt)*u + (gamma/beta-1)*v + ...
+                     dt*(gamma/(2*beta)-1)*a);
+
+        u_new = P_eff / K_eff;
+        v = gamma/(beta*dt)*(u_new - u) - (gamma/beta-1)*v - ...
+            dt*(gamma/(2*beta)-1)*a;
+        a = 1/(beta*dt^2)*(u_new - u) - 1/(beta*dt)*v - ...
+            (1/(2*beta)-1)*a;
+        u = u_new;
+
+        a_abs = abs(a + acc(i+1));
+        if a_abs > a_max
+            a_max = a_abs;
+        end
+    end
+end</code></pre>
+          </div>
+
+          <h3>GMPE 拟合</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>fit_gmpe.m</span>
+                <span class="lang">MATLAB</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-matlab">% 拟合地震动预测方程：
+% ln(PGA) = c0 + c1*M + c2*ln(R + 10) + c3*R + eps
+
+rng(42);
+n = 500;
+
+% 生成"观测"数据
+M = 4 + 3.5 * rand(n, 1);
+R = 10 + 200 * rand(n, 1);
+lnPGA = 1.5 + 0.8*M - 1.2*log(R + 10) - 0.002*R + 0.4*randn(n, 1);
+
+% 构建设计矩阵
+X = [ones(n, 1), M, log(R + 10), R];
+
+% 最小二乘
+coef = X \ lnPGA;
+
+fprintf('拟合系数：\n');
+fprintf('  c0 = %8.4f\n', coef(1));
+fprintf('  c1 = %8.4f  (真值 0.8000)\n', coef(2));
+fprintf('  c2 = %8.4f  (真值 -1.2000)\n', coef(3));
+fprintf('  c3 = %8.4f  (真值 -0.0020)\n', coef(4));
+
+% 残差标准差
+residuals = lnPGA - X * coef;
+sigma = std(residuals);
+fprintf('\n残差标准差 sigma = %.4f\n', sigma);
+
+% 决定系数
+SS_res = sum(residuals.^2);
+SS_tot = sum((lnPGA - mean(lnPGA)).^2);
+R2 = 1 - SS_res / SS_tot;
+fprintf('R² = %.4f\n', R2);
+
+% 残差诊断图
+figure('Position', [100, 100, 1000, 400]);
+tiledlayout(1, 2);
+
+nexttile;
+scatter(X*coef, residuals, 15, 'filled');
+xlabel('拟合值'); ylabel('残差');
+title('残差 vs 拟合值'); grid on;
+
+nexttile;
+histogram(residuals, 30);
+xlabel('残差'); ylabel('频次');
+title('残差分布'); grid on;</code></pre>
+          </div>
+
+          <h3>MATLAB 在地震工程中的典型场景</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>关键函数 / 工具箱</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>波形读写</td>
+                  <td>GISMO、rdsac</td>
+                  <td>SAC、MiniSEED 读写</td>
+                </tr>
+                <tr>
+                  <td>滤波与去噪</td>
+                  <td>butter、filtfilt</td>
+                  <td>带通、陷波</td>
+                </tr>
+                <tr>
+                  <td>谱分析</td>
+                  <td>fft、pwelch</td>
+                  <td>傅里叶谱、功率谱</td>
+                </tr>
+                <tr>
+                  <td>反应谱</td>
+                  <td>自编 + ode45 / Newmark</td>
+                  <td>单自由度时程积分</td>
+                </tr>
+                <tr>
+                  <td>结构动力学</td>
+                  <td>eig、ss、lsim</td>
+                  <td>模态、状态空间</td>
+                </tr>
+                <tr>
+                  <td>系统仿真</td>
+                  <td>Simulink</td>
+                  <td>隔震、控制</td>
+                </tr>
+                <tr>
+                  <td>参数反演</td>
+                  <td>lsqcurvefit、fmincon</td>
+                  <td>震源、GMPE</td>
+                </tr>
+                <tr>
+                  <td>统计拟合</td>
+                  <td>fitlm、fitdist</td>
+                  <td>分布、回归</td>
+                </tr>
+                <tr>
+                  <td>可视化</td>
+                  <td>plot、pcolor、mapshow</td>
+                  <td>波形、场图、地图</td>
+                </tr>
+                <tr>
+                  <td>并行加速</td>
+                  <td>parfor、gpuArray</td>
+                  <td>批量计算</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>MATLAB 与你的项目</strong>：
+              如果你的项目在 Python 之外还需要 MATLAB 支持（例如
+              与既有 MATLAB 代码集成、使用 Simulink 做系统仿真、
+              或使用特定工具箱），这份笔记可以作为参考。
+              常见做法：
+              ① 用 Python 做数据处理与可视化；
+              ② 用 MATLAB 做信号处理验证、Simulink 仿真；
+              ③ 通过 MATLAB Engine API 双向调用。
+              关键在于<strong>保持接口清晰、数据格式统一</strong>
+              （推荐用 HDF5、MAT、CSV 交换）。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>语言特性</strong>：一切皆为矩阵；1-based 索引；<code>*</code> 与 <code>.*</code> 区分矩阵乘与逐元素乘。</li>
+              <li><strong>矩阵与数组</strong>：创建、索引、矩阵运算、稀疏矩阵、结构体与 table。</li>
+              <li><strong>函数与脚本</strong>：独立作用域、输入输出明确；函数句柄与匿名函数。</li>
+              <li><strong>数值计算</strong>：线性代数、稀疏矩阵、优化、ODE、信号处理。</li>
+              <li><strong>可视化</strong>：plot / scatter / histogram / contour；tiledlayout 布局；出版级配置。</li>
+              <li><strong>工具箱</strong>：Signal Processing、Control、Optimization、Statistics、Curve Fitting。</li>
+              <li><strong>Simulink</strong>：图形化动态系统建模；与 MATLAB 交互。</li>
+              <li><strong>与 Python 对比</strong>：各有优势；可互补；通过 MATLAB Engine 双向调用。</li>
+              <li><strong>工程应用</strong>：波形处理、反应谱、GMPE 拟合、结构控制。</li>
+            </ul>
+          </div>
+
+          <h3>MATLAB 语法速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>MATLAB</th><th>备注</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>创建范围</td>
+                  <td><code>1:5</code>、<code>1:0.5:3</code></td>
+                  <td>与 Python <code>range</code> 不同</td>
+                </tr>
+                <tr>
+                  <td>线性等距</td>
+                  <td><code>linspace(0, 1, 100)</code></td>
+                  <td>包含两端</td>
+                </tr>
+                <tr>
+                  <td>矩阵乘</td>
+                  <td><code>A * B</code></td>
+                  <td>Python <code>A @ B</code></td>
+                </tr>
+                <tr>
+                  <td>逐元素乘</td>
+                  <td><code>A .* B</code></td>
+                  <td>Python <code>A * B</code></td>
+                </tr>
+                <tr>
+                  <td>共轭转置</td>
+                  <td><code>A'</code></td>
+                  <td>Python <code>A.conj().T</code></td>
+                </tr>
+                <tr>
+                  <td>普通转置</td>
+                  <td><code>A.'</code></td>
+                  <td>Python <code>A.T</code></td>
+                </tr>
+                <tr>
+                  <td>解线性方程组</td>
+                  <td><code>x = A \ b</code></td>
+                  <td>推荐做法</td>
+                </tr>
+                <tr>
+                  <td>特征值</td>
+                  <td><code>[V, D] = eig(A)</code></td>
+                  <td>列向量特征向量</td>
+                </tr>
+                <tr>
+                  <td>稀疏矩阵</td>
+                  <td><code>spdiags</code>、<code>sparse</code></td>
+                  <td>CSR 类似</td>
+                </tr>
+                <tr>
+                  <td>ODE 求解</td>
+                  <td><code>ode45</code></td>
+                  <td>RK45 自适应步长</td>
+                </tr>
+                <tr>
+                  <td>滤波</td>
+                  <td><code>butter</code> + <code>filtfilt</code></td>
+                  <td>零相位</td>
+                </tr>
+                <tr>
+                  <td>FFT</td>
+                  <td><code>fft(x)</code></td>
+                  <td>与 NumPy 相同</td>
+                </tr>
+                <tr>
+                  <td>最小二乘</td>
+                  <td><code>X \ y</code></td>
+                  <td>正规方程自动处理</td>
+                </tr>
+                <tr>
+                  <td>非线性拟合</td>
+                  <td><code>lsqcurvefit</code></td>
+                  <td>需要 Optimization Toolbox</td>
+                </tr>
+                <tr>
+                  <td>绘图</td>
+                  <td><code>plot</code>、<code>scatter</code></td>
+                  <td>与 Matplotlib 类似</td>
+                </tr>
+                <tr>
+                  <td>性能分析</td>
+                  <td><code>tic</code> / <code>toc</code>、<code>profile</code></td>
+                  <td>与 <code>%timeit</code> 类似</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>科学计算与 Python</strong>（计算机）：互补工具链，可对比学习。</li>
+            <li><strong>数字信号处理</strong>（计算机）：MATLAB 的信号处理工具箱是 DSP 的经典实现。</li>
+            <li><strong>数据结构</strong>（计算机）：稀疏矩阵、cell、struct 都是数据结构。</li>
+            <li><strong>算法设计与分析</strong>（计算机）：MATLAB 内置函数实现了大量算法。</li>
+            <li><strong>机器学习基础</strong>（计算机）：MATLAB 有 Statistics and ML Toolbox。</li>
+            <li><strong>线性代数</strong>（数学）：MATLAB 的 <code>eig</code>、<code>svd</code>、<code>lu</code> 是线代的实现。</li>
+            <li><strong>数值分析</strong>（数学）：<code>ode45</code>、<code>lsqcurvefit</code> 等是数值算法的实现。</li>
+            <li><strong>复变函数与积分变换</strong>（数学）：<code>fft</code> 是傅里叶变换的实现。</li>
+            <li><strong>偏微分方程</strong>（数学）：PDE Toolbox、<code>pdepe</code> 求解 PDE。</li>
+            <li><strong>结构动力学</strong>（力学）：Simulink 建模、状态空间、模态分析。</li>
+            <li><strong>强震动观测</strong>（地震学）：波形处理、反应谱计算。</li>
+            <li><strong>工程地震学</strong>（地震学）：GMPE 拟合、曲线拟合。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>MathWorks, <em>MATLAB Documentation</em> — 官方文档，最权威</li>
+            <li>MathWorks, <em>Simulink User's Guide</em> — Simulink 官方指南</li>
+            <li>Palm, <em>MATLAB for Engineering Applications</em> — 工程应用入门</li>
+            <li>Chapman, <em>MATLAB Programming for Engineers</em> — 编程实践</li>
+            <li>Hahn &amp; Valentine, <em>Essential MATLAB for Engineers and Scientists</em> — 简洁入门</li>
+            <li>Attaway, <em>MATLAB: A Practical Introduction to Programming and Problem Solving</em> — 系统教材</li>
+            <li>Kattan, <em>MATLAB for Beginners: A Gentle Approach</em> — 快速上手</li>
+            <li>MathWorks, <em>Signal Processing Toolbox User's Guide</em> — 信号处理工具箱</li>
+            <li>MathWorks, <em>Optimization Toolbox User's Guide</em> — 优化工具箱</li>
+            <li>Higham &amp; Higham, <em>MATLAB Guide</em> — 进阶参考</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="category">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算机 · 笔记 · wayione</title>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="dot"></span><span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← 返回主页</a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="category-wrap">
+
+  <div class="crumb">
+    <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 计算机
+  </div>
+
+  <header class="category-head">
+    <h1>计算机</h1>
+    <p>数据结构、算法、信号处理、机器学习与科学计算工具链，是数值实现与数据处理的编程基础。</p>
+    <div class="meta">
+      <span>9 篇</span>
+      <span>数字信号处理</span>
+      <span>数据结构</span>
+      <span>算法设计与分析</span>
+      <span>机器学习基础</span>
+      <span>科学计算与 Python</span>
+      <span>科学计算与 MATLAB</span>
+      <span>科学计算与 R</span>
+      <span>数据库与数据工程</span>
+      <span>并行与高性能计算</span>
+    </div>
+  </header>
+
+  <div class="category-grid">
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/dsp.html">数字信号处理</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">离散信号与系统、采样定理、变换与数字滤波器设计。</p>
+      <div class="subnotes">
+        <a href="cs/dsp.html#sampling">采样定理</a>
+        <a href="cs/dsp.html#ztransform">Z 变换</a>
+        <a href="cs/dsp.html#fft">DFT 与 FFT</a>
+        <a href="cs/dsp.html#filter">数字滤波器设计</a>
+        <a href="cs/dsp.html#window">窗函数与频谱泄漏</a>
+      </div>
+      <div class="tags">
+        <span class="tag">DSP</span>
+        <span class="tag">FFT</span>
+        <span class="tag blue">滤波</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/data-structures.html">数据结构</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从数组链表到图与排序，覆盖栈、队列、树、哈希、堆与图算法，是科学计算、有限元组装与地震数据处理的基础工具。</p>
+      <div class="subnotes">
+        <a href="cs/data-structures.html#complexity">算法分析</a>
+        <a href="cs/data-structures.html#linear">线性结构</a>
+        <a href="cs/data-structures.html#tree">树结构</a>
+        <a href="cs/data-structures.html#hash">哈希表</a>
+        <a href="cs/data-structures.html#heap">堆与优先队列</a>
+        <a href="cs/data-structures.html#graph">图与图算法</a>
+        <a href="cs/data-structures.html#sort">排序与查找</a>
+        <a href="cs/data-structures.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">算法分析</span>
+        <span class="tag">树与图</span>
+        <span class="tag blue">科学计算</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/algorithm-design.html">算法设计与分析</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从分治到动态规划，覆盖贪心、回溯、分支限界与 NP 完全性，是科学计算、优化求解与高性能实现的方法论基础。</p>
+      <div class="subnotes">
+        <a href="cs/algorithm-design.html#paradigm">算法设计范式</a>
+        <a href="cs/algorithm-design.html#divide">分治法</a>
+        <a href="cs/algorithm-design.html#greedy">贪心算法</a>
+        <a href="cs/algorithm-design.html#dp">动态规划</a>
+        <a href="cs/algorithm-design.html#backtrack">回溯与分支限界</a>
+        <a href="cs/algorithm-design.html#randomized">随机化算法</a>
+        <a href="cs/algorithm-design.html#np">NP 完全性</a>
+        <a href="cs/algorithm-design.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">动态规划</span>
+        <span class="tag">贪心</span>
+        <span class="tag blue">优化求解</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/machine-learning.html">机器学习基础</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从线性回归到神经网络，覆盖监督学习、无监督学习、模型评估与正则化，是地震学数据挖掘、震相拾取与地震预测研究的新工具。</p>
+      <div class="subnotes">
+        <a href="cs/machine-learning.html#workflow">机器学习流程</a>
+        <a href="cs/machine-learning.html#regression">线性回归</a>
+        <a href="cs/machine-learning.html#classification">分类</a>
+        <a href="cs/machine-learning.html#clustering">聚类</a>
+        <a href="cs/machine-learning.html#neural">神经网络</a>
+        <a href="cs/machine-learning.html#evaluation">模型评估</a>
+        <a href="cs/machine-learning.html#regularization">正则化与优化</a>
+        <a href="cs/machine-learning.html#application">地震学应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">监督学习</span>
+        <span class="tag">神经网络</span>
+        <span class="tag blue">地震学应用</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/scientific-computing-python.html">科学计算与 Python</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从 NumPy 向量化到 SciPy 数值算法，覆盖数组运算、优化、积分、信号处理与性能调优，是工程计算与地震数据处理的核心工具链。</p>
+      <div class="subnotes">
+        <a href="cs/scientific-computing-python.html#ecosystem">科学计算生态</a>
+        <a href="cs/scientific-computing-python.html#numpy">NumPy 基础</a>
+        <a href="cs/scientific-computing-python.html#vectorize">向量化与广播</a>
+        <a href="cs/scientific-computing-python.html#scipy">SciPy 数值算法</a>
+        <a href="cs/scientific-computing-python.html#matplotlib">Matplotlib 可视化</a>
+        <a href="cs/scientific-computing-python.html#pandas">Pandas 数据处理</a>
+        <a href="cs/scientific-computing-python.html#performance">性能优化</a>
+        <a href="cs/scientific-computing-python.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">NumPy</span>
+        <span class="tag">SciPy</span>
+        <span class="tag blue">向量化</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/scientific-computing-matlab.html">科学计算与 MATLAB</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从矩阵运算到 Simulink 建模，覆盖 MATLAB 语言特性、数值计算、信号处理与工程可视化，是工程仿真与地震数据处理的重要工具。</p>
+      <div class="subnotes">
+        <a href="cs/scientific-computing-matlab.html#language">语言特性</a>
+        <a href="cs/scientific-computing-matlab.html#matrix">矩阵与数组</a>
+        <a href="cs/scientific-computing-matlab.html#function">函数与脚本</a>
+        <a href="cs/scientific-computing-matlab.html#numeric">数值计算</a>
+        <a href="cs/scientific-computing-matlab.html#plot">可视化</a>
+        <a href="cs/scientific-computing-matlab.html#toolbox">工具箱</a>
+        <a href="cs/scientific-computing-matlab.html#simulink">Simulink</a>
+        <a href="cs/scientific-computing-matlab.html#vs-python">与 Python 对比</a>
+        <a href="cs/scientific-computing-matlab.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">矩阵运算</span>
+        <span class="tag">Simulink</span>
+        <span class="tag blue">工程仿真</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/scientific-computing-r.html">科学计算与 R</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从向量化到统计建模，覆盖 R 语言特性、数据操作、可视化与时间序列分析，是地震目录统计、极值分析与 ETAS 建模的专用工具。</p>
+      <div class="subnotes">
+        <a href="cs/scientific-computing-r.html#language">语言特性</a>
+        <a href="cs/scientific-computing-r.html#data">数据结构</a>
+        <a href="cs/scientific-computing-r.html#functional">函数式与 apply</a>
+        <a href="cs/scientific-computing-r.html#tidyverse">tidyverse 数据操作</a>
+        <a href="cs/scientific-computing-r.html#stats">统计建模</a>
+        <a href="cs/scientific-computing-r.html#timeseries">时间序列</a>
+        <a href="cs/scientific-computing-r.html#plot">可视化</a>
+        <a href="cs/scientific-computing-r.html#vs-python">与 Python 对比</a>
+        <a href="cs/scientific-computing-r.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">向量化</span>
+        <span class="tag">统计建模</span>
+        <span class="tag blue">地震统计</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/database-data-engineering.html">数据库与数据工程</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从关系模型到时序数据库，覆盖 SQL、索引、事务、数据仓库与数据管道，是地震目录管理、波形归档与大规模数据处理的基础设施。</p>
+      <div class="subnotes">
+        <a href="cs/database-data-engineering.html#model">数据模型</a>
+        <a href="cs/database-data-engineering.html#sql">SQL 与查询</a>
+        <a href="cs/database-data-engineering.html#index">索引与优化</a>
+        <a href="cs/database-data-engineering.html#transaction">事务与并发</a>
+        <a href="cs/database-data-engineering.html#timeseries">时序数据库</a>
+        <a href="cs/database-data-engineering.html#warehouse">数据仓库</a>
+        <a href="cs/database-data-engineering.html#pipeline">数据管道</a>
+        <a href="cs/database-data-engineering.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">SQL</span>
+        <span class="tag">时序数据库</span>
+        <span class="tag blue">数据管道</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><a href="cs/parallel-high-performance-computing.html">并行与高性能计算</a></h3>
+        <span class="arrow">→</span>
+      </div>
+      <p class="desc">从多核到 GPU 集群，覆盖 OpenMP、MPI、CUDA 与 Python 并行，是有限元求解、地震波模拟与大规模数据分析的加速关键。</p>
+      <div class="subnotes">
+        <a href="cs/parallel-high-performance-computing.html#basis">并行计算基础</a>
+        <a href="cs/parallel-high-performance-computing.html#hardware">并行硬件架构</a>
+        <a href="cs/parallel-high-performance-computing.html#openmp">共享内存 OpenMP</a>
+        <a href="cs/parallel-high-performance-computing.html#mpi">消息传递 MPI</a>
+        <a href="cs/parallel-high-performance-computing.html#gpu">GPU 与 CUDA</a>
+        <a href="cs/parallel-high-performance-computing.html#python">Python 并行</a>
+        <a href="cs/parallel-high-performance-computing.html#algorithm">并行算法设计</a>
+        <a href="cs/parallel-high-performance-computing.html#application">工程应用</a>
+      </div>
+      <div class="tags">
+        <span class="tag">OpenMP</span>
+        <span class="tag">MPI</span>
+        <span class="tag blue">GPU</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

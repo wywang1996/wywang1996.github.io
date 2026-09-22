@@ -1,0 +1,1476 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>场地地震安全性评价 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="site-seismic-safety-evaluation">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#regulation">一、法规框架</a></li>
+      <li><a href="#workflow">二、工作流程</a></li>
+      <li><a href="#hazard">三、地震危险性分析</a></li>
+      <li><a href="#site">四、场地效应评估</a></li>
+      <li><a href="#design">五、设计地震动确定</a></li>
+      <li><a href="#geohazard">六、地震地质灾害评估</a></li>
+      <li><a href="#review">七、评审与实施</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 场地地震安全性评价
+        </div>
+        <h1>场地地震安全性评价</h1>
+        <p class="lead">
+          从法规框架到工作流程，覆盖地震危险性分析、场地效应评估、
+          设计地震动确定与地震地质灾害评估。
+          它是重大工程抗震设防的法定环节，
+          把地震地质、工程地震学、土动力学的研究成果
+          转化为具体的工程设计参数。
+        </p>
+        <div class="article-meta">
+          <span>地震安全性评价</span>
+          <span>设计地震动</span>
+          <span>地震地质灾害</span>
+          <span class="blue">重大工程</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            场地地震安全性评价（Seismic Safety Evaluation of Engineering Sites）
+            是对<strong>重大工程场地未来可能遭遇的地震作用</strong>进行系统评估的技术工作。
+            它是连接地震学、地震地质与结构抗震设计的法定桥梁。
+          </p>
+
+          <h3>为什么需要专门评价</h3>
+          <p>
+            一般建筑按规范设计谱设计即可，规范谱基于全国地震区划图，
+            具有区域性、统计性。
+            但重大工程（核电站、大坝、超高层、跨海大桥）具有：
+          </p>
+          <ul>
+            <li><strong>高安全要求</strong>：失效后果极其严重。</li>
+            <li><strong>特殊场地</strong>：可能位于近断层、软土、复杂地形。</li>
+            <li><strong>长设计寿命</strong>：50~100 年，超出规范谱的适用范围。</li>
+            <li><strong>巨大投资</strong>：地震动参数的小幅变化引起造价大幅变化。</li>
+          </ul>
+          <p>
+            这些特点决定了必须有针对性的场地地震安全性评价。
+          </p>
+
+          <h3>与规范设计的关系</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>规范设计</th><th>场地地震安全性评价</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>适用范围</td>
+                  <td>一般建筑</td>
+                  <td>重大工程、特殊工程</td>
+                </tr>
+                <tr>
+                  <td>地震动来源</td>
+                  <td>全国区划图</td>
+                  <td>专门的地震危险性分析</td>
+                </tr>
+                <tr>
+                  <td>场地考虑</td>
+                  <td>简单分类（Ⅰ~Ⅳ类）</td>
+                  <td>详细场地效应分析</td>
+                </tr>
+                <tr>
+                  <td>概率水平</td>
+                  <td>三水准</td>
+                  <td>多水准 + 确定性校核</td>
+                </tr>
+                <tr>
+                  <td>时程选取</td>
+                  <td>规范要求 3 条</td>
+                  <td>专门选波或合成</td>
+                </tr>
+                <tr>
+                  <td>深度</td>
+                  <td>标准化</td>
+                  <td>个性化、系统化</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            场地地震安全性评价在法律上是<strong>强制性</strong>的：
+            根据《中华人民共和国防震减灾法》，
+            重大建设工程和可能发生严重次生灾害的建设工程，
+            必须进行地震安全性评价。
+          </p>
+
+          <h3>典型重大工程</h3>
+          <ul>
+            <li><strong>核电站</strong>：安全等级最高，评价最严格。</li>
+            <li><strong>大型水坝</strong>：溃坝后果极其严重。</li>
+            <li><strong>超高层建筑</strong>：长周期结构，对地震动特性敏感。</li>
+            <li><strong>跨海大桥</strong>：多点地震动输入。</li>
+            <li><strong>长输管线</strong>：跨多断层、多场地。</li>
+            <li><strong>液化天然气（LNG）储罐</strong>：易燃易爆。</li>
+            <li><strong>大型石化装置</strong>：次生灾害风险高。</li>
+            <li><strong>重要生命线工程</strong>：医院、指挥中心、数据中心。</li>
+          </ul>
+
+          <p>
+            这份笔记按"法规 $\to$ 流程 $\to$ 危险性 $\to$ 场地效应 $\to$ 设计地震动 $\to$ 地质灾害 $\to$ 评审 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程实践上。
+          </p>
+        </section>
+
+        <section id="regulation">
+          <h2><span class="num">01</span>法规框架</h2>
+
+          <h3>中国法规体系</h3>
+          <p>
+            场地地震安全性评价在中国的法规体系：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>层级</th><th>文件</th><th>内容</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>法律</td>
+                  <td>《中华人民共和国防震减灾法》</td>
+                  <td>规定评价的强制性</td>
+                </tr>
+                <tr>
+                  <td>行政法规</td>
+                  <td>《地震安全性评价管理条例》</td>
+                  <td>规定评价的范围、程序、资质</td>
+                </tr>
+                <tr>
+                  <td>部门规章</td>
+                  <td>《地震安全性评价资质管理办法》</td>
+                  <td>资质要求、人员要求</td>
+                </tr>
+                <tr>
+                  <td>国家标准</td>
+                  <td>GB 17741《工程场地地震安全性评价》</td>
+                  <td>技术方法、技术要求</td>
+                </tr>
+                <tr>
+                  <td>行业标准</td>
+                  <td>GB 50267《核电厂抗震设计规范》</td>
+                  <td>核电站专门要求</td>
+                </tr>
+                <tr>
+                  <td>地方标准</td>
+                  <td>各省地震安全性评价管理办法</td>
+                  <td>地方性要求</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>必须进行评价的工程</h3>
+          <p>
+            根据《防震减灾法》和《地震安全性评价管理条例》，
+            以下工程必须进行地震安全性评价：
+          </p>
+          <ul>
+            <li>核电站、核设施。</li>
+            <li>大型水利工程、可能引起次生灾害的工程。</li>
+            <li>大型石化、化工、燃气工程。</li>
+            <li>超高层建筑、大型公共建筑。</li>
+            <li>大型桥梁、隧道、港口、机场。</li>
+            <li>重要通信、电力、供水、供气设施。</li>
+            <li>大型工矿企业。</li>
+            <li>可能产生严重次生灾害的工程。</li>
+          </ul>
+
+          <h3>评价等级</h3>
+          <p>
+            根据工程重要性和场地复杂性，评价工作分为不同等级：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>等级</th><th>适用工程</th><th>工作深度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ⅰ 级</td>
+                  <td>核电站、极高安全要求</td>
+                  <td>最详细，含断层活动性鉴定、确定性分析</td>
+                </tr>
+                <tr>
+                  <td>Ⅱ 级</td>
+                  <td>大型水坝、超高层、大型桥梁</td>
+                  <td>详细，含专门危险性分析与场地反应</td>
+                </tr>
+                <tr>
+                  <td>Ⅲ 级</td>
+                  <td>重要公共建筑、大型工业设施</td>
+                  <td>较详细，含危险性分析与场地分类</td>
+                </tr>
+                <tr>
+                  <td>Ⅳ 级</td>
+                  <td>一般重要工程</td>
+                  <td>简化，含地震动参数复核</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>国际法规参考</h3>
+          <ul>
+            <li><strong>美国</strong>：USGS 地震危险性图 + 场地专门研究（如核管会 RG 1.165）。</li>
+            <li><strong>日本</strong>：建筑基准法 + 特定行政厅审查（如原子力規制委員会）。</li>
+            <li><strong>欧洲</strong>：EC8 规范 + 国家附录。</li>
+            <li><strong>IAEA</strong>：核设施地震危险性评价安全标准（SSG-9）。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么核电站要求最严</strong>：
+              核电站一旦发生严重事故，后果极其严重。
+              因此核电站的地震安全性评价要求：
+              ① 用<strong>PSHA + DSHA 双重方法</strong>；
+              ② 评价<strong>万年一遇</strong>甚至更长重现期的地震；
+              ③ 考虑<strong>近断层、多点地震动、地表破裂</strong>；
+              ④ 结果由<strong>国家核安全局</strong>独立审查。
+              这体现了"纵深防御"的安全理念。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow">
+          <h2><span class="num">02</span>工作流程</h2>
+
+          <h3>完整流程</h3>
+          <p>
+            场地地震安全性评价的标准工作流程：
+          </p>
+          <ol class="steps">
+            <li><strong>任务确定</strong>：明确工程类型、评价等级、设计需求。</li>
+            <li><strong>区域地震构造环境调查</strong>：区域构造格架、地震活动性。</li>
+            <li><strong>近场活动断层鉴定</strong>：活动断层位置、活动性、滑动速率。</li>
+            <li><strong>地震危险性分析</strong>：PSHA + DSHA，给出基岩地震动。</li>
+            <li><strong>场地勘察</strong>：钻孔、波速测试、土工试验。</li>
+            <li><strong>场地地震反应分析</strong>：土层模型、等效线性或非线性分析。</li>
+            <li><strong>设计地震动确定</strong>：设计谱、时程、参数。</li>
+            <li><strong>地震地质灾害评估</strong>：液化、滑坡、地表破裂、软土震陷。</li>
+            <li><strong>成果编制与评审</strong>：报告、专家评审、批复。</li>
+            <li><strong>成果应用</strong>：设计输入、施工配合、运营监测。</li>
+          </ol>
+
+          <h3>区域地震构造环境调查</h3>
+          <p>
+            调查内容：
+          </p>
+          <ul>
+            <li><strong>区域构造格架</strong>：大地构造单元、主要断裂。</li>
+            <li><strong>新构造运动</strong>：第四纪以来的构造活动。</li>
+            <li><strong>地震活动性</strong>：历史地震、仪器地震目录。</li>
+            <li><strong>构造应力场</strong>：主应力方向、震源机制解。</li>
+            <li><strong>深部结构</strong>：地壳结构、莫霍面深度。</li>
+          </ul>
+          <p>
+            调查范围通常是以场地为中心、半径 150~300 km 的区域，
+            对核电站等超高安全要求工程，范围可达 300 km 以上。
+          </p>
+
+          <h3>近场活动断层鉴定</h3>
+          <p>
+            近场（通常半径 25~40 km）活动断层鉴定是评价的关键：
+          </p>
+          <ul>
+            <li><strong>遥感解译</strong>：卫星影像、航片识别线性构造。</li>
+            <li><strong>地质调查</strong>：野外追索、断层剖面测量。</li>
+            <li><strong>探槽开挖</strong>：确定断层活动性与古地震。</li>
+            <li><strong>物探</strong>：浅层地震勘探确定隐伏断层。</li>
+            <li><strong>钻探</strong>：断层活动性的深部验证。</li>
+            <li><strong>年代学</strong>：$^{14}$C、OSL 测年。</li>
+          </ul>
+
+          <h3>场地勘察</h3>
+          <p>
+            场地勘察为土层反应分析提供参数：
+          </p>
+          <ul>
+            <li><strong>钻孔</strong>：确定土层分层、厚度、地下水位。</li>
+            <li><strong>剪切波速测试</strong>：钻孔波速法、面波法。</li>
+            <li><strong>标准贯入试验（SPT）</strong>：密实度、液化判别。</li>
+            <li><strong>静力触探（CPT）</strong>：连续土层剖面。</li>
+            <li><strong>室内试验</strong>：动三轴、共振柱测 $G$、$D$。</li>
+            <li><strong>颗粒分析</strong>：黏粒含量、级配。</li>
+          </ul>
+
+          <h3>工作周期</h3>
+          <p>
+            一个完整的场地地震安全性评价项目通常需要：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>阶段</th><th>时间</th><th>主要工作</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>准备阶段</td>
+                  <td>1~2 个月</td>
+                  <td>资料收集、现场踏勘、方案编制</td>
+                </tr>
+                <tr>
+                  <td>现场工作</td>
+                  <td>2~6 个月</td>
+                  <td>地质调查、物探、钻探、测试</td>
+                </tr>
+                <tr>
+                  <td>室内分析</td>
+                  <td>2~4 个月</td>
+                  <td>资料整理、危险性分析、反应分析</td>
+                </tr>
+                <tr>
+                  <td>报告编制</td>
+                  <td>1~2 个月</td>
+                  <td>报告撰写、图件制作</td>
+                </tr>
+                <tr>
+                  <td>评审批复</td>
+                  <td>1~3 个月</td>
+                  <td>专家评审、修改、批复</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            总周期通常 6~18 个月，核电站等特大型工程可达 2~3 年。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工作流程的核心思想</strong>：从"区域"到"近场"再到"场地"，
+              逐级聚焦，逐级加密。
+              区域调查确定潜在震源，
+              近场鉴定确定活动断层，
+              场地勘察确定土层模型，
+              最终综合给出设计地震动。
+              这体现了<strong>由粗到细、逐级筛选</strong>的工作哲学。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="hazard">
+          <h2><span class="num">03</span>地震危险性分析</h2>
+
+          <h3>PSHA 的应用</h3>
+          <p>
+            场地地震安全性评价中的危险性分析以 PSHA 为主，
+            方法框架与工程地震学一致，但要求更严格：
+          </p>
+          <ul>
+            <li><strong>震源模型更细</strong>：需要建立三维断层模型，考虑断层几何、产状、滑动速率。</li>
+            <li><strong>逻辑树更复杂</strong>：每个参数都要给出多分支与权重。</li>
+            <li><strong>不确定性分析</strong>：必须给出中值、15%、85% 分位数结果。</li>
+            <li><strong>解聚分析</strong>：确定主导的震级-距离组合，用于选波。</li>
+            <li><strong>多周期输出</strong>：给出所有关注周期的危险性曲线。</li>
+          </ul>
+
+          <h3>潜在震源区划分</h3>
+          <p>
+            潜在震源区划分是 PSHA 的第一步：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>依据</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>断层源</td>
+                  <td>活动断层位置与几何</td>
+                  <td>位置明确，受断层约束</td>
+                </tr>
+                <tr>
+                  <td>地震构造区</td>
+                  <td>构造特征、应力场</td>
+                  <td>地震可能分布在整个区域</td>
+                </tr>
+                <tr>
+                  <td>弥散地震区</td>
+                  <td>历史地震分布</td>
+                  <td>无明显断层但曾发生地震</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            中国第五代地震区划图采用"地震构造区 + 潜在震源区"两级划分。
+          </p>
+
+          <h3>地震活动性参数</h3>
+          <p>
+            每个潜在震源区需要给出：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>参数</th><th>含义</th><th>来源</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$M_{\min}$</td>
+                  <td>震级下限</td>
+                  <td>通常取 4.0~4.5</td>
+                </tr>
+                <tr>
+                  <td>$M_{\max}$</td>
+                  <td>震级上限</td>
+                  <td>断层长度、分段</td>
+                </tr>
+                <tr>
+                  <td>$b$ 值</td>
+                  <td>GR 关系斜率</td>
+                  <td>区域地震活动性统计</td>
+                </tr>
+                <tr>
+                  <td>$\nu$</td>
+                  <td>年发生率</td>
+                  <td>滑动速率或历史地震</td>
+                </tr>
+                <tr>
+                  <td>深度分布</td>
+                  <td>震源深度范围</td>
+                  <td>区域地震目录</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>PSHA 计算</h3>
+          <p>
+            对每个潜在震源区，计算对场地的地震动贡献：
+          </p>
+
+          $$ \lambda(Y > y) = \sum_i \nu_i \iiint
+             P[Y > y \mid m, r] \, f_M(m) \, f_R(r) \, dm \, dr $$
+
+          <p>
+            对所有震源求和，得到场地的危险性曲线。
+          </p>
+
+          <p>
+            现代评价中，PSHA 用专业软件计算（如 OpenQuake、CRISIS、EZ-FRISK），
+            并做完整的逻辑树分析。
+          </p>
+
+          <h3>DSHA 的应用</h3>
+          <p>
+            确定性分析（DSHA）在核电站等超高安全要求工程中是必需的：
+          </p>
+          <ol class="steps">
+            <li>确定"最大可信地震"（MCE）：断层能产生的最大地震。</li>
+            <li>确定"最大历史地震"：历史记录中的最大地震。</li>
+            <li>确定"构造地震"：基于构造分析的合理最大地震。</li>
+            <li>取三者中的最大值作为 MCE。</li>
+            <li>计算 MCE 在场地产生的地震动（通常用 GMPE 的中值 + 1σ）。</li>
+          </ol>
+          <p>
+            DSHA 给出的地震动作为设计地震动的上限校核。
+          </p>
+
+          <h3>解聚分析</h3>
+          <p>
+            解聚分析确定对危险性贡献最大的震级-距离组合：
+          </p>
+
+          $$ \text{解聚}(m, r) = \frac{\lambda_{m,r}(Y > y)}
+             {\lambda_{\text{total}}(Y > y)} $$
+
+          <p>
+            解聚结果用于：
+          </p>
+          <ul>
+            <li>选波：选取与主导 $(m, r)$ 匹配的实际记录。</li>
+            <li>模拟：用主导 $(m, r)$ 合成地震动。</li>
+            <li>理解危险性来源：近场小震还是远场大震？</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>PSHA 与 DSHA 的关系</strong>：
+              在核电站评价中，两者通常并用——
+              PSHA 给出概率水平的设计基准地震动（DBE），
+              DSHA 给出最大可信地震动（MCE）作为上限。
+              结构设计要求：
+              ① 在 DBE 下保持功能；
+              ② 在 MCE 下保持安全（不泄漏、不倒塌）。
+              这种"双水平设防"是核安全的核心理念。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="site">
+          <h2><span class="num">04</span>场地效应评估</h2>
+
+          <h3>场地效应的重要性</h3>
+          <p>
+            相同基岩地震动下，不同场地地表地震动可以相差数倍。
+            场地效应评估是场地地震安全性评价的核心环节。
+          </p>
+
+          <h3>一维土层反应分析</h3>
+          <p>
+            对水平成层场地，一维 SH 波传播是标准方法：
+          </p>
+
+          $$ \rho \frac{\partial^2 u}{\partial t^2}
+             = G \frac{\partial^2 u}{\partial z^2}
+             + \eta \frac{\partial^3 u}{\partial z^2 \partial t} $$
+
+          <p>
+            求解方法：
+          </p>
+          <ul>
+            <li><strong>频域等效线性</strong>：SHAKE 类程序，迭代求解 $G$、$D$ 与应变。</li>
+            <li><strong>时域等效线性</strong>：DEEPSOIL 的等效线性模式。</li>
+            <li><strong>时域非线性</strong>：DEEPSOIL、OpenSees 的非线性模式。</li>
+          </ul>
+
+          <h3>等效线性化迭代</h3>
+          <p>
+            由于土的 $G$、$D$ 依赖应变，需要迭代：
+          </p>
+          <ol class="steps">
+            <li>假定初始 $G$、$D$（通常取小应变值 $G_{\max}$、$D_{\min}$）。</li>
+            <li>用传递矩阵法计算土层中各点的剪应变时程。</li>
+            <li>取有效剪应变 $\gamma_{\text{eff}} = 0.65 \gamma_{\max}$。</li>
+            <li>根据 $G/G_{\max}$–$\gamma$ 与 $D$–$\gamma$ 曲线更新 $G$、$D$。</li>
+            <li>重复 2~4 直到收敛（$G$、$D$ 变化 &lt; 5%）。</li>
+            <li>输出地表地震动、各层剪应变、加速度时程。</li>
+          </ol>
+
+          <h3>二维/三维场地效应</h3>
+          <p>
+            对地形起伏、河谷、盆地、山前等复杂场地，
+            一维分析不适用，需要二维或三维分析：
+          </p>
+          <ul>
+            <li><strong>二维有限元</strong>：河谷、边坡、坝址。</li>
+            <li><strong>二维有限差分</strong>：FLAC。</li>
+            <li><strong>三维有限元</strong>：盆地、城市区域。</li>
+            <li><strong>边界元</strong>：半空间辐射条件。</li>
+            <li><strong>谱元法</strong>：高精度、大尺度。</li>
+          </ul>
+
+          <h3>地形效应</h3>
+          <p>
+            山脊、陡崖、孤立山体等地形对地震动有放大效应：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>地形类型</th><th>放大特征</th><th>典型放大倍数</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>孤立山丘</td>
+                  <td>顶部放大</td>
+                  <td>1.5~3.0</td>
+                </tr>
+                <tr>
+                  <td>山脊</td>
+                  <td>顶部与两侧放大</td>
+                  <td>1.5~4.0</td>
+                </tr>
+                <tr>
+                  <td>陡崖</td>
+                  <td>边缘放大</td>
+                  <td>1.2~2.5</td>
+                </tr>
+                <tr>
+                  <td>河谷</td>
+                  <td>边缘与内部共振</td>
+                  <td>1.5~3.0</td>
+                </tr>
+                <tr>
+                  <td>盆地</td>
+                  <td>边缘与中心放大</td>
+                  <td>2.0~5.0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            1994 年 Northridge 地震、1999 年集集地震中，
+            都观测到显著的地形放大效应。
+          </p>
+
+          <h3>盆地效应</h3>
+          <p>
+            沉积盆地会捕获并放大地震波：
+          </p>
+          <ul>
+            <li><strong>边缘效应</strong>：盆地边缘的入射波聚焦。</li>
+            <li><strong>共振效应</strong>：盆地整体共振，产生长周期地震动。</li>
+            <li><strong>面波转换</strong>：体波在盆地边缘转换为面波。</li>
+            <li><strong>持时延长</strong>：盆地的混响使地震动持时显著延长。</li>
+          </ul>
+
+          <p>
+            1985 年墨西哥城地震是盆地效应的经典案例：
+            距震中 400 km 的墨西哥城，因位于湖积盆地，
+            地震动被放大 5~10 倍，中高层建筑严重破坏。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>场地效应的常见错误</strong>：
+              ① 只用一维分析处理明显二维/三维场地；
+              ② 土层模型过于简化，忽略软弱夹层；
+              ③ $G$、$D$ 曲线选取不当，用了不匹配土类的曲线；
+              ④ 剪应变过大时等效线性化不适用；
+              ⑤ 忽略地形效应。
+              这些错误会显著低估或高估场地放大，影响设计安全。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="design">
+          <h2><span class="num">05</span>设计地震动确定</h2>
+
+          <h3>设计地震动的三要素</h3>
+          <p>
+            设计地震动由三个要素确定：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>要素</th><th>参数</th><th>表达形式</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>幅值</td>
+                  <td>PGA、PGV、谱加速度</td>
+                  <td>峰值、谱值</td>
+                </tr>
+                <tr>
+                  <td>频谱</td>
+                  <td>反应谱</td>
+                  <td>设计谱</td>
+                </tr>
+                <tr>
+                  <td>持时</td>
+                  <td>有效持时</td>
+                  <td>时间窗</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>设计地震动参数</h3>
+          <p>
+            一个完整的设计地震动成果包含：
+          </p>
+          <ul>
+            <li><strong>PGA</strong>：峰值加速度（基岩、地表）。</li>
+            <li><strong>设计谱</strong>：多个阻尼比（通常 2%、5%、7%、10%）的反应谱。</li>
+            <li><strong>时程</strong>：多条与设计谱匹配的加速度时程。</li>
+            <li><strong>持续时间</strong>：有效持时（Arias 5%~95%）。</li>
+            <li><strong>竖向分量</strong>：竖向设计谱与水平谱的比例（通常 2/3）。</li>
+            <li><strong>多水准</strong>：不同概率水平的地震动。</li>
+          </ul>
+
+          <h3>设计基准地震动</h3>
+          <p>
+            根据不同概率水平，核电站等工程常用两个水准：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>水准</th><th>年超越概率</th><th>重现期</th><th>设计要求</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SL-1（运行基准地震）</td>
+                  <td>$10^{-4}$</td>
+                  <td>10,000 年</td>
+                  <td>保持功能，可继续运行</td>
+                </tr>
+                <tr>
+                  <td>SL-2（安全停堆地震）</td>
+                  <td>$10^{-5}$</td>
+                  <td>100,000 年</td>
+                  <td>安全停堆，不泄漏</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            美国核管会 RG 1.165 给出的标准：
+          </p>
+          <ul>
+            <li>DBE（设计基准地震）：$10^{-4}$~$10^{-5}$ 年超越概率。</li>
+            <li>MCE（最大可信地震）：取 DBE 的 1.67 倍，或 DSHA 结果。</li>
+          </ul>
+
+          <h3>设计谱的确定</h3>
+          <p>
+            设计谱由 PSHA 的 UHS 简化得到：
+          </p>
+          <ol class="steps">
+            <li>用 PSHA 计算场地基岩地震动的危险性曲线。</li>
+            <li>取目标超越概率对应的 UHS。</li>
+            <li>用场地反应分析把基岩谱放大到地表。</li>
+            <li>对地表谱进行规整化（简化成规范形式）。</li>
+            <li>确定设计谱的平台值、特征周期、下降段形状。</li>
+          </ol>
+
+          <p>
+            设计谱通常采用标准形式：
+          </p>
+
+          $$ S_a(T) = \begin{cases}
+             a_{\max} \cdot (0.45 + 5.5 T/T_0), & T < 0.1 \text{ s} \\
+             2.25 a_{\max}, & 0.1 \le T \le T_g \\
+             2.25 a_{\max} \cdot (T_g/T)^{\gamma}, & T_g < T \le 5 T_g
+             \end{cases} $$
+
+          <h3>设计时程的选取</h3>
+          <p>
+            设计时程用于非线性时程分析，选取要求：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>准则</th><th>要求</th><th>评价指标</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>幅值匹配</td>
+                  <td>PGA/PGV 与设计水平一致</td>
+                  <td>缩放后偏差 &lt; 10%</td>
+                </tr>
+                <tr>
+                  <td>频谱匹配</td>
+                  <td>在主要周期段与设计谱匹配</td>
+                  <td>SSE &lt; 0.1</td>
+                </tr>
+                <tr>
+                  <td>持时匹配</td>
+                  <td>有效持时覆盖结构主要响应时段</td>
+                  <td>$t_{5-95}$ 与目标一致</td>
+                </tr>
+                <tr>
+                  <td>震级-距离匹配</td>
+                  <td>与解聚分析的主导 $(m, r)$ 一致</td>
+                  <td>在主导范围内</td>
+                </tr>
+                <tr>
+                  <td>场地匹配</td>
+                  <td>$V_{S30}$ 与场地接近</td>
+                  <td>同场地类别</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>时程数量与结果处理</h3>
+          <p>
+            时程数量与结果处理：
+          </p>
+          <ul>
+            <li><strong>3 条</strong>：取响应的最大值。</li>
+            <li><strong>5 条</strong>：取响应的平均值与最大值，取包络。</li>
+            <li><strong>7 条以上</strong>：取响应的平均值。</li>
+          </ul>
+
+          <p>
+            核电站要求至少 5 组时程，取包络。
+            重要的非线性分析要求 7~11 组，取平均。
+          </p>
+
+          <h3>人工合成地震动</h3>
+          <p>
+            当实际记录不足时，人工合成：
+          </p>
+          <ul>
+            <li><strong>三角级数法</strong>：用正弦波叠加，迭代匹配目标谱。</li>
+            <li><strong>随机振动法</strong>：基于功率谱 + 包络函数。</li>
+            <li><strong>经验格林函数法</strong>：小震记录叠加。</li>
+            <li><strong>物理模拟法</strong>：有限断层模型 + 波传播模拟。</li>
+          </ul>
+
+          <p>
+            人工合成时程与设计谱的匹配精度要求：
+          </p>
+
+          $$ \text{在 } 0.2T_1 \sim 2T_1 \text{ 范围内}
+             \left| \frac{S_a^{\text{合成}}}{S_a^{\text{设计}}} - 1 \right|
+             \le 10\% \sim 20\% $$
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>设计地震动不是"越大越好"</strong>：
+              过度保守的设计地震动会导致：
+              ① 工程造价大幅增加；
+              ② 结构刚度过大，反而吸引更大作用；
+              ③ 抗震措施难以实现。
+              合理的设计地震动应该<strong>与概率水平和工程重要性相匹配</strong>，
+              这是风险决策而非绝对安全。
+              场地地震安全性评价的核心价值在于提供<strong>科学的、可辩护的</strong>设计输入。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="geohazard">
+          <h2><span class="num">06</span>地震地质灾害评估</h2>
+
+          <h3>地震地质灾害类型</h3>
+          <p>
+            地震地质灾害是地震引起的次生灾害，
+            对工程的威胁有时超过地震动本身：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>机理</th><th>工程影响</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>液化</td>
+                  <td>饱和砂土孔压上升、有效应力丧失</td>
+                  <td>地基失效、建筑倾斜、上浮</td>
+                </tr>
+                <tr>
+                  <td>软土震陷</td>
+                  <td>软黏土在循环荷载下变形累积</td>
+                  <td>地面沉降、基础下沉</td>
+                </tr>
+                <tr>
+                  <td>滑坡</td>
+                  <td>地震惯性力触发斜坡失稳</td>
+                  <td>掩埋、阻断、破坏</td>
+                </tr>
+                <tr>
+                  <td>崩塌</td>
+                  <td>陡崖岩体失稳</td>
+                  <td>砸伤、阻断交通</td>
+                </tr>
+                <tr>
+                  <td>地表破裂</td>
+                  <td>发震断层错动到达地表</td>
+                  <td>直接切断、错位</td>
+                </tr>
+                <tr>
+                  <td>地裂缝</td>
+                  <td>断层错动、地面沉降</td>
+                  <td>差异沉降、结构开裂</td>
+                </tr>
+                <tr>
+                  <td>泥石流</td>
+                  <td>地震后降雨触发</td>
+                  <td>掩埋、阻断</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>液化评估</h3>
+          <p>
+            液化评估是地震地质灾害评估中最常见的内容。
+            评估流程：
+          </p>
+          <ol class="steps">
+            <li>场地勘察：确定砂土层分布、地下水位。</li>
+            <li>SPT / CPT 测试：获得贯入阻力。</li>
+            <li>计算 CSR：地震引起的循环应力比。</li>
+            <li>计算 CRR：土层的循环抗力比。</li>
+            <li>计算 FS：抗液化安全系数。</li>
+            <li>液化判别：FS &lt; 1 液化，FS &gt; 1.2 不液化。</li>
+            <li>评估液化后果：沉降、侧移、上浮。</li>
+          </ol>
+
+          <p>
+            液化沉降的估算（Ishihara &amp; Yoshimine 方法）：
+          </p>
+
+          $$ S = \int_0^{H} \frac{\Delta V}{V} \, dz $$
+
+          <p>
+            其中 $\Delta V / V$ 是体积应变，由 $N_1$ 与 CSR 查表得到。
+          </p>
+
+          <h3>地表破裂评估</h3>
+          <p>
+            地表破裂是活动断层最直接的威胁。评估内容：
+          </p>
+          <ul>
+            <li><strong>地表破裂位置</strong>：断层线、破裂带范围。</li>
+            <li><strong>破裂宽度</strong>：通常 10~100 m。</li>
+            <li><strong>同震位移</strong>：由经验关系估算（如 Wells &amp; Coppersmith）。</li>
+            <li><strong>破裂概率</strong>：断层活动的概率。</li>
+            <li><strong>避让距离</strong>：根据断层类型与工程重要性确定。</li>
+          </ul>
+
+          <p>
+            汶川地震的地表破裂带长达 240 km，
+            最大垂直位移约 6 m，水平位移约 4.5 m，
+            对沿线建筑造成了直接破坏。
+          </p>
+
+          <h3>滑坡评估</h3>
+          <p>
+            地震滑坡评估的简化方法（Newmark 滑块法）：
+          </p>
+
+          $$ D = \int_0^T \left[ a(t) - a_c \right]^+ dt $$
+
+          <p>
+            其中 $a_c$ 是临界加速度，$D$ 是累计位移。
+            当 $D > 100$ mm 时，通常认为滑坡风险较高。
+          </p>
+
+          <p>
+            更精细的评估用有限元或有限差分（FLAC）做动力分析。
+          </p>
+
+          <h3>软土震陷</h3>
+          <p>
+            软黏土在地震作用下产生永久变形：
+          </p>
+          <ul>
+            <li><strong>软化</strong>：循环荷载使土体强度降低。</li>
+            <li><strong>累积变形</strong>：每一循环产生微小应变，叠加成永久变形。</li>
+            <li><strong>震后沉降</strong>：震后固结引起的附加沉降。</li>
+          </ul>
+
+          <p>
+            软土震陷对建筑物的影响：
+          </p>
+          <ul>
+            <li>不均匀沉降导致结构开裂。</li>
+            <li>基础差异沉降导致倾斜。</li>
+            <li>桩基负摩阻导致承载力降低。</li>
+            <li>地面沉降影响管线、道路。</li>
+          </ul>
+
+          <h3>防治措施</h3>
+          <p>
+            根据地质灾害类型，采取相应的防治措施：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>灾害类型</th><th>防治措施</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>液化</td>
+                  <td>换土、加密、排水、固化、桩基</td>
+                </tr>
+                <tr>
+                  <td>软土震陷</td>
+                  <td>预压、排水固结、桩基、地基处理</td>
+                </tr>
+                <tr>
+                  <td>滑坡</td>
+                  <td>抗滑桩、锚索、排水、削坡减载</td>
+                </tr>
+                <tr>
+                  <td>崩塌</td>
+                  <td>清除危岩、锚固、拦石网、防护墙</td>
+                </tr>
+                <tr>
+                  <td>地表破裂</td>
+                  <td>避让、柔性设计、跨断层结构</td>
+                </tr>
+                <tr>
+                  <td>地裂缝</td>
+                  <td>地基加固、结构加强、设缝断开</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>地震地质灾害的工程教训</strong>：
+              ① 1964 年新潟地震：液化导致大量建筑物倾斜，
+              有的倾斜超过 60°；
+              ② 1976 年唐山地震：天津、塘沽地区严重液化，
+              喷砂冒水覆盖大片农田；
+              ③ 2011 年东日本地震：大范围液化，
+              影响生命线工程与住宅；
+              ④ 2008 年汶川地震：地表破裂直接摧毁沿线建筑，
+              滑坡形成堰塞湖。
+              这些教训表明，地质灾害评估是场地地震安全性评价
+              不可或缺的内容。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="review">
+          <h2><span class="num">07</span>评审与实施</h2>
+
+          <h3>成果构成</h3>
+          <p>
+            场地地震安全性评价的成果通常包括：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>成果</th><th>内容</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>评价报告</td>
+                  <td>正文 + 图件 + 附录</td>
+                  <td>主报告</td>
+                </tr>
+                <tr>
+                  <td>技术报告</td>
+                  <td>专题研究报告</td>
+                  <td>详细依据</td>
+                </tr>
+                <tr>
+                  <td>设计地震动参数表</td>
+                  <td>PGA、谱值、时程</td>
+                  <td>设计输入</td>
+                </tr>
+                <tr>
+                  <td>设计谱图</td>
+                  <td>多个阻尼比的谱</td>
+                  <td>设计输入</td>
+                </tr>
+                <tr>
+                  <td>设计时程</td>
+                  <td>加速度时程记录</td>
+                  <td>时程分析</td>
+                </tr>
+                <tr>
+                  <td>地震地质灾害图</td>
+                  <td>液化、滑坡、破裂分布</td>
+                  <td>选址与防治</td>
+                </tr>
+                <tr>
+                  <td>活动断层分布图</td>
+                  <td>断层位置、活动性</td>
+                  <td>避让依据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>评审流程</h3>
+          <p>
+            评价报告需要经过严格的评审：
+          </p>
+          <ol class="steps">
+            <li>编制单位内部审核。</li>
+            <li>提交省级或国家级地震安全性评审机构。</li>
+            <li>专家评审会（通常 7~15 位专家）。</li>
+            <li>评审意见修改。</li>
+            <li>批复（省级或国家级地震局）。</li>
+            <li>成果归档、交付使用。</li>
+          </ol>
+
+          <p>
+            核电站等特别重要工程的评价报告，
+            需经国家核安全局或国家地震局评审。
+          </p>
+
+          <h3>资质与责任</h3>
+          <p>
+            场地地震安全性评价是<strong>持证上岗</strong>的工作：
+          </p>
+          <ul>
+            <li><strong>单位资质</strong>：必须取得地震安全性评价资质。</li>
+            <li><strong>人员资质</strong>：评价人员需持有相应资格证书。</li>
+            <li><strong>法律责任</strong>：评价结果出错需承担法律责任。</li>
+            <li><strong>终身负责制</strong>：主要技术人员对成果终身负责。</li>
+          </ul>
+
+          <h3>成果的实施</h3>
+          <p>
+            评价成果在工程中的应用：
+          </p>
+          <ul>
+            <li><strong>设计阶段</strong>：提供设计地震动参数，作为结构设计的输入。</li>
+            <li><strong>施工阶段</strong>：指导地基处理、地质灾害防治。</li>
+            <li><strong>运营阶段</strong>：作为结构健康监测、地震应急的基准。</li>
+            <li><strong>更新</strong>：重大地震后、长期运营后，需重新评估。</li>
+          </ul>
+
+          <h3>案例：某核电站评价</h3>
+          <p>
+            以某核电站为例，典型评价工作：
+          </p>
+          <ul>
+            <li><strong>区域调查</strong>：半径 300 km 区域构造调查。</li>
+            <li><strong>近场鉴定</strong>：半径 40 km 活动断层鉴定，包括探槽、物探。</li>
+            <li><strong>PSHA</strong>：多分支逻辑树，给出 SL-1、SL-2 地震动。</li>
+            <li><strong>DSHA</strong>：确定 MCE，给出上限校核。</li>
+            <li><strong>场地反应</strong>：一维 + 二维分析，考虑地形与盆地效应。</li>
+            <li><strong>设计地震动</strong>：给出多个阻尼比的设计谱、时程。</li>
+            <li><strong>地质灾害</strong>：液化、滑坡、地表破裂评估。</li>
+            <li><strong>评审</strong>：国家级评审，多年周期。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>成果质量的关键</strong>：
+              场地地震安全性评价的成果质量取决于三个因素：
+              ① <strong>数据质量</strong>：地质、地震、场地勘察数据的可靠性；
+              ② <strong>方法正确性</strong>：模型、算法、参数选取的科学性；
+              ③ <strong>专家判断</strong>：不确定性处理、逻辑树权重的合理性。
+              三者缺一不可，其中专家判断最考验评价团队的经验与水平。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>不同类型工程的应用</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>工程类型</th><th>关注重点</th><th>特殊要求</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>核电站</td>
+                  <td>SL-1、SL-2 设计基准地震动</td>
+                  <td>PSHA + DSHA、MCE、多水准</td>
+                </tr>
+                <tr>
+                  <td>大坝</td>
+                  <td>设计地震动、动水压力</td>
+                  <td>MCE、坝-水-地基耦合</td>
+                </tr>
+                <tr>
+                  <td>超高层</td>
+                  <td>长周期地震动、SSI</td>
+                  <td>长周期谱、多点输入</td>
+                </tr>
+                <tr>
+                  <td>跨海大桥</td>
+                  <td>多点多维地震动</td>
+                  <td>空间相干性、行波效应</td>
+                </tr>
+                <tr>
+                  <td>长输管线</td>
+                  <td>地表破裂、液化</td>
+                  <td>跨断层设计、柔性连接</td>
+                </tr>
+                <tr>
+                  <td>LNG 储罐</td>
+                  <td>PGA、竖向分量</td>
+                  <td>液体晃动、基础稳定性</td>
+                </tr>
+                <tr>
+                  <td>石化装置</td>
+                  <td>PGA、PGA 竖向</td>
+                  <td>次生灾害、管道抗震</td>
+                </tr>
+                <tr>
+                  <td>医院</td>
+                  <td>功能保障</td>
+                  <td>立即入住、设备保护</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它环节的衔接</h3>
+          <p>
+            场地地震安全性评价在工程全生命周期中的位置：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>阶段</th><th>场地地震安全性评价的任务</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>选址</td>
+                  <td>活动断层鉴定、地质灾害评估</td>
+                </tr>
+                <tr>
+                  <td>可行性研究</td>
+                  <td>初步危险性分析、设计地震动初步参数</td>
+                </tr>
+                <tr>
+                  <td>初步设计</td>
+                  <td>详细危险性分析、设计谱、时程</td>
+                </tr>
+                <tr>
+                  <td>施工图设计</td>
+                  <td>最终设计地震动、场地反应分析</td>
+                </tr>
+                <tr>
+                  <td>施工</td>
+                  <td>地质灾害防治、地基处理指导</td>
+                </tr>
+                <tr>
+                  <td>运营</td>
+                  <td>监测基准、震后快速评估、更新</td>
+                </tr>
+                <tr>
+                  <td>退役</td>
+                  <td>地震风险评估、安全退役</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它专业的关系</h3>
+          <p>
+            场地地震安全性评价需要多专业协作：
+          </p>
+          <ul>
+            <li><strong>地震地质</strong>：提供活动断层、古地震、滑动速率。</li>
+            <li><strong>工程地震学</strong>：提供 PSHA、GMPE、模拟方法。</li>
+            <li><strong>土动力学</strong>：提供场地反应分析。</li>
+            <li><strong>岩土工程</strong>：提供地质勘察、地质灾害评估。</li>
+            <li><strong>结构工程</strong>：提出设计地震动需求。</li>
+            <li><strong>地震工程</strong>：提供抗震设计准则。</li>
+          </ul>
+
+          <h3>现代趋势</h3>
+          <ul>
+            <li><strong>物理 GMPE</strong>：从统计回归走向物理模拟驱动。</li>
+            <li><strong>三维场地效应</strong>：从一维走向二维/三维模拟。</li>
+            <li><strong>实时更新</strong>：与地震预警结合，震后快速更新。</li>
+            <li><strong>机器学习</strong>：用深度学习改进 GMPE、场地分类、地质灾害评估。</li>
+            <li><strong>多灾种耦合</strong>：地震 + 海啸 + 滑坡联合评估。</li>
+            <li><strong>城市尺度评价</strong>：从单个场地走向城市群、区域尺度。</li>
+            <li><strong>气候变化影响</strong>：海平面上升、冰川消融对地震危险性的影响。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>场地地震安全性评价与你的项目</strong>：
+              你主页上的"地震危险性分析"项目正好对应这份笔记的
+              <strong>PSHA、DSHA、解聚分析</strong>等章节。
+              如果项目提供了输入震源模型、GMPE、场地参数的功能，
+              可以把这份笔记作为<strong>方法论文档</strong>，
+              从项目页面链接到对应章节。
+              "地震动参数分析"项目也可以与<strong>设计地震动确定</strong>章节关联。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>法规框架</strong>：重大工程法定必须做场地地震安全性评价；分等级管理；持证上岗。</li>
+              <li><strong>工作流程</strong>：区域 → 近场 → 场地，逐级聚焦；10 个标准步骤。</li>
+              <li><strong>地震危险性分析</strong>：PSHA 为主，DSHA 校核；解聚分析确定主导 $(m, r)$。</li>
+              <li><strong>场地效应评估</strong>：一维 SHAKE 类程序为主，复杂场地用二维/三维。</li>
+              <li><strong>设计地震动</strong>：三要素（幅值、频谱、持时）；多水准（SL-1、SL-2、MCE）。</li>
+              <li><strong>地震地质灾害</strong>：液化、软土震陷、滑坡、崩塌、地表破裂、地裂缝。</li>
+              <li><strong>评审与实施</strong>：严格的评审流程；成果在工程全生命周期中应用。</li>
+              <li><strong>多专业协作</strong>：地震地质 + 工程地震学 + 土动力学 + 岩土 + 结构。</li>
+            </ul>
+          </div>
+
+          <h3>关键内容速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>项目</th><th>典型值/内容</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>区域调查半径</td>
+                  <td>150~300 km</td>
+                  <td>核电站可达 300 km</td>
+                </tr>
+                <tr>
+                  <td>近场鉴定半径</td>
+                  <td>25~40 km</td>
+                  <td>活动断层鉴定范围</td>
+                </tr>
+                <tr>
+                  <td>SL-1 重现期</td>
+                  <td>10,000 年</td>
+                  <td>$10^{-4}$/年</td>
+                </tr>
+                <tr>
+                  <td>SL-2 重现期</td>
+                  <td>100,000 年</td>
+                  <td>$10^{-5}$/年</td>
+                </tr>
+                <tr>
+                  <td>设计时程数量</td>
+                  <td>3~11 条</td>
+                  <td>核电站至少 5 条</td>
+                </tr>
+                <tr>
+                  <td>有效持时</td>
+                  <td>10~30 s</td>
+                  <td>Arias 5%~95%</td>
+                </tr>
+                <tr>
+                  <td>频谱匹配精度</td>
+                  <td>±10%~20%</td>
+                  <td>主要周期段</td>
+                </tr>
+                <tr>
+                  <td>地震动参数</td>
+                  <td>PGA、谱、时程、持时</td>
+                  <td>多阻尼比、多水准</td>
+                </tr>
+                <tr>
+                  <td>地质灾害评估</td>
+                  <td>液化、滑坡、破裂</td>
+                  <td>按工程重要性分级</td>
+                </tr>
+                <tr>
+                  <td>工作周期</td>
+                  <td>6~18 个月</td>
+                  <td>核电站 2~3 年</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>地震地质</strong>（地震学）：活动断层、古地震、滑动速率——评价的地质基础。</li>
+            <li><strong>工程地震学</strong>（地震学）：PSHA、GMPE、UHS——评价的核心方法。</li>
+            <li><strong>土动力学</strong>（地震学）：场地反应分析、液化、SSI——评价的场地介质基础。</li>
+            <li><strong>地震工程</strong>（地震学）：设计地震动——评价的输出应用。</li>
+            <li><strong>强震动观测</strong>（地震学）：选波、场地反应记录——评价的数据来源。</li>
+            <li><strong>定量地震学</strong>（地震学）：震源物理——评价的物理背景。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：PSHA 概率积分、逻辑树——评价的数学工具。</li>
+            <li><strong>偏微分方程</strong>（数学）：波动方程、场地反应——评价的数学基础。</li>
+            <li><strong>数值分析</strong>（数学）：等效线性化、数值积分——评价的计算方法。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>GB 17741《工程场地地震安全性评价》— 中国标准</li>
+            <li>GB 50267《核电厂抗震设计规范》— 核电站专门规范</li>
+            <li>IAEA SSG-9, <em>Seismic Hazards in Site Evaluation for Nuclear Installations</em> — IAEA 安全导则</li>
+            <li>US NRC RG 1.165, <em>Identification and Characterization of Seismic Sources and Determination of Safe Shutdown Earthquake Ground Motion</em> — 美国核管会导则</li>
+            <li>McGuire, <em>Seismic Hazard and Risk Analysis</em> — PSHA 权威教材</li>
+            <li>Kramer, <em>Geotechnical Earthquake Engineering</em> — 岩土地震工程</li>
+            <li>Schnabel, Lysmer &amp; Seed, "SHAKE: A computer program for earthquake response analysis of horizontally layered sites" (1972) — SHAKE 程序报告</li>
+            <li>Idriss &amp; Sun, "SHAKE91: A computer program for conducting equivalent linear seismic response analyses of horizontally layered soil deposits" (1992) — SHAKE91 用户手册</li>
+            <li>Hashash 等, <em>DEEPSOIL</em> 用户手册 — 一维非线性场地反应分析</li>
+            <li>Baker, <em>Seismic Hazard and Risk Analysis</em> — 现代 PSHA 教材</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

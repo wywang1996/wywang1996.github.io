@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" data-page="note">
 <head>
 <meta charset="UTF-8">
@@ -17,8 +17,8 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>科学计算与 R · wayione</title>
-<link rel="stylesheet" href="assets/site.css">
-<link rel="stylesheet" href="assets/pages.css">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
 </head>
 <body data-nav="scientific-computing-r">
 
@@ -26,7 +26,7 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo">
+    <a href="../index.html" class="nav-logo">
       <span class="dot"></span>
       <span>wayione</span>
     </a>
@@ -47,7 +47,7 @@
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
         </svg>
       </button>
-      <a href="index.html#notes" class="nav-back">← 返回主页</a>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
     </div>
   </div>
 </nav>
@@ -76,7 +76,7 @@
 
       <header class="article-header">
         <div class="crumb">
-          <a href="index.html">主页</a> / <a href="index.html#notes">笔记</a> / 科学计算与 R
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 科学计算与 R
         </div>
         <h1>科学计算与 R</h1>
         <p class="lead">
@@ -1830,3 +1830,372 @@ format: html
 #| echo: true
 library(dplyr)
 catalog |> group_by(station) |> summarize(n = n())
+```</code></pre>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">09</span>工程应用</h2>
+
+          <h3>地震目录清洗</h3>
+          <p>
+            R 在地震目录清洗与预处理中非常常用。
+            以下是一个从原始 CSV 到分析用 tibble 的完整流程：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>catalog_clean.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r">library(dplyr)
+library(tidyr)
+library(lubridate)
+library(readr)
+
+# 读取目录
+catalog <- read_csv("raw_catalog.csv") |>
+  # 统一列名
+  rename_with(tolower) |>
+  # 提取时间
+  mutate(
+    origin_time = ymd_hms(paste(date, time)),
+    year = year(origin_time)
+  ) |>
+  # 过滤缺测
+  drop_na(magnitude, latitude, longitude, depth_km) |>
+  # 去重
+  distinct(event_id, .keep_all = TRUE) |>
+  # 排序
+  arrange(origin_time) |>
+  # 派生
+  mutate(
+    depth_class = cut(depth_km,
+                      breaks = c(0, 10, 30, 100, Inf),
+                      labels = c("浅源", "中源", "深源", "极深源")),
+    log_energy = 1.5 * magnitude + 4.8
+  )
+
+# 质量检查
+cat("总事件数:", nrow(catalog), "\n")
+cat("时间范围:", format(range(catalog$origin_time)), "\n")
+cat("震级范围:", range(catalog$magnitude), "\n")
+
+# 空间分块
+catalog <- catalog |>
+  mutate(
+    lat_bin = round(latitude),
+    lon_bin = round(longitude)
+  )</code></pre>
+          </div>
+
+          <h3>b 值的时空变化</h3>
+          <p>
+            b 值反映应力状态与构造特征。
+            R 可以方便地做滑动窗口 b 值计算：
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>b_value_sliding.R</span>
+                <span class="lang">R</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-r">library(dplyr)
+library(ggplot2)
+
+# 滑动窗口 b 值
+compute_b <- function(M, Mc) {
+  M <- M[M >= Mc]
+  if (length(M) < 50) return(NA)
+  log10(exp(1)) / (mean(M) - Mc)
+}
+
+# 假设 catalog 有 origin_time 和 magnitude
+Mc <- 2.5
+window_years <- 5
+step_years <- 1
+
+results <- tibble(
+  year_center = seq(2005, 2020, by = step_years)
+) |>
+  rowwise() |>
+  mutate(
+    b = compute_b(
+      catalog$magnitude[
+        catalog$origin_time >= as.Date(paste0(year_center - window_years/2, "-01-01")) &
+        catalog$origin_time <  as.Date(paste0(year_center + window_years/2, "-01-01"))
+      ],
+      Mc = Mc
+    )
+  ) |>
+  ungroup()
+
+# 绘图
+ggplot(results, aes(x = year_center, y = b)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 1.0, linetype = 2, color = "grey") +
+  labs(x = "年", y = "b 值", title = "b 值的时间变化") +
+  theme_bw()</code></pre>
+          </div>
+
+          <h3>PSHA 中的统计计算</h3>
+          <p>
+            R 在 PSHA 后处理中常用：
+            危险性曲线、一致危险性谱（UHS）、
+            分位数与置信区间都可以方便地用 R 做：
+          </p>
+
+          <pre><code class="language-r"># 危险性曲线插值
+hazard_curve <- function(pga_grid, lambda, pga_target) {
+  # 对数插值
+  approx(log10(pga_grid), log10(lambda),
+         xout = log10(pga_target))$y |>
+    (function(x) 10^x)()
+}
+
+# 一致危险性谱
+uhs <- function(T_grid, hazard_level, curves) {
+  sapply(T_grid, function(T) {
+    sapply(hazard_level, function(h) {
+      # curves[[T]] 是危险性曲线
+      hazard_curve(curves[[T]]$pga,
+                   curves[[T]]$lambda,
+                   h)
+    })
+  })
+}
+
+# 分位数
+quantile_hazard <- function(curves, probs = c(0.16, 0.5, 0.84)) {
+  apply(curves, 1, quantile, probs = probs)
+}</code></pre>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">10</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>语言特性</strong>：向量化优先；一切皆对象；函数式编程；<code>&lt;-</code> 赋值。</li>
+              <li><strong>数据结构</strong>：vector / matrix / data.frame / tibble / list / factor。</li>
+              <li><strong>apply 家族</strong>：apply、lapply、sapply、vapply、mapply、tapply、purrr。</li>
+              <li><strong>tidyverse</strong>：dplyr 核心动词 + tidyr 数据整形 + 管道操作。</li>
+              <li><strong>统计建模</strong>：lm / glm / 极大似然 / 极值分析 / 贝叶斯推断。</li>
+              <li><strong>时间序列</strong>：ts、decompose、ARIMA、ETAS。</li>
+              <li><strong>可视化</strong>：基础绘图 + ggplot2 图形语法 + patchwork 组合。</li>
+              <li><strong>与 Python 对比</strong>：R 统计最强，Python 通用性最强；可互补使用。</li>
+              <li><strong>工程应用</strong>：目录清洗、b 值时空变化、PSHA 后处理。</li>
+            </ul>
+          </div>
+
+          <h3>R 语法速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>R</th><th>备注</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>创建向量</td>
+                  <td><code>c(1,2,3)</code></td>
+                  <td>与 NumPy <code>array</code> 类似</td>
+                </tr>
+                <tr>
+                  <td>范围</td>
+                  <td><code>1:5</code>、<code>seq(0,1,0.1)</code></td>
+                  <td>1-based</td>
+                </tr>
+                <tr>
+                  <td>矩阵乘</td>
+                  <td><code>A %*% B</code></td>
+                  <td>Python <code>A @ B</code></td>
+                </tr>
+                <tr>
+                  <td>逐元素乘</td>
+                  <td><code>A * B</code></td>
+                  <td>与 NumPy 相同</td>
+                </tr>
+                <tr>
+                  <td>转置</td>
+                  <td><code>t(A)</code></td>
+                  <td>Python <code>A.T</code></td>
+                </tr>
+                <tr>
+                  <td>求逆</td>
+                  <td><code>solve(A)</code></td>
+                  <td>Python <code>np.linalg.inv</code></td>
+                </tr>
+                <tr>
+                  <td>解线性方程组</td>
+                  <td><code>solve(A, b)</code></td>
+                  <td>推荐</td>
+                </tr>
+                <tr>
+                  <td>特征值</td>
+                  <td><code>eigen(A)</code></td>
+                  <td>Python <code>np.linalg.eig</code></td>
+                </tr>
+                <tr>
+                  <td>数据框</td>
+                  <td><code>data.frame</code>、<code>tibble</code></td>
+                  <td>Python <code>pd.DataFrame</code></td>
+                </tr>
+                <tr>
+                  <td>管道</td>
+                  <td><code>|&gt;</code> 或 <code>%&gt;%</code></td>
+                  <td>Python <code>链式调用</code></td>
+                </tr>
+                <tr>
+                  <td>线性回归</td>
+                  <td><code>lm(y ~ x)</code></td>
+                  <td>Python <code>sm.OLS</code></td>
+                </tr>
+                <tr>
+                  <td>广义线性</td>
+                  <td><code>glm(..., family)</code></td>
+                  <td>Python <code>sm.GLM</code></td>
+                </tr>
+                <tr>
+                  <td>极大似然</td>
+                  <td><code>optim / mle / fitdistrplus</code></td>
+                  <td>Python <code>scipy.optimize</code></td>
+                </tr>
+                <tr>
+                  <td>绘图</td>
+                  <td><code>plot</code>、<code>ggplot</code></td>
+                  <td>Python <code>matplotlib / seaborn</code></td>
+                </tr>
+                <tr>
+                  <td>报告生成</td>
+                  <td>R Markdown / Quarto</td>
+                  <td>Python <code>Jupyter</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>科学计算与 Python</strong>（计算机）：互补工具链，可对比学习。</li>
+            <li><strong>科学计算与 MATLAB</strong>（计算机）：三角对比，各有所长。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：R 的核心是统计，先修概率论。</li>
+            <li><strong>线性代数</strong>（数学）：矩阵运算、特征值分解。</li>
+            <li><strong>数值分析</strong>（数学）：极大似然、数值积分、ODE。</li>
+            <li><strong>地震危险性分析</strong>（项目）：PSHA 统计后处理。</li>
+            <li><strong>工程地震学</strong>（地震学）：GMPE、PSHA。</li>
+            <li><strong>地震地质</strong>（地震学）：G-R 关系、b 值。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Wickham &amp; Grolemund, <em>R for Data Science</em>（2nd ed.）— 数据科学首选</li>
+            <li>Wickham, <em>Advanced R</em>（2nd ed.）— R 语言深度</li>
+            <li>Wickham, <em>ggplot2: Elegant Graphics for Data Analysis</em> — 图形语法圣经</li>
+            <li>Venables &amp; Ripley, <em>Modern Applied Statistics with S</em> — 经典统计教材</li>
+            <li>Gelman &amp; Hill, <em>Data Analysis Using Regression and Multilevel/Hierarchical Models</em> — 回归与多层模型</li>
+            <li>Coles, <em>An Introduction to Statistical Modeling of Extreme Values</em> — 极值统计</li>
+            <li>R Core Team, <em>An Introduction to R</em> — 官方入门</li>
+            <li>CRAN Task View, <em>Analysis of Spatial Data</em> — 空间分析</li>
+            <li>CRAN Task View, <em>Time Series Analysis</em> — 时间序列</li>
+            <li>CRAN Task View, <em>Extreme Value Analysis</em> — 极值分析</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   R 版页面的 TOC 滚动高亮（独立于 site.js 运行）
+   ------------------------------------------------------------
+   与 site.js 里的 initTocHighlight() 逻辑一致，但阈值放宽
+   到 150px；当页面顶部且尚无任何 section 落入阈值范围时，
+   默认高亮第一个目录项。
+   ============================================================ */
+(function () {
+  'use strict';
+
+  function highlightTOC() {
+    var tocLinks = document.querySelectorAll('.toc a[href^="#"]');
+    if (!tocLinks.length) return;
+
+    var pos = window.scrollY + 150;
+    var current = null;
+
+    for (var i = 0; i < tocLinks.length; i++) {
+      var href = tocLinks[i].getAttribute('href');
+      if (!href || href.charAt(0) !== '#') continue;
+      var sec = document.querySelector(href);
+      if (sec && sec.offsetTop <= pos) {
+        current = sec.id;
+      }
+    }
+
+    // 页面顶部时，如果还没有任何 section 进入阈值范围，则高亮第一项
+    if (!current && window.scrollY < 300 && tocLinks.length > 0) {
+      var firstHref = tocLinks[0].getAttribute('href');
+      if (firstHref && firstHref.charAt(0) === '#') {
+        current = firstHref.slice(1);
+      }
+    }
+
+    for (var j = 0; j < tocLinks.length; j++) {
+      var a = tocLinks[j];
+      var h = a.getAttribute('href');
+      if (h === '#' + current) {
+        a.classList.add('active');
+      } else {
+        a.classList.remove('active');
+      }
+    }
+  }
+
+  // 用 requestAnimationFrame 节流
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      highlightTOC();
+      ticking = false;
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+
+  function init() {
+    setTimeout(highlightTOC, 150);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,929 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>断裂力学 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="fracture-mechanics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#modes">一、断裂模式</a></li>
+      <li><a href="#stress">二、裂纹尖端应力场</a></li>
+      <li><a href="#g">三、能量释放率 G</a></li>
+      <li><a href="#k-g">四、K 与 G 的关系</a></li>
+      <li><a href="#j">五、J 积分</a></li>
+      <li><a href="#fatigue">六、疲劳裂纹扩展</a></li>
+      <li><a href="#seismic">七、与抗震工程的关系</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 断裂力学
+        </div>
+        <h1>断裂力学</h1>
+        <p class="lead">
+          从裂纹尖端应力场到 J 积分，梳理含裂纹体的力学行为。
+          断裂力学是结构损伤评估、疲劳寿命预测与钢结构抗震节点分析的理论基础。
+        </p>
+        <div class="article-meta">
+          <span>应力强度因子</span>
+          <span>J 积分</span>
+          <span>疲劳裂纹</span>
+          <span class="blue">损伤评估</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            传统强度理论（材料力学、弹性力学）都假设材料是<strong>无缺陷</strong>的，
+            破坏由应力达到屈服强度或抗拉强度引起。
+            但工程实践表明，许多结构事故都源于<strong>裂纹</strong>：
+            焊接缺陷、疲劳裂纹、应力腐蚀裂纹，
+            即使整体应力远低于材料强度，也会导致突然的脆性断裂。
+          </p>
+          <p>
+            断裂力学研究<strong>含裂纹体的力学行为</strong>，回答三个核心问题：
+          </p>
+          <ul>
+            <li><strong>裂纹是否稳定</strong>：给定裂纹尺寸与荷载，结构是否会断裂？</li>
+            <li><strong>裂纹如何扩展</strong>：循环荷载下裂纹扩展速率是多少？剩余寿命有多长？</li>
+            <li><strong>如何评估</strong>：用什么参量描述裂纹的危险程度？</li>
+          </ul>
+          <p>
+            断裂力学的发展源于二战期间与之后的几次重大事故：
+            自由轮焊接船体的脆断、彗星号客机的座舱疲劳裂纹、
+            F-111 战斗机机翼断裂。
+            这些事故表明：<strong>结构的实际强度可能远低于理论预测</strong>，
+            缺陷是不可回避的现实。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>断裂力学的两大流派</strong>：<strong>线弹性断裂力学（LEFM）</strong>
+              适用于脆性材料或裂纹尖端的塑性区远小于裂纹尺寸的情况；
+              <strong>弹塑性断裂力学（EPFM）</strong>适用于韧性材料，
+              用 J 积分或裂纹张开位移（CTOD）描述。
+              工程实践根据材料的韧性水平选择。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="modes">
+          <h2><span class="num">01</span>断裂模式</h2>
+
+          <h3>三种基本开裂模式</h3>
+          <p>
+            根据裂纹面相对位移的方向，断裂分为三种基本模式：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>模式</th><th>名称</th><th>裂纹面位移</th><th>典型场景</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>I 型</strong></td>
+                  <td>张开型</td>
+                  <td>垂直裂纹面张开</td>
+                  <td>最危险、最常见，如受拉板中的横向裂纹</td>
+                </tr>
+                <tr>
+                  <td><strong>II 型</strong></td>
+                  <td>滑开型</td>
+                  <td>沿裂纹面在平面内错动</td>
+                  <td>受剪构件，如受横向剪力的裂纹</td>
+                </tr>
+                <tr>
+                  <td><strong>III 型</strong></td>
+                  <td>撕开型</td>
+                  <td>沿裂纹面出平面错动</td>
+                  <td>受扭转构件，如受扭矩的轴</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            三种模式可以叠加，复合型裂纹的应力场是三种基本场的线性组合。
+            工程中以 I 型最常见，也最容易引起脆性断裂，因此成为断裂力学的核心研究对象。
+          </p>
+
+          <h3>裂纹的分类</h3>
+          <ul>
+            <li><strong>穿透裂纹</strong>：贯穿构件厚度，是最简单的模型。</li>
+            <li><strong>表面裂纹</strong>：从构件表面开始，如半椭圆裂纹。</li>
+            <li><strong>埋藏裂纹</strong>：在构件内部，如椭圆片状裂纹。</li>
+          </ul>
+
+          <p>
+            实际工程中常将表面裂纹与埋藏裂纹按等效穿透裂纹处理，
+            用修正系数考虑三维效应。
+          </p>
+
+          <h3>裂纹尖端塑性区</h3>
+          <p>
+            虽然 LEFM 假设材料是弹性的，但实际材料在裂纹尖端一定范围内会屈服。
+            塑性区的形状和大小决定了 LEFM 的适用范围。
+            对 I 型裂纹，平面应力与平面应变下的塑性区长度估算：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            平面应力（Irwin 修正）：
+          </p>
+          $$ r_p = \frac{1}{2\pi} \left( \frac{K_I}{\sigma_y} \right)^2 $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            平面应变（考虑三轴约束）：
+          </p>
+          $$ r_p = \frac{1}{6\pi} \left( \frac{K_I}{\sigma_y} \right)^2 $$
+
+          <p>
+            <strong>LEFM 的适用范围</strong>：塑性区尺寸应远小于裂纹长度和构件尺寸，
+            一般要求 $r_p < a / 10$ 且 $r_p < B / 10$（B 为构件厚度）。
+            超出此范围需使用弹塑性断裂力学。
+          </p>
+        </section>
+
+        <section id="stress">
+          <h2><span class="num">02</span>裂纹尖端应力场</h2>
+
+          <h3>Westergaard 解</h3>
+          <p>
+            对无限大板中一长度为 $2a$ 的中心穿透裂纹，远场拉应力为 $\sigma$，
+            裂纹尖端附近的应力场为：
+          </p>
+
+          $$ \sigma_{xx} = \frac{K_I}{\sqrt{2\pi r}} \cos\frac{\theta}{2}
+             \left( 1 - \sin\frac{\theta}{2} \sin\frac{3\theta}{2} \right) $$
+
+          $$ \sigma_{yy} = \frac{K_I}{\sqrt{2\pi r}} \cos\frac{\theta}{2}
+             \left( 1 + \sin\frac{\theta}{2} \sin\frac{3\theta}{2} \right) $$
+
+          $$ \tau_{xy} = \frac{K_I}{\sqrt{2\pi r}} \cos\frac{\theta}{2}
+             \sin\frac{\theta}{2} \cos\frac{3\theta}{2} $$
+
+          <p>
+            其中 $(r, \theta)$ 为以裂纹尖端为原点的极坐标，
+            $\theta = 0$ 对应裂纹延长线方向。
+          </p>
+
+          <h3>应力强度因子 K</h3>
+          <p>
+            应力场的关键参量是<strong>应力强度因子 $K_I$</strong>（下标 I 表示 I 型裂纹）。
+            它描述了裂纹尖端应力场的强度：
+          </p>
+
+          $$ K_I = \sigma \sqrt{\pi a} \cdot Y $$
+
+          <p>
+            其中 $Y$ 为几何修正因子，取决于裂纹形状、构件几何与加载方式。
+          </p>
+
+          <h3>常见几何的 K 表达式</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>几何</th><th>应力强度因子 K</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>无限大板中心裂纹（2a）</strong></td>
+                  <td>$K_I = \sigma \sqrt{\pi a}$</td>
+                </tr>
+                <tr>
+                  <td><strong>无限大板单边裂纹</strong></td>
+                  <td>$K_I = 1.12 \, \sigma \sqrt{\pi a}$</td>
+                </tr>
+                <tr>
+                  <td><strong>无限大板双边裂纹</strong></td>
+                  <td>$K_I = \sigma \sqrt{\pi a} \cdot \sqrt{\sec(\pi a / W)}$</td>
+                </tr>
+                <tr>
+                  <td><strong>三点弯曲梁</strong></td>
+                  <td>$K_I = \dfrac{PS}{BW^{3/2}} f(a/W)$</td>
+                </tr>
+                <tr>
+                  <td><strong>受内压圆筒</strong></td>
+                  <td>$K_I = p \sqrt{\pi a} \cdot F(a/t)$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>奇异性与量纲</h3>
+          <p>
+            注意应力场中 $1 / \sqrt{r}$ 的<strong>奇异性</strong>——
+            当 $r \to 0$ 时应力趋于无穷。
+            这是弹性解的特性，说明弹性理论不能描述真实裂纹尖端——
+            真实材料在尖端一定有塑性区或损伤区，
+            奇异性被"抹平"。
+          </p>
+
+          <p>
+            $K$ 的量纲为 $\text{应力} \times \sqrt{\text{长度}}$，
+            常用单位 $\mathrm{MPa \cdot \sqrt{m}}$ 或 $\mathrm{MPa \cdot \sqrt{mm}}$。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>应力强度因子 K 不是应力集中系数 $K_t$</strong>：
+              $K_t$ 是无量纲的应力放大比，描述弹性应力集中；
+              $K$ 有量纲，描述裂纹尖端奇异场的强度。
+              两者是完全不同的概念，工程中经常混淆。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="g">
+          <h2><span class="num">03</span>能量释放率 G</h2>
+
+          <h3>Griffith 理论</h3>
+          <p>
+            早在 1920 年，Griffith 就从能量角度研究了玻璃的脆性断裂。
+            他提出：裂纹扩展需要新的表面能，
+            这部分能量来自弹性应变能的释放。
+          </p>
+
+          <p>
+            对无限大板中心裂纹（2a）、远场拉应力 $\sigma$：
+            裂纹存在使系统弹性应变能减少：
+          </p>
+
+          $$ U_e = -\frac{\pi \sigma^2 a^2 B}{E} \quad \text{（平面应力）} $$
+
+          <p>
+            而裂纹表面新增能量为 $U_s = 4 a B \gamma_s$（$\gamma_s$ 为单位面积表面能）。
+            系统总能量：
+          </p>
+
+          $$ \Pi = U_e + U_s = -\frac{\pi \sigma^2 a^2 B}{E} + 4 a B \gamma_s $$
+
+          <p>
+            裂纹扩展条件为能量释放率达到临界值：
+          </p>
+
+          $$ \frac{\partial \Pi}{\partial a} = 0 \quad \Rightarrow \quad
+             \frac{\pi \sigma^2 a}{E} = 2 \gamma_s $$
+
+          <p>由此得到<strong>Griffith 临界应力</strong>：</p>
+
+          $$ \sigma_c = \sqrt{\frac{2 E \gamma_s}{\pi a}} $$
+
+          <h3>能量释放率 G</h3>
+          <p>
+            定义<strong>能量释放率</strong> $G$ 为单位裂纹面积扩展所释放的弹性能：
+          </p>
+
+          $$ G = -\frac{\partial \Pi_e}{\partial A} = \frac{\pi \sigma^2 a}{E}
+             \quad \text{（平面应力）} $$
+
+          <p>对中心裂纹无限大板，$G$ 与 $K$ 的关系为：</p>
+
+          $$ G = \frac{K_I^2}{E} \quad \text{（平面应力）}, \qquad
+             G = \frac{K_I^2 (1 - \nu^2)}{E} \quad \text{（平面应变）} $$
+
+          <h3>能量判据</h3>
+          <p>裂纹扩展的<strong>能量判据</strong>为：</p>
+
+          $$ G \ge G_c $$
+
+          <p>
+            其中 $G_c$ 为材料的<strong>临界能量释放率</strong>，
+            是材料属性，表征材料抵抗裂纹扩展的能力。
+          </p>
+
+          <h3>Griffith 理论的修正</h3>
+          <p>
+            对金属等韧性材料，裂纹尖端存在塑性变形，
+            消耗的能量远大于表面能。Irwin 与 Orowan 提出修正：
+          </p>
+
+          $$ G_c = 2 \gamma_s + \gamma_p $$
+
+          <p>
+            其中 $\gamma_p$ 为塑性耗散功。对大多数金属，
+            $\gamma_p \gg \gamma_s$，因此 $G_c$ 主要反映材料的塑性耗能能力。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>K 与 G 的等价性</strong>：在 LEFM 框架下，
+              $K$ 与 $G$ 是等价的——都描述裂纹尖端的能量状态。
+              工程中使用哪个更方便就选哪个：
+              $K$ 便于从应力场角度分析，
+              $G$ 便于从能量角度分析。
+              现代断裂力学统一用 J 积分，可以覆盖两者。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="k-g">
+          <h2><span class="num">04</span>K 与 G 的关系</h2>
+
+          <h3>Irwin 关系</h3>
+          <p>
+            对 I 型裂纹，K 与 G 之间存在明确的关系：
+          </p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            平面应力：
+          </p>
+          $$ G_I = \frac{K_I^2}{E} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            平面应变：
+          </p>
+          $$ G_I = \frac{K_I^2 (1 - \nu^2)}{E} $$
+
+          <p>
+            对 II、III 型裂纹也有类似关系，只是形式略有不同。
+          </p>
+
+          <h3>断裂韧度</h3>
+          <p>
+            与 $G_c$ 对应的临界应力强度因子称为<strong>断裂韧度 $K_{Ic}$</strong>：
+          </p>
+
+          $$ K_{Ic} = \sqrt{E' G_c}, \qquad
+             E' = \begin{cases}
+               E & \text{平面应力} \\[4pt]
+               \dfrac{E}{1 - \nu^2} & \text{平面应变}
+             \end{cases} $$
+
+          <p>
+            $K_{Ic}$ 是材料抵抗脆性断裂的能力，是断裂力学的核心材料参数。
+            它与温度、加载速率、材料厚度有关——这是 LEFM 最重要的工程发现之一。
+          </p>
+
+          <h3>断裂韧度的典型值</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>材料</th><th>K<sub>Ic</sub> (MPa·√m)</th><th>特征</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>高强钢</strong></td><td>30 – 60</td><td>强度高但脆</td></tr>
+                <tr><td><strong>普通结构钢</strong></td><td>80 – 200</td><td>韧性与强度平衡</td></tr>
+                <tr><td><strong>铝合金</strong></td><td>20 – 40</td><td>中低强度</td></tr>
+                <tr><td><strong>钛合金</strong></td><td>50 – 100</td><td>高强度耐蚀</td></tr>
+                <tr><td><strong>陶瓷</strong></td><td>2 – 5</td><td>非常脆</td></tr>
+                <tr><td><strong>混凝土</strong></td><td>0.5 – 2</td><td>准脆性</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>尺寸效应</strong>：平面应变下的 $K_{Ic}$ 低于平面应力，
+            因为三轴应力状态抑制塑性变形。
+            试样厚度越大，约束越强，$K_{Ic}$ 越小并趋于稳定值——
+            这个稳定值才是材料的真 $K_{Ic}$。
+          </p>
+
+          <h3>临界裂纹尺寸</h3>
+          <p>
+            给定工作应力 $\sigma$ 和材料断裂韧度 $K_{Ic}$，
+            可以反推结构能容忍的最大裂纹尺寸：
+          </p>
+
+          $$ a_c = \frac{1}{\pi} \left( \frac{K_{Ic}}{Y \sigma} \right)^2 $$
+
+          <p>
+            这一公式是<strong>损伤容限设计</strong>的核心依据：
+            在设计应力下，结构应能容忍一定尺寸的初始裂纹，
+            在下次检测前不会扩展到临界值。
+          </p>
+        </section>
+
+        <section id="j">
+          <h2><span class="num">05</span>J 积分</h2>
+
+          <h3>弹塑性断裂问题</h3>
+          <p>
+            LEFM 适用于塑性区很小的脆性材料。
+            对韧性材料（如压力容器钢、管线钢），
+            裂纹尖端的塑性区尺寸可以与裂纹长度相当，
+            此时 LEFM 失效，需要弹塑性断裂力学。
+          </p>
+
+          <h3>J 积分的定义</h3>
+          <p>
+            Rice 于 1968 年提出 <strong>J 积分</strong>，
+            定义为围绕裂纹尖端的一条路径上的线积分：
+          </p>
+
+          $$ J = \int_{\Gamma} \left( W \, dy - \mathbf{T} \cdot \frac{\partial \mathbf{u}}{\partial x} \, ds \right) $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$\Gamma$ 为从裂纹下表面绕过尖端到上表面的任意路径。</li>
+            <li>$W = \int \sigma_{ij} \, d\varepsilon_{ij}$ 为应变能密度。</li>
+            <li>$\mathbf{T}$ 为路径上的面力向量。</li>
+            <li>$\mathbf{u}$ 为位移向量。</li>
+          </ul>
+
+          <h3>路径无关性</h3>
+          <p>
+            J 积分最重要的性质是<strong>路径无关性</strong>：
+            积分值与路径 $\Gamma$ 的选择无关，
+            只取决于裂纹尖端的状态。
+            这使得 J 积分成为描述裂纹的可靠参量。
+          </p>
+
+          <p>这一性质来源于能量守恒，可以证明为：</p>
+
+          $$ \frac{dJ}{d\Gamma} = 0 $$
+
+          <h3>J 积分的物理意义</h3>
+          <p>
+            J 积分等价于<strong>能量释放率</strong>：
+          </p>
+
+          $$ J = -\frac{d\Pi}{dA} $$
+
+          <p>
+            在线弹性条件下，J 积分退化为 G：
+          </p>
+
+          $$ J = G = \frac{K_I^2}{E'} $$
+
+          <p>
+            在弹塑性条件下，J 积分仍然是能量释放率的度量，
+            可以用作裂纹扩展判据：
+          </p>
+
+          $$ J \ge J_{Ic} $$
+
+          <p>
+            其中 $J_{Ic}$ 为材料的临界 J 积分值，是弹塑性断裂韧度的主要指标。
+          </p>
+
+          <h3>HRR 场</h3>
+          <p>
+            在弹塑性条件下，裂纹尖端应力应变场由 Hutchinson、Rice 与 Rosengren
+            分别独立求解，称为 <strong>HRR 奇异性场</strong>：
+          </p>
+
+          $$ \sigma_{ij} = \sigma_y \left( \frac{J}{\alpha \sigma_y \varepsilon_y I_n r} \right)^{\frac{1}{n+1}}
+             \tilde{\sigma}_{ij}(\theta, n) $$
+
+          <p>
+            其中 $n$ 为 Ramberg-Osgood 硬化指数，
+            $I_n$ 为 $n$ 的函数，$\tilde{\sigma}_{ij}$ 为角分布函数。
+            应力奇异性由 $1/\sqrt{r}$ 变为 $r^{-1/(n+1)}$——
+            塑性使奇异性减弱。
+          </p>
+
+          <h3>J 积分与 CTOD</h3>
+          <p>
+            另一种常用的弹塑性断裂参量是<strong>裂纹尖端张开位移 CTOD</strong>
+            （Crack Tip Opening Displacement）。
+            它与 J 积分的关系为：
+          </p>
+
+          $$ \delta = \frac{J}{m \sigma_y} $$
+
+          <p>
+            其中 $m$ 为约束因子（约 1–2）。
+            CTOD 的物理意义直观——裂纹尖端张开多少——
+            在焊接结构评估中应用广泛。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>J 积分的适用条件</strong>：J 积分理论建立在
+              <strong>非线性弹性</strong>或<strong>形变理论塑性</strong>基础上，
+              要求加载是<strong>单调</strong>的、无卸载的。
+              在循环荷载下（如地震），J 积分不再适用，
+              需要使用循环 J 积分或等效的方法。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="fatigue">
+          <h2><span class="num">06</span>疲劳裂纹扩展</h2>
+
+          <h3>疲劳的三阶段</h3>
+          <p>
+            结构在循环荷载下会发生疲劳破坏，整个过程分为三个阶段：
+          </p>
+          <ol class="steps">
+            <li><strong>裂纹萌生</strong>：在应力集中处形成微裂纹（$a < 0.1$ mm）。</li>
+            <li><strong>稳定扩展</strong>：裂纹缓慢、稳定地扩展（$0.1 \text{ mm} < a < a_c$）。</li>
+            <li><strong>快速断裂</strong>：裂纹达到临界尺寸，失稳扩展，瞬间断裂。</li>
+          </ol>
+
+          <p>
+            断裂力学主要研究第二阶段——<strong>稳定扩展阶段</strong>，
+            因为这一阶段占据了疲劳寿命的大部分。
+          </p>
+
+          <h3>Paris 定律</h3>
+          <p>
+            1963 年，Paris 与 Erdogan 发现裂纹扩展速率与应力强度因子幅值之间
+            存在幂律关系：
+          </p>
+
+          $$ \frac{da}{dN} = C (\Delta K)^m $$
+
+          <p>
+            其中：
+          </p>
+          <ul>
+            <li>$\dfrac{da}{dN}$ 为每循环裂纹扩展量（mm/cycle）。</li>
+            <li>$\Delta K = K_{\max} - K_{\min}$ 为应力强度因子幅值。</li>
+            <li>$C$、$m$ 为材料常数，由实验确定。</li>
+          </ul>
+
+          <p>
+            对大多数金属，$m$ 在 2–4 之间，$C$ 与 $m$ 有经验关系。
+          </p>
+
+          <h3>完整 da/dN 曲线</h3>
+          <p>
+            在双对数坐标下，$\dfrac{da}{dN}$ 与 $\Delta K$ 的关系分为三个区域：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>区域</th><th>$\Delta K$ 范围</th><th>特征</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>I 区</strong></td>
+                  <td>接近阈值 $\Delta K_{th}$</td>
+                  <td>扩展速率极低，趋于停止</td>
+                </tr>
+                <tr>
+                  <td><strong>II 区</strong></td>
+                  <td>中间范围</td>
+                  <td>Paris 定律适用，双对数下为直线</td>
+                </tr>
+                <tr>
+                  <td><strong>III 区</strong></td>
+                  <td>接近 $K_{Ic}$</td>
+                  <td>扩展速率急剧增大，趋向失稳</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            两个关键参量：
+          </p>
+          <ul>
+            <li><strong>门槛值 $\Delta K_{th}$</strong>：低于此值裂纹不扩展。</li>
+            <li><strong>断裂韧度 $K_{Ic}$</strong>：达到此值时裂纹失稳扩展。</li>
+          </ul>
+
+          <h3>应力比的影响</h3>
+          <p>
+            平均应力对疲劳裂纹扩展有显著影响。
+            定义<strong>应力比</strong>：
+          </p>
+
+          $$ R = \frac{K_{\min}}{K_{\max}} = \frac{\sigma_{\min}}{\sigma_{\max}} $$
+
+          <p>
+            经验上，$R$ 增大（平均应力增大）时：
+          </p>
+          <ul>
+            <li>阈值 $\Delta K_{th}$ 降低。</li>
+            <li>Paris 系数 $C$ 增大。</li>
+            <li>裂纹扩展速率增大。</li>
+          </ul>
+
+          <p>Walker 公式给出了 $C$、$m$ 随 $R$ 的修正：</p>
+
+          $$ \Delta K_{eq} = \Delta K \cdot (1 - R)^{1 - \gamma} $$
+
+          <p>其中 $\gamma$ 为材料常数。</p>
+
+          <h3>剩余寿命估算</h3>
+          <p>
+            由 Paris 定律积分可以得到从初始裂纹 $a_0$ 扩展到临界裂纹 $a_c$
+            的循环次数：
+          </p>
+
+          $$ N_f = \int_{a_0}^{a_c} \frac{da}{C (\Delta K)^m} $$
+
+          <p>
+            对 $\Delta K = \Delta \sigma \sqrt{\pi a} \cdot Y$ 的情况，
+            若 $Y$ 近似为常数，积分得到：
+          </p>
+
+          $$ N_f = \frac{a_c^{1 - m/2} - a_0^{1 - m/2}}
+             {C (\Delta \sigma \sqrt{\pi} Y)^m (1 - m/2)} \quad (m \ne 2) $$
+
+          <h3>Python 示例：疲劳寿命估算</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>fatigue_life.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+疲劳裂纹扩展寿命估算（Paris 定律）
+模拟含中心穿透裂纹的无限大板在恒幅循环荷载下的疲劳寿命
+"""
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def paris_law_life(sigma_range, a0, ac, C, m, Y=1.0, n_cycles_max=1e8):
+    """
+    用 Paris 定律估算剩余寿命
+    sigma_range : 应力幅 Δσ (Pa)
+    a0, ac      : 初始、临界裂纹半长 (m)
+    C, m        : Paris 常数，单位对应 da/dN 与 ΔK
+    Y           : 几何修正因子
+    返回 (N, a_history)：循环数与对应的裂纹长度历史
+    """
+    a = a0
+    N = 0.0
+    a_history = [a]
+    N_history = [N]
+
+    while a < ac and N < n_cycles_max:
+        # 当前 ΔK
+        dK = sigma_range * np.sqrt(np.pi * a) * Y
+        # Paris 定律
+        da_dN = C * dK ** m
+        # 用一个小步长推进
+        dN = (ac - a) / da_dN * 0.001 if da_dN > 0 else 1.0
+        dN = min(dN, 100.0)   # 单步不超过 100 循环
+        a += da_dN * dN
+        N += dN
+        a_history.append(a)
+        N_history.append(N)
+
+    return N, np.array(N_history), np.array(a_history)
+
+
+def critical_crack_size(KIc, sigma_max, Y=1.0):
+    """由断裂韧度反推临界裂纹尺寸"""
+    return (KIc / (Y * sigma_max)) ** 2 / np.pi
+
+
+if __name__ == "__main__":
+    # 示例：压力容器用钢
+    # Paris 常数（假定单位：ΔK 用 MPa·√m，da/dN 用 mm/cycle）
+    C = 1.5e-11        # mm/cycle / (MPa·√m)^m
+    m = 3.0
+
+    # 应力幅
+    sigma_a = 100e6    # 100 MPa
+    sigma_max = 200e6  # 200 MPa
+
+    # 断裂韧度
+    KIc = 100e6        # 100 MPa·√m
+
+    # 初始裂纹
+    a0 = 1.0e-3        # 1 mm
+    ac = critical_crack_size(KIc, sigma_max)
+
+    print(f"临界裂纹半长 ac = {ac*1000:.2f} mm")
+
+    Nf, N_hist, a_hist = paris_law_life(sigma_a, a0, ac, C, m)
+
+    print(f"疲劳寿命 Nf = {Nf:,.0f} 循环")
+
+    # 在双对数坐标下画 da/dN - ΔK 曲线
+    dK_range = np.logspace(0.5, 2, 200)   # MPa·√m
+    da_dN = C * dK_range ** m
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+
+    # 左图：da/dN - ΔK
+    axes[0].loglog(dK_range, da_dN, color="#db2777", linewidth=2)
+    axes[0].set_xlabel(r"$\Delta K$ (MPa·$\sqrt{m}$)")
+    axes[0].set_ylabel(r"$da/dN$ (mm/cycle)")
+    axes[0].set_title("Paris 定律：裂纹扩展速率曲线")
+    axes[0].grid(True, which="both", alpha=0.3)
+
+    # 右图：a - N 曲线
+    axes[1].plot(N_hist, a_hist * 1000, color="#2563eb", linewidth=2)
+    axes[1].axhline(ac * 1000, color="red", linestyle="--", label=f"$a_c$ = {ac*1000:.1f} mm")
+    axes[1].set_xlabel("循环数 N")
+    axes[1].set_ylabel("裂纹半长 a (mm)")
+    axes[1].set_title("裂纹长度随循环数的发展")
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # 不同应力幅下的寿命对比
+    print("\n不同应力幅下的寿命：")
+    for sig in [80e6, 100e6, 120e6, 150e6]:
+        Nf, _, _ = paris_law_life(sig, a0, ac, C, m)
+        print(f"  Δσ = {sig/1e6:5.0f} MPa  →  Nf = {Nf:,.0f} 循环")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Miner 线性累积损伤</strong>：工程中还常用另一种疲劳方法——
+              S-N 曲线 + Miner 累积损伤。断裂力学方法与 S-N 方法的区别：
+              <strong>S-N 法</strong>适用于裂纹萌生阶段的寿命估算，
+              <strong>断裂力学法</strong>适用于已有裂纹的剩余寿命估算。
+              对焊接结构，通常用断裂力学方法评估焊接缺陷的扩展。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="seismic">
+          <h2><span class="num">07</span>与抗震工程的关系</h2>
+
+          <h3>钢结构节点的断裂问题</h3>
+          <p>
+            1994 年 Northridge 地震与 1995 年 Kobe 地震中，
+            大量钢框架梁柱节点的焊接部位发生脆性断裂，
+            震惊了工程界。这些破坏的共同特征是：
+          </p>
+          <ul>
+            <li>破坏位置在焊缝或热影响区。</li>
+            <li>断裂模式为脆性（无明显塑性变形）。</li>
+            <li>裂纹从焊接缺陷处萌生。</li>
+            <li>梁下翼缘全焊透坡口焊缝是薄弱环节。</li>
+          </ul>
+
+          <p>
+            断裂力学提供了分析这些破坏的工具：
+            焊接缺陷作为初始裂纹，地震的循环荷载引起裂纹扩展，
+            最终达到 $K_{Ic}$ 或 $J_{Ic}$ 而发生失稳断裂。
+          </p>
+
+          <h3>梁柱节点的断裂力学评估</h3>
+          <p>
+            对焊接节点，评估步骤为：
+          </p>
+          <ol class="steps">
+            <li>识别焊接缺陷（未熔合、夹渣、裂纹）作为初始裂纹 $a_0$。</li>
+            <li>计算节点在地震荷载下的应力强度因子 $K$ 或 $J$ 积分。</li>
+            <li>对比材料在服役温度下的断裂韧度 $K_{Ic}$ 或 $J_{Ic}$。</li>
+            <li>估算残余寿命或评估安全裕度。</li>
+          </ol>
+
+          <h3>断裂控制设计</h3>
+          <p>
+            基于断裂力学的设计策略：
+          </p>
+          <ul>
+            <li><strong>材料选择</strong>：选用低强度转变温度、高 $K_{Ic}$ 的钢材。</li>
+            <li><strong>焊接工艺</strong>：控制热输入、采用韧性焊材、减少缺陷。</li>
+            <li><strong>节点构造</strong>：采用狗骨式（RBS）节点、加盖板节点等，
+              把塑性铰从焊缝处移开。</li>
+            <li><strong>超声波检测</strong>：及时发现超标缺陷并修复。</li>
+          </ul>
+
+          <h3>焊缝断裂韧度</h3>
+          <p>
+            焊接区域是断裂力学分析的重点，因为：
+          </p>
+          <ul>
+            <li><strong>组织不均匀</strong>：焊缝、热影响区、母材的韧度差异大。</li>
+            <li><strong>残余应力</strong>：焊接残余应力可达屈服应力，
+              叠加工作应力后加速裂纹扩展。</li>
+            <li><strong>缺陷密度高</strong>：焊接必然带来一定的缺陷。</li>
+            <li><strong>低温脆性</strong>：焊缝韧脆转变温度较高，
+              在低温下容易脆断。</li>
+          </ul>
+
+          <h3>断裂力学在抗震中的其他应用</h3>
+          <ul>
+            <li><strong>混凝土结构</strong>：裂缝控制、粘结-滑移、损伤演化。</li>
+            <li><strong>钢管节点</strong>：相贯线焊接节点的疲劳裂纹。</li>
+            <li><strong>桥梁结构</strong>：疲劳裂纹与地震荷载的耦合。</li>
+            <li><strong>管线</strong>：地震引起的管道断裂与泄漏。</li>
+            <li><strong>岩石与岩体</strong>：断层破裂的断裂力学描述。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从强度设计到损伤容限设计</strong>：传统设计理念是"强度足够高"；
+              现代设计理念是"允许存在缺陷，但要能安全使用"。
+              这一理念转变的核心工具就是断裂力学。
+              从飞机、核电站压力容器到建筑钢结构，
+              损伤容限设计已经成为现代工程的标准实践。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>三种断裂模式</strong>：I 型（张开）、II 型（滑开）、III 型（撕开）；I 型最常见也最危险。</li>
+              <li><strong>裂纹尖端应力场</strong>：$\sigma \propto K / \sqrt{2\pi r}$，具有 $1/\sqrt{r}$ 奇异性，由应力强度因子 K 唯一确定。</li>
+              <li><strong>应力强度因子</strong>：$K_I = \sigma \sqrt{\pi a} \cdot Y$，量纲为 $\text{应力} \times \sqrt{\text{长度}}$，与几何、荷载相关。</li>
+              <li><strong>能量释放率</strong>：$G = K_I^2 / E'$；Griffith 理论给出裂纹扩展的能量判据 $G \ge G_c$。</li>
+              <li><strong>断裂韧度</strong>：$K_{Ic}$ 是材料抵抗断裂的能力，具有厚度效应与温度效应；$a_c = (K_{Ic} / Y\sigma)^2 / \pi$。</li>
+              <li><strong>J 积分</strong>：路径无关的弹塑性断裂参量，$J = -d\Pi/dA$，在弹性下退化为 G。</li>
+              <li><strong>疲劳扩展</strong>：Paris 定律 $da/dN = C (\Delta K)^m$，门槛值 $\Delta K_{th}$ 与断裂韧度 $K_{Ic}$ 是两个关键阈值。</li>
+              <li><strong>工程应用</strong>：钢结构节点断裂评估、疲劳寿命估算、损伤容限设计、抗震节点优化。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Anderson, <em>Fracture Mechanics: Fundamentals and Applications</em> — 断裂力学标准教材</li>
+            <li>Broek, <em>Elementary Engineering Fracture Mechanics</em> — 工程视角入门</li>
+            <li>Rice, J.R. (1968). A path independent integral and the approximate analysis of strain concentration by notches and cracks. <em>Journal of Applied Mechanics</em>.</li>
+            <li>Paris, P., &amp; Erdogan, F. (1963). A critical analysis of crack propagation laws. <em>Journal of Basic Engineering</em>.</li>
+            <li>郦正能等，《断裂力学》— 国内主流教材</li>
+            <li>GB/T 2bull 1163 与 GB/T 21143 — 金属材料断裂韧度试验方法标准</li>
+            <li>FEMA-350 / FEMA-355D — 钢结构节点断裂评估指南</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,546 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>理论力学 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="theoretical-mechanics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#statics">一、静力学基础</a></li>
+      <li><a href="#kinematics">二、质点运动学</a></li>
+      <li><a href="#kinetics">三、质点动力学</a></li>
+      <li><a href="#rigid">四、刚体动力学</a></li>
+      <li><a href="#lagrange">五、拉格朗日力学</a></li>
+      <li><a href="#hamilton">六、哈密顿力学</a></li>
+      <li><a href="#summary">七、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 理论力学
+        </div>
+        <h1>理论力学</h1>
+        <p class="lead">
+          从静力学平衡到分析力学，梳理经典力学的完整体系。理论力学是结构动力学、
+          有限元方法与结构抗震分析的共同基础——从单自由度体系到多自由度耦合系统，
+          其运动方程的推导与求解都建立在这套框架之上。
+        </p>
+        <div class="article-meta">
+          <span>经典力学</span>
+          <span>拉格朗日</span>
+          <span>哈密顿</span>
+          <span class="blue">结构动力学</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            理论力学是力学的基础学科，用严格的数学语言描述物体的平衡与运动。
+            它包含三个相互独立又紧密衔接的分支：
+          </p>
+          <ul>
+            <li><strong>静力学</strong>：研究力系的平衡条件，是结构内力分析与支座反力计算的基础。</li>
+            <li><strong>运动学</strong>：只关心几何运动本身，不考虑力的作用。</li>
+            <li><strong>动力学</strong>：研究力与运动之间的关系，包括牛顿力学与分析力学两种体系。</li>
+          </ul>
+          <p>
+            在结构工程中，理论力学最直接的延伸是<strong>结构动力学</strong>。一条地震动作用下，
+            结构响应本质上是一个多自由度体系的动力学问题，其运动方程可以由牛顿第二定律直接建立，
+            也可以由拉格朗日方程从能量角度推导。后者在多自由度、耦合系统、
+            含约束的复杂结构中更为优雅。
+          </p>
+        </section>
+
+        <section id="statics">
+          <h2><span class="num">01</span>静力学基础</h2>
+
+          <h3>力系简化</h3>
+          <p>
+            任意空间力系都可以简化为一个<strong>主矢</strong> $\mathbf{F}_R$ 与一个<strong>主矩</strong> $\mathbf{M}_O$：
+          </p>
+
+          $$ \mathbf{F}_R = \sum_{i=1}^{n} \mathbf{F}_i, \qquad
+             \mathbf{M}_O = \sum_{i=1}^{n} \mathbf{r}_i \times \mathbf{F}_i $$
+
+          <p>
+            如果 $\mathbf{F}_R$ 与 $\mathbf{M}_O$ 都为零，则物体处于<strong>平衡状态</strong>。
+            这是所有静力平衡方程的来源。
+          </p>
+
+          <h3>平衡方程</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>方程数</th><th>方程形式</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>平面一般力系</strong></td>
+                  <td>3</td>
+                  <td>$\sum F_x = 0, \; \sum F_y = 0, \; \sum M_O = 0$</td>
+                </tr>
+                <tr>
+                  <td><strong>空间一般力系</strong></td>
+                  <td>6</td>
+                  <td>三个力投影方程 + 三个矩投影方程</td>
+                </tr>
+                <tr>
+                  <td><strong>平面汇交力系</strong></td>
+                  <td>2</td>
+                  <td>$\sum F_x = 0, \; \sum F_y = 0$</td>
+                </tr>
+                <tr>
+                  <td><strong>平面平行力系</strong></td>
+                  <td>2</td>
+                  <td>$\sum F_y = 0, \; \sum M_O = 0$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>桁架分析</h3>
+          <p>
+            理想桁架假定：节点为光滑铰接、杆件只受轴向力、荷载只作用在节点上。
+            常用两种方法：
+          </p>
+          <ul>
+            <li><strong>节点法</strong>：逐节点取隔离体，用汇交力系平衡方程求解。适合求全部杆件内力。</li>
+            <li><strong>截面法</strong>：用假想截面切过若干杆件，用一般力系平衡方程求解。适合求指定杆件内力。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程意义</strong>：静力学是结构分析的第一层。无论是框架结构的支座反力，
+              还是刚架的内力图，都要先通过静力平衡方程求出支座反力，再进行后续分析。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="kinematics">
+          <h2><span class="num">02</span>质点运动学</h2>
+
+          <h3>三种坐标系</h3>
+          <p>描述质点运动时，选择合适的坐标系能大幅简化问题：</p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            直角坐标：
+          </p>
+          $$ \mathbf{r} = x \mathbf{i} + y \mathbf{j} + z \mathbf{k}, \qquad
+             \mathbf{v} = \dot{x} \mathbf{i} + \dot{y} \mathbf{j} + \dot{z} \mathbf{k} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            极坐标（平面）：
+          </p>
+          $$ \mathbf{v} = \dot{r} \mathbf{e}_r + r \dot{\theta} \mathbf{e}_\theta, \qquad
+             \mathbf{a} = (\ddot{r} - r \dot{\theta}^2) \mathbf{e}_r
+                      + (r \ddot{\theta} + 2 \dot{r} \dot{\theta}) \mathbf{e}_\theta $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            自然坐标（已知轨迹）：
+          </p>
+          $$ a_t = \frac{dv}{dt}, \qquad a_n = \frac{v^2}{\rho} $$
+
+          <p>
+            其中 $\rho$ 为轨迹曲率半径，$a_t$ 为切向加速度，$a_n$ 为法向（向心）加速度。
+          </p>
+
+          <h3>刚体运动分类</h3>
+          <ul>
+            <li><strong>平动</strong>：刚体上任意两点连线方向不变，各点速度、加速度相同。</li>
+            <li><strong>定轴转动</strong>：绕固定轴旋转，角速度 $\omega$、角加速度 $\alpha$。</li>
+            <li><strong>平面运动</strong>：可分解为随基点的平动 + 绕基点的转动。</li>
+            <li><strong>定点运动</strong>：绕固定点旋转，可用欧拉角描述。</li>
+            <li><strong>一般运动</strong>：平动 + 定点转动的组合。</li>
+          </ul>
+        </section>
+
+        <section id="kinetics">
+          <h2><span class="num">03</span>质点动力学</h2>
+
+          <h3>牛顿三定律</h3>
+          <p>牛顿力学建立在三个基本定律之上：</p>
+          <ul>
+            <li><strong>第一定律（惯性定律）</strong>：不受力的质点保持静止或匀速直线运动。</li>
+            <li><strong>第二定律</strong>：质点动量变化率等于作用力。</li>
+            <li><strong>第三定律（作用-反作用）</strong>：两物体间的作用力与反作用力等大反向。</li>
+          </ul>
+
+          $$ \frac{d}{dt}(m \mathbf{v}) = \mathbf{F} \quad \xrightarrow{m = \text{const}} \quad
+             m \mathbf{a} = \mathbf{F} $$
+
+          <h3>三大定理</h3>
+          <p>对牛顿第二定律做数学变换，可以得到三个守恒形式的定理：</p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            动量定理：
+          </p>
+          $$ \frac{d\mathbf{p}}{dt} = \mathbf{F} \quad \Rightarrow \quad
+             \mathbf{p}_2 - \mathbf{p}_1 = \int_{t_1}^{t_2} \mathbf{F} \, dt $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            角动量定理：
+          </p>
+          $$ \frac{d\mathbf{L}_O}{dt} = \mathbf{M}_O \quad \Rightarrow \quad
+             \mathbf{L}_O = \mathbf{r} \times m\mathbf{v} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            动能定理：
+          </p>
+          $$ dT = \mathbf{F} \cdot d\mathbf{r} \quad \Rightarrow \quad
+             T_2 - T_1 = W_{12}, \qquad T = \frac{1}{2} m v^2 $$
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>常见误区</strong>：三大定理形式上等价于牛顿第二定律，
+              但它们把问题从"逐时刻求加速度"变成"关注初末状态之间的关系"。
+              在脉冲力、碰撞、变质量等问题中使用动量定理往往更简洁。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="rigid">
+          <h2><span class="num">04</span>刚体动力学</h2>
+
+          <h3>质心运动定理</h3>
+          <p>
+            刚体运动可以分解为<strong>质心的平动</strong>与<strong>绕质心的转动</strong>：
+          </p>
+
+          $$ M \ddot{\mathbf{r}}_C = \mathbf{F}, \qquad
+             \mathbf{I}_C \dot{\boldsymbol{\omega}} + \boldsymbol{\omega} \times (\mathbf{I}_C \boldsymbol{\omega}) = \mathbf{M}_C $$
+
+          <p>
+            其中 $M$ 为刚体总质量，$\mathbf{r}_C$ 为质心位置，$\mathbf{I}_C$ 为关于质心的转动惯量张量。
+          </p>
+
+          <h3>转动惯量</h3>
+          <p>转动惯量是刚体转动惯性的度量，对规则几何体有解析公式：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>刚体</th><th>转轴</th><th>转动惯量</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>均匀细杆（长 L）</td>
+                  <td>过质心垂直杆</td>
+                  <td>$I = \dfrac{1}{12} M L^2$</td>
+                </tr>
+                <tr>
+                  <td>均匀圆盘（半径 R）</td>
+                  <td>过质心垂直盘面</td>
+                  <td>$I = \dfrac{1}{2} M R^2$</td>
+                </tr>
+                <tr>
+                  <td>均匀球体（半径 R）</td>
+                  <td>过球心</td>
+                  <td>$I = \dfrac{2}{5} M R^2$</td>
+                </tr>
+                <tr>
+                  <td>均匀圆柱（半径 R）</td>
+                  <td>轴心线</td>
+                  <td>$I = \dfrac{1}{2} M R^2$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>平行轴定理</h3>
+          <p>如果转轴平行于过质心的轴，且相距 $d$：</p>
+
+          $$ I = I_C + M d^2 $$
+
+          <h3>欧拉方程</h3>
+          <p>
+            在刚体主轴坐标系下，绕定点的转动方程可以写成欧拉方程：
+          </p>
+
+          $$ \begin{aligned}
+             I_1 \dot{\omega}_1 + (I_3 - I_2) \omega_2 \omega_3 &= M_1 \\
+             I_2 \dot{\omega}_2 + (I_1 - I_3) \omega_3 \omega_1 &= M_2 \\
+             I_3 \dot{\omega}_3 + (I_2 - I_1) \omega_1 \omega_2 &= M_3
+             \end{aligned} $$
+
+          <p>
+            这组方程是陀螺动力学、卫星姿态控制等问题的核心。
+          </p>
+        </section>
+
+        <section id="lagrange">
+          <h2><span class="num">05</span>拉格朗日力学</h2>
+
+          <h3>广义坐标与自由度</h3>
+          <p>
+            拉格朗日力学的核心思想，是用<strong>广义坐标</strong> $q_i$ 代替直角坐标，
+            自动处理约束，避免引入约束力。
+            一个含 $n$ 个质点的系统，若有 $k$ 个完整约束，则自由度数为 $3n - k$。
+          </p>
+
+          <h3>拉格朗日方程</h3>
+          <p>
+            定义拉格朗日函数 $L = T - V$，则运动方程可以写成：
+          </p>
+
+          $$ \frac{d}{dt}\left( \frac{\partial L}{\partial \dot{q}_i} \right)
+             - \frac{\partial L}{\partial q_i} = 0, \qquad i = 1, 2, \ldots, N $$
+
+          <p>
+            这是一组 $N$ 个二阶常微分方程，每个自由度对应一个方程。
+          </p>
+
+          <h3>示例：单摆</h3>
+          <p>
+            单摆长度为 $l$、质量为 $m$、摆角为 $\theta$。动能与势能分别为：
+          </p>
+
+          $$ T = \frac{1}{2} m l^2 \dot{\theta}^2, \qquad
+             V = -m g l \cos\theta $$
+
+          <p>拉格朗日函数为 $L = T - V$，代入拉格朗日方程：</p>
+
+          $$ \frac{d}{dt}(m l^2 \dot{\theta}) + m g l \sin\theta = 0
+             \quad \Rightarrow \quad
+             \ddot{\theta} + \frac{g}{l} \sin\theta = 0 $$
+
+          <p>
+            当 $\theta$ 很小时 $\sin\theta \approx \theta$，
+            方程退化为简谐振子 $\ddot{\theta} + \omega_0^2 \theta = 0$，
+            其中 $\omega_0 = \sqrt{g / l}$。这正是结构动力学中单自由度体系的原型。
+          </p>
+
+          <h3>Python 数值求解</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>pendulum.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+
+
+def pendulum_ode(t, y, g=9.81, l=1.0):
+    """
+    单摆运动方程（由拉格朗日方程导出）
+    y = [theta, omega]
+    d(theta)/dt = omega
+    d(omega)/dt = -(g/l) * sin(theta)
+    """
+    theta, omega = y
+    dtheta = omega
+    domega = -(g / l) * np.sin(theta)
+    return [dtheta, domega]
+
+
+def simulate(theta0=np.pi / 6, omega0=0.0, t_end=10.0, l=1.0):
+    """给定初始条件，数值求解单摆运动"""
+    y0 = [theta0, omega0]
+    t_span = (0.0, t_end)
+    t_eval = np.linspace(*t_span, 1000)
+
+    sol = solve_ivp(
+        pendulum_ode,
+        t_span,
+        y0,
+        args=(9.81, l),
+        t_eval=t_eval,
+        method="RK45",
+        rtol=1e-8,
+    )
+    return sol.t, sol.y[0], sol.y[1]
+
+
+if __name__ == "__main__":
+    # 小角度：接近简谐运动
+    t, theta, omega = simulate(theta0=0.1)
+    period_numeric = 2 * np.pi * np.sqrt(1.0 / 9.81)
+    print(f"小角度摆动周期（解析）: {period_numeric:.4f} s")
+
+    # 大角度：周期略长，体现非线性
+    t2, theta2, _ = simulate(theta0=np.pi / 2)
+    print(f"大角度初值 theta0 = {np.pi/2:.4f} rad")
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(t, theta, label="θ₀ = 0.1 rad")
+    plt.plot(t2, theta2, label="θ₀ = π/2 rad")
+    plt.xlabel("t / s")
+    plt.ylabel("θ / rad")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从单摆到结构动力学</strong>：把 $\theta$ 换成结构位移 $u$，
+              把 $g / l$ 换成 $\omega_n^2 = k / m$，
+              单摆方程就变成了单自由度体系的自由振动方程
+              $\ddot{u} + \omega_n^2 u = 0$。
+              这正是反应谱、模态分析等一系列结构动力学工具的起点。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="hamilton">
+          <h2><span class="num">06</span>哈密顿力学</h2>
+
+          <h3>正则变量与相空间</h3>
+          <p>
+            定义广义动量 $p_i = \partial L / \partial \dot{q}_i$，
+            并对拉格朗日函数做勒让德变换，得到<strong>哈密顿函数</strong>：
+          </p>
+
+          $$ H(q, p, t) = \sum_{i=1}^{N} p_i \dot{q}_i - L(q, \dot{q}, t) $$
+
+          <p>
+            对于保守系统，$H$ 就是系统的总能量 $T + V$。
+          </p>
+
+          <h3>哈密顿正则方程</h3>
+          <p>运动方程变成一组 $2N$ 个一阶微分方程：</p>
+
+          $$ \dot{q}_i = \frac{\partial H}{\partial p_i}, \qquad
+             \dot{p}_i = -\frac{\partial H}{\partial q_i} $$
+
+          <p>
+            这套方程把力学问题放在<strong>相空间</strong> $(q, p)$ 中描述，
+            比拉格朗日方程更适合：
+          </p>
+          <ul>
+            <li>统计力学与遍历性分析</li>
+            <li>混沌理论中的分岔与 Lyapunov 指数</li>
+            <li>量子力学的正则量子化</li>
+            <li>辛几何数值积分（保辛算法）</li>
+          </ul>
+
+          <h3>泊松括号</h3>
+          <p>任意两个物理量 $A(q, p)$ 与 $B(q, p)$ 的泊松括号定义为：</p>
+
+          $$ \{A, B\} = \sum_{i=1}^{N}
+             \left( \frac{\partial A}{\partial q_i} \frac{\partial B}{\partial p_i}
+                  - \frac{\partial A}{\partial p_i} \frac{\partial B}{\partial q_i} \right) $$
+
+          <p>
+            用泊松括号可以把运动方程写成极简形式：
+          </p>
+
+          $$ \dot{A} = \{A, H\} + \frac{\partial A}{\partial t} $$
+
+          <p>
+            若 $\{A, H\} = 0$ 且 $A$ 不显含时间，则 $A$ 是守恒量。
+            这是诺特定理在哈密顿框架下的体现——<strong>对称性对应守恒量</strong>。
+          </p>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">07</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>静力学</strong>：力系简化为主矢 + 主矩，平衡条件是两者都为零。</li>
+              <li><strong>运动学</strong>：只描述几何运动，坐标系选择决定问题难度。</li>
+              <li><strong>牛顿动力学</strong>：$m\mathbf{a} = \mathbf{F}$，配套三大定理（动量、角动量、动能）。</li>
+              <li><strong>刚体动力学</strong>：质心平动 + 绕质心转动，欧拉方程用于定点转动。</li>
+              <li><strong>拉格朗日力学</strong>：用广义坐标自动处理约束，$L = T - V$，方程统一优美。</li>
+              <li><strong>哈密顿力学</strong>：从相空间视角看运动，是统计力学和量子力学的入口。</li>
+              <li><strong>结构动力学</strong>：理论力学的直接延伸，单摆方程 $\to$ 单自由度体系 $\to$ 反应谱。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Goldstein, Poole &amp; Safko, <em>Classical Mechanics</em> — 分析力学的标准教材</li>
+            <li>Landau &amp; Lifshitz, <em>Mechanics</em> — 理论物理教程第一卷，精炼深刻</li>
+            <li>Arnold, <em>Mathematical Methods of Classical Mechanics</em> — 几何力学的经典</li>
+            <li>Clough &amp; Penzien, <em>Dynamics of Structures</em> — 从理论力学到结构动力学</li>
+            <li>Chopra, <em>Dynamics of Structures</em> — 结构动力学入门</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

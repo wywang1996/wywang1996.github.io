@@ -1,0 +1,764 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结构力学 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="structural-mechanics">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#geometry">一、几何组成分析</a></li>
+      <li><a href="#statically">二、静定结构内力</a></li>
+      <li><a href="#virtual">三、虚功原理与位移</a></li>
+      <li><a href="#force">四、力法</a></li>
+      <li><a href="#displacement">五、位移法</a></li>
+      <li><a href="#moment">六、力矩分配法</a></li>
+      <li><a href="#matrix">七、矩阵位移法</a></li>
+      <li><a href="#influence">八、影响线</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 结构力学
+        </div>
+        <h1>结构力学</h1>
+        <p class="lead">
+          从几何组成到矩阵位移法，梳理杆系结构分析的完整体系。
+          结构力学是结构抗震分析的直接前身——从单自由度到多自由度、
+          从静定到超静定、从手算到矩阵化，
+          这条主线最终汇入了现代有限元方法与结构动力学。
+        </p>
+        <div class="article-meta">
+          <span>静定结构</span>
+          <span>超静定</span>
+          <span>矩阵位移法</span>
+          <span class="blue">有限元雏形</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            结构力学研究杆系结构（梁、刚架、桁架、拱、组合结构）
+            在荷载作用下的<strong>强度</strong>与<strong>刚度</strong>问题，
+            是材料力学的直接延伸。与材料力学只研究单根杆件不同，
+            结构力学关注的是<strong>杆件的集合体</strong>——
+            结构内部的杆件之间通过节点连接，存在互相约束与力的传递。
+          </p>
+          <p>
+            本笔记的主线是：
+          </p>
+          <ul>
+            <li><strong>能否分析</strong>：通过几何组成分析判断结构的静定性。</li>
+            <li><strong>怎么分析</strong>：静定结构用截面法与平衡方程；超静定结构用力法、位移法、力矩分配法。</li>
+            <li><strong>如何计算</strong>：手算方法最终可以统一到矩阵位移法的框架里，正是现代有限元的雏形。</li>
+          </ul>
+          <p>
+            对地震工程而言，结构力学最直接的用途是：
+            建立结构的<strong>刚度矩阵</strong>与<strong>质量矩阵</strong>，
+            从而把结构的动力方程 $\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = \mathbf{F}(t)$ 展开为矩阵形式，
+            为模态分析、反应谱分析、时程分析提供基础。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>静定 vs 超静定</strong>：静定结构的内力仅由平衡方程即可确定；
+              超静定结构的内力还依赖于杆件刚度，需要补充变形协调条件。
+              抗震设计中的多数结构都是超静定的，
+              因为超静定结构有冗余约束，一根杆件破坏不一定会引起整体倒塌。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="geometry">
+          <h2><span class="num">01</span>几何组成分析</h2>
+
+          <h3>自由度与约束</h3>
+          <p>
+            一个平面内的刚片（刚体）有 3 个自由度：
+            水平位移、竖向位移、转角。
+            约束按限制自由度的数量分类：
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>约束类型</th><th>限制自由度</th><th>等效约束数</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>链杆</strong></td><td>沿杆方向位移</td><td>1</td></tr>
+                <tr><td><strong>单铰</strong></td><td>两个线位移</td><td>2</td></tr>
+                <tr><td><strong>固定铰支座</strong></td><td>两个线位移</td><td>2</td></tr>
+                <tr><td><strong>固定端</strong></td><td>两个线位移 + 一个角位移</td><td>3</td></tr>
+                <tr><td><strong>定向支座</strong></td><td>一个线位移 + 一个角位移</td><td>2</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>自由度计算公式</h3>
+          <p>
+            对平面杆系结构，自由度 $W$（也叫计算自由度）为：
+          </p>
+
+          $$ W = 3m - (2h + r) $$
+
+          <p>
+            其中 $m$ 为刚片数，$h$ 为单铰数，$r$ 为支座约束数。
+          </p>
+
+          <h3>静定性判断</h3>
+          <ul>
+            <li>$W > 0$：几何可变体系，不能作为结构使用。</li>
+            <li>$W = 0$：恰好几何不变，无多余约束（静定）。</li>
+            <li>$W < 0$：有多余约束，可能是超静定的。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>注意</strong>：$W$ 只是必要条件，不是充分条件。
+              有些 $W = 0$ 甚至 $W < 0$ 的体系仍然是几何可变的——
+              例如瞬变体系、约束布置不合理等。真正的几何不变性判断要使用
+              <strong>三刚片规则</strong>、<strong>二元体规则</strong>等方法。</p>
+            </div>
+          </div>
+
+          <h3>基本构成规则</h3>
+          <ul>
+            <li><strong>三刚片规则</strong>：三个刚片用不在同一直线的三个铰两两相连，构成几何不变体系。</li>
+            <li><strong>二元体规则</strong>：在一个刚片上增加一个由两根不共线链杆连接的铰节点，仍为几何不变。</li>
+            <li><strong>二刚片规则</strong>：两个刚片用一铰一链杆连接，且链杆不穿过铰，构成几何不变体系。</li>
+          </ul>
+        </section>
+
+        <section id="statically">
+          <h2><span class="num">02</span>静定结构内力</h2>
+
+          <h3>多跨静定梁</h3>
+          <p>
+            多跨静定梁由基本部分与附属部分组成。
+            分析时<strong>先计算附属部分，再计算基本部分</strong>，
+            把附属部分的支座反力反向加到基本部分上。
+          </p>
+
+          <h3>静定刚架</h3>
+          <p>
+            刚架由多个杆件刚性连接而成，节点保持刚接。
+            分析步骤：
+          </p>
+          <ol class="steps">
+            <li>求支座反力：整体取隔离体，应用三个平衡方程。</li>
+            <li>逐杆作内力图：截断各杆，用截面法求杆端内力。</li>
+            <li>校核：取任一节点验证 $\sum F_x = 0$、$\sum F_y = 0$、$\sum M = 0$。</li>
+          </ol>
+
+          <h3>三铰拱</h3>
+          <p>
+            三铰拱是静定的拱结构，由两个拱片通过顶部铰相连。
+            在竖向荷载作用下，任意截面的内力为：
+          </p>
+
+          $$ M = M^0 - H y, \qquad
+             Q = Q^0 \cos\varphi - H \sin\varphi, \qquad
+             N = -Q^0 \sin\varphi - H \cos\varphi $$
+
+          <p>
+            其中 $M^0$、$Q^0$ 为对应简支梁的内力，$H$ 为水平推力，
+            $y$ 为截面距拱顶连线的竖距。
+          </p>
+
+          <p>
+            合理拱轴线使弯矩处处为零——对竖向均布荷载，合理拱轴是抛物线：
+          </p>
+
+          $$ y = \frac{4 f}{l^2} x (l - x) $$
+
+          <h3>静定桁架</h3>
+          <p>
+            理想桁架假定：节点铰接、荷载只在节点、杆件只受轴向力。
+            计算方法：
+          </p>
+          <ul>
+            <li><strong>节点法</strong>：逐节点取隔离体，用平面汇交力系平衡方程。</li>
+            <li><strong>截面法</strong>：用假想截面切过若干杆件，用一般力系平衡方程。</li>
+            <li><strong>零杆判别</strong>：无荷载、不受力的两根杆连接节点，两杆都是零杆。</li>
+          </ul>
+
+          <h3>组合结构</h3>
+          <p>
+            由梁式杆与链杆组合成的结构。
+            计算时区分两类杆件：链杆只有轴力，梁式杆有弯矩、剪力、轴力。
+            先求链杆内力，再代入梁式杆的内力计算。
+          </p>
+        </section>
+
+        <section id="virtual">
+          <h2><span class="num">03</span>虚功原理与位移计算</h2>
+
+          <h3>虚功原理</h3>
+          <p>
+            对于一个处于平衡状态的变形体，外力所做的虚功等于内力所做的虚功：
+          </p>
+
+          $$ W_e = W_i $$
+
+          <p>
+            这是结构力学中最本质的原理之一：
+            它把<strong>平衡问题</strong>与<strong>几何问题</strong>统一到一个方程里，
+            提供了几乎所有结构位移计算的统一框架。
+          </p>
+
+          <h3>单位荷载法</h3>
+          <p>
+            要求某点的位移 $\Delta$，可以在该点沿所求位移方向施加一个单位荷载，
+            按虚功原理得：
+          </p>
+
+          $$ \Delta = \sum \int \frac{\bar{M} M}{E I} \, ds
+                    + \sum \int \frac{\bar{N} N}{E A} \, ds
+                    + \sum \int \frac{k \bar{Q} Q}{G A} \, ds $$
+
+          <p>
+            其中带横线的量是由单位荷载产生的内力。
+            对梁与刚架，通常只保留弯曲项：
+          </p>
+
+          $$ \Delta = \sum \int \frac{\bar{M} M}{E I} \, ds $$
+
+          <h3>图乘法</h3>
+          <p>
+            当 $EI$ 为常数、杆件为直杆时，积分可以转化为两个弯矩图的面积与形心对应纵坐标的乘积：
+          </p>
+
+          $$ \int M \bar{M} \, dx = \omega \cdot \bar{y}_C $$
+
+          <p>
+            其中 $\omega$ 为某一弯矩图的面积，$\bar{y}_C$ 为其形心对应另一弯矩图的纵坐标。
+            这是手算中最常用的加速手段。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>弯矩图</th><th>面积 ω</th><th>形心位置</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>矩形（高 h、长 l）</td><td>$h l$</td><td>中点</td></tr>
+                <tr><td>三角形（高 h、长 l）</td><td>$\dfrac{1}{2} h l$</td><td>距底 2/3 处</td></tr>
+                <tr><td>二次抛物线（顶点峰值 h）</td><td>$\dfrac{2}{3} h l$</td><td>中点</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>互等定理</h3>
+          <p>线弹性体系满足三个互等定理，是后续力法/位移法的理论基础：</p>
+          <ul>
+            <li><strong>功的互等定理</strong>：第一状态力在第二状态位移上的功 = 第二状态力在第一状态位移上的功。</li>
+            <li><strong>位移互等定理</strong>：$\delta_{12} = \delta_{21}$。</li>
+            <li><strong>反力互等定理</strong>：$r_{12} = r_{21}$。</li>
+          </ul>
+        </section>
+
+        <section id="force">
+          <h2><span class="num">04</span>力法</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            力法是分析<strong>超静定结构</strong>的最基本方法。
+            它的思路是：
+          </p>
+          <ol class="steps">
+            <li>确定<strong>超静定次数</strong>——多余约束的数量。</li>
+            <li>去掉多余约束，得到<strong>静定基本体系</strong>。</li>
+            <li>把多余约束力作为<strong>基本未知量</strong>。</li>
+            <li>建立<strong>变形协调条件</strong>——去掉的约束处位移为零。</li>
+            <li>解方程求出多余约束力，再计算结构内力。</li>
+          </ol>
+
+          <h3>力法典型方程</h3>
+          <p>对 $n$ 次超静定结构，力法方程为：</p>
+
+          $$ \begin{cases}
+             \delta_{11} X_1 + \delta_{12} X_2 + \cdots + \delta_{1n} X_n + \Delta_{1P} = 0 \\
+             \delta_{21} X_1 + \delta_{22} X_2 + \cdots + \delta_{2n} X_n + \Delta_{2P} = 0 \\
+             \qquad \vdots \\
+             \delta_{n1} X_1 + \delta_{n2} X_2 + \cdots + \delta_{nn} X_n + \Delta_{nP} = 0
+             \end{cases} $$
+
+          <p>
+            矩阵形式：
+          </p>
+
+          $$ \boldsymbol{\delta} \mathbf{X} + \boldsymbol{\Delta}_P = \mathbf{0}
+             \quad \Rightarrow \quad
+             \mathbf{X} = -\boldsymbol{\delta}^{-1} \boldsymbol{\Delta}_P $$
+
+          <p>
+            其中 $\delta_{ij}$ 为柔度系数（$X_j = 1$ 时 $X_i$ 方向上的位移），
+            $\Delta_{iP}$ 为荷载产生的位移。由位移互等定理 $\delta_{ij} = \delta_{ji}$，
+            柔度矩阵是对称的。
+          </p>
+
+          <h3>对称性的利用</h3>
+          <p>
+            对对称结构，可以通过取对称/反对称半边结构大幅简化计算：
+          </p>
+          <ul>
+            <li>对称荷载：对称轴上的截面位移只含对称部分，可简化为滑动或铰支。</li>
+            <li>反对称荷载：对称轴上的截面只含反对称部分，简化为定向或自由。</li>
+            <li>对称结构在对称荷载下无反对称内力（剪力、扭矩）。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>力法的物理意义</strong>：力法把超静定问题化为
+              "拆解 → 恢复约束 → 满足协调"的过程。
+              柔度矩阵 $\boldsymbol{\delta}$ 是结构的<strong>柔度</strong>描述，
+              与后续位移法的<strong>刚度</strong>描述互为逆关系。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="displacement">
+          <h2><span class="num">05</span>位移法</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            位移法以<strong>节点位移</strong>为基本未知量，比力法更接近现代有限元的思路：
+          </p>
+          <ol class="steps">
+            <li>确定结构的<strong>独立节点位移</strong>——角位移与独立线位移。</li>
+            <li>用节点位移表示各杆件的杆端力。</li>
+            <li>建立节点或截面的<strong>平衡方程</strong>，求解节点位移。</li>
+            <li>回代求杆端力，作出内力图。</li>
+          </ol>
+
+          <h3>转角位移方程</h3>
+          <p>等截面直杆的杆端弯矩用杆端转角与相对位移表示：</p>
+
+          $$ M_{AB} = \frac{4 E I}{l} \theta_A + \frac{2 E I}{l} \theta_B
+                    - \frac{6 E I}{l^2} \Delta + M_{AB}^F $$
+
+          $$ M_{BA} = \frac{2 E I}{l} \theta_A + \frac{4 E I}{l} \theta_B
+                    - \frac{6 E I}{l^2} \Delta + M_{BA}^F $$
+
+          <p>
+            其中 $M^F$ 是固端弯矩，$\Delta$ 是杆端相对侧移。
+            这组方程是位移法的核心。
+          </p>
+
+          <h3>固端弯矩</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>荷载形式</th><th>$M_{AB}^F$</th><th>$M_{BA}^F$</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>均布荷载 $q$</td>
+                  <td>$-q l^2 / 12$</td>
+                  <td>$+q l^2 / 12$</td>
+                </tr>
+                <tr>
+                  <td>跨中集中力 $P$</td>
+                  <td>$-P l / 8$</td>
+                  <td>$+P l / 8$</td>
+                </tr>
+                <tr>
+                  <td>端部集中力偶 $M$</td>
+                  <td>$-M / 2$</td>
+                  <td>$-M / 2$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>位移法典型方程</h3>
+          <p>对 $n$ 个未知节点位移，位移法方程为：</p>
+
+          $$ \begin{cases}
+             k_{11} \Delta_1 + k_{12} \Delta_2 + \cdots + k_{1n} \Delta_n + F_{1P} = 0 \\
+             k_{21} \Delta_1 + k_{22} \Delta_2 + \cdots + k_{2n} \Delta_n + F_{2P} = 0 \\
+             \qquad \vdots \\
+             k_{n1} \Delta_1 + k_{n2} \Delta_2 + \cdots + k_{nn} \Delta_n + F_{nP} = 0
+             \end{cases} $$
+
+          <p>
+            矩阵形式：
+          </p>
+
+          $$ \mathbf{K} \boldsymbol{\Delta} + \mathbf{F}_P = \mathbf{0}
+             \quad \Rightarrow \quad
+             \boldsymbol{\Delta} = -\mathbf{K}^{-1} \mathbf{F}_P $$
+
+          <p>
+            $\mathbf{K}$ 是<strong>刚度矩阵</strong>，对称、正定。
+            这与有限元的 $\mathbf{K}\mathbf{u} = \mathbf{F}$ 完全一致——
+            矩阵位移法就是有限元的直系祖先。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>力法 vs 位移法</strong>：力法以<strong>多余约束力</strong>为未知量，
+              方程数是超静定次数；位移法以<strong>节点位移</strong>为未知量，
+              方程数是节点位移数。手工计算时力法方程数常较少；
+              计算机实现时位移法更易自动化——这是现代有限元选择位移法的原因。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="moment">
+          <h2><span class="num">06</span>力矩分配法</h2>
+
+          <h3>基本思想</h3>
+          <p>
+            力矩分配法是一种<strong>逐次逼近</strong>的手算方法，
+            不需要解联立方程，特别适合连续梁与无节点线位移的刚架。
+            它本质上是位移法的一种迭代形式。
+          </p>
+
+          <h3>关键概念</h3>
+          <ul>
+            <li><strong>转动刚度</strong> $S$：使杆端产生单位转角所需施加的弯矩。
+              远端固定 $S = 4i$，远端铰支 $S = 3i$，远端滑动 $S = i$，其中 $i = EI/l$。</li>
+            <li><strong>分配系数</strong> $\mu_{ij} = S_{ij} / \sum S$：节点处各杆分配不平衡弯矩的比例。</li>
+            <li><strong>传递系数</strong> $C$：近端弯矩向远端传递的比例。
+              远端固定 $C = 0.5$，远端铰支 $C = 0$。</li>
+          </ul>
+
+          <h3>计算步骤</h3>
+          <ol class="steps">
+            <li>计算各杆的转动刚度与分配系数。</li>
+            <li>按各节点施加约束（固定），求固端弯矩。</li>
+            <li>释放每个节点的不平衡弯矩，按分配系数分配。</li>
+            <li>将分配得到的弯矩乘以传递系数，传到杆的另一端。</li>
+            <li>重复上述过程直至收敛，累加各次结果。</li>
+          </ol>
+
+          <p>
+            通常两三轮迭代就能得到工程上足够精确的结果。
+            这是一种<strong>由局部到整体</strong>的松弛思想，
+            与数值分析中的 Gauss-Seidel 迭代、多重网格方法在思想上是一脉相承的。
+          </p>
+        </section>
+
+        <section id="matrix">
+          <h2><span class="num">07</span>矩阵位移法</h2>
+
+          <h3>从手算到矩阵</h3>
+          <p>
+            矩阵位移法是现代结构分析的通用方法，
+            也是有限元法在杆系结构上的具体实现。它把位移法从"手算求解"提升为
+            "程序求解"，可以处理任意规模、任意拓扑的杆系结构。
+          </p>
+
+          <h3>核心步骤</h3>
+          <ol class="steps">
+            <li><strong>离散化</strong>：把结构划分为若干单元（杆件）。</li>
+            <li><strong>单元分析</strong>：建立<strong>单元刚度矩阵</strong> $\mathbf{k}^e$，把杆端力与杆端位移联系起来。</li>
+            <li><strong>坐标变换</strong>：把单元局部坐标转换到整体坐标。</li>
+            <li><strong>集成</strong>：把各单元刚度矩阵组装到<strong>整体刚度矩阵</strong> $\mathbf{K}$。</li>
+            <li><strong>施加边界条件</strong>：约束已知的节点位移。</li>
+            <li><strong>求解方程</strong>：$\mathbf{K}\mathbf{u} = \mathbf{F}$。</li>
+            <li><strong>后处理</strong>：由节点位移求杆端力、内力图。</li>
+          </ol>
+
+          <h3>平面梁单元刚度矩阵</h3>
+          <p>
+            对一根平面梁单元，节点位移向量为 $\mathbf{u}^e = [u_1, v_1, \theta_1, u_2, v_2, \theta_2]^T$，
+            其局部刚度矩阵为：
+          </p>
+
+          $$ \mathbf{k}^e = \begin{bmatrix}
+             \dfrac{EA}{l} & 0 & 0 & -\dfrac{EA}{l} & 0 & 0 \\[6pt]
+             0 & \dfrac{12EI}{l^3} & \dfrac{6EI}{l^2} & 0 & -\dfrac{12EI}{l^3} & \dfrac{6EI}{l^2} \\[6pt]
+             0 & \dfrac{6EI}{l^2} & \dfrac{4EI}{l} & 0 & -\dfrac{6EI}{l^2} & \dfrac{2EI}{l} \\[6pt]
+             -\dfrac{EA}{l} & 0 & 0 & \dfrac{EA}{l} & 0 & 0 \\[6pt]
+             0 & -\dfrac{12EI}{l^3} & -\dfrac{6EI}{l^2} & 0 & \dfrac{12EI}{l^3} & -\dfrac{6EI}{l^2} \\[6pt]
+             0 & \dfrac{6EI}{l^2} & \dfrac{2EI}{l} & 0 & -\dfrac{6EI}{l^2} & \dfrac{4EI}{l}
+             \end{bmatrix} $$
+
+          <p>
+            矩阵的每一行对应一个节点自由度，
+            每一列对应一个节点位移。整个矩阵对称、稀疏。
+          </p>
+
+          <h3>Python 示例：平面桁架分析</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>truss_fem.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+平面桁架有限元分析（矩阵位移法）
+用单元刚度矩阵 + 坐标变换 + 集成的思路求解
+"""
+import numpy as np
+
+
+def bar_element_global(E, A, x1, y1, x2, y2):
+    """
+    返回平面桁架杆单元的 4x4 整体坐标刚度矩阵
+    自由度顺序: [u1, v1, u2, v2]
+    """
+    dx = x2 - x1
+    dy = y2 - y1
+    L = np.hypot(dx, dy)
+    c = dx / L
+    s = dy / L
+
+    # 局部坐标下的 4x4 矩阵（只有轴向刚度）
+    k_loc = (E * A / L) * np.array([
+        [ 1, 0, -1, 0],
+        [ 0, 0,  0, 0],
+        [-1, 0,  1, 0],
+        [ 0, 0,  0, 0],
+    ])
+
+    # 坐标变换矩阵 T
+    T = np.array([
+        [ c, s, 0, 0],
+        [-s, c, 0, 0],
+        [ 0, 0, c, s],
+        [ 0, 0,-s, c],
+    ])
+
+    # 整体坐标下的刚度矩阵 k = T^T @ k_loc @ T
+    return T.T @ k_loc @ T
+
+
+def assemble(nodes, bars, E, A):
+    """
+    nodes : list of (x, y)，节点坐标
+    bars  : list of (i, j)，杆件连接的节点编号
+    返回整体刚度矩阵 K（2n × 2n）
+    """
+    n = len(nodes)
+    K = np.zeros((2 * n, 2 * n))
+    for (i, j) in bars:
+        x1, y1 = nodes[i]
+        x2, y2 = nodes[j]
+        ke = bar_element_global(E, A, x1, y1, x2, y2)
+        # 节点自由度: i -> [2i, 2i+1]，j -> [2j, 2j+1]
+        dof = [2 * i, 2 * i + 1, 2 * j, 2 * j + 1]
+        for a in range(4):
+            for b in range(4):
+                K[dof[a], dof[b]] += ke[a, b]
+    return K
+
+
+def solve_truss(nodes, bars, E, A, fixed_dofs, F):
+    """
+    求解平面桁架
+    fixed_dofs : list，被约束的自由度编号
+    F          : ndarray，外部荷载向量（长度 2n）
+    """
+    K = assemble(nodes, bars, E, A)
+    n_dof = K.shape[0]
+    free = [d for d in range(n_dof) if d not in fixed_dofs]
+
+    K_ff = K[np.ix_(free, free)]
+    F_f = F[free]
+
+    u = np.zeros(n_dof)
+    u[free] = np.linalg.solve(K_ff, F_f)
+
+    R = K @ u - F  # 支座反力
+    return u, R, K
+
+
+if __name__ == "__main__":
+    # 简单三角形桁架：三个节点，三根杆
+    # 节点 0(0, 0), 1(2, 0), 2(1, 1.5)
+    nodes = [(0.0, 0.0), (2.0, 0.0), (1.0, 1.5)]
+    bars = [(0, 2), (1, 2), (0, 1)]
+
+    E = 210e9       # 钢材弹性模量 Pa
+    A = 1.0e-3      # 截面积 m²
+
+    # 约束: 节点0,1 固定 (u,v 都为 0)
+    fixed = [0, 1, 2, 3]
+
+    # 荷载: 节点2 受向下 10 kN
+    F = np.zeros(6)
+    F[5] = -10e3
+
+    u, R, K = solve_truss(nodes, bars, E, A, fixed, F)
+
+    print("节点位移 (m):")
+    for i, (x, y) in enumerate(nodes):
+        print(f"  节点{i} ({x},{y}): u = {u[2*i]:.4e}, v = {u[2*i+1]:.4e}")
+
+    print("\n支座反力 (N):")
+    for d in fixed:
+        print(f"  DOF {d}: R = {R[d]:.2f}")
+
+    # 校核平衡：反力之和 + 外荷载 = 0
+    print(f"\n竖向平衡检查: sum(R_y) + F_y = "
+          f"{R[1] + R[3] + F[5]:.4e}")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从结构力学到有限元</strong>：矩阵位移法的这套流程
+              （离散化 → 单元分析 → 坐标变换 → 集成 → 施加边界 → 求解 → 后处理）
+              是有限元方法在杆系结构上的体现。
+              把梁单元扩展到二维/三维连续体单元（三角形、四边形、四面体），
+              把轴向刚度扩展到一般本构关系，就是完整的有限元理论。
+              ANSYS、ABAQUS、OpenSees 都建立在这个框架上。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="influence">
+          <h2><span class="num">08</span>影响线</h2>
+
+          <h3>基本概念</h3>
+          <p>
+            <strong>影响线</strong>描述单位移动荷载作用下结构某一量值
+            （支座反力、某一截面内力、位移）随荷载位置变化的规律。
+            它是桥梁、吊车梁等承受移动荷载结构设计的核心工具。
+          </p>
+
+          <h3>静力法</h3>
+          <p>
+            把单位荷载放在任意位置 $x$，用静力平衡方程求出目标量值，
+            得到量值关于 $x$ 的函数。
+          </p>
+
+          <h3>机动法</h3>
+          <p>
+            由虚功原理可知：影响线的形状
+            <strong>就是去掉该量值对应约束后得到的机构的位移图</strong>。
+            这一方法不需要求平衡，仅靠几何关系就能快速画出影响线的形状。
+          </p>
+
+          <h3>多跨静定梁的影响线</h3>
+          <ul>
+            <li>基本部分的影响线在荷载离开该部分后仍可能受附属部分影响。</li>
+            <li>附属部分的影响线形状由基本部分的位置关系决定。</li>
+            <li>支座反力影响线在支座处等于 1。</li>
+          </ul>
+
+          <h3>最不利荷载位置</h3>
+          <p>
+            当一行移动荷载（如车辆）作用在结构上时，
+            最不利位置由影响线的形状决定：
+          </p>
+          <ul>
+            <li>三角形影响线：密集排列的荷载尽量往顶点处靠。</li>
+            <li>多边形影响线：利用临界位置判据，逐段试算。</li>
+          </ul>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>几何组成分析</strong>：$W = 3m - (2h + r)$ 判断体系是否几何不变，$W = 0$ 为静定。</li>
+              <li><strong>静定结构</strong>：用平衡方程即可确定全部内力；多跨梁先附属后基本，刚架逐杆分析，三铰拱用合理拱轴。</li>
+              <li><strong>虚功原理</strong>：结构力学最本质的原理，导出单位荷载法、图乘法与互等定理。</li>
+              <li><strong>力法</strong>：以多余约束力为未知量，方程数为超静定次数，柔度矩阵对称。</li>
+              <li><strong>位移法</strong>：以节点位移为未知量，刚度矩阵对称正定，是现代有限元的直接源头。</li>
+              <li><strong>力矩分配法</strong>：逐次逼近的手算方法，思想与数值分析中的迭代松弛一致。</li>
+              <li><strong>矩阵位移法</strong>：离散化 → 单元分析 → 集成 → 求解，是杆系有限元的实现框架。</li>
+              <li><strong>影响线</strong>：移动荷载作用下的量值变化规律，静力法或机动法求解。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>龙驭球、包世华，《结构力学》— 国内经典教材</li>
+            <li>李廉锟，《结构力学》— 系统全面</li>
+            <li>Hibbeler, <em>Structural Analysis</em> — 国际主流教材，例题丰富</li>
+            <li>McGuire, Gallagher &amp; Ziemian, <em>Matrix Structural Analysis</em> — 矩阵位移法权威</li>
+            <li>Bathe, <em>Finite Element Procedures</em> — 从矩阵位移法到有限元</li>
+            <li>Chopra, <em>Dynamics of Structures</em> — 结构动力学与抗震分析</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

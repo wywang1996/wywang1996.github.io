@@ -1,0 +1,1930 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据结构 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="data-structures">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#complexity">一、算法分析</a></li>
+      <li><a href="#linear">二、线性结构</a></li>
+      <li><a href="#tree">三、树结构</a></li>
+      <li><a href="#hash">四、哈希表</a></li>
+      <li><a href="#heap">五、堆与优先队列</a></li>
+      <li><a href="#graph">六、图与图算法</a></li>
+      <li><a href="#sort">七、排序与查找</a></li>
+      <li><a href="#application">八、工程应用</a></li>
+      <li><a href="#summary">九、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 数据结构
+        </div>
+        <h1>数据结构</h1>
+        <p class="lead">
+          从数组链表到图与排序，覆盖栈、队列、树、哈希、堆与图算法。
+          数据结构是科学计算、有限元组装、地震数据处理与信号分析的基础工具，
+          决定了算法的效率与代码的可维护性。
+        </p>
+        <div class="article-meta">
+          <span>算法分析</span>
+          <span>树与图</span>
+          <span>排序查找</span>
+          <span class="blue">科学计算</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            数据结构研究<strong>数据的组织、存储与操作方式</strong>。
+            它与算法一起构成计算机科学的核心——
+            程序 = 数据结构 + 算法。
+          </p>
+
+          <p>
+            对工程计算来说，数据结构并非"纯计算机科学"话题，
+            而是<strong>决定计算效率的关键因素</strong>：
+          </p>
+          <ul>
+            <li><strong>有限元</strong>：稀疏矩阵的存储格式（CSR、CSC）决定内存占用与运算速度。</li>
+            <li><strong>地震数据处理</strong>：波形记录的存储、索引、检索需要合适的数据结构。</li>
+            <li><strong>信号处理</strong>：FFT、滤波、卷积的实现依赖数组与队列。</li>
+            <li><strong>PSHA</strong>：大量震源与距离组合的空间索引依赖树与哈希。</li>
+            <li><strong>地震预警</strong>：实时数据流的处理依赖环形缓冲区与优先队列。</li>
+            <li><strong>地震目录</strong>：数十万条事件的检索、排序、空间查询需要高效的数据结构。</li>
+          </ul>
+
+          <p>
+            一个直观的例子：同样的矩阵-向量乘法，
+            用稠密数组存储是 $O(n^2)$，用 CSR 稀疏格式可以达到 $O(\text{nnz})$，
+            当 nnz（非零元素数）远小于 $n^2$ 时，效率提升数千倍。
+            这就是数据结构的价值。
+          </p>
+
+          <p>
+            这份笔记按"复杂度 $\to$ 线性 $\to$ 树 $\to$ 哈希 $\to$ 堆 $\to$ 图 $\to$ 排序 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程语境上。
+          </p>
+        </section>
+
+        <section id="complexity">
+          <h2><span class="num">01</span>算法分析</h2>
+
+          <h3>渐进复杂度</h3>
+          <p>
+            算法分析关心的是运算量随问题规模 $n$ 的增长趋势，
+            用大 $O$ 记号表示上界：
+          </p>
+
+          $$ O(f(n)) = \{ g(n) : \exists c > 0, n_0, \; \forall n > n_0,
+             \; 0 \le g(n) \le c \cdot f(n) \} $$
+
+          <p>
+            常见复杂度从优到劣：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>记号</th><th>名称</th><th>典型算法</th><th>n=10⁶ 时的量级</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>$O(1)$</td>
+                  <td>常数</td>
+                  <td>数组索引、哈希查找</td>
+                  <td>1</td>
+                </tr>
+                <tr>
+                  <td>$O(\log n)$</td>
+                  <td>对数</td>
+                  <td>二分查找、平衡树</td>
+                  <td>20</td>
+                </tr>
+                <tr>
+                  <td>$O(n)$</td>
+                  <td>线性</td>
+                  <td>遍历、线性查找</td>
+                  <td>10⁶</td>
+                </tr>
+                <tr>
+                  <td>$O(n \log n)$</td>
+                  <td>线性对数</td>
+                  <td>归并排序、快速排序</td>
+                  <td>2×10⁷</td>
+                </tr>
+                <tr>
+                  <td>$O(n^2)$</td>
+                  <td>平方</td>
+                  <td>冒泡排序、朴素矩阵乘</td>
+                  <td>10¹²</td>
+                </tr>
+                <tr>
+                  <td>$O(n^3)$</td>
+                  <td>立方</td>
+                  <td>高斯消元</td>
+                  <td>10¹⁸</td>
+                </tr>
+                <tr>
+                  <td>$O(2^n)$</td>
+                  <td>指数</td>
+                  <td>穷举、朴素 TSP</td>
+                  <td>不可行</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            关键观察：当 $n = 10^6$ 时，$O(n^2)$ 需要约 $10^{12}$ 次运算，
+            在现代计算机上需数小时；而 $O(n \log n)$ 只需 $2 \times 10^7$ 次，
+            不到一秒。这就是算法设计的意义。
+          </p>
+
+          <h3>空间复杂度</h3>
+          <p>
+            空间复杂度衡量算法所需的额外内存。常见考虑：
+          </p>
+          <ul>
+            <li><strong>原地算法</strong>：额外空间 $O(1)$，如冒泡排序、快速排序（递归栈除外）。</li>
+            <li><strong>非原地算法</strong>：额外空间 $O(n)$，如归并排序、哈希表。</li>
+            <li><strong>稀疏存储</strong>：只存非零元素，把 $O(n^2)$ 降到 $O(\text{nnz})$。</li>
+          </ul>
+
+          <h3>均摊分析</h3>
+          <p>
+            有些操作的<strong>单次</strong>代价可能很高，但<strong>均摊</strong>到每次操作很低。
+            经典例子：动态数组的扩容。
+          </p>
+          <p>
+            每次数组满时，容量翻倍（2 倍策略）。
+            虽然扩容需要 $O(n)$ 复制，
+            但均摊到 $n$ 次插入上，每次只需 $O(1)$。
+          </p>
+
+          <p>
+            均摊分析也可以用<strong>势能法</strong>严格证明，
+            是分析哈希表、动态数组、并查集等结构的基础工具。
+          </p>
+
+          <h3>工程中的复杂度选择</h3>
+          <p>
+            复杂度不是唯一标准。实际选择时还要考虑：
+          </p>
+          <ul>
+            <li><strong>常数因子</strong>：$O(n)$ 的算法可能因常数因子大而慢于 $O(n \log n)$（在 $n$ 小时）。</li>
+            <li><strong>缓存友好性</strong>：数组比链表有更好的空间局部性，实际性能更优。</li>
+            <li><strong>并行性</strong>：有些算法天然易于并行。</li>
+            <li><strong>实现复杂度</strong>：简单的算法更易维护、更少 bug。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>工程计算的复杂度门槛</strong>：
+              在结构有限元、地震波模拟等领域，
+              问题规模常达到 $10^6$~$10^9$ 自由度。
+              此时：
+              ① $O(n^2)$ 算法完全不可行；
+              ② $O(n^{1.5})$ 算法勉强可行；
+              ③ 稀疏矩阵 + 迭代法（$O(\text{nnz})$）是唯一选择。
+              这就是为什么有限元软件大量投资于稀疏存储与迭代求解器。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="linear">
+          <h2><span class="num">02</span>线性结构</h2>
+
+          <h3>数组</h3>
+          <p>
+            数组是最基础的数据结构：连续内存 + 随机访问。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>操作</th><th>复杂度</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>随机访问</td>
+                  <td>$O(1)$</td>
+                  <td>下标计算直接定位</td>
+                </tr>
+                <tr>
+                  <td>尾部插入/删除</td>
+                  <td>$O(1)$（均摊）</td>
+                  <td>动态数组</td>
+                </tr>
+                <tr>
+                  <td>中间插入/删除</td>
+                  <td>$O(n)$</td>
+                  <td>需要移动元素</td>
+                </tr>
+                <tr>
+                  <td>查找</td>
+                  <td>$O(n)$</td>
+                  <td>线性扫描</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            数组的优势是<strong>缓存友好</strong>。
+            现代 CPU 一次访存读取 64 字节缓存行，
+            数组的连续访问几乎达到内存带宽上限。
+            科学计算中，优先用数组而非链表，就是为了利用这一点。
+          </p>
+
+          <h3>链表</h3>
+          <p>
+            链表由节点组成，每个节点存放数据与下一个节点的指针。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>特点</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>单链表</td>
+                  <td>每节点一个 next 指针</td>
+                  <td>栈、队列</td>
+                </tr>
+                <tr>
+                  <td>双链表</td>
+                  <td>每节点 prev + next</td>
+                  <td>LRU 缓存</td>
+                </tr>
+                <tr>
+                  <td>循环链表</td>
+                  <td>尾节点指向头</td>
+                  <td>轮询调度、约瑟夫环</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            链表在头部插入/删除是 $O(1)$，
+            但随机访问是 $O(n)$，
+            且缓存不友好。
+            实际工程中，链表通常只在需要频繁中间插入/删除时使用。
+          </p>
+
+          <h3>栈</h3>
+          <p>
+            栈是<strong>后进先出</strong>（LIFO）的结构。基本操作：
+          </p>
+          <ul>
+            <li><code>push(x)</code>：压入栈顶。</li>
+            <li><code>pop()</code>：弹出栈顶。</li>
+            <li><code>peek()</code>：查看栈顶。</li>
+          </ul>
+
+          <p>
+            栈的典型应用：
+          </p>
+          <ul>
+            <li><strong>函数调用</strong>：调用栈记录返回地址与局部变量。</li>
+            <li><strong>表达式求值</strong>：中缀转后缀、后缀求值。</li>
+            <li><strong>括号匹配</strong>：编译器、解析器。</li>
+            <li><strong>深度优先搜索</strong>：DFS 用栈实现。</li>
+            <li><strong>撤销操作</strong>：编辑器的 undo/redo。</li>
+          </ul>
+
+          <h3>队列</h3>
+          <p>
+            队列是<strong>先进先出</strong>（FIFO）的结构。变体：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>变体</th><th>特点</th><th>应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>普通队列</td>
+                  <td>FIFO</td>
+                  <td>BFS、任务调度</td>
+                </tr>
+                <tr>
+                  <td>双端队列（deque）</td>
+                  <td>两端可入可出</td>
+                  <td>滑动窗口、单调队列</td>
+                </tr>
+                <tr>
+                  <td>优先队列</td>
+                  <td>按优先级出队</td>
+                  <td>Dijkstra、任务调度</td>
+                </tr>
+                <tr>
+                  <td>环形缓冲区</td>
+                  <td>固定容量，循环使用</td>
+                  <td>实时数据流、DSP</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>环形缓冲区</strong>在地震预警、实时信号处理中特别重要：
+            它允许在固定内存下持续接收数据，
+            新数据覆盖旧数据，无需动态分配。
+          </p>
+
+          <h3>Python 示例：环形缓冲区</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>ring_buffer.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+class RingBuffer:
+    """
+    固定容量的环形缓冲区。
+    适合实时数据流：写入速度快，永不动态分配。
+    """
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.buffer = np.zeros(capacity, dtype=float)
+        self.head = 0      # 写指针
+        self.size = 0      # 当前元素数
+
+    def push(self, value):
+        """写入一个值，覆盖最旧的值（若已满）"""
+        self.buffer[self.head] = value
+        self.head = (self.head + 1) % self.capacity
+        if self.size < self.capacity:
+            self.size += 1
+
+    def get_all(self):
+        """按时间顺序返回所有有效数据"""
+        if self.size < self.capacity:
+            return self.buffer[:self.size].copy()
+        # 已满：从 head 开始环形读取
+        idx = (np.arange(self.size) + self.head) % self.capacity
+        return self.buffer[idx].copy()
+
+    def get_latest(self, n=1):
+        """返回最近 n 个值"""
+        if n > self.size:
+            n = self.size
+        end = self.head
+        start = (end - n) % self.capacity
+        if start < end:
+            return self.buffer[start:end].copy()
+        else:
+            return np.concatenate([
+                self.buffer[start:],
+                self.buffer[:end]
+            ])
+
+
+if __name__ == "__main__":
+    rb = RingBuffer(capacity=10)
+
+    # 模拟实时数据流
+    for i in range(15):
+        rb.push(float(i))
+        if i < 3 or i >= 12:
+            print(f"push({i}) → 缓冲区: {rb.get_all()}")
+
+    print(f"\n最近 3 个值: {rb.get_latest(3)}")
+    print(f"当前大小: {rb.size} / 容量 {rb.capacity}")</code></pre>
+          </div>
+
+          <p>
+            环形缓冲区在地震预警、DSP 实时处理、
+            网络数据包接收等场景中不可或缺。
+          </p>
+        </section>
+
+        <section id="tree">
+          <h2><span class="num">03</span>树结构</h2>
+
+          <h3>二叉树与遍历</h3>
+          <p>
+            二叉树每个节点最多有两个子节点。
+            三种深度优先遍历：
+          </p>
+          <ul>
+            <li><strong>前序</strong>（Preorder）：根 → 左 → 右。</li>
+            <li><strong>中序</strong>（Inorder）：左 → 根 → 右。</li>
+            <li><strong>后序</strong>（Postorder）：左 → 右 → 根。</li>
+          </ul>
+          <p>
+            还有广度优先遍历（层序遍历），用队列实现。
+          </p>
+
+          <h3>二叉搜索树（BST）</h3>
+          <p>
+            BST 满足：左子树所有节点 &lt; 根 &lt; 右子树所有节点。
+            平均情况下查找、插入、删除都是 $O(\log n)$。
+            但若按有序序列插入，会退化为链表，复杂度变成 $O(n)$。
+          </p>
+
+          <h3>平衡树</h3>
+          <p>
+            为解决 BST 退化问题，出现多种平衡树：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>平衡条件</th><th>查找/插入/删除</th><th>典型应用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>AVL 树</td>
+                  <td>左右高度差 ≤ 1</td>
+                  <td>$O(\log n)$</td>
+                  <td>查找密集场景</td>
+                </tr>
+                <tr>
+                  <td>红黑树</td>
+                  <td>颜色 + 路径约束</td>
+                  <td>$O(\log n)$</td>
+                  <td>STL map / set</td>
+                </tr>
+                <tr>
+                  <td>B 树</td>
+                  <td>多路平衡</td>
+                  <td>$O(\log n)$</td>
+                  <td>数据库索引</td>
+                </tr>
+                <tr>
+                  <td>B+ 树</td>
+                  <td>叶子节点链式连接</td>
+                  <td>$O(\log n)$</td>
+                  <td>文件系统、数据库</td>
+                </tr>
+                <tr>
+                  <td>Trie 前缀树</td>
+                  <td>按字符分支</td>
+                  <td>$O(L)$（L 为串长）</td>
+                  <td>字符串检索、IP 路由</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>B 树与数据库索引</h3>
+          <p>
+            B 树是专为磁盘存储设计的平衡树。
+            每个节点可以存多个键（通常几百个），
+            高度只有 3~4 层就能存储上亿条记录。
+          </p>
+          <p>
+            为什么 B 树适合磁盘？
+            磁盘的读写以<strong>块</strong>（通常 4 KB）为单位，
+            一次 I/O 读取整个节点远比多次小 I/O 高效。
+            B 树的节点大小与磁盘块对齐，因此每次访问只需一次 I/O。
+          </p>
+
+          <h3>空间索引：四叉树与 R 树</h3>
+          <p>
+            对地震目录、GIS 数据的<strong>空间查询</strong>
+            （如"查询某个矩形范围内的所有地震"），
+            需要空间索引：
+          </p>
+          <ul>
+            <li><strong>四叉树</strong>：递归把平面分成四个象限。</li>
+            <li><strong>R 树</strong>：用最小外接矩形组织空间对象，PostGIS、SQLite R*Tree 使用。</li>
+            <li><strong>kd 树</strong>：k 维空间二分，适合最近邻查询。</li>
+            <li><strong>H3 / S2</strong>：球面网格索引，适合全球尺度的空间分析。</li>
+          </ul>
+
+          <p>
+            USGS、IRIS 等地震数据中心用 R 树或类似结构索引数百万条地震事件，
+            让"矩形范围内的地震"查询在毫秒级完成。
+          </p>
+
+          <h3>Python 示例：BST 与 kd 树</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>tree_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+class BSTNode:
+    def __init__(self, key, value=None):
+        self.key = key
+        self.value = value
+        self.left = None
+        self.right = None
+
+
+class BST:
+    """二叉搜索树的插入、查找与中序遍历"""
+    def __init__(self):
+        self.root = None
+
+    def insert(self, key, value=None):
+        if self.root is None:
+            self.root = BSTNode(key, value)
+            return
+        node = self.root
+        while True:
+            if key < node.key:
+                if node.left is None:
+                    node.left = BSTNode(key, value)
+                    return
+                node = node.left
+            elif key > node.key:
+                if node.right is None:
+                    node.right = BSTNode(key, value)
+                    return
+                node = node.right
+            else:
+                node.value = value
+                return
+
+    def search(self, key):
+        node = self.root
+        while node is not None:
+            if key == node.key:
+                return node.value
+            node = node.left if key < node.key else node.right
+        return None
+
+    def inorder(self):
+        """中序遍历：输出有序序列"""
+        result = []
+        def _walk(n):
+            if n is None:
+                return
+            _walk(n.left)
+            result.append((n.key, n.value))
+            _walk(n.right)
+        _walk(self.root)
+        return result
+
+
+class KDTreeSimple:
+    """
+    简化的 2D kd 树：用于地震目录的空间索引。
+    每个节点存储一个点 (x, y) 并按轴交替划分。
+    """
+    def __init__(self, points, depth=0):
+        if not points:
+            self.point = None
+            self.left = None
+            self.right = None
+            return
+        k = 2   # 2D
+        axis = depth % k
+        points = sorted(points, key=lambda p: p[axis])
+        mid = len(points) // 2
+        self.point = points[mid]
+        self.axis = axis
+        self.left = KDTreeSimple(points[:mid], depth + 1)
+        self.right = KDTreeSimple(points[mid + 1:], depth + 1)
+
+    def query_rect(self, xmin, xmax, ymin, ymax):
+        """矩形范围查询"""
+        result = []
+        if self.point is None:
+            return result
+        x, y = self.point
+        if xmin <= x <= xmax and ymin <= y <= ymax:
+            result.append(self.point)
+        # 简化：两棵子树都递归（实际应有剪枝）
+        if self.left is not None:
+            result.extend(self.left.query_rect(xmin, xmax, ymin, ymax))
+        if self.right is not None:
+            result.extend(self.right.query_rect(xmin, xmax, ymin, ymax))
+        return result
+
+
+if __name__ == "__main__":
+    # ---- BST ----
+    bst = BST()
+    for k in [50, 30, 70, 20, 40, 60, 80]:
+        bst.insert(k, f"event_{k}")
+
+    print("BST 中序遍历（有序）:")
+    print(bst.inorder())
+    print(f"\n查找 key=40: {bst.search(40)}")
+    print(f"查找 key=45: {bst.search(45)}")
+
+    # ---- kd 树 ----
+    rng = np.random.default_rng(42)
+    n = 1000
+    points = [(float(rng.uniform(0, 100)), float(rng.uniform(0, 100)))
+              for _ in range(n)]
+    kd = KDTreeSimple(points)
+
+    # 查询矩形范围内的点
+    result = kd.query_rect(20, 40, 30, 50)
+    print(f"\nkd 树矩形查询 (20~40, 30~50)：找到 {len(result)} 个点")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到 BST 的中序遍历按 key 有序，
+            kd 树能快速筛选出矩形范围内的点。
+            实际地震目录的 kd 树用 <code>scipy.spatial.cKDTree</code>，
+            性能远高于简化版。
+          </p>
+        </section>
+
+        <section id="hash">
+          <h2><span class="num">04</span>哈希表</h2>
+
+          <h3>基本原理</h3>
+          <p>
+            哈希表用<strong>哈希函数</strong>把键映射到数组下标，
+            实现平均 $O(1)$ 的插入、查找、删除。
+          </p>
+
+          $$ h: \text{Key} \to [0, m-1] $$
+
+          <p>
+            其中 $m$ 是哈希表大小。
+            理想情况下，每个键均匀分布到不同槽位，无冲突。
+          </p>
+
+          <h3>冲突处理</h3>
+          <p>
+            不同的键可能映射到同一槽位，称为<strong>哈希冲突</strong>。
+            两种主要处理方式：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>方式</th><th>原理</th><th>优点</th><th>缺点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>链地址法</td>
+                  <td>同一槽位挂链表</td>
+                  <td>实现简单、删除方便</td>
+                  <td>指针开销、缓存不友好</td>
+                </tr>
+                <tr>
+                  <td>开放寻址</td>
+                  <td>线性/二次探测下一个空槽</td>
+                  <td>缓存友好、无指针</td>
+                  <td>删除复杂、易聚集</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Python 的 <code>dict</code>、Java 的 <code>HashMap</code>、
+            C++ 的 <code>unordered_map</code> 都用哈希表实现。
+          </p>
+
+          <h3>负载因子与再哈希</h3>
+          <p>
+            负载因子定义为：
+          </p>
+
+          $$ \alpha = \frac{n}{m} $$
+
+          <p>
+            其中 $n$ 是元素数，$m$ 是槽位数。
+            当 $\alpha$ 超过阈值（通常 0.7~0.75），
+            需要<strong>再哈希</strong>：扩容并重新插入所有元素。
+          </p>
+
+          <p>
+            均摊分析证明：再哈希的总代价均摊到每次插入为 $O(1)$。
+          </p>
+
+          <h3>哈希函数的性质</h3>
+          <p>
+            好的哈希函数应满足：
+          </p>
+          <ul>
+            <li><strong>确定性</strong>：同一个键总是产生同一个哈希值。</li>
+            <li><strong>均匀性</strong>：键在槽位上均匀分布，减少冲突。</li>
+            <li><strong>快速计算</strong>：避免复杂的操作。</li>
+            <li><strong>雪崩效应</strong>：输入的微小变化产生输出的巨大变化。</li>
+          </ul>
+
+          <p>
+            常见哈希函数：
+          </p>
+          <ul>
+            <li><strong>乘法哈希</strong>：$h(k) = \lfloor m (kA \bmod 1) \rfloor$，$A \approx 0.618$（黄金比例）。</li>
+            <li><strong>除法哈希</strong>：$h(k) = k \bmod m$，$m$ 取质数。</li>
+            <li><strong>MurmurHash</strong>：工程中广泛使用，雪崩效应好。</li>
+            <li><strong>SHA-256</strong>：密码学哈希，用于安全场景。</li>
+            <li><strong>xxHash</strong>：极快的非密码学哈希，适合大数据处理。</li>
+          </ul>
+
+          <h3>一致性哈希</h3>
+          <p>
+            分布式系统中，把键映射到多台服务器。
+            普通哈希在节点增减时需要重新分配所有键，代价巨大。
+          </p>
+          <p>
+            <strong>一致性哈希</strong>把哈希空间组织成环，
+            键与节点都映射到环上，
+            每个键由顺时针最近的节点处理。
+            节点增减只影响相邻区域的键，
+            最小化重分配。
+          </p>
+          <p>
+            地震数据中心、云存储、CDN 都使用一致性哈希。
+          </p>
+
+          <h3>Python 示例：简单哈希表</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>hash_table.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">class HashTable:
+    """
+    用链地址法实现的哈希表。
+    支持 put / get / delete。
+    """
+    def __init__(self, capacity=16):
+        self.capacity = capacity
+        self.size = 0
+        self.buckets = [[] for _ in range(capacity)]
+
+    def _hash(self, key):
+        """简单乘法哈希"""
+        return hash(key) % self.capacity
+
+    def put(self, key, value):
+        idx = self._hash(key)
+        bucket = self.buckets[idx]
+        for i, (k, v) in enumerate(bucket):
+            if k == key:
+                bucket[i] = (key, value)
+                return
+        bucket.append((key, value))
+        self.size += 1
+
+        # 负载因子超过 0.75 就扩容
+        if self.size / self.capacity > 0.75:
+            self._resize(self.capacity * 2)
+
+    def get(self, key, default=None):
+        idx = self._hash(key)
+        for k, v in self.buckets[idx]:
+            if k == key:
+                return v
+        return default
+
+    def delete(self, key):
+        idx = self._hash(key)
+        bucket = self.buckets[idx]
+        for i, (k, v) in enumerate(bucket):
+            if k == key:
+                bucket.pop(i)
+                self.size -= 1
+                return True
+        return False
+
+    def _resize(self, new_capacity):
+        """再哈希"""
+        old_buckets = self.buckets
+        self.capacity = new_capacity
+        self.buckets = [[] for _ in range(new_capacity)]
+        self.size = 0
+        for bucket in old_buckets:
+            for k, v in bucket:
+                self.put(k, v)
+
+    def stats(self):
+        """统计冲突分布"""
+        lengths = [len(b) for b in self.buckets]
+        return {
+            "capacity": self.capacity,
+            "size": self.size,
+            "load_factor": self.size / self.capacity,
+            "max_bucket": max(lengths) if lengths else 0,
+            "avg_bucket": sum(lengths) / len(lengths) if lengths else 0,
+        }
+
+
+if __name__ == "__main__":
+    ht = HashTable()
+
+    # 插入一批台站记录
+    stations = [f"ST{i:03d}" for i in range(200)]
+    for i, st in enumerate(stations):
+        ht.put(st, {"lat": 30 + i * 0.01, "lon": 100 + i * 0.01})
+
+    print(f"插入 {len(stations)} 个台站")
+    print(f"统计: {ht.stats()}")
+
+    # 查找
+    print(f"\n查找 ST042: {ht.get('ST042')}")
+    print(f"查找 ST999: {ht.get('ST999')}")
+
+    # 删除
+    ht.delete("ST042")
+    print(f"\n删除 ST042 后查找: {ht.get('ST042')}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：200 个台站分布在 512 个槽位中，
+            最大桶长度通常 1~2，
+            证明简单哈希在均匀分布下表现良好。
+          </p>
+        </section>
+
+        <section id="heap">
+          <h2><span class="num">05</span>堆与优先队列</h2>
+
+          <h3>堆的定义</h3>
+          <p>
+            二叉堆是完全二叉树，满足<strong>堆性质</strong>：
+          </p>
+          <ul>
+            <li><strong>最小堆</strong>：每个节点 &le; 其子节点。</li>
+            <li><strong>最大堆</strong>：每个节点 &ge; 其子节点。</li>
+          </ul>
+
+          <p>
+            堆通常用数组表示：
+            下标 $i$ 的节点，左子节点 $2i+1$，右子节点 $2i+2$，
+            父节点 $\lfloor (i-1)/2 \rfloor$。
+          </p>
+
+          <h3>核心操作</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>操作</th><th>复杂度</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>取最小值</td>
+                  <td>$O(1)$</td>
+                  <td>根节点</td>
+                </tr>
+                <tr>
+                  <td>插入</td>
+                  <td>$O(\log n)$</td>
+                  <td>上浮</td>
+                </tr>
+                <tr>
+                  <td>删除最小值</td>
+                  <td>$O(\log n)$</td>
+                  <td>下沉</td>
+                </tr>
+                <tr>
+                  <td>建堆</td>
+                  <td>$O(n)$</td>
+                  <td>自底向上调整</td>
+                </tr>
+                <tr>
+                  <td>堆排序</td>
+                  <td>$O(n \log n)$</td>
+                  <td>反复取最小值</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>优先队列</h3>
+          <p>
+            优先队列是抽象数据类型，堆是其最常见实现。
+            应用：
+          </p>
+          <ul>
+            <li><strong>Dijkstra 最短路径</strong>：每次取距离最小的节点。</li>
+            <li><strong>A* 搜索</strong>：按 $f = g + h$ 优先级扩展节点。</li>
+            <li><strong>任务调度</strong>：按优先级执行任务。</li>
+            <li><strong>事件驱动模拟</strong>：按时间排序事件。</li>
+            <li><strong>霍夫曼编码</strong>：反复取频率最小的两个节点合并。</li>
+            <li><strong>Top-K 问题</strong>：用大小为 K 的最小堆，$O(n \log K)$。</li>
+          </ul>
+
+          <h3>Top-K 与流式数据</h3>
+          <p>
+            一个常见问题：从 $n$ 个数据中找最大的 $K$ 个。
+            如果 $n$ 很大且数据是流式的，
+            用一个大小为 $K$ 的最小堆即可：
+          </p>
+          <ol class="steps">
+            <li>初始化最小堆，插入前 $K$ 个元素。</li>
+            <li>对每个新元素 $x$，若 $x >$ 堆顶，则弹出堆顶并插入 $x$。</li>
+            <li>遍历结束后，堆中即为最大的 $K$ 个元素。</li>
+          </ol>
+          <p>
+            时间复杂度 $O(n \log K)$，
+            空间复杂度 $O(K)$。
+            当地震目录有数十万条记录，
+            要找震级最大的前 100 条，这个算法几乎是瞬时的。
+          </p>
+
+          <h3>Python 示例：Top-K 与优先队列</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>heap_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import heapq
+import numpy as np
+
+
+def top_k_largest(stream, k):
+    """
+    用大小为 k 的最小堆求流式数据的 Top-K 最大值。
+    复杂度 O(n log k)，空间 O(k)。
+    """
+    heap = []
+    for x in stream:
+        if len(heap) < k:
+            heapq.heappush(heap, x)
+        elif x > heap[0]:
+            heapq.heapreplace(heap, x)
+    # 堆中是最大的 k 个，按从大到小返回
+    return sorted(heap, reverse=True)
+
+
+def dijkstra(graph, start):
+    """
+    Dijkstra 最短路径：用优先队列（最小堆）。
+    graph: {node: [(neighbor, weight), ...]}
+    """
+    dist = {start: 0}
+    pq = [(0, start)]         # (距离, 节点)
+    visited = set()
+
+    while pq:
+        d, u = heapq.heappop(pq)
+        if u in visited:
+            continue
+        visited.add(u)
+        for v, w in graph.get(u, []):
+            nd = d + w
+            if v not in dist or nd < dist[v]:
+                dist[v] = nd
+                heapq.heappush(pq, (nd, v))
+    return dist
+
+
+if __name__ == "__main__":
+    # ---- Top-K 示例：从地震目录中找最大震级 ----
+    rng = np.random.default_rng(42)
+    n_events = 100000
+    magnitudes = rng.gumbel(loc=4.5, scale=0.5, size=n_events)
+
+    top_10 = top_k_largest(magnitudes, k=10)
+    print("震级最大的 10 次事件：")
+    for i, m in enumerate(top_10, 1):
+        print(f"  {i:>2}. M = {m:.3f}")
+
+    print(f"\n直接排序验证: {sorted(magnitudes, reverse=True)[:10]}")
+
+    # ---- Dijkstra 示例：台站网络最短路径 ----
+    graph = {
+        "A": [("B", 4), ("C", 2)],
+        "B": [("C", 5), ("D", 10)],
+        "C": [("E", 3)],
+        "D": [("F", 11)],
+        "E": [("D", 4)],
+        "F": [],
+    }
+    dist = dijkstra(graph, "A")
+    print(f"\n从 A 出发的最短距离: {dist}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：从 10 万条事件中提取 Top-10，
+            用堆只需 $O(n \log 10)$ 的运算量，
+            且内存只占 10 个元素，适合流式处理。
+          </p>
+        </section>
+
+        <section id="graph">
+          <h2><span class="num">06</span>图与图算法</h2>
+
+          <h3>图的表示</h3>
+          <p>
+            图 $G = (V, E)$ 由顶点集与边集组成。
+            两种主要表示：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>表示</th><th>空间</th><th>查边</th><th>遍历邻居</th><th>适用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>邻接矩阵</td>
+                  <td>$O(V^2)$</td>
+                  <td>$O(1)$</td>
+                  <td>$O(V)$</td>
+                  <td>稠密图</td>
+                </tr>
+                <tr>
+                  <td>邻接表</td>
+                  <td>$O(V+E)$</td>
+                  <td>$O(\deg)$</td>
+                  <td>$O(\deg)$</td>
+                  <td>稀疏图</td>
+                </tr>
+                <tr>
+                  <td>CSR</td>
+                  <td>$O(V+E)$</td>
+                  <td>—</td>
+                  <td>$O(\deg)$</td>
+                  <td>科学计算、大规模图</td>
+                </tr>
+                <tr>
+                  <td>边列表</td>
+                  <td>$O(E)$</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>Kruskal 算法</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>CSR 格式：稀疏矩阵的核心</h3>
+          <p>
+            CSR（Compressed Sparse Row）用三个数组表示稀疏矩阵：
+          </p>
+          <ul>
+            <li><code>values</code>：所有非零元素的值。</li>
+            <li><code>col_indices</code>：每个非零元素所在的列。</li>
+            <li><code>row_ptr</code>：每行第一个非零元素在 values 中的下标。</li>
+          </ul>
+
+          <p>
+            例如矩阵：
+          </p>
+
+          $$ \mathbf{A} = \begin{bmatrix}
+             1 & 0 & 2 & 0 \\
+             0 & 3 & 0 & 4 \\
+             5 & 0 & 6 & 0
+             \end{bmatrix} $$
+
+          <p>
+            CSR 表示为：
+          </p>
+          <pre><code>values      = [1, 2, 3, 4, 5, 6]
+col_indices = [0, 2, 1, 3, 0, 2]
+row_ptr     = [0, 2, 4, 6]</code></pre>
+
+          <p>
+            对 $n \times n$ 的有限元刚度矩阵，
+            稠密存储需要 $n^2$ 个元素，
+            CSR 只需 $O(\text{nnz})$。
+            当 $n = 10^6$、$\text{nnz} \approx 10^7$ 时，
+            内存占用从 8 TB 降到 80 MB。
+            这就是稀疏数据结构在科学计算中的价值。
+          </p>
+
+          <h3>图遍历</h3>
+
+          <h4>广度优先搜索（BFS）</h4>
+          <p>
+            从起点出发，先访问所有距离为 1 的节点，
+            再访问距离为 2 的，依此类推。
+            用队列实现，复杂度 $O(V + E)$。
+          </p>
+          <p>
+            应用：
+          </p>
+          <ul>
+            <li>无权图的最短路径。</li>
+            <li>连通分量识别。</li>
+            <li>社交网络分析。</li>
+            <li>地震台网的连通性分析。</li>
+          </ul>
+
+          <h4>深度优先搜索（DFS）</h4>
+          <p>
+            沿一条路径一直走到底，再回溯。
+            用栈或递归实现，复杂度 $O(V + E)$。
+          </p>
+          <p>
+            应用：
+          </p>
+          <ul>
+            <li>拓扑排序。</li>
+            <li>强连通分量（Tarjan 算法）。</li>
+            <li>桥与割点识别。</li>
+            <li>迷宫生成与求解。</li>
+          </ul>
+
+          <h3>最短路径</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>算法</th><th>适用</th><th>复杂度</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>BFS</td>
+                  <td>无权图</td>
+                  <td>$O(V+E)$</td>
+                  <td>最短边数</td>
+                </tr>
+                <tr>
+                  <td>Dijkstra</td>
+                  <td>非负权</td>
+                  <td>$O((V+E)\log V)$</td>
+                  <td>贪心 + 优先队列</td>
+                </tr>
+                <tr>
+                  <td>Bellman-Ford</td>
+                  <td>可有负权</td>
+                  <td>$O(VE)$</td>
+                  <td>可检测负环</td>
+                </tr>
+                <tr>
+                  <td>Floyd-Warshall</td>
+                  <td>全源最短路径</td>
+                  <td>$O(V^3)$</td>
+                  <td>动态规划</td>
+                </tr>
+                <tr>
+                  <td>A*</td>
+                  <td>启发式</td>
+                  <td>依赖启发函数</td>
+                  <td>地图导航、路径规划</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>最小生成树</h3>
+          <p>
+            连通加权无向图的最小生成树（MST）是边权和最小的生成树。
+            两种经典算法：
+          </p>
+          <ul>
+            <li><strong>Prim</strong>：从一个点开始，每次加入离树最近的节点。$O(E \log V)$。</li>
+            <li><strong>Kruskal</strong>：按边权从小到大加边，用并查集判环。$O(E \log E)$。</li>
+          </ul>
+          <p>
+            MST 在台站网络规划、供水管网设计、电路布线中有应用。
+          </p>
+
+          <h3>地震学中的图</h3>
+          <ul>
+            <li><strong>台站网络</strong>：台站作为节点，通信链路作为边。</li>
+            <li><strong>断层网络</strong>：断层段作为节点，相互作用作为边。</li>
+            <li><strong>地震序列</strong>：事件作为节点，触发关系作为边，用于余震序列分析。</li>
+            <li><strong>地震目录聚类</strong>：用图聚类算法识别地震丛集。</li>
+          </ul>
+
+          <h3>Python 示例：BFS 与 Dijkstra</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>graph_demo.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">from collections import deque
+import heapq
+
+
+def bfs_shortest_path(graph, start, goal=None):
+    """
+    BFS 求无权图最短路径。
+    返回从 start 到所有节点的最短距离（边数）。
+    """
+    dist = {start: 0}
+    parent = {start: None}
+    queue = deque([start])
+
+    while queue:
+        u = queue.popleft()
+        for v in graph.get(u, []):
+            if v not in dist:
+                dist[v] = dist[u] + 1
+                parent[v] = u
+                queue.append(v)
+
+    if goal is not None and goal in parent:
+        # 重建路径
+        path = []
+        cur = goal
+        while cur is not None:
+            path.append(cur)
+            cur = parent[cur]
+        return dist, path[::-1]
+    return dist, parent
+
+
+def dijkstra_full(graph, start):
+    """
+    Dijkstra 算法：非负权图的最短路径。
+    返回 (距离字典, 父节点字典)。
+    """
+    dist = {start: 0}
+    parent = {start: None}
+    pq = [(0, start)]
+    visited = set()
+
+    while pq:
+        d, u = heapq.heappop(pq)
+        if u in visited:
+            continue
+        visited.add(u)
+        for v, w in graph.get(u, []):
+            nd = d + w
+            if v not in dist or nd < dist[v]:
+                dist[v] = nd
+                parent[v] = u
+                heapq.heappush(pq, (nd, v))
+    return dist, parent
+
+
+def reconstruct_path(parent, goal):
+    """从父节点字典重建路径"""
+    path = []
+    cur = goal
+    while cur is not None:
+        path.append(cur)
+        cur = parent[cur]
+    return path[::-1]
+
+
+if __name__ == "__main__":
+    # ---- 无权图：BFS ----
+    # 假想的地震台站通信网络
+    g_unweighted = {
+        "A": ["B", "C"],
+        "B": ["A", "D", "E"],
+        "C": ["A", "F"],
+        "D": ["B"],
+        "E": ["B", "F"],
+        "F": ["C", "E", "G"],
+        "G": ["F"],
+    }
+
+    dist, path = bfs_shortest_path(g_unweighted, "A", "G")
+    print("BFS 台站网络：")
+    print(f"  从 A 到 G 的最短路径: {path}")
+    print(f"  距离（边数）: {dist['G']}")
+    print(f"  各节点距离: {dist}")
+
+    # ---- 带权图：Dijkstra ----
+    # 边权代表通信延迟（ms）
+    g_weighted = {
+        "A": [("B", 4), ("C", 2)],
+        "B": [("C", 5), ("D", 10)],
+        "C": [("E", 3)],
+        "D": [("F", 11)],
+        "E": [("D", 4)],
+        "F": [],
+    }
+
+    dist_w, parent_w = dijkstra_full(g_weighted, "A")
+    path_w = reconstruct_path(parent_w, "F")
+    print(f"\nDijkstra 台站网络（带延迟）：")
+    print(f"  从 A 到 F 的最短路径: {path_w}")
+    print(f"  总延迟: {dist_w['F']} ms")
+    print(f"  各节点最短距离: {dist_w}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到 BFS 给出边数最短路径，
+            Dijkstra 给出加权最短路径。
+            台站网络规划、通信路径选择都用到这类算法。
+          </p>
+        </section>
+
+        <section id="sort">
+          <h2><span class="num">07</span>排序与查找</h2>
+
+          <h3>排序算法对比</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>算法</th><th>平均</th><th>最坏</th><th>空间</th><th>稳定</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>冒泡</td>
+                  <td>$O(n^2)$</td>
+                  <td>$O(n^2)$</td>
+                  <td>$O(1)$</td>
+                  <td>是</td>
+                  <td>教学用，实际不用</td>
+                </tr>
+                <tr>
+                  <td>插入</td>
+                  <td>$O(n^2)$</td>
+                  <td>$O(n^2)$</td>
+                  <td>$O(1)$</td>
+                  <td>是</td>
+                  <td>小数组或近似有序时快</td>
+                </tr>
+                <tr>
+                  <td>归并</td>
+                  <td>$O(n \log n)$</td>
+                  <td>$O(n \log n)$</td>
+                  <td>$O(n)$</td>
+                  <td>是</td>
+                  <td>稳定，适合外排序</td>
+                </tr>
+                <tr>
+                  <td>快速</td>
+                  <td>$O(n \log n)$</td>
+                  <td>$O(n^2)$</td>
+                  <td>$O(\log n)$</td>
+                  <td>否</td>
+                  <td>实际最快</td>
+                </tr>
+                <tr>
+                  <td>堆排序</td>
+                  <td>$O(n \log n)$</td>
+                  <td>$O(n \log n)$</td>
+                  <td>$O(1)$</td>
+                  <td>否</td>
+                  <td>原地、最坏也保证</td>
+                </tr>
+                <tr>
+                  <td>计数排序</td>
+                  <td>$O(n + k)$</td>
+                  <td>$O(n + k)$</td>
+                  <td>$O(k)$</td>
+                  <td>是</td>
+                  <td>整数、范围小</td>
+                </tr>
+                <tr>
+                  <td>基数排序</td>
+                  <td>$O(d(n + k))$</td>
+                  <td>$O(d(n + k))$</td>
+                  <td>$O(n + k)$</td>
+                  <td>是</td>
+                  <td>整数/字符串</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            "稳定"指相等元素的相对顺序在排序后保持不变。
+            对多关键字排序，稳定性很重要。
+          </p>
+
+          <h3>快速排序</h3>
+          <p>
+            快速排序是实践中最快的通用排序：
+          </p>
+          <ol class="steps">
+            <li>选一个基准元素（pivot）。</li>
+            <li>把数组分成小于基准和大于基准两部分。</li>
+            <li>递归排序两部分。</li>
+          </ol>
+
+          <p>
+            平均 $O(n \log n)$，常数因子小、缓存友好。
+            最坏情况（如已排序数组 + 首元素作 pivot）会退化到 $O(n^2)$，
+            用随机 pivot 或三数取中可避免。
+          </p>
+
+          <h3>二分查找</h3>
+          <p>
+            在有序数组上查找，每次排除一半，$O(\log n)$。
+          </p>
+
+          $$ \text{mid} = \text{lo} + \lfloor (\text{hi} - \text{lo}) / 2 \rfloor $$
+
+          <p>
+            注意用 <code>lo + (hi - lo) / 2</code> 而非 <code>(lo + hi) / 2</code>，
+            避免整数溢出。
+          </p>
+
+          <h3>外部排序</h3>
+          <p>
+            当数据大于内存时，需要外部排序：
+          </p>
+          <ul>
+            <li>把数据分成若干块，每块在内存中排序后写回磁盘。</li>
+            <li>用 k 路归并把所有块合并。</li>
+            <li>或用败者树加速合并。</li>
+          </ul>
+
+          <p>
+            地震数据中心处理 TB 级连续波形记录时，
+            外部排序是必须的技术。
+          </p>
+
+          <h3>Python 示例：排序与二分查找</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>sort_search.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+
+def quicksort(arr):
+    """原地快速排序（简化的递归实现）"""
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    mid = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + mid + quicksort(right)
+
+
+def binary_search(arr, target):
+    """
+    在有序数组中二分查找。
+    返回 target 的下标，未找到返回 -1。
+    """
+    lo, hi = 0, len(arr) - 1
+    while lo <= hi:
+        mid = lo + (hi - lo) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+
+
+def binary_search_lower_bound(arr, target):
+    """
+    二分查找：返回第一个 >= target 的元素下标。
+    这是 bisect_left 的行为。
+    """
+    lo, hi = 0, len(arr)
+    while lo < hi:
+        mid = lo + (hi - lo) // 2
+        if arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
+if __name__ == "__main__":
+    # ---- 排序演示 ----
+    rng = np.random.default_rng(42)
+    data = rng.integers(0, 1000, size=20).tolist()
+    print(f"原始数组: {data}")
+
+    sorted_data = quicksort(data)
+    print(f"快速排序后: {sorted_data}")
+
+    # 用 NumPy 验证
+    assert sorted_data == sorted(data), "排序错误！"
+    print("✓ 排序结果与 Python 内置 sorted() 一致")
+
+    # ---- 二分查找 ----
+    target = sorted_data[7]
+    idx = binary_search(sorted_data, target)
+    print(f"\n二分查找 target={target}: 下标 {idx}")
+    assert sorted_data[idx] == target
+
+    # ---- 范围查询：用 lower_bound ----
+    # 场景：查询震级在 [5.0, 5.5] 之间的事件
+    mags = np.sort(rng.uniform(3.0, 8.0, 10000))
+    lo = binary_search_lower_bound(mags, 5.0)
+    hi = binary_search_lower_bound(mags, 5.5)
+    print(f"\n震级在 [5.0, 5.5] 的事件数: {hi - lo}")
+    print(f"  最小震级: {mags[lo]:.3f}")
+    print(f"  最大震级: {mags[hi-1]:.3f}")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：
+          </p>
+          <ul>
+            <li>快速排序与 Python 内置排序结果一致。</li>
+            <li>二分查找精确找到目标位置。</li>
+            <li>用两次 lower_bound 可以在 $O(\log n)$ 内完成范围查询。</li>
+          </ul>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">08</span>工程应用</h2>
+
+          <h3>有限元中的数据结构</h3>
+          <p>
+            有限元的计算流程高度依赖数据结构：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>环节</th><th>数据结构</th><th>作用</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>网格存储</td>
+                  <td>节点数组 + 单元连通表</td>
+                  <td>描述几何拓扑</td>
+                </tr>
+                <tr>
+                  <td>刚度矩阵</td>
+                  <td>CSR / CSC 稀疏格式</td>
+                  <td>节省内存、加速运算</td>
+                </tr>
+                <tr>
+                  <td>方程求解</td>
+                  <td>稀疏 LU / CG</td>
+                  <td>利用稀疏性求解</td>
+                </tr>
+                <tr>
+                  <td>接触搜索</td>
+                  <td>kd 树 / 网格哈希</td>
+                  <td>快速查找可能接触的单元对</td>
+                </tr>
+                <tr>
+                  <td>节点重排序</td>
+                  <td>Cuthill-McKee / AMD</td>
+                  <td>减少带宽、加速求解</td>
+                </tr>
+                <tr>
+                  <td>自适应网格</td>
+                  <td>八叉树</td>
+                  <td>空间划分</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>地震数据处理</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务</th><th>数据结构</th><th>理由</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>波形存储</td>
+                  <td>数组 / 环形缓冲区</td>
+                  <td>连续采样、缓存友好</td>
+                </tr>
+                <tr>
+                  <td>事件目录索引</td>
+                  <td>哈希表 + B 树</td>
+                  <td>快速按键值查找与范围查询</td>
+                </tr>
+                <tr>
+                  <td>空间查询</td>
+                  <td>R 树 / kd 树</td>
+                  <td>矩形范围与最近邻查询</td>
+                </tr>
+                <tr>
+                  <td>P 波拾取</td>
+                  <td>滑动窗口 + 双端队列</td>
+                  <td>实时处理 STA/LTA</td>
+                </tr>
+                <tr>
+                  <td>波形去噪</td>
+                  <td>数组 + FFT 缓冲区</td>
+                  <td>频域处理</td>
+                </tr>
+                <tr>
+                  <td>地震目录排序</td>
+                  <td>外部归并排序</td>
+                  <td>处理 TB 级数据</td>
+                </tr>
+                <tr>
+                  <td>余震序列分析</td>
+                  <td>图结构</td>
+                  <td>事件间的触发关系</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>地震预警中的数据流</h3>
+          <p>
+            地震预警系统是数据结构的高强度应用场景：
+          </p>
+          <ul>
+            <li><strong>环形缓冲区</strong>：每个台站连续记录最近几秒的波形。</li>
+            <li><strong>优先队列</strong>：按触发时间排序待处理的事件。</li>
+            <li><strong>哈希表</strong>：按台站代码快速查找台站元数据。</li>
+            <li><strong>堆</strong>：实时维护距离目标最近的几个台站。</li>
+            <li><strong>图</strong>：台站通信网络的最短路径与冗余路径。</li>
+            <li><strong>位图</strong>：快速标记哪些台站已触发。</li>
+          </ul>
+
+          <h3>PSHA 中的空间索引</h3>
+          <p>
+            PSHA 需要把场地周围的震源都考虑进来。
+            当震源数量很大（数千个断层段 + 网格源），
+            每次计算都要遍历所有震源，代价极高。
+          </p>
+          <p>
+            优化方案：
+          </p>
+          <ul>
+            <li><strong>R 树</strong>：先筛选出距离场地一定范围内的震源。</li>
+            <li><strong>kd 树</strong>：快速查询最近邻震源。</li>
+            <li><strong>网格哈希</strong>：把区域划分为网格，每个网格存储其内的震源。</li>
+            <li><strong>距离截断</strong>：忽略距离超过阈值（如 200 km）的震源，因为它们贡献可忽略。</li>
+          </ul>
+          <p>
+            这些优化能让 PSHA 的计算速度提升数十倍。
+          </p>
+
+          <h3>科学计算中的性能优化</h3>
+          <p>
+            数据结构的选择直接影响科学计算的性能：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>场景</th><th>朴素方案</th><th>优化方案</th><th>加速倍数</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>稀疏矩阵</td>
+                  <td>稠密数组 $O(n^2)$</td>
+                  <td>CSR $O(\text{nnz})$</td>
+                  <td>10~1000 倍</td>
+                </tr>
+                <tr>
+                  <td>最近邻查询</td>
+                  <td>线性扫描 $O(n)$</td>
+                  <td>kd 树 $O(\log n)$</td>
+                  <td>10~1000 倍</td>
+                </tr>
+                <tr>
+                  <td>范围查询</td>
+                  <td>线性扫描 $O(n)$</td>
+                  <td>二分查找 $O(\log n)$</td>
+                  <td>100~1000 倍</td>
+                </tr>
+                <tr>
+                  <td>Top-K</td>
+                  <td>全排序 $O(n \log n)$</td>
+                  <td>堆 $O(n \log K)$</td>
+                  <td>10 倍</td>
+                </tr>
+                <tr>
+                  <td>去重</td>
+                  <td>两两比较 $O(n^2)$</td>
+                  <td>哈希表 $O(n)$</td>
+                  <td>100~10000 倍</td>
+                </tr>
+                <tr>
+                  <td>字符串检索</td>
+                  <td>逐个匹配 $O(nm)$</td>
+                  <td>Trie / Aho-Corasick</td>
+                  <td>10~100 倍</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>数据结构与你的项目</strong>：
+              你主页上的三个项目（强震动数据处理、地震动参数分析、地震危险性分析）
+              都会用到这份笔记的内容：
+              ① <strong>强震动数据处理</strong>：数组、环形缓冲区、哈希表、CSR。
+              ② <strong>地震动参数分析</strong>：数组、排序、二分查找、图。
+              ③ <strong>地震危险性分析</strong>：空间索引、堆、优先队列、图。
+              如果你用 ObsPy、NumPy、SciPy 实现这些功能，
+              它们内部大量使用了这里介绍的数据结构。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">09</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>算法分析</strong>：大 $O$ 记号描述增长趋势；复杂度决定大规模问题的可行性。</li>
+              <li><strong>线性结构</strong>：数组缓存友好、链表灵活插入；栈/队列/环形缓冲区是基础构件。</li>
+              <li><strong>树结构</strong>：BST / 平衡树 / B 树 / 空间索引；磁盘与空间查询的核心。</li>
+              <li><strong>哈希表</strong>：平均 $O(1)$ 查找；负载因子与再哈希保证性能。</li>
+              <li><strong>堆与优先队列</strong>：Dijkstra、Top-K、任务调度；$O(\log n)$ 的插入与取极值。</li>
+              <li><strong>图与图算法</strong>：BFS/DFS、最短路径、最小生成树；CSR 稀疏存储是科学计算核心。</li>
+              <li><strong>排序与查找</strong>：快速排序实际最快，归并稳定，二分查找 $O(\log n)$。</li>
+              <li><strong>工程应用</strong>：有限元稀疏矩阵、地震数据处理、地震预警、PSHA 空间索引。</li>
+            </ul>
+          </div>
+
+          <h3>数据结构选择速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>需求</th><th>推荐结构</th><th>复杂度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>随机访问</td>
+                  <td>数组</td>
+                  <td>$O(1)$</td>
+                </tr>
+                <tr>
+                  <td>头部插入/删除</td>
+                  <td>链表 / deque</td>
+                  <td>$O(1)$</td>
+                </tr>
+                <tr>
+                  <td>LIFO</td>
+                  <td>栈</td>
+                  <td>$O(1)$</td>
+                </tr>
+                <tr>
+                  <td>FIFO</td>
+                  <td>队列 / deque</td>
+                  <td>$O(1)$</td>
+                </tr>
+                <tr>
+                  <td>快速查找</td>
+                  <td>哈希表</td>
+                  <td>平均 $O(1)$</td>
+                </tr>
+                <tr>
+                  <td>有序遍历</td>
+                  <td>平衡树</td>
+                  <td>$O(\log n)$</td>
+                </tr>
+                <tr>
+                  <td>取极值</td>
+                  <td>堆</td>
+                  <td>$O(1)$</td>
+                </tr>
+                <tr>
+                  <td>范围查询</td>
+                  <td>有序数组 + 二分</td>
+                  <td>$O(\log n)$</td>
+                </tr>
+                <tr>
+                  <td>空间查询</td>
+                  <td>kd 树 / R 树</td>
+                  <td>$O(\log n)$ 左右</td>
+                </tr>
+                <tr>
+                  <td>稀疏矩阵</td>
+                  <td>CSR / CSC</td>
+                  <td>$O(\text{nnz})$</td>
+                </tr>
+                <tr>
+                  <td>图遍历</td>
+                  <td>邻接表</td>
+                  <td>$O(V+E)$</td>
+                </tr>
+                <tr>
+                  <td>最短路径</td>
+                  <td>优先队列 + 邻接表</td>
+                  <td>$O((V+E)\log V)$</td>
+                </tr>
+                <tr>
+                  <td>并查集</td>
+                  <td>Union-Find</td>
+                  <td>近 $O(1)$ 均摊</td>
+                </tr>
+                <tr>
+                  <td>前缀匹配</td>
+                  <td>Trie</td>
+                  <td>$O(L)$</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>数值分析</strong>（数学）：Cholesky、迭代法都依赖稀疏矩阵数据结构。</li>
+            <li><strong>线性代数</strong>（数学）：矩阵存储、稀疏格式、CSR 与线性代数运算。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：蒙特卡洛、哈希表采样。</li>
+            <li><strong>复变函数与积分变换</strong>（数学）：FFT 与数组、缓冲区。</li>
+            <li><strong>偏微分方程</strong>（数学）：网格数据结构、稀疏矩阵。</li>
+            <li><strong>数字信号处理</strong>（计算机）：缓冲区、FFT、滤波的数据结构。</li>
+            <li><strong>强震动观测</strong>（地震学）：波形存储、事件目录索引。</li>
+            <li><strong>地震预警</strong>（地震学）：实时数据流、优先队列、环形缓冲区。</li>
+            <li><strong>工程地震学</strong>（地震学）：PSHA 空间索引、震源数据结构。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Cormen, Leiserson, Rivest &amp; Stein, <em>Introduction to Algorithms</em> (CLRS) — 算法与数据结构权威教材</li>
+            <li>Sedgewick &amp; Wayne, <em>Algorithms</em> — 实用导向，配大量代码</li>
+            <li>Skiena, <em>The Algorithm Design Manual</em> — 工程视角的算法书</li>
+            <li>Knuth, <em>The Art of Computer Programming</em> — 计算机科学经典</li>
+            <li>Davis, <em>Direct Methods for Sparse Linear Systems</em> — 稀疏矩阵数据结构的权威参考</li>
+            <li>Saad, <em>Iterative Methods for Sparse Linear Systems</em> — 稀疏迭代求解</li>
+            <li>Samet, <em>The Design and Analysis of Spatial Data Structures</em> — 空间索引</li>
+            <li>Bentley, "Multidimensional binary search trees used for associative searching" (1975) — kd 树原始论文</li>
+            <li>Kahan, "IEEE Standard 754 for Binary Floating-Point Arithmetic" — 浮点与数组访问基础</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

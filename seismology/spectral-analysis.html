@@ -1,0 +1,439 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="spectral-analysis">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震动谱分析入门 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="spectral-analysis">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#fourier">一、傅里叶谱</a></li>
+      <li><a href="#response">二、反应谱</a></li>
+      <li><a href="#psa-psv">三、谱加速度与谱速度</a></li>
+      <li><a href="#damping">四、阻尼比影响</a></li>
+      <li><a href="#summary">五、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 地震动谱分析入门
+        </div>
+        <h1>地震动谱分析入门</h1>
+        <p class="lead">
+          从傅里叶谱到反应谱，理解地震动在频域和结构响应两个视角下的表达方式，
+          是读懂强震记录、设计反应谱与地震危险性分析的基础。
+        </p>
+        <div class="article-meta">
+          <span>反应谱</span>
+          <span>傅里叶谱</span>
+          <span class="blue">谱分析</span>
+          <span class="blue">地震工程</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <!-- 引言 -->
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            地震动是随机的非平稳信号。直接从时程曲线上读取信息有限，
+            因此在工程和地震学中，我们通常从两个角度来分析它：
+          </p>
+          <ul>
+            <li><strong>频域视角</strong>：用傅里叶谱描述地震动中不同频率成分的能量分布。</li>
+            <li><strong>结构响应视角</strong>：用反应谱描述一个弹性单自由度体系在不同自振周期下所受到的最大响应。</li>
+          </ul>
+          <p>
+            傅里叶谱回答“地震动里有哪些频率成分”，反应谱回答“这些频率成分对结构有多大影响”。
+            两者互补，是地震动分析的基石。
+          </p>
+        </section>
+
+        <!-- 傅里叶谱 -->
+        <section id="fourier">
+          <h2><span class="num">01</span>傅里叶谱</h2>
+
+          <h3>基本原理</h3>
+          <p>
+            傅里叶变换将一个时域信号 $a(t)$ 分解为不同频率的正弦波叠加。
+            对离散采样的地震动记录（采样间隔 $\Delta t$，总点数 $N$），使用离散傅里叶变换（DFT）：
+          </p>
+
+          $$ A_k = \sum_{n=0}^{N-1} a_n \, e^{-i 2\pi k n / N} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            其中 $k = 0, 1, \ldots, N-1$，对应频率 $f_k = k / (N \Delta t)$
+          </p>
+
+          <p>
+            得到的<strong>傅里叶幅值谱</strong> $|A_k|$ 反映各频率成分的强度，
+            <strong>相位谱</strong>则描述各频率分量的时间对齐关系。
+          </p>
+
+          <h3>关键参数</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>参数</th><th>含义</th><th>与地震动的关系</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>频率分辨率</strong></td>
+                  <td>$\Delta f = 1 / (N \Delta t)$</td>
+                  <td>记录越长，分辨率越细</td>
+                </tr>
+                <tr>
+                  <td><strong>Nyquist 频率</strong></td>
+                  <td>$f_N = 1 / (2 \Delta t)$</td>
+                  <td>能识别的最高频率，采样率一半</td>
+                </tr>
+                <tr>
+                  <td><strong>卓越频率</strong></td>
+                  <td>幅值谱最大值对应频率</td>
+                  <td>反映场地或震源的固有特征</td>
+                </tr>
+                <tr>
+                  <td><strong>频带宽度</strong></td>
+                  <td>幅值显著区间的频率范围</td>
+                  <td>反映地震动能量集中程度</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>实用提示</strong>：地震动记录的傅里叶谱通常呈“宽频带”特征，
+              能量集中在 0.1–10 Hz。硬土场地卓越频率偏高，软土场地偏低。</p>
+            </div>
+          </div>
+
+          <h3>Python 示例</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>fourier_spectrum.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+def fourier_amplitude(acc, dt):
+    """计算单边傅里叶幅值谱"""
+    N = len(acc)
+    # 去均值，减少直流分量
+    acc = acc - np.mean(acc)
+    # FFT
+    A = np.fft.rfft(acc)
+    # 单边幅值（归一化）
+    amp = 2.0 * np.abs(A) / N
+    # 对应频率
+    freq = np.fft.rfftfreq(N, d=dt)
+    return freq, amp</code></pre>
+          </div>
+        </section>
+
+        <!-- 反应谱 -->
+        <section id="response">
+          <h2><span class="num">02</span>反应谱</h2>
+
+          <h3>物理意义</h3>
+          <p>
+            反应谱的核心思想：把地震动作用在一组<strong>不同自振周期</strong>的
+            弹性单自由度体系上，记录每个体系的最大响应，得到响应随周期变化的曲线。
+          </p>
+
+          $$ S_a(T, \zeta) = \max_t \left| \ddot{x}(t) + \ddot{x}_g(t) \right| $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $T$ 为体系自振周期，$\zeta$ 为阻尼比，$\ddot{x}_g$ 为地面加速度
+          </p>
+
+          <h3>三类反应谱</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>名称</th><th>符号</th><th>物理量</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>谱加速度</strong></td>
+                  <td>$S_a(T)$</td>
+                  <td>绝对加速度峰值</td>
+                  <td>地震力、抗震设计</td>
+                </tr>
+                <tr>
+                  <td><strong>谱速度</strong></td>
+                  <td>$S_v(T)$</td>
+                  <td>相对速度峰值</td>
+                  <td>能量输入、阻尼器设计</td>
+                </tr>
+                <tr>
+                  <td><strong>谱位移</strong></td>
+                  <td>$S_d(T)$</td>
+                  <td>相对位移峰值</td>
+                  <td>层间位移、隔震设计</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Newmark–Hall 四段谱</h3>
+          <p>
+            标准设计反应谱通常被简化为四段：上升段、平台段、速度控制段、位移控制段。
+            分别对应结构的不同自振周期区间。
+          </p>
+          <ul>
+            <li><strong>短周期段</strong>（$T < T_0$）：$S_a$ 随 $T$ 增大而上升，斜率由场地决定。</li>
+            <li><strong>平台段</strong>（$T_0 < T < T_g$）：$S_a$ 基本恒定，等于峰值加速度放大系数乘以 PGA。</li>
+            <li><strong>速度段</strong>（$T_g < T < T_d$）：$S_a \propto 1/T$，对应等速度区。</li>
+            <li><strong>位移段</strong>（$T > T_d$）：$S_a \propto 1/T^2$，对应等位移区。</li>
+          </ul>
+
+          <h3>计算方法（时域）</h3>
+          <p>
+            对每个周期 $T$，用 Newmark-$\beta$ 法或 Duhamel 积分逐步积分求解，记录最大响应。
+            工程中通常取阻尼比 $\zeta = 5\%$。
+          </p>
+
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>response_spectrum.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+
+def response_spectrum(acc, dt, periods, zeta=0.05):
+    """计算谱加速度 Sa、谱速度 Sv、谱位移 Sd"""
+    acc = acc - np.mean(acc)
+    Sa, Sv, Sd = [], [], []
+
+    for T in periods:
+        wn = 2 * np.pi / T           # 自振圆频率
+        c  = 2 * zeta * wn           # 阻尼系数
+        # Newmark-β 参数（平均加速度法）
+        gamma, beta = 0.5, 0.25
+
+        u = ud = udd = 0.0
+        umax = udmax = uddmax = 0.0
+
+        for i in range(len(acc)):
+            # 有效刚度
+            k_eff = wn**2 + gamma/(beta*dt)*c + 1/(beta*dt**2)
+            # 有效荷载
+            p_eff = (-acc[i]
+                     + (1/(beta*dt**2))*u + (1/(beta*dt))*ud + (1/(2*beta)-1)*udd
+                     + c*((gamma/(beta*dt))*u + (gamma/beta-1)*ud
+                          + (gamma/(2*beta)-1)*dt*udd))
+            u_new = p_eff / k_eff
+            ud_new = (gamma/(beta*dt))*(u_new-u) + (1-gamma/beta)*ud \
+                     + dt*(1-gamma/(2*beta))*udd
+            udd_new = (1/(beta*dt**2))*(u_new-u) - (1/(beta*dt))*ud \
+                      - (1/(2*beta)-1)*udd
+
+            u, ud, udd = u_new, ud_new, udd_new
+            umax   = max(umax,  abs(u))
+            udmax  = max(udmax, abs(ud))
+            uddmax = max(uddmax, abs(udd + acc[i]))
+
+        Sd.append(umax)
+        Sv.append(udmax)
+        Sa.append(uddmax)
+
+    return np.array(Sa), np.array(Sv), np.array(Sd)</code></pre>
+          </div>
+        </section>
+
+        <!-- 谱加速度与谱速度 -->
+        <section id="psa-psv">
+          <h2><span class="num">03</span>谱加速度与谱速度</h2>
+
+          <h3>近似关系</h3>
+          <p>在小阻尼情况下，三种谱之间存在简单的近似关系：</p>
+
+          $$ S_a \approx \omega \, S_v \approx \omega^2 \, S_d $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            其中 $\omega = 2\pi/T$ 为自振圆频率，该关系在 $\zeta \le 0.2$ 时精度较高
+          </p>
+
+          <h3>三联谱（Tripartite Spectrum）</h3>
+          <p>
+            将 $S_a$、$S_v$、$S_d$ 画在同一张对数坐标图上，
+            得到经典的<strong>三联反应谱</strong>。它把周期范围划分为三个区域：
+          </p>
+          <ul>
+            <li><strong>等加速度区</strong>（短周期）：$S_a$ 为常数，$S_v$ 随 $T$ 线性增长</li>
+            <li><strong>等速度区</strong>（中周期）：$S_v$ 为常数，$S_a \propto 1/T$，$S_d \propto T$</li>
+            <li><strong>等位移区</strong>（长周期）：$S_d$ 为常数，$S_a \propto 1/T^2$</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>为什么重要</strong>：三联谱是结构抗震设计的核心工具。
+              当你看到一条设计谱曲线，通过它落在哪个区域，就能快速判断
+              结构的响应由<strong>惯性力</strong>（短周期）、<strong>速度</strong>（中周期）
+              还是<strong>位移</strong>（长周期）主导。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 阻尼比影响 -->
+        <section id="damping">
+          <h2><span class="num">04</span>阻尼比影响</h2>
+
+          <h3>基本规律</h3>
+          <p>
+            阻尼比 $\zeta$ 决定体系耗散能量的能力。$\zeta$ 越大，共振放大越弱，谱值越低。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>结构类型</th><th>典型阻尼比 ζ</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>钢结构（焊接）</td><td>2% – 3%</td><td>阻尼小，共振响应大</td></tr>
+                <tr><td>钢筋混凝土结构</td><td>5%</td><td>设计反应谱常用取值</td></tr>
+                <tr><td>预应力混凝土</td><td>3% – 5%</td><td>介于钢与普通混凝土之间</td></tr>
+                <tr><td>砌体结构</td><td>5% – 8%</td><td>开裂后耗能增加</td></tr>
+                <tr><td>隔震结构</td><td>10% – 20%</td><td>橡胶支座或摩擦摆耗能</td></tr>
+                <tr><td>土体</td><td>5% – 15%</td><td>随应变水平变化</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>阻尼调整系数</h3>
+          <p>
+            如果设计谱基准阻尼比是 $\zeta_0$（通常 5%），实际阻尼 $\zeta$ 不同时，
+            可用下式近似调整谱值：
+          </p>
+
+          $$ R = \sqrt{\frac{10}{5 + \zeta}} $$
+
+          <p style="text-align:center; font-size:12.5px; color:var(--text-dim); margin-top:-6px;">
+            $\zeta$ 以百分数计，该系数用于缩放基准谱
+          </p>
+
+          <h3>阻尼对谱形的影响</h3>
+          <ul>
+            <li><strong>短周期段</strong>：阻尼影响小，$S_a$ 变化不明显。</li>
+            <li><strong>平台段</strong>：阻尼影响适中，阻尼增大使平台降低。</li>
+            <li><strong>长周期段</strong>：阻尼影响最显著，尤其共振峰附近（$T \approx$ 场地卓越周期）。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>常见误区</strong>：把阻尼比从 5% 提高到 10%，谱值并不会简单减半。
+              真实缩放关系依赖周期，短周期处变化很小，长周期附近可能接近 $1/\sqrt{2}$ 甚至更大。
+              因此不能用简单线性比例去调整设计谱。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 小结 -->
+        <section id="summary">
+          <h2><span class="num">05</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>傅里叶谱</strong>描述地震动的频域能量分布，与结构无关，仅反映地震动本身。</li>
+              <li><strong>反应谱</strong>描述结构响应，通过弹性 SDOF 体系建立地震动与结构之间的桥梁。</li>
+              <li>三种谱之间存在 $S_a \approx \omega S_v \approx \omega^2 S_d$ 的近似关系，构成三联谱。</li>
+              <li><strong>阻尼比</strong>主要影响长周期段谱值，对短周期影响小，不能用简单线性比例处理。</li>
+              <li>实际计算中，<strong>Newmark-$\beta$ 法</strong>是最常用的反应谱时域求解方法，阻尼比一般取 5%。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Chopra, A. K. <em>Dynamics of Structures</em> — 反应谱理论的标准教材</li>
+            <li>Kramer, S. L. <em>Geotechnical Earthquake Engineering</em> — 场地效应与反应谱</li>
+            <li>PEER NGA 数据库 — 全球强震记录，可下载实测反应谱</li>
+            <li>中国《建筑抗震设计规范》GB 50011 — 设计反应谱的工程应用</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

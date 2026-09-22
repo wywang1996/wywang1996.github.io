@@ -1,0 +1,1482 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="note">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>强震动观测 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="strong-motion-observation">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#network">一、台网与仪器</a></li>
+      <li><a href="#format">二、数据格式</a></li>
+      <li><a href="#qc">三、质量控制</a></li>
+      <li><a href="#baseline">四、基线校正</a></li>
+      <li><a href="#filter">五、滤波与去噪</a></li>
+      <li><a href="#derived">六、积分与导出</a></li>
+      <li><a href="#application">七、工程应用</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 强震动观测
+        </div>
+        <h1>强震动观测</h1>
+        <p class="lead">
+          从台网布设到数据质量控制，覆盖强震仪原理、记录格式、
+          基线校正、滤波与去噪。它是地震工程的数据来源，
+          也是所有抗震分析、地震动参数提取的第一步。
+        </p>
+        <div class="article-meta">
+          <span>强震仪</span>
+          <span>数据格式</span>
+          <span>信号处理</span>
+          <span class="blue">工程应用</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            强震动观测是<strong>在地震发生时直接记录地面运动</strong>的一门技术。
+            与地震学中观测微弱地震波（远场、小振幅）不同，
+            强震动观测关注的是<strong>工程场地附近、可能造成结构破坏的强烈地面运动</strong>。
+          </p>
+          <p>
+            两种观测的差异：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>维度</th><th>地震学观测</th><th>强震动观测</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>目标</td>
+                  <td>研究震源与地球结构</td>
+                  <td>评估地震动对工程的影响</td>
+                </tr>
+                <tr>
+                  <td>距离</td>
+                  <td>远场（100~10000 km）</td>
+                  <td>近场（0~200 km）</td>
+                </tr>
+                <tr>
+                  <td>振幅</td>
+                  <td>$10^{-9} \sim 10^{-3}$ m/s²</td>
+                  <td>$10^{-3} \sim 10^1$ m/s²</td>
+                </tr>
+                <tr>
+                  <td>频段</td>
+                  <td>0.01~10 Hz</td>
+                  <td>0.1~30 Hz</td>
+                </tr>
+                <tr>
+                  <td>仪器</td>
+                  <td>宽频带地震计</td>
+                  <td>加速度计（强震仪）</td>
+                </tr>
+                <tr>
+                  <td>记录方式</td>
+                  <td>连续记录</td>
+                  <td>触发记录</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            强震动观测是<strong>地震工程的数据源头</strong>。没有强震记录：
+          </p>
+          <ul>
+            <li>无法建立地震动衰减关系（GMPE）</li>
+            <li>无法计算反应谱与设计谱</li>
+            <li>无法做场地效应分析</li>
+            <li>无法做结构时程分析</li>
+          </ul>
+          <p>
+            从 1933 年美国长滩地震首次记录到强震记录以来，
+            全球已积累数十万条记录，
+            其中著名的如 1940 年 EL Centro 记录、1971 年 San Fernando、
+            1995 年神户、1999 年集集、2008 年汶川、2011 年东日本，
+            都深刻影响了抗震设计理论的发展。
+          </p>
+          <p>
+            这份笔记按"台网 $\to$ 格式 $\to$ 质控 $\to$ 基线 $\to$ 滤波 $\to$ 积分 $\to$ 应用"
+            的顺序梳理，每一节都尽量落到工程实践上。
+          </p>
+        </section>
+
+        <section id="network">
+          <h2><span class="num">01</span>台网与仪器</h2>
+
+          <h3>强震仪的三种类型</h3>
+          <p>
+            按测量原理，强震仪分为三代：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>原理</th><th>特点</th><th>代表</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>模拟光记录式</td>
+                  <td>摆 + 光学记录</td>
+                  <td>早期设备，已淘汰</td>
+                  <td>SMA-1</td>
+                </tr>
+                <tr>
+                  <td>数字式（力平衡）</td>
+                  <td>伺服加速度计</td>
+                  <td>动态范围大、精度高</td>
+                  <td>Kinemetrics、Reftek</td>
+                </tr>
+                <tr>
+                  <td>MEMS 式</td>
+                  <td>微机电传感器</td>
+                  <td>体积小、成本低、可密集布设</td>
+                  <td>手机、低成本台站</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>强震仪的关键参数</h3>
+          <ul>
+            <li><strong>量程</strong>：通常 ±2g 或 ±4g（$g$ 为重力加速度）。</li>
+            <li><strong>频带</strong>：DC~100 Hz 或 DC~200 Hz。</li>
+            <li><strong>动态范围</strong>：$>100$ dB，即能分辨极小与极大的加速度。</li>
+            <li><strong>采样率</strong>：100 Hz、200 Hz、500 Hz 不等。</li>
+            <li><strong>分辨率</strong>：通常 24 bit（约 $10^{-7}g$）。</li>
+            <li><strong>触发方式</strong>：阈值触发（STA/LTA）、外部触发。</li>
+          </ul>
+
+          <h3>台站布设原则</h3>
+          <p>
+            强震台网的布设方式决定了它能记录到什么：
+          </p>
+          <ul>
+            <li><strong>自由场台站</strong>：布设在无建筑物的基岩或土层场地，记录地震动输入，用于 GMPE、场地效应研究。</li>
+            <li><strong>结构台阵</strong>：布设在建筑、桥梁、大坝等结构上，记录结构响应，用于系统辨识与抗震性能评估。</li>
+            <li><strong>密集台阵</strong>：间距 10~100 m，用于研究地震动的空间变化与相干性。</li>
+            <li><strong>井下台阵</strong>：沿钻孔不同深度布设，直接测量土层放大。</li>
+          </ul>
+
+          <h3>全球与区域台网</h3>
+          <ul>
+            <li><strong>USGS NSMP</strong>：美国国家强震台网，覆盖全美及海外领土。</li>
+            <li><strong>CESMD</strong>：美国工程强震数据中心，整合加州与全国记录。</li>
+            <li><strong>PEER NGA</strong>：太平洋地震工程研究中心的强震记录库。</li>
+            <li><strong>K-NET / KiK-net</strong>：日本全国台网，约 1700 + 700 个台站。</li>
+            <li><strong>ESM</strong>：欧洲强震数据库。</li>
+            <li><strong>CSMNC</strong>：中国国家强震动台网中心，覆盖全国。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>自由场记录的重要性</strong>：只有自由场记录才代表<strong>场地输入</strong>，
+              而结构上的记录包含了结构自身的动力特性。
+              做 GMPE、反应谱、场地效应研究时，必须使用自由场记录。
+              这是选取训练数据时的关键筛选条件。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="format">
+          <h2><span class="num">02</span>数据格式</h2>
+
+          <h3>主流强震数据格式</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>格式</th><th>来源</th><th>特点</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SAC</td>
+                  <td>Seismic Analysis Code</td>
+                  <td>地震学标准格式，二进制头段 + 数据</td>
+                </tr>
+                <tr>
+                  <td>MiniSEED</td>
+                  <td>IRIS / FDSN</td>
+                  <td>国际标准，支持多通道、连续记录</td>
+                </tr>
+                <tr>
+                  <td>ASCII / PEER</td>
+                  <td>PEER NGA</td>
+                  <td>文本格式，便于人工查看与交换</td>
+                </tr>
+                <tr>
+                  <td>COSMOS V1/V2/V3</td>
+                  <td>COSMOS</td>
+                  <td>强震专用格式，含事件与台站元数据</td>
+                </tr>
+                <tr>
+                  <td>K-NET ASCII</td>
+                  <td>日本 K-NET</td>
+                  <td>固定列文本，日文元数据</td>
+                </tr>
+                <tr>
+                  <td>ESM ASCII</td>
+                  <td>欧洲 ESM</td>
+                  <td>统一文本格式，含全部元数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>SAC 格式简介</h3>
+          <p>
+            SAC（Seismic Analysis Code）是地震学最常用的格式。
+            一个 SAC 文件包含两部分：
+          </p>
+          <ul>
+            <li><strong>头段</strong>：<code>delta</code>（采样间隔）、<code>b</code>、<code>e</code>（起止时间）、
+              <code>stla</code>、<code>stlo</code>（经纬度）、<code>kcmpnm</code>（分量名）、
+              <code>knetwk</code>（台网）、<code>kstnm</code>（台站名）、<code>evla</code>、<code>evlo</code>（事件经纬度）等。</li>
+            <li><strong>数据段</strong>：等间隔采样的浮点数组。</li>
+          </ul>
+          <p>
+            每个分量（NS、EW、UD）通常是独立的文件。
+          </p>
+
+          <h3>MiniSEED 格式简介</h3>
+          <p>
+            MiniSEED 是 SEED 格式的简化版，数据按<strong>记录块</strong>组织，
+            每块 512 字节。记录头包含：
+          </p>
+          <ul>
+            <li>台网代码（network）、台站代码（station）</li>
+            <li>位置代码（location）、通道代码（channel），如 <code>HN1</code>、<code>HN2</code>、<code>HNZ</code></li>
+            <li>起始时间、采样率、样本数</li>
+          </ul>
+          <p>
+            MiniSEED 支持多通道合并、连续记录，适合长期台网数据。
+          </p>
+
+          <h3>通道命名规范</h3>
+          <p>
+            通道代码通常 3 个字母，第一位表示频带，第二位表示仪器，第三位表示方向：
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>位置</th><th>含义</th><th>常见取值</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>第 1 位（频带）</td>
+                  <td>带宽</td>
+                  <td>H（80 Hz~250 Hz）、B（宽带）、E（极宽带）</td>
+                </tr>
+                <tr>
+                  <td>第 2 位（仪器）</td>
+                  <td>仪器类型</td>
+                  <td>N（加速度计）、L（低增益地震计）、H（高增益）</td>
+                </tr>
+                <tr>
+                  <td>第 3 位（方向）</td>
+                  <td>分量方向</td>
+                  <td>Z（垂直）、N（北南）、E（东西）、1、2（水平）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            例如 <code>HN1</code>、<code>HN2</code>、<code>HNZ</code>
+            分别代表高频加速度计的 1 分量、2 分量和垂直分量。
+          </p>
+
+          <h3>Python 示例：读取 SAC 与 MiniSEED</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>read_formats.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+用 ObsPy 读取多种强震数据格式。
+安装：pip install obspy
+"""
+from obspy import read, read_inventory
+import numpy as np
+
+
+def read_sac_example(fname):
+    """读取 SAC 文件"""
+    st = read(fname, format="SAC")
+    tr = st[0]
+
+    print(f"台网: {tr.stats.network}")
+    print(f"台站: {tr.stats.station}")
+    print(f"通道: {tr.stats.channel}")
+    print(f"起始时间: {tr.stats.starttime}")
+    print(f"采样间隔: {tr.stats.delta:.6f} s")
+    print(f"采样点数: {tr.stats.npts}")
+    print(f"经纬度: ({tr.stats.sac.stla:.4f}, {tr.stats.sac.stlo:.4f})")
+    print(f"PGA: {np.max(np.abs(tr.data)):.6f}")
+
+    return tr
+
+
+def read_mseed_example(fname):
+    """读取 MiniSEED 文件"""
+    st = read(fname, format="MSEED")
+
+    for tr in st:
+        print(f"{tr.stats.network}.{tr.stats.station}."
+              f"{tr.stats.location}.{tr.stats.channel}  "
+              f"{tr.stats.starttime}  "
+              f"npts={tr.stats.npts}  "
+              f"fs={tr.stats.sampling_rate:.1f} Hz")
+
+    return st
+
+
+def read_peerascii_example(fname):
+    """
+    读取 PEER NGA ASCII 格式。
+    文件头部有若干行元数据，之后是 4 列数据：
+      time, acc_ns, acc_ew, acc_ud
+    """
+    with open(fname, "r") as f:
+        lines = f.readlines()
+
+    # 跳过头部（以 | 结尾或空行开头）
+    data_lines = []
+    for line in lines:
+        s = line.strip()
+        if not s or s.startswith("|"):
+            continue
+        parts = s.split()
+        if len(parts) >= 4:
+            try:
+                data_lines.append([float(x) for x in parts[:4]])
+            except ValueError:
+                continue
+
+    data = np.array(data_lines)
+    t = data[:, 0]
+    acc = data[:, 1:4]   # 三分量
+
+    print(f"时间范围: {t[0]:.4f} ~ {t[-1]:.4f} s")
+    print(f"采样率: {1.0 / (t[1] - t[0]):.2f} Hz")
+    print(f"三分量 PGA: {np.max(np.abs(acc), axis=0)}")
+
+    return t, acc
+
+
+if __name__ == "__main__":
+    # 示例：读取本地文件（请替换为实际路径）
+    # tr = read_sac_example("KNET_2024_001.sac")
+    # st = read_mseed_example("station_2024_001.mseed")
+    # t, acc = read_peerascii_example("ELCentro_NS.txt")
+
+    print("示例代码演示完毕，请替换为实际文件路径。")</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>ObsPy 是强震数据处理的瑞士军刀</strong>：
+              它统一封装了 SAC、MiniSEED、SEED、GSE2 等格式的读写，
+              内置了滤波、重采样、去趋势、反应谱计算等常用操作。
+              如果你用 Python 处理强震数据，ObsPy 应该是首选工具。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="qc">
+          <h2><span class="num">03</span>质量控制</h2>
+
+          <h3>质控的目标</h3>
+          <p>
+            强震记录的质控目标是：
+          </p>
+          <ul>
+            <li>判断记录是否可用（触发是否正确、有无截幅、有无丢失）。</li>
+            <li>识别并标记异常（仪器故障、环境干扰、电磁干扰）。</li>
+            <li>提取事件元数据（震级、震中距、震源深度）。</li>
+            <li>为后续处理（基线校正、滤波、反应谱）提供基础。</li>
+          </ul>
+
+          <h3>常见的质量问题</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>问题</th><th>表现</th><th>处理</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>截幅（clipping）</td>
+                  <td>波形顶部/底部被削平</td>
+                  <td>放弃或截取未截幅段</td>
+                </tr>
+                <tr>
+                  <td>尖峰（spike）</td>
+                  <td>单点或数点突跳</td>
+                  <td>去尖峰滤波</td>
+                </tr>
+                <tr>
+                  <td>基线漂移</td>
+                  <td>波形整体向上或向下漂移</td>
+                  <td>基线校正</td>
+                </tr>
+                <tr>
+                  <td>背景噪声大</td>
+                  <td>触发前记录幅值偏高</td>
+                  <td>检查台站环境或仪器</td>
+                </tr>
+                <tr>
+                  <td>数据丢失</td>
+                  <td>时间轴不连续</td>
+                  <td>标记 gap，分段处理</td>
+                </tr>
+                <tr>
+                  <td>触发错误</td>
+                  <td>误触发或漏触发</td>
+                  <td>人工复核</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>质控流程</h3>
+          <ol class="steps">
+            <li>检查时间戳与采样率是否与元数据一致。</li>
+            <li>检查三分量是否齐全，是否有分量缺失。</li>
+            <li>检查波形是否有截幅、尖峰、突跳。</li>
+            <li>检查触发前噪声水平（PGA/PGV 阈值）。</li>
+            <li>检查波形与地震事件在时间与距离上是否一致。</li>
+            <li>计算 PGA、PGV、PGD、Arias 强度等参数，作为质控指标。</li>
+            <li>保存质控标记（quality flag）到数据库。</li>
+          </ol>
+
+          <h3>信噪比（SNR）</h3>
+          <p>
+            信噪比是判断记录可用性的重要指标，定义为：
+          </p>
+
+          $$ \mathrm{SNR} = \frac{\text{P 波到时前 5~10 s 的信号 RMS}}
+                                {\text{P 波到时前 20~30 s 的噪声 RMS}} $$
+
+          <p>
+            通常要求 SNR &gt; 3（或 5），才能用于后续分析。
+            对强震记录，还要注意 PGA 是否超过触发电平，
+            未触发或触发前的记录也可以用于环境噪声研究。
+          </p>
+
+          <h3>Python 示例：自动质控检查</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>quality_check.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+from scipy import signal
+
+
+def check_quality(acc, fs, clip_threshold=0.99):
+    """
+    对单分量强震记录做基本质控检查。
+    acc: 加速度时程（numpy 数组）
+    fs:  采样率 Hz
+    clip_threshold: 截幅判断的相对阈值
+    """
+    report = {}
+
+    # 1. 极值与均值
+    report["npts"] = len(acc)
+    report["pga"] = np.max(np.abs(acc))
+    report["mean"] = np.mean(acc)
+    report["std"] = np.std(acc)
+    report["range"] = acc.max() - acc.min()
+
+    # 2. 截幅检查
+    # 若多个连续点接近极值，可能为截幅
+    max_abs = report["pga"]
+    close_to_max = np.abs(np.abs(acc) - max_abs) < 0.01 * max_abs
+    max_run = _max_consecutive(close_to_max)
+    report["clipped"] = max_run >= 3
+    report["clip_run_length"] = max_run
+
+    # 3. 尖峰检查
+    # 用中位数绝对偏差（MAD）识别异常点
+    med = np.median(acc)
+    mad = np.median(np.abs(acc - med))
+    if mad > 0:
+        spikes = np.abs(acc - med) > 8.0 * mad
+        report["n_spikes"] = int(np.sum(spikes))
+        report["spike_ratio"] = float(np.sum(spikes) / len(acc))
+    else:
+        report["n_spikes"] = 0
+        report["spike_ratio"] = 0.0
+
+    # 4. 基线漂移检查
+    # 用前后两段的均值差衡量
+    n_half = len(acc) // 2
+    drift = np.mean(acc[n_half:]) - np.mean(acc[:n_half])
+    report["drift"] = drift
+    report["drift_ratio"] = abs(drift) / (max_abs + 1e-12)
+
+    # 5. 频谱检查：是否有明显 50 Hz 工频干扰
+    f, Pxx = signal.welch(acc, fs=fs, nperseg=min(4096, len(acc)))
+    # 找 50 Hz 附近的峰
+    idx_50 = np.argmin(np.abs(f - 50.0))
+    idx_noise = np.argmin(np.abs(f - 10.0))
+    if Pxx[idx_noise] > 0:
+        report["p50_ratio"] = Pxx[idx_50] / Pxx[idx_noise]
+    else:
+        report["p50_ratio"] = 0.0
+
+    # 综合评估
+    passed = (
+        not report["clipped"]
+        and report["spike_ratio"] < 1e-4
+        and report["drift_ratio"] < 0.1
+        and report["pga"] > 1e-4
+    )
+    report["passed"] = passed
+
+    return report
+
+
+def _max_consecutive(mask):
+    """计算 mask 中最长的连续 True 段长度"""
+    if not mask.any():
+        return 0
+    runs = []
+    count = 0
+    for v in mask:
+        if v:
+            count += 1
+        else:
+            if count > 0:
+                runs.append(count)
+            count = 0
+    if count > 0:
+        runs.append(count)
+    return max(runs) if runs else 0
+
+
+if __name__ == "__main__":
+    # 合成一条测试记录
+    rng = np.random.default_rng(42)
+    fs = 100.0
+    t = np.arange(0, 60, 1.0 / fs)
+
+    # 噪声 + 地震信号
+    acc = 0.001 * rng.normal(size=len(t))
+    envelope = np.exp(-((t - 20) ** 2) / (2 * 3.0**2))
+    acc += 0.5 * envelope * np.sin(2 * np.pi * 2.0 * t)
+
+    # 加入一段尖峰
+    acc[1000:1003] += 5.0
+
+    # 加入基线漂移
+    acc += 0.02 * t / t[-1]
+
+    report = check_quality(acc, fs)
+    print("质控报告：")
+    for k, v in report.items():
+        print(f"  {k:20s}: {v}")</code></pre>
+          </div>
+
+          <p>
+            运行后会输出一份质控报告，包括：
+          </p>
+          <ul>
+            <li>PGA、均值、标准差等基本统计量</li>
+            <li>是否截幅、尖峰数量、漂移比率</li>
+            <li>50 Hz 工频干扰强度</li>
+            <li>综合通过/不通过结论</li>
+          </ul>
+          <p>
+            这类自动质控脚本是强震台网数据处理的常见工具。
+            在数据量大的情况下，还可以进一步用机器学习方法（异常检测）自动分类。
+          </p>
+        </section>
+
+        <section id="baseline">
+          <h2><span class="num">04</span>基线校正</h2>
+
+          <h3>为什么需要基线校正</h3>
+          <p>
+            强震记录的加速度时程积分一次得到速度，
+            积分两次得到位移。如果加速度存在<strong>微小基线偏差</strong>
+            （如仪器零点漂移、传感器倾斜），积分后位移会<strong>无界增长</strong>，
+            表现为位移时程整体向上或向下漂移，这是物理上不可能的。
+          </p>
+          <p>
+            基线校正的目标：消除加速度的基线偏移，
+            使积分得到的速度与位移在物理上合理。
+          </p>
+
+          <h3>经典方法：Iwan 校正</h3>
+          <p>
+            Iwan 等人（1985）提出用<strong>分段线性函数</strong>拟合加速度基线：
+          </p>
+
+          $$ a_{\text{corr}}(t) = a_{\text{raw}}(t) - b(t) $$
+
+          <p>
+            其中 $b(t)$ 是分段线性基线函数。基线在各时间点之间线性变化，
+            控制点在用户指定的时间点，取值使校正后的速度、位移末端归零。
+          </p>
+          <p>
+            控制点通常选在：
+          </p>
+          <ul>
+            <li>P 波到时前（记录起始）</li>
+            <li>S 波到时附近</li>
+            <li>强震段结束</li>
+            <li>记录末尾</li>
+          </ul>
+
+          <h3>多项式校正</h3>
+          <p>
+            更简单的方法：用低阶多项式拟合记录的前段或整体趋势，
+            再从原始记录中减去：
+          </p>
+
+          $$ b(t) = c_0 + c_1 t + c_2 t^2 + \cdots $$
+
+          <p>
+            一阶多项式去掉常值偏移，二阶去掉线性漂移。
+            缺点是可能误伤真实的低频信息。
+          </p>
+
+          <h3>高通滤波（等效基线校正）</h3>
+          <p>
+            工程上常用<strong>高通滤波</strong>代替基线校正。
+            选择合适的高通截止频率（通常 0.05~0.2 Hz），
+            滤掉极低频成分，从而消除基线漂移。
+          </p>
+          <p>
+            优点：简单、一致、可复现。
+            缺点：会损失部分真实的低频信息，
+            对长周期结构（如超高层、大跨桥梁）可能影响较大。
+          </p>
+
+          <h3>速度、位移的积分策略</h3>
+          <p>
+            从加速度积分得到速度与位移，常用两种方式：
+          </p>
+          <ul>
+            <li><strong>时域梯形法</strong>：直接累加，
+              需要配合基线校正或高通滤波。</li>
+            <li><strong>频域积分</strong>：在频域内除以 $i\omega$，
+              低频段置零，等价于高通滤波。
+              对噪声抑制更好，但对基线校正要求更严格。</li>
+          </ul>
+
+          <h3>Python 示例：基线校正与积分</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>baseline.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+
+def baseline_polynomial(acc, dt, order=2):
+    """用多项式拟合基线并校正"""
+    n = len(acc)
+    t = np.arange(n) * dt
+    # 拟合
+    coeffs = np.polyfit(t, acc, order)
+    baseline = np.polyval(coeffs, t)
+    return acc - baseline, baseline
+
+
+def integrate_trapezoid(acc, dt):
+    """时域梯形法积分"""
+    n = len(acc)
+    vel = np.zeros(n)
+    disp = np.zeros(n)
+    for i in range(1, n):
+        vel[i] = vel[i - 1] + 0.5 * (acc[i] + acc[i - 1]) * dt
+        disp[i] = disp[i - 1] + 0.5 * (vel[i] + vel[i - 1]) * dt
+    return vel, disp
+
+
+def integrate_frequency(acc, dt, hp_freq=0.05):
+    """
+    频域积分：除以 iω，并把低频置零。
+    hp_freq: 高通截止频率 Hz
+    """
+    n = len(acc)
+    # FFT
+    A = np.fft.fft(acc)
+    freqs = np.fft.fftfreq(n, d=dt)
+    omega = 2 * np.pi * freqs
+
+    # 频域积分（避开零频）
+    V = np.zeros_like(A, dtype=complex)
+    D = np.zeros_like(A, dtype=complex)
+    for i in range(n):
+        if abs(omega[i]) < 1e-9:
+            V[i] = 0
+            D[i] = 0
+        else:
+            V[i] = A[i] / (1j * omega[i])
+            D[i] = -A[i] / omega[i]**2
+
+    # 高通滤波（低频置零）
+    mask = np.abs(freqs) >= hp_freq
+    V *= mask
+    D *= mask
+
+    vel = np.fft.ifft(V).real
+    disp = np.fft.ifft(D).real
+
+    return vel, disp
+
+
+def highpass_butter(acc, dt, fc=0.1, order=4):
+    """Butterworth 高通滤波"""
+    from scipy.signal import butter, filtfilt
+    fs = 1.0 / dt
+    wn = fc / (fs / 2)
+    b, a = butter(order, wn, btype="high")
+    return filtfilt(b, a, acc)
+
+
+if __name__ == "__main__":
+    # ---- 合成一条带基线漂移的加速度 ----
+    rng = np.random.default_rng(7)
+    dt = 0.01
+    t = np.arange(0, 40, dt)
+
+    acc_true = (1.0 * np.sin(2 * np.pi * 2.0 * t)
+                * np.exp(-((t - 15) ** 2) / (2 * 5.0**2)))
+    acc = acc_true + 0.005 * t + 0.002 * rng.normal(size=len(t))
+
+    # ---- 直接积分（错误） ----
+    vel_raw, disp_raw = integrate_trapezoid(acc, dt)
+
+    # ---- 多项式校正 ----
+    acc_corr, baseline = baseline_polynomial(acc, dt, order=1)
+    vel_corr, disp_corr = integrate_trapezoid(acc_corr, dt)
+
+    # ---- 频域积分 ----
+    vel_freq, disp_freq = integrate_frequency(acc, dt, hp_freq=0.1)
+
+    # ---- 绘图 ----
+    fig, axes = plt.subplots(3, 1, figsize=(11, 8), sharex=True)
+
+    axes[0].plot(t, acc, label="原始（含漂移）", alpha=0.6)
+    axes[0].plot(t, acc_corr, label="多项式校正", linewidth=1.0)
+    axes[0].set_ylabel("加速度 / (m/s²)")
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(t, vel_raw, label="直接积分")
+    axes[1].plot(t, vel_corr, label="校正后积分")
+    axes[1].plot(t, vel_freq, "--", label="频域积分")
+    axes[1].set_ylabel("速度 / (m/s)")
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    axes[2].plot(t, disp_raw, label="直接积分")
+    axes[2].plot(t, disp_corr, label="校正后积分")
+    axes[2].plot(t, disp_freq, "--", label="频域积分")
+    axes[2].set_xlabel("t / s")
+    axes[2].set_ylabel("位移 / m")
+    axes[2].legend()
+    axes[2].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    print("校正前后末端位移对比：")
+    print(f"  直接积分    : {disp_raw[-1]:+.4f} m")
+    print(f"  多项式校正  : {disp_corr[-1]:+.4f} m")
+    print(f"  频域积分    : {disp_freq[-1]:+.4f} m")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：<strong>未校正</strong>时位移末值明显偏离零点（物理上不可能），
+            校正后速度、位移都回到合理范围。
+          </p>
+        </section>
+
+        <section id="filter">
+          <h2><span class="num">05</span>滤波与去噪</h2>
+
+          <h3>为什么要滤波</h3>
+          <p>
+            强震记录中包含三类需要去除的成分：
+          </p>
+          <ul>
+            <li><strong>高频噪声</strong>：来自传感器、采集器、环境的随机噪声，通常 &gt;30 Hz。</li>
+            <li><strong>低频噪声</strong>：来自仪器温漂、地脉动、基线漂移，通常 &lt;0.1 Hz。</li>
+            <li><strong>窄带干扰</strong>：如 50 Hz 工频、台站附近机械振动。</li>
+          </ul>
+
+          <h3>滤波器类型</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>通带</th><th>典型用途</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>低通</td>
+                  <td>$f < f_c$</td>
+                  <td>去除高频噪声</td>
+                </tr>
+                <tr>
+                  <td>高通</td>
+                  <td>$f > f_c$</td>
+                  <td>去除低频漂移</td>
+                </tr>
+                <tr>
+                  <td>带通</td>
+                  <td>$f_1 < f < f_2$</td>
+                  <td>同时去除高低频</td>
+                </tr>
+                <tr>
+                  <td>带阻（陷波）</td>
+                  <td>去除窄带</td>
+                  <td>去除 50 Hz 工频</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Butterworth 滤波器</h3>
+          <p>
+            最常用的滤波器是 Butterworth，其幅频响应为：
+          </p>
+
+          $$ |H(\omega)|^2 = \frac{1}{1 + (\omega / \omega_c)^{2n}} $$
+
+          <p>
+            其中 $n$ 是阶数，$\omega_c$ 是截止频率。
+            特点：通带平坦、过渡带平缓。阶数越高过渡越陡，
+            但会引入更大的相位失真。
+          </p>
+
+          <h3>零相位滤波</h3>
+          <p>
+            单向滤波会引入<strong>相位延迟</strong>，导致波形时间偏移。
+            工程上常用<strong>零相位滤波</strong>：
+            正向滤波一次，再反向滤波一次。
+            通过 <code>filtfilt</code> 实现，幅频响应平方，相位为零。
+          </p>
+
+          <h3>去尖峰</h3>
+          <p>
+            强震记录中常见单点或数点的突跳。去尖峰方法：
+          </p>
+          <ul>
+            <li><strong>中值滤波</strong>：用邻域中值替换当前点，可去掉窄脉冲。</li>
+            <li><strong>阈值法</strong>：若某点与中位数之差超过若干倍 MAD，则用中位数替换。</li>
+            <li><strong>Hampel 滤波</strong>：滑动窗口内的稳健异常检测。</li>
+          </ul>
+
+          <h3>选择截止频率的原则</h3>
+          <p>
+            低通截止频率通常取 Nyquist 频率的 1/2~1/3，
+            或根据结构关注频段确定。
+            对建筑结构，关注频段通常 0.1~10 Hz，
+            因此常用 0.1 Hz 高通 + 25 Hz 低通。
+            对长周期结构（如超高层、大跨桥梁），
+            高通可降到 0.02~0.05 Hz。
+          </p>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>滤波的副作用</strong>：滤波会损失真实信号成分。
+              如果高通截止频率选得太高（如 0.5 Hz），
+              会把长周期信息也一起滤掉，导致反应谱长周期段被低估。
+              对地震动记录的滤波参数必须在<strong>数据说明</strong>中明确记录，
+              这也是 NGA-West2 等数据库对滤波参数有严格要求的原因。</p>
+            </div>
+          </div>
+
+          <h3>Python 示例：滤波与去尖峰</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>filter_denoise.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import butter, filtfilt, medfilt, iirnotch
+
+
+def bandpass_filter(acc, dt, fc_low=0.1, fc_high=25.0, order=4):
+    """零相位 Butterworth 带通滤波"""
+    fs = 1.0 / dt
+    nyq = fs / 2
+    wn = [fc_low / nyq, fc_high / nyq]
+    b, a = butter(order, wn, btype="band")
+    return filtfilt(b, a, acc)
+
+
+def notch_filter(acc, dt, f0=50.0, Q=30.0):
+    """陷波滤波去除工频干扰"""
+    fs = 1.0 / dt
+    b, a = iirnotch(f0, Q, fs=fs)
+    return filtfilt(b, a, acc)
+
+
+def despike_median(acc, kernel_size=5):
+    """中值滤波去尖峰"""
+    return medfilt(acc, kernel_size=kernel_size)
+
+
+def despike_threshold(acc, n_sigma=6.0):
+    """基于 MAD 的阈值去尖峰"""
+    med = np.median(acc)
+    mad = np.median(np.abs(acc - med))
+    if mad == 0:
+        return acc.copy()
+    threshold = n_sigma * 1.4826 * mad
+    mask = np.abs(acc - med) > threshold
+    out = acc.copy()
+    # 用邻域均值替换异常点
+    for i in np.where(mask)[0]:
+        lo = max(0, i - 3)
+        hi = min(len(acc), i + 4)
+        out[i] = np.mean(acc[lo:hi][~mask[lo:hi]]) if (~mask[lo:hi]).any() else med
+    return out
+
+
+if __name__ == "__main__":
+    # ---- 合成一条含噪声与尖峰的记录 ----
+    rng = np.random.default_rng(2024)
+    dt = 0.01
+    t = np.arange(0, 40, dt)
+
+    # 真实信号
+    acc_true = (1.0 * np.sin(2 * np.pi * 2.0 * t)
+                * np.exp(-((t - 15) ** 2) / (2 * 5.0**2)))
+
+    # 加入噪声、50 Hz 工频、尖峰
+    acc = acc_true.copy()
+    acc += 0.05 * rng.normal(size=len(t))          # 白噪声
+    acc += 0.1 * np.sin(2 * np.pi * 50.0 * t)       # 50 Hz 工频
+    acc[2000] += 5.0                                # 单点尖峰
+    acc[3500:3503] += 3.0                           # 短时尖峰
+
+    # ---- 处理链 ----
+    acc_filt = bandpass_filter(acc, dt, 0.1, 25.0)
+    acc_notch = notch_filter(acc_filt, dt, 50.0)
+    acc_clean = despike_threshold(acc_notch)
+
+    # ---- 绘图 ----
+    fig, axes = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
+
+    axes[0].plot(t, acc, alpha=0.6, label="原始")
+    axes[0].plot(t, acc_clean, linewidth=1.2, label="处理后")
+    axes[0].set_ylabel("加速度 / (m/s²)")
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(t, acc - acc_clean, color="gray", label="去除的成分")
+    axes[1].set_xlabel("t / s")
+    axes[1].set_ylabel("残差")
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # ---- 定量对比 ----
+    print("处理前后对比：")
+    print(f"  PGA 原始  : {np.max(np.abs(acc)):.4f} m/s²")
+    print(f"  PGA 处理后: {np.max(np.abs(acc_clean)):.4f} m/s²")
+    print(f"  信噪比改善: "
+          f"{20 * np.log10(np.max(np.abs(acc_clean)) / np.std(acc[:1000])):.1f} dB")</code></pre>
+          </div>
+
+          <p>
+            运行后可以看到：处理后波形更干净，
+            50 Hz 工频与尖峰都被去除，
+            但<strong>真实的 2 Hz 信号保留</strong>。
+          </p>
+        </section>
+
+        <section id="derived">
+          <h2><span class="num">06</span>积分与导出</h2>
+
+          <h3>加速度、速度、位移</h3>
+          <p>
+            强震仪通常直接记录加速度。工程分析中需要速度与位移时，通过积分获得：
+          </p>
+
+          $$ v(t) = \int_0^t a(\tau) \, d\tau, \qquad
+             d(t) = \int_0^t v(\tau) \, d\tau $$
+
+          <p>
+            积分必须在<strong>基线校正</strong>与<strong>滤波</strong>之后进行，
+            否则误差会累积。
+          </p>
+
+          <h3>PGV 与 PGD</h3>
+          <p>
+            常用的地震动峰值参数：
+          </p>
+          <ul>
+            <li><strong>PGA</strong>：峰值地面加速度，最常用。</li>
+            <li><strong>PGV</strong>：峰值地面速度，与结构能量输入关系更密切。</li>
+            <li><strong>PGD</strong>：峰值地面位移，对长周期结构重要。</li>
+          </ul>
+          <p>
+            三者的组合，如 PGV/PGA 或 PGD/PGV，可以反映地震动的频率特征。
+          </p>
+
+          <h3>导出格式</h3>
+          <p>
+            处理后的记录通常导出为：
+          </p>
+          <ul>
+            <li><strong>CSV / TXT</strong>：便于查看与交换，适合小型数据。</li>
+            <li><strong>SAC / MiniSEED</strong>：保持元数据，适合台网归档。</li>
+            <li><strong>PEER NGA</strong>：用于 GMPE 拟合与反应谱计算。</li>
+            <li><strong>Excel / HDF5</strong>：适合批量处理与机器学习训练数据。</li>
+          </ul>
+
+          <h3>元数据记录</h3>
+          <p>
+            导出记录时，必须同时记录以下元数据：
+          </p>
+          <ul>
+            <li>台网、台站、通道、位置代码</li>
+            <li>台站经纬度、高程、场地类别</li>
+            <li>事件时间、震中位置、震源深度、震级</li>
+            <li>震中距、震源距、RJB、Rrup</li>
+            <li>采样率、单位、量程</li>
+            <li>基线校正参数、滤波参数</li>
+            <li>质控结论、可用性评分</li>
+          </ul>
+          <p>
+            没有元数据的记录几乎无法用于后续研究。
+            NGA-West2、ESM 等数据库对元数据的完整性有严格要求。
+          </p>
+
+          <h3>Python 示例：完整处理链与导出</h3>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>process_export.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">import numpy as np
+import csv
+from datetime import datetime
+
+
+def process_record(acc, dt, hp=0.1, lp=25.0):
+    """
+    完整处理链：
+      1. 去尖峰
+      2. 带通滤波
+      3. 基线校正
+      4. 积分得到速度与位移
+    """
+    from scipy.signal import butter, filtfilt, medfilt
+
+    # 1. 去尖峰
+    acc = medfilt(acc, kernel_size=3)
+
+    # 2. 零相位带通滤波
+    fs = 1.0 / dt
+    nyq = fs / 2
+    b, a = butter(4, [hp / nyq, lp / nyq], btype="band")
+    acc = filtfilt(b, a, acc)
+
+    # 3. 去均值（作为简单基线校正）
+    acc = acc - np.mean(acc)
+
+    # 4. 积分
+    n = len(acc)
+    vel = np.zeros(n)
+    disp = np.zeros(n)
+    for i in range(1, n):
+        vel[i] = vel[i - 1] + 0.5 * (acc[i] + acc[i - 1]) * dt
+        disp[i] = disp[i - 1] + 0.5 * (vel[i] + vel[i - 1]) * dt
+
+    # 再次去除末端的线性趋势（保证位移末端归零）
+    t = np.arange(n) * dt
+    coeffs = np.polyfit(t, disp, 1)
+    disp = disp - np.polyval(coeffs, t)
+
+    return acc, vel, disp
+
+
+def export_csv(fname, t, acc, vel, disp, metadata=None):
+    """导出为 CSV 格式"""
+    with open(fname, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+
+        # 元数据头
+        if metadata:
+            writer.writerow(["# Metadata"])
+            for k, v in metadata.items():
+                writer.writerow([f"# {k}", str(v)])
+            writer.writerow([])
+
+        # 数据表头
+        writer.writerow(["time_s", "acc_m_s2", "vel_m_s", "disp_m"])
+        for i in range(len(t)):
+            writer.writerow([f"{t[i]:.4f}",
+                             f"{acc[i]:.6e}",
+                             f"{vel[i]:.6e}",
+                             f"{disp[i]:.6e}"])
+
+    print(f"已导出：{fname}")
+
+
+if __name__ == "__main__":
+    # 合成测试记录
+    rng = np.random.default_rng(7)
+    dt = 0.01
+    t = np.arange(0, 40, dt)
+    acc_raw = (1.0 * np.sin(2 * np.pi * 2.0 * t)
+               * np.exp(-((t - 15) ** 2) / (2 * 5.0**2)))
+    acc_raw += 0.02 * rng.normal(size=len(t))
+
+    # 处理
+    acc, vel, disp = process_record(acc_raw, dt)
+
+    # 计算峰值参数
+    pga = np.max(np.abs(acc))
+    pgv = np.max(np.abs(vel))
+    pgd = np.max(np.abs(disp))
+
+    print("峰值参数：")
+    print(f"  PGA = {pga:.4f} m/s² = {pga * 100:.2f} gal")
+    print(f"  PGV = {pgv:.4f} m/s = {pgv * 100:.2f} cm/s")
+    print(f"  PGD = {pgd:.4f} m = {pgd * 100:.2f} cm")
+
+    # 导出
+    metadata = {
+        "station": "TEST01",
+        "network": "XX",
+        "channel": "HN1",
+        "start_time": "2026-01-01T00:00:00",
+        "delta": dt,
+        "hp_freq": 0.1,
+        "lp_freq": 25.0,
+        "pga_m_s2": pga,
+        "pgv_m_s": pgv,
+        "pgd_m": pgd,
+        "processed_at": datetime.now().isoformat(),
+    }
+    export_csv("processed_record.csv", t, acc, vel, disp, metadata)</code></pre>
+          </div>
+
+          <p>
+            这个脚本给出了<strong>从原始记录到可交付数据</strong>的完整流程。
+            在实际项目中，可以进一步封装成命令行工具或批处理脚本。
+          </p>
+        </section>
+
+        <section id="application">
+          <h2><span class="num">07</span>工程应用</h2>
+
+          <h3>强震记录在工程中的用途</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>用途</th><th>所需数据</th><th>输出</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>地震动衰减关系（GMPE）</td>
+                  <td>大量自由场记录 + 震源/路径/场地参数</td>
+                  <td>PGA/PGV/反应谱预测方程</td>
+                </tr>
+                <tr>
+                  <td>反应谱计算</td>
+                  <td>单条或多条记录</td>
+                  <td>设计谱、场地谱</td>
+                </tr>
+                <tr>
+                  <td>场地效应分析</td>
+                  <td>基岩 + 地表记录</td>
+                  <td>传递函数、放大因子</td>
+                </tr>
+                <tr>
+                  <td>结构时程分析</td>
+                  <td>选波记录</td>
+                  <td>结构响应</td>
+                </tr>
+                <tr>
+                  <td>系统辨识</td>
+                  <td>结构台阵记录</td>
+                  <td>结构模态参数</td>
+                </tr>
+                <tr>
+                  <td>地震预警</td>
+                  <td>近场 P 波记录</td>
+                  <td>预警信息</td>
+                </tr>
+                <tr>
+                  <td>机器学习</td>
+                  <td>大量标注记录</td>
+                  <td>震级/距离估计、异常检测</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>数据质量对结果的影响</h3>
+          <p>
+            强震记录的质量直接影响下游分析：
+          </p>
+          <ul>
+            <li><strong>PGA 错误</strong> → GMPE 残差偏大 → PSHA 结果偏差。</li>
+            <li><strong>基线漂移</strong> → 位移谱不可信 → 长周期结构分析失效。</li>
+            <li><strong>滤波参数不一致</strong> → 反应谱不可比 → 数据库无法统一使用。</li>
+            <li><strong>元数据缺失</strong> → 无法分类、无法统计 → 记录使用价值下降。</li>
+          </ul>
+          <p>
+            因此，国际强震数据库（PEER NGA、ESM、COSMOS）
+            都对记录处理有<strong>统一流程与元数据标准</strong>。
+          </p>
+
+          <h3>与地震工程的衔接</h3>
+          <p>
+            强震动观测是<strong>地震工程数据链的起点</strong>：
+          </p>
+          <ol class="steps">
+            <li>台网记录 → 原始强震记录。</li>
+            <li>质控与处理 → 可用记录 + 元数据。</li>
+            <li>参数提取 → PGA、PGV、PGD、反应谱、Arias 强度、持时。</li>
+            <li>数据库积累 → GMPE 拟合、场地效应研究。</li>
+            <li>工程应用 → 抗震设计、地震危险性分析、结构时程分析。</li>
+          </ol>
+          <p>
+            没有高质量的强震记录，整个链条都会失真。
+            这也是全球各国持续投入台网建设的原因。
+          </p>
+
+          <h3>现代趋势</h3>
+          <ul>
+            <li><strong>密集台阵与分布式声传感（DAS）</strong>：光纤传感提供米级空间分辨率的应变记录。</li>
+            <li><strong>低成本 MEMS 台站</strong>：大量布设、网格化，提高近场记录密度。</li>
+            <li><strong>实时流数据与云处理</strong>：从触发记录走向实时连续流，支持快速响应。</li>
+            <li><strong>机器学习应用</strong>：自动质控、P 波拾取、震级估计、异常检测。</li>
+            <li><strong>数据共享与标准化</strong>：FDSN、ORFEUS、EMSC 等国际标准。</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>强震动观测与你的项目</strong>：你主页上"强震动数据处理"项目
+              正好对应这份笔记的<strong>数据格式、质量控制、基线校正、滤波、积分</strong>几个章节。
+              如果你的项目实现了这些功能，可以把这份笔记作为<strong>方法论文档</strong>，
+              从项目页面链接到对应章节。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>台网与仪器</strong>：自由场台站与结构台阵各有用途；强震仪量程大、频带宽、动态范围高。</li>
+              <li><strong>数据格式</strong>：SAC、MiniSEED、PEER ASCII、COSMOS 各有所长；ObsPy 是统一读写工具。</li>
+              <li><strong>质量控制</strong>：检查截幅、尖峰、漂移、信噪比；PGA/PGV 是基本质控指标。</li>
+              <li><strong>基线校正</strong>：多项式、Iwan、高通滤波；保证积分后位移物理合理。</li>
+              <li><strong>滤波与去噪</strong>：零相位 Butterworth 带通 + 陷波 + 中值滤波，去除噪声保留真实信号。</li>
+              <li><strong>积分与导出</strong>：加速度 → 速度 → 位移；导出时必须包含完整元数据。</li>
+              <li><strong>工程应用</strong>：GMPE、反应谱、场地效应、时程分析、系统辨识、地震预警。</li>
+              <li><strong>数据质量决定一切</strong>：错误的记录会导致所有下游分析失效。</li>
+            </ul>
+          </div>
+
+          <h3>处理流程速查</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>步骤</th><th>典型参数</th><th>目的</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>格式读取</td>
+                  <td>SAC / MSEED / PEER</td>
+                  <td>获取波形与元数据</td>
+                </tr>
+                <tr>
+                  <td>质控检查</td>
+                  <td>截幅、尖峰、SNR</td>
+                  <td>判断记录可用性</td>
+                </tr>
+                <tr>
+                  <td>去尖峰</td>
+                  <td>中值滤波（3~5 点）</td>
+                  <td>去除瞬时突跳</td>
+                </tr>
+                <tr>
+                  <td>带通滤波</td>
+                  <td>0.1~25 Hz（常规）</td>
+                  <td>去除高低频噪声</td>
+                </tr>
+                <tr>
+                  <td>陷波滤波</td>
+                  <td>50 Hz（中国）/ 60 Hz（美国）</td>
+                  <td>去除工频干扰</td>
+                </tr>
+                <tr>
+                  <td>基线校正</td>
+                  <td>多项式或 Iwan</td>
+                  <td>消除漂移</td>
+                </tr>
+                <tr>
+                  <td>积分</td>
+                  <td>时域或频域</td>
+                  <td>得到速度与位移</td>
+                </tr>
+                <tr>
+                  <td>峰值提取</td>
+                  <td>PGA、PGV、PGD</td>
+                  <td>基础参数</td>
+                </tr>
+                <tr>
+                  <td>反应谱</td>
+                  <td>5% 阻尼、0.01~10 s</td>
+                  <td>工程设计输入</td>
+                </tr>
+                <tr>
+                  <td>导出</td>
+                  <td>CSV / SAC + 元数据</td>
+                  <td>交付与归档</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>与其它笔记的联系</h3>
+          <ul>
+            <li><strong>数字信号处理</strong>（计算机）：滤波、FFT、窗函数、频谱分析的理论基础。</li>
+            <li><strong>地震动谱分析入门</strong>（地震学）：从处理后的记录计算反应谱。</li>
+            <li><strong>定量地震学</strong>（地震学）：震源、P/S 波、衰减的理论背景。</li>
+            <li><strong>地震工程</strong>（地震学）：记录的工程应用，选波、反应谱、时程分析。</li>
+            <li><strong>概率论与数理统计</strong>（数学）：质控与 GMPE 回归的统计方法。</li>
+            <li><strong>数值分析</strong>（数学）：积分方法、滤波算法、优化算法。</li>
+          </ul>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Bormann (ed.), <em>New Manual of Seismological Observatory Practice (NMSOP)</em> — IASPEI 台站标准手册</li>
+            <li>Iwan, Moser &amp; Peng, "Some observations on strong-motion earthquake measurement using a digital accelerograph" (1985) — 基线校正经典文献</li>
+            <li>Boore &amp; Bommer, "Processing of strong-motion accelerograms: needs, options and consequences" (2005) — 处理流程综述</li>
+            <li>Douglas, "Ground motion estimation equations 1964–2003" (2004) — GMPE 综述</li>
+            <li>Kramer, <em>Geotechnical Earthquake Engineering</em> — 岩土地震工程</li>
+            <li>Beyreuther et al., "ObsPy: A Python toolbox for seismology" (2010) — ObsPy 官方论文</li>
+            <li>COSMOS Strong Motion Data Format Guidelines — COSMOS 格式标准</li>
+            <li>PEER NGA-West2 Database — 强震记录数据库</li>
+            <li>中国地震局《强震动观测技术规程》— 国内强震观测标准</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>

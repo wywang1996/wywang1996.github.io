@@ -1,0 +1,829 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-page="dsp">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>振动力学 · wayione</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/pages.css">
+</head>
+<body data-nav="vibration">
+
+<div id="progress"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <span class="dot"></span>
+      <span>wayione</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <a href="../index.html#notes" class="nav-back">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="dsp-wrap">
+
+  <aside class="toc">
+    <div class="toc-title">目录</div>
+    <ul>
+      <li><a href="#intro">引言</a></li>
+      <li><a href="#sdof">一、单自由度系统</a></li>
+      <li><a href="#free">二、自由振动</a></li>
+      <li><a href="#harmonic">三、简谐激励响应</a></li>
+      <li><a href="#duhamel">四、一般激励响应</a></li>
+      <li><a href="#mdof">五、多自由度系统</a></li>
+      <li><a href="#modal">六、模态分析</a></li>
+      <li><a href="#continuous">七、连续系统</a></li>
+      <li><a href="#summary">八、小结</a></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <article>
+
+      <header class="article-header">
+        <div class="crumb">
+          <a href="../index.html">主页</a> / <a href="../index.html#notes">笔记</a> / 振动力学
+        </div>
+        <h1>振动力学</h1>
+        <p class="lead">
+          从单自由度到多自由度、从离散到连续，梳理结构振动的基本理论与求解方法。
+          振动力学是结构动力学与抗震分析的核心——反应谱、模态分解、
+          时程分析都建立在这套框架之上。
+        </p>
+        <div class="article-meta">
+          <span>单自由度</span>
+          <span>多自由度</span>
+          <span>模态分析</span>
+          <span class="blue">结构动力学</span>
+        </div>
+      </header>
+
+      <div class="article-body">
+
+        <section id="intro">
+          <h2><span class="num">§</span>引言</h2>
+          <p>
+            振动力学研究结构在动荷载（随时间变化的荷载）作用下的响应。
+            与静力问题不同，动力问题要考虑<strong>惯性力</strong>，
+            因此位移、应力、内力都随时间变化，问题的本质是<strong>微分方程初值问题</strong>。
+          </p>
+          <p>
+            振动问题的分类：
+          </p>
+          <ul>
+            <li><strong>自由振动</strong>：无外激励，由初始条件引起的振动。</li>
+            <li><strong>受迫振动</strong>：在外激励作用下产生的响应。</li>
+            <li><strong>自激振动</strong>：由系统内部的能量反馈引起的持续振动（如颤振）。</li>
+            <li><strong>参数振动</strong>：系统参数随时间变化引起的振动。</li>
+          </ul>
+          <p>
+            在地震工程中，最重要的一类问题是：
+            给定地面加速度 $\ddot{u}_g(t)$，求结构相对于地面的位移响应 $u(t)$。
+            这是地震反应谱、时程分析、Pushover 等一系列抗震分析方法的基础。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>单自由度的地位</strong>：虽然真实结构都是多自由度甚至无限自由度，
+              但<strong>单自由度（SDOF）</strong>是所有振动理论的核心：
+              一方面它本身是最简单的实际系统（单层框架、隔震支座、单摆）；
+              另一方面，多自由度结构经模态分解后，等价于一组独立的单自由度系统。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="sdof">
+          <h2><span class="num">01</span>单自由度系统</h2>
+
+          <h3>运动方程</h3>
+          <p>
+            一个质量为 $m$、刚度为 $k$、阻尼系数为 $c$ 的单自由度体系，
+            在外部激励 $p(t)$ 作用下的运动方程为：
+          </p>
+
+          $$ m \ddot{u} + c \dot{u} + k u = p(t) $$
+
+          <p>
+            若考虑地面加速度 $\ddot{u}_g(t)$，把结构相对位移记为 $u$，
+            则等效荷载为 $-m \ddot{u}_g(t)$：
+          </p>
+
+          $$ m \ddot{u} + c \dot{u} + k u = -m \ddot{u}_g(t) $$
+
+          <p>
+            这就是结构抗震分析中最基本的运动方程。
+          </p>
+
+          <h3>三个关键参数</h3>
+          <p>除 $m$、$k$、$c$ 本身外，以下三个量更常用于描述振动：</p>
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px;">
+            自振圆频率：
+          </p>
+          $$ \omega_n = \sqrt{\frac{k}{m}} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            自振周期：
+          </p>
+          $$ T_n = \frac{2 \pi}{\omega_n} = 2 \pi \sqrt{\frac{m}{k}} $$
+
+          <p style="font-family:var(--mono); font-size:12.5px; color:var(--text-dim); margin-bottom:4px; margin-top:14px;">
+            阻尼比：
+          </p>
+          $$ \zeta = \frac{c}{2 m \omega_n} = \frac{c}{2 \sqrt{m k}} $$
+
+          <p>
+            工程中常用<strong>频率 $f_n = 1 / T_n$</strong>（Hz）而不是圆频率。
+            结构自振周期与结构高度、材料、结构形式有关，
+            多层框架建筑的自振周期通常在 0.1–2 s 之间。
+          </p>
+        </section>
+
+        <section id="free">
+          <h2><span class="num">02</span>自由振动</h2>
+
+          <h3>无阻尼自由振动</h3>
+          <p>
+            当 $c = 0$、$p(t) = 0$ 时，运动方程退化为：
+          </p>
+
+          $$ \ddot{u} + \omega_n^2 u = 0 $$
+
+          <p>其通解为简谐振动：</p>
+
+          $$ u(t) = A \cos \omega_n t + B \sin \omega_n t $$
+
+          <p>
+            或写成振幅-相位形式：
+          </p>
+
+          $$ u(t) = u_0 \cos \omega_n t + \frac{\dot{u}_0}{\omega_n} \sin \omega_n t $$
+
+          <p>
+            其中 $u_0 = u(0)$、$\dot{u}_0 = \dot{u}(0)$ 为初始位移与初始速度。
+          </p>
+
+          <h3>阻尼自由振动</h3>
+          <p>引入阻尼比 $\zeta$ 后，运动方程变为：</p>
+
+          $$ \ddot{u} + 2 \zeta \omega_n \dot{u} + \omega_n^2 u = 0 $$
+
+          <p>根据 $\zeta$ 的取值，有三种情形：</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>阻尼类别</th><th>ζ 范围</th><th>响应特征</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>欠阻尼</strong></td>
+                  <td>$0 < \zeta < 1$</td>
+                  <td>振荡衰减，工程常见</td>
+                </tr>
+                <tr>
+                  <td><strong>临界阻尼</strong></td>
+                  <td>$\zeta = 1$</td>
+                  <td>无振荡，最快回到平衡</td>
+                </tr>
+                <tr>
+                  <td><strong>过阻尼</strong></td>
+                  <td>$\zeta > 1$</td>
+                  <td>无振荡，衰减慢</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>欠阻尼下（工程最常用），解为：</p>
+
+          $$ u(t) = e^{-\zeta \omega_n t}
+             \left( u_0 \cos \omega_d t
+             + \frac{\dot{u}_0 + \zeta \omega_n u_0}{\omega_d} \sin \omega_d t \right) $$
+
+          <p>其中<strong>有阻尼自振圆频率</strong>为：</p>
+
+          $$ \omega_d = \omega_n \sqrt{1 - \zeta^2} $$
+
+          <p>
+            对常见工程结构 $\zeta$ 很小（钢结构 2%–5%，混凝土 5%–8%），
+            因此 $\omega_d \approx \omega_n$，$\zeta$ 对频率影响可忽略。
+          </p>
+
+          <h3>对数衰减率</h3>
+          <p>
+            通过测量相邻两个峰值比的对数，可以估计阻尼比：
+          </p>
+
+          $$ \delta = \ln \frac{u_i}{u_{i+1}}
+                   = \frac{2 \pi \zeta}{\sqrt{1 - \zeta^2}}
+                   \approx 2 \pi \zeta $$
+
+          <p>
+            这是实验测定阻尼比最常用的方法之一。
+          </p>
+        </section>
+
+        <section id="harmonic">
+          <h2><span class="num">03</span>简谐激励响应</h2>
+
+          <h3>简谐荷载</h3>
+          <p>
+            设激励为 $p(t) = p_0 \sin(\omega t)$，其中 $\omega$ 为激励圆频率。
+            稳态响应为：
+          </p>
+
+          $$ u_p(t) = \frac{p_0}{k} \cdot \frac{1}{\sqrt{(1 - \beta^2)^2 + (2 \zeta \beta)^2}}
+             \sin(\omega t - \phi) $$
+
+          <p>
+            其中频率比 $\beta = \omega / \omega_n$，相位差为：
+          </p>
+
+          $$ \phi = \arctan \frac{2 \zeta \beta}{1 - \beta^2} $$
+
+          <h3>放大系数与共振</h3>
+          <p>
+            定义<strong>动力放大系数</strong> $D = \dfrac{u_{\max}}{p_0 / k}$，则：
+          </p>
+
+          $$ D = \frac{1}{\sqrt{(1 - \beta^2)^2 + (2 \zeta \beta)^2}} $$
+
+          <ul>
+            <li>当 $\beta \ll 1$（激励频率远低于自振频率）：$D \to 1$，准静力响应。</li>
+            <li>当 $\beta \to 1$（共振）：$D \to 1 / (2\zeta)$，响应剧烈放大。</li>
+            <li>当 $\beta \gg 1$（激励频率远高于自振频率）：$D \to 0$，结构基本不响应。</li>
+          </ul>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div>
+              <p><strong>共振的危害</strong>：$\zeta = 0.05$ 时共振放大系数可达 10 倍。
+              历史上 Tacoma 悬索桥因风致振动而破坏、土耳其某体育场看台因人群跳跃而倒塌，
+              都是共振作用的典型案例。结构设计必须使自振频率避开主要激励频率。</p>
+            </div>
+          </div>
+
+          <h3>隔振原理</h3>
+          <p>
+            当 $\beta > \sqrt{2}$ 时，$D < 1$——这是隔振的物理基础：
+            通过降低隔振系统刚度使 $\beta$ 足够大，可以显著减小传到结构的力。
+            地震工程中的<strong>基础隔震</strong>正是利用了这一原理：
+            隔震层周期通常在 2–4 s，远大于地震动卓越周期。
+          </p>
+        </section>
+
+        <section id="duhamel">
+          <h2><span class="num">04</span>一般激励响应</h2>
+
+          <h3>Duhamel 积分</h3>
+          <p>
+            当激励为任意时间函数 $p(t)$ 时，可以把 $p(t)$ 看成无穷多个脉冲的叠加。
+            对每个脉冲用冲量-动量定理得到脉冲响应函数 $h(t)$，
+            再叠加得到总响应：
+          </p>
+
+          $$ u(t) = \int_0^t p(\tau) \, h(t - \tau) \, d\tau $$
+
+          <p>
+            其中欠阻尼单自由度的<strong>单位脉冲响应函数</strong>为：
+          </p>
+
+          $$ h(t) = \frac{1}{m \omega_d} e^{-\zeta \omega_n t} \sin(\omega_d t) $$
+
+          <p>
+            把 $h(t)$ 代入，得到一般荷载下的位移响应（零初始条件）：
+          </p>
+
+          $$ u(t) = \frac{1}{m \omega_d} \int_0^t p(\tau) \, e^{-\zeta \omega_n (t - \tau)}
+             \sin[\omega_d (t - \tau)] \, d\tau $$
+
+          <p>
+            这就是经典的 <strong>Duhamel 积分</strong>（也称卷积积分）。
+          </p>
+
+          <h3>地震作用下的响应</h3>
+          <p>
+            对地震地面运动 $\ddot{u}_g(t)$，等效荷载为 $p(t) = -m \ddot{u}_g(t)$，
+            于是相对位移响应为：
+          </p>
+
+          $$ u(t) = -\frac{1}{\omega_d} \int_0^t \ddot{u}_g(\tau)
+             e^{-\zeta \omega_n (t - \tau)}
+             \sin[\omega_d (t - \tau)] \, d\tau $$
+
+          <p>
+            结构的<strong>绝对加速度</strong>响应为 $\ddot{u}^t = \ddot{u} + \ddot{u}_g$，
+            它与结构受力直接相关。工程中通常用绝对加速度最大值
+            定义为<strong>谱加速度 $S_a$</strong>，即：
+          </p>
+
+          $$ S_a(T, \zeta) = \max_t |\ddot{u}(t) + \ddot{u}_g(t)| $$
+
+          <p>
+            把 $S_a$ 作为周期 $T$ 的函数作图，就得到<strong>反应谱</strong>——
+            这是连接振动力学与抗震设计的核心概念。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>Newmark-β 法</strong>：Duhamel 积分只在简单荷载下能解析求解。
+              对实测地震波这类离散数据，通常用<strong>逐步积分法</strong>
+              （Newmark-β、Wilson-θ、HHT-α 等）求解。
+              这些方法本质上是对运动方程在时间步内做数值近似，
+              把连续问题化为代数递推问题。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="mdof">
+          <h2><span class="num">05</span>多自由度系统</h2>
+
+          <h3>运动方程的矩阵形式</h3>
+          <p>
+            具有 $n$ 个自由度的结构，运动方程写成矩阵形式为：
+          </p>
+
+          $$ \mathbf{M} \ddot{\mathbf{u}} + \mathbf{C} \dot{\mathbf{u}} + \mathbf{K} \mathbf{u} = \mathbf{p}(t) $$
+
+          <p>
+            其中 $\mathbf{M}$、$\mathbf{C}$、$\mathbf{K}$ 分别为
+            $n \times n$ 的<strong>质量矩阵</strong>、<strong>阻尼矩阵</strong>、
+            <strong>刚度矩阵</strong>。它们都具有以下性质：
+          </p>
+          <ul>
+            <li>对称：$\mathbf{M}^T = \mathbf{M}$，$\mathbf{K}^T = \mathbf{K}$。</li>
+            <li>质量矩阵正定，刚度矩阵正定或半正定。</li>
+            <li>对角元素为正，非对角元素通常较小。</li>
+          </ul>
+
+          <h3>单元质量矩阵</h3>
+          <p>
+            与刚度矩阵一样，质量矩阵也可以由有限元方法组装：
+          </p>
+          <ul>
+            <li><strong>集中质量矩阵</strong>：把单元质量集中到节点，矩阵为对角。</li>
+            <li><strong>一致质量矩阵</strong>：由形函数积分得到，矩阵非对角，精度更高。</li>
+          </ul>
+
+          <p>对等截面梁单元，一致质量矩阵为：</p>
+
+          $$ \mathbf{m}^e = \frac{\rho A l}{420} \begin{bmatrix}
+             156 & 22l & 54 & -13l \\
+             22l & 4l^2 & 13l & -3l^2 \\
+             54 & 13l & 156 & -22l \\
+             -13l & -3l^2 & -22l & 4l^2
+             \end{bmatrix} $$
+
+          <p>（对应节点自由度：$v_1$、$\theta_1$、$v_2$、$\theta_2$）。</p>
+
+          <h3>静力凝聚</h3>
+          <p>
+            当只关心部分自由度（通常是无质量或质量很小的转角自由度）时，
+            可以用静力凝聚把质量为零的自由度消去，得到<strong>凝聚刚度矩阵</strong>：
+          </p>
+
+          $$ \mathbf{K}^* = \mathbf{K}_{aa} - \mathbf{K}_{ab} \mathbf{K}_{bb}^{-1} \mathbf{K}_{ba} $$
+
+          <p>
+            这一步骤在建筑结构动力分析中非常常用，
+            可以把数千个自由度缩减为数百个，大幅提高计算效率。
+          </p>
+
+          <h3>阻尼矩阵</h3>
+          <p>
+            阻尼是结构动力学中最难建模的部分。工程中通常用两种简化：
+          </p>
+          <ul>
+            <li><strong>Rayleigh 阻尼</strong>：$\mathbf{C} = \alpha \mathbf{M} + \beta \mathbf{K}$。</li>
+            <li><strong>模态阻尼</strong>：每个模态指定一个独立的阻尼比 $\zeta_i$。</li>
+          </ul>
+
+          <p>
+            其中 Rayleigh 阻尼的系数 $\alpha$、$\beta$ 通过两个指定频率下的目标阻尼比确定：
+          </p>
+
+          $$ \alpha = \frac{2 \omega_i \omega_j (\zeta_i \omega_j - \zeta_j \omega_i)}{\omega_j^2 - \omega_i^2}, \qquad
+             \beta = \frac{2 (\zeta_j \omega_j - \zeta_i \omega_i)}{\omega_j^2 - \omega_i^2} $$
+
+          <p>
+            通常选择两个频率覆盖结构的前几阶模态。
+          </p>
+        </section>
+
+        <section id="modal">
+          <h2><span class="num">06</span>模态分析</h2>
+
+          <h3>广义特征值问题</h3>
+          <p>
+            忽略阻尼与外力，考虑自由振动解 $\mathbf{u}(t) = \boldsymbol{\phi} e^{i \omega t}$，
+            代入运动方程得到：
+          </p>
+
+          $$ (\mathbf{K} - \omega^2 \mathbf{M}) \boldsymbol{\phi} = \mathbf{0} $$
+
+          <p>
+            非零解要求系数行列式为零：
+          </p>
+
+          $$ \det(\mathbf{K} - \omega^2 \mathbf{M}) = 0 $$
+
+          <p>
+            这是 $n$ 次代数方程，可解出 $n$ 个自振圆频率
+            $\omega_1 \le \omega_2 \le \cdots \le \omega_n$，
+            相应得到 $n$ 个振型向量 $\boldsymbol{\phi}_i$。
+          </p>
+
+          <h3>振型的正交性</h3>
+          <p>
+            不同阶振型关于质量矩阵与刚度矩阵正交：
+          </p>
+
+          $$ \boldsymbol{\phi}_i^T \mathbf{M} \boldsymbol{\phi}_j = 0, \qquad
+             \boldsymbol{\phi}_i^T \mathbf{K} \boldsymbol{\phi}_j = 0,
+             \qquad i \ne j $$
+
+          <p>
+            同一阶振型归一化后可得到<strong>广义质量</strong>与<strong>广义刚度</strong>：
+          </p>
+
+          $$ M_i^* = \boldsymbol{\phi}_i^T \mathbf{M} \boldsymbol{\phi}_i, \qquad
+             K_i^* = \boldsymbol{\phi}_i^T \mathbf{K} \boldsymbol{\phi}_i = \omega_i^2 M_i^* $$
+
+          <h3>模态叠加法</h3>
+          <p>
+            把物理位移用振型展开：
+          </p>
+
+          $$ \mathbf{u}(t) = \sum_{i=1}^{n} \boldsymbol{\phi}_i q_i(t) $$
+
+          <p>
+            代入运动方程，利用正交性可以把 $n$ 个耦合方程<strong>解耦</strong>为
+            $n$ 个独立的单自由度方程：
+          </p>
+
+          $$ \ddot{q}_i + 2 \zeta_i \omega_i \dot{q}_i + \omega_i^2 q_i
+             = \frac{\boldsymbol{\phi}_i^T \mathbf{p}(t)}{M_i^*} $$
+
+          <p>
+            每个方程都可以用前面单自由度的公式求解。
+            工程中通常只取前几阶模态（$i \le 5$ 或 $10$）就能得到足够精度。
+          </p>
+
+          <h3>地震作用下的模态分解</h3>
+          <p>
+            对地震荷载 $\mathbf{p}(t) = -\mathbf{M} \mathbf{1} \ddot{u}_g(t)$：
+          </p>
+
+          $$ \ddot{q}_i + 2 \zeta_i \omega_i \dot{q}_i + \omega_i^2 q_i
+             = -\Gamma_i \ddot{u}_g(t) $$
+
+          <p>
+            其中<strong>模态参与系数</strong>为：
+          </p>
+
+          $$ \Gamma_i = \frac{\boldsymbol{\phi}_i^T \mathbf{M} \mathbf{1}}{M_i^*} $$
+
+          <p>
+            $\Gamma_i$ 描述第 $i$ 阶模态对整体动力响应的贡献程度。
+            第一阶模态的 $\Gamma_1$ 通常最大（约 1.2–1.4），
+            说明第一阶振型往往是控制性模态。
+          </p>
+
+          <h3>振型分解反应谱法</h3>
+          <p>
+            抗震设计中最常用的简化方法：把每个模态看成独立的单自由度体系，
+            用反应谱求得各阶模态的最大响应，再组合为总响应：
+          </p>
+
+          $$ R \approx \sqrt{\sum_i R_i^2} \quad \text{(SRSS)}, \qquad
+             R \approx \sqrt{\sum_i \sum_j \rho_{ij} R_i R_j} \quad \text{(CQC)} $$
+
+          <p>
+            SRSS 用于频率分离较好的情况；CQC（完全二次组合）
+            考虑了模态间的相关性，更适合密集模态。
+          </p>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>模态分析的物理意义</strong>：每一阶模态对应结构的一种"固有振动模式"，
+              其自振频率与振型由结构的质量与刚度分布唯一确定。
+              在地震、风、车辆等动力作用下，结构响应表现为若干阶模态的线性叠加，
+              而通常只有最低几阶模态被显著激发。
+              这就是为什么工程上只需计算前几阶模态就能抓住主要响应。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="continuous">
+          <h2><span class="num">07</span>连续系统</h2>
+
+          <h3>从离散到连续</h3>
+          <p>
+            当结构质量与刚度连续分布时（如梁、板、壳），
+            需要用<strong>偏微分方程</strong>描述振动，
+            对应有无穷多个自由度与无穷多阶振型。
+            工程中通常用有限元把它离散化为多自由度系统后求解。
+          </p>
+
+          <h3>梁的横向振动</h3>
+          <p>
+            考虑等截面 Euler-Bernoulli 梁，用挠度 $w(x, t)$ 表示运动，
+            自由振动方程为：
+          </p>
+
+          $$ \rho A \frac{\partial^2 w}{\partial t^2}
+             + E I \frac{\partial^4 w}{\partial x^4} = 0 $$
+
+          <p>
+            用分离变量 $w(x, t) = \phi(x) \sin(\omega t)$ 代入，
+            得到振型方程：
+          </p>
+
+          $$ \frac{d^4 \phi}{dx^4} - \beta^4 \phi = 0, \qquad
+             \beta^4 = \frac{\rho A \omega^2}{E I} $$
+
+          <h3>简支梁的自振频率</h3>
+          <p>
+            对两端简支梁，边界条件 $\phi(0) = \phi''(0) = \phi(l) = \phi''(l) = 0$，
+            得到自振频率：
+          </p>
+
+          $$ \omega_n = (n \pi)^2 \sqrt{\frac{E I}{\rho A l^4}}, \qquad n = 1, 2, 3, \ldots $$
+
+          <p>
+            相应振型为：
+          </p>
+
+          $$ \phi_n(x) = \sin \frac{n \pi x}{l} $$
+
+          <p>
+            相邻两阶频率之比为 $1 : 4 : 9 : 16 : \ldots$（平方关系）。
+            这是简支梁的典型特征，与弦的振动规律一致。
+          </p>
+
+          <h3>其他边界条件</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>边界条件</th><th>一阶频率系数 $\beta_1 l$</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>两端简支</td><td>$\pi \approx 3.14$</td></tr>
+                <tr><td>一端固定、一端自由（悬臂）</td><td>1.875</td></tr>
+                <tr><td>两端固定</td><td>4.730</td></tr>
+                <tr><td>一端固定、一端简支</td><td>3.927</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Python 示例：单自由度与多自由度响应</h2>
+          <div class="code-block">
+            <div class="code-head">
+              <div class="file-lang">
+                <span>sdof_mdof_response.py</span>
+                <span class="lang">Python</span>
+              </div>
+              <button class="copy-btn" type="button">复制</button>
+            </div>
+<pre><code class="language-python">"""
+振动力学示例
+1. 单自由度体系在简谐与地震动下的响应
+2. 多自由度体系的模态分析
+"""
+import numpy as np
+from scipy.linalg import eigh
+from scipy.integrate import solve_ivp
+
+
+# =========================================================
+# 1. 单自由度体系
+# =========================================================
+def sdof_ode(t, y, m, c, k, p_func):
+    """
+    单自由度运动方程 m*u'' + c*u' + k*u = p(t)
+    y = [u, v]
+    """
+    u, v = y
+    p = p_func(t)
+    du = v
+    dv = (p - c * v - k * u) / m
+    return [du, dv]
+
+
+def sdof_harmonic(m=1.0, k=100.0, zeta=0.05, p0=1.0, omega=5.0, t_end=30.0):
+    """
+    单自由度在简谐荷载 p(t) = p0*sin(omega*t) 下的响应
+    """
+    c = 2 * zeta * np.sqrt(m * k)
+    p_func = lambda t: p0 * np.sin(omega * t)
+
+    t_eval = np.linspace(0, t_end, 2000)
+    sol = solve_ivp(sdof_ode, (0, t_end), [0.0, 0.0],
+                    args=(m, c, k, p_func),
+                    t_eval=t_eval, method="RK45", rtol=1e-9)
+
+    # 稳态解的理论振幅
+    wn = np.sqrt(k / m)
+    beta = omega / wn
+    D = 1.0 / np.sqrt((1 - beta**2)**2 + (2 * zeta * beta)**2)
+    u_static = p0 / k
+    u_steady_theory = D * u_static
+
+    return sol.t, sol.y[0], wn, D, u_steady_theory
+
+
+def sdof_earthquake(acc_g, dt, T=1.0, zeta=0.05, m=1.0):
+    """
+    单自由度体系对地震地面运动的响应
+    acc_g : 地面加速度时程
+    dt    : 采样间隔
+    T     : 结构自振周期
+    zeta  : 阻尼比
+    返回 (t, u, u_abs_acc)
+    """
+    wn = 2 * np.pi / T
+    c = 2 * zeta * wn * m
+    k = m * wn**2
+
+    # 用线性插值把地面加速度作为时间的函数
+    t_g = np.arange(len(acc_g)) * dt
+    p_func = lambda t: -m * np.interp(t, t_g, acc_g)
+
+    t_eval = t_g
+    sol = solve_ivp(sdof_ode, (t_g[0], t_g[-1]), [0.0, 0.0],
+                    args=(m, c, k, p_func),
+                    t_eval=t_eval, method="RK45", rtol=1e-8)
+
+    # 绝对加速度 = 相对加速度 + 地面加速度
+    u = sol.y[0]
+    v = sol.y[1]
+    # 由运动方程反推相对加速度 a_rel
+    a_rel = (p_func(t_eval) - c * v - k * u) / m
+    u_abs_acc = a_rel + acc_g
+    return t_eval, u, u_abs_acc
+
+
+# =========================================================
+# 2. 多自由度体系的模态分析
+# =========================================================
+def mdof_modal(M, K):
+    """
+    广义特征值问题 K * phi = omega^2 * M * phi
+    返回 (omega, phi)，按圆频率从小到大排列
+    """
+    eigvals, eigvecs = eigh(K, M)
+    # eigh 保证返回的 eigvals 是升序
+    omega = np.sqrt(eigvals)
+    # 按广义质量归一化
+    for i in range(eigvecs.shape[1]):
+        phi_i = eigvecs[:, i]
+        M_i = phi_i @ M @ phi_i
+        eigvecs[:, i] = phi_i / np.sqrt(M_i)
+    return omega, eigvecs
+
+
+def modal_participation(phi, M):
+    """
+    计算各阶模态的参与系数 Gamma_i = phi_i^T * M * 1 / (phi_i^T * M * phi_i)
+    （因为 phi 已按广义质量归一化，分母为 1）
+    """
+    ones = np.ones(M.shape[0])
+    return phi.T @ M @ ones
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("示例 1：单自由度体系在简谐荷载下的稳态响应")
+    print("=" * 60)
+    t, u, wn, D, u_steady = sdof_harmonic()
+    print(f"自振圆频率 ω_n = {wn:.4f} rad/s")
+    print(f"激励频率 ω     = 5.0000 rad/s")
+    print(f"频率比 β       = {5.0 / wn:.4f}")
+    print(f"放大系数 D     = {D:.4f}")
+    print(f"稳态振幅（理论）: {u_steady:.4e}")
+    print(f"稳态振幅（数值）: {np.max(np.abs(u[-500:])):.4e}")
+
+    print()
+    print("=" * 60)
+    print("示例 2：三层剪切型框架的模态分析")
+    print("=" * 60)
+    # 3 层剪切型框架：每层质量 m，层间刚度 k
+    m, k = 1.0e5, 1.0e8
+    M = np.diag([m, m, m])
+    K = np.array([
+        [ 2*k, -k,    0],
+        [-k,    2*k, -k],
+        [ 0,   -k,    k],
+    ])
+
+    omega, phi = mdof_modal(M, K)
+    print("各阶自振频率：")
+    for i, wi in enumerate(omega):
+        Ti = 2 * np.pi / wi
+        print(f"  第 {i+1} 阶: ω = {wi:.4f} rad/s,  T = {Ti:.4f} s")
+
+    gamma = modal_participation(phi, M)
+    print("\n各阶模态参与系数：")
+    for i, gi in enumerate(gamma):
+        print(f"  第 {i+1} 阶: Γ = {gi:.4f}")
+
+    print("\n振型矩阵（列为主振型）：")
+    print(np.array2string(phi, precision=4, suppress_small=True))</code></pre>
+          </div>
+
+          <div class="callout tip">
+            <span class="ico">💡</span>
+            <div>
+              <p><strong>从振动力学到抗震设计</strong>：这套"运动方程 → 自由振动 → 模态分析 → 模态叠加"
+              的流程，正是现代抗震分析的骨架。
+              反应谱法对应"每阶模态用反应谱求最大响应再组合"，
+              时程分析法对应"逐步数值积分"，Pushover 分析对应"用等效单自由度近似"。
+              掌握振动力学，抗震设计的一半就已经入门了。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">08</span>小结</h2>
+
+          <div class="keypoints">
+            <h4>📌 核心要点</h4>
+            <ul>
+              <li><strong>SDOF 运动方程</strong>：$m\ddot{u} + c\dot{u} + ku = p(t)$，三个关键参数：$\omega_n$、$T_n$、$\zeta$。</li>
+              <li><strong>自由振动</strong>：无阻尼为简谐振动；有阻尼时振荡衰减，衰减快慢由 $\zeta$ 决定。</li>
+              <li><strong>简谐激励</strong>：动力放大系数 $D$ 在 $\beta = \omega / \omega_n = 1$ 时达峰值 $1/(2\zeta)$，即共振。</li>
+              <li><strong>一般激励</strong>：Duhamel 积分给出任意荷载下的响应；实测地震波用 Newmark-β 等逐步积分法。</li>
+              <li><strong>MDOF 运动方程</strong>：$\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{K}\mathbf{u} = \mathbf{p}(t)$，三个矩阵均对称。</li>
+              <li><strong>模态分析</strong>：广义特征值问题 $\det(\mathbf{K} - \omega^2 \mathbf{M}) = 0$ 给出 $n$ 阶频率与振型。</li>
+              <li><strong>模态叠加</strong>：利用振型正交性把耦合方程解耦为 $n$ 个独立 SDOF 方程。</li>
+              <li><strong>反应谱法</strong>：各阶模态响应组合（SRSS / CQC），是抗震设计最常用的简化方法。</li>
+              <li><strong>连续系统</strong>：梁、板、壳振动由偏微分方程描述，工程中常用有限元离散化求解。</li>
+            </ul>
+          </div>
+
+          <h3>延伸阅读</h3>
+          <ul>
+            <li>Clough &amp; Penzien, <em>Dynamics of Structures</em> — 结构动力学经典教材</li>
+            <li>Chopra, <em>Dynamics of Structures: Theory and Applications to Earthquake Engineering</em> — 抗震分析权威</li>
+            <li>刘晶波、杜修力，《结构动力学》— 国内主流教材</li>
+            <li>Rao, <em>Mechanical Vibrations</em> — 机械振动角度</li>
+            <li>GB 50011-2010《建筑抗震设计规范》— 反应谱法的工程实现</li>
+            <li>PEER NGA 数据库 — 实测地震动记录</li>
+          </ul>
+        </section>
+
+      </div>
+
+      <a href="../index.html#notes" class="back-link">
+        <span class="arrow">←</span>
+        <span>返回笔记列表</span>
+      </a>
+
+      <footer>
+        © 2026 wayione · Built with ❤️ and Python
+      </footer>
+
+    </article>
+  </main>
+</div>
+
+<script src="../assets/site.js"></script>
+
+</body>
+</html>
